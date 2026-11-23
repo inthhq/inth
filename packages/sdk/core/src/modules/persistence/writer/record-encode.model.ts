@@ -398,6 +398,9 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 	if (record.rightsConfirmed) {
 		encoded.rightsConfirmed = true;
 	}
+	if (record.linkedExternalId) {
+		encoded.linkedExternalId = record.linkedExternalId;
+	}
 	return JSON.stringify(encoded);
 };
 

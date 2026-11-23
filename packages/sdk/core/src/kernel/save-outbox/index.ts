@@ -210,6 +210,8 @@ export interface SaveOutboxOptions {
 	store: SaveOutboxStore;
 	/** Called whenever something is left queued; replay once back online. */
 	retryWhenOnline: () => void;
+	/** Called when a backend response confirms a verified subject-to-user link. */
+	markSubjectLinked?: (subjectId: string, externalId: string) => void;
 	/** Loads the queue module. Defaults to `import('./queue')`. */
 	loadQueue?: () => Promise<{
 		createQueueWorker: (options: QueueWorkerOptions) => QueueWorker;
@@ -347,6 +349,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	transport,
 	store,
 	retryWhenOnline,
+	markSubjectLinked,
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
 	const { emit, getSnapshot } = runtime;
@@ -406,6 +409,7 @@ export const createSaveOutbox = function createSaveOutbox({
 					hasOptOutInFlight: () => directOptOutSends.size > 0,
 					isSending,
 					isSendingOptOut,
+					markSubjectLinked,
 					runtime,
 					store,
 					tools: queueTools,
@@ -1013,16 +1017,26 @@ export const createSaveOutbox = function createSaveOutbox({
 							ownedBy
 						)
 					: undefined;
+				const effectiveSubjectId = adopted ?? act.payload.subjectId;
+				if (
+					owned &&
+					act.kind === 'record' &&
+					act.payload.user?.externalId &&
+					(result as { link?: { stored?: boolean } }).link?.stored === true
+				) {
+					markSubjectLinked?.(effectiveSubjectId, act.payload.user.externalId);
+				}
 				if (owned && result.optOut !== undefined) {
 					applySyncedOptOut(runtime, result.optOut, {
 						account: act.payload.user,
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
 						externalId: act.payload.user?.externalId ?? null,
+						fromOptOutRequest: act.kind === 'record',
 						generation: context.generation,
 						identity: context.identity,
 						ownAct: act.kind === 'record',
-						subjectId: adopted ?? act.payload.subjectId,
+						subjectId: effectiveSubjectId,
 					});
 				}
 			} else if (clearVersion === startedClear) {

@@ -4002,3 +4002,395 @@ describe('kernel regressions (set 6)', () => {
 		}
 	});
 });
+
+describe('e2e findings: remote lift drops stale linked device opt-out & both answer fills requested device rights', () => {
+	// the e2e repro (including reload across persistence!)
+	test('e2e repro: a fresh account doc with null legacy optOut drops a linked browser device opt-out, deletes storage, and emits opt-out:synced', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_e2e', identityToken: 'tok_e2e' };
+
+		// Visit 1 on A: signed in as U, optOut() records device opt-out and backend confirms verified link + both
+		const visit1 = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: user,
+				now: NOW - 5000,
+				transport: {
+					optOut: (payload) =>
+						Promise.resolve({
+							link: { stored: true, verifiedBy: 'identity_token' },
+							ok: true,
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW - 5000,
+								rights: ['sale', 'share', 'targeted_ads'],
+							},
+							recordId: RECORD_UUID,
+							subjectId: payload.subjectId,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const p1 = createPersistence({ kernel: visit1 });
+		try {
+			visit1.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 6000,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			const res = await visit1.commands.optOut({ actionAt: NOW - 5000 });
+			expect(res.ok).toBe(true);
+			await flushMacrotasks();
+			expect(window.localStorage.getItem('inth-opt-out')).not.toBeNull();
+		} finally {
+			p1.dispose();
+			visit1.dispose();
+		}
+
+		// Reload A after B lifted: fresh /check has legacy optOut: null and sync.optOut: null at NOW
+		const visit2 = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: user,
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const p2 = createPersistence({ kernel: visit2 });
+		const syncedEvents: (Readonly<OptOutRecord> | null)[] = [];
+		visit2.events.on('opt-out:synced', ({ optOut }) => {
+			syncedEvents.push(optOut);
+		});
+		try {
+			await flushMacrotasks();
+			expect(visit2.getBrowserRecords().optOut?.heldBy).toBe('device');
+
+			visit2.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			await flushMacrotasks();
+
+			expect(visit2.getBrowserRecords().optOut).toBeNull();
+			expect(visit2.getSnapshot().optOut).toBeNull();
+			expect(visit2.getSnapshot().effectivePermissions.marketing).toBe(true);
+			expect(window.localStorage.getItem('inth-opt-out')).toBeNull();
+			expect(document.cookie).not.toContain('inth-opt-out=');
+			expect(syncedEvents).toEqual([null]);
+		} finally {
+			p2.dispose();
+			visit2.dispose();
+		}
+	});
+
+	// local opt-out made after the document's checkedAt survives
+	test('a local device opt-out recorded after the account document checkedAt survives', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_newer', identityToken: 'tok_newer' };
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 1000,
+						rights: ['sale', 'share', 'targeted_ads'],
+					},
+					optOutRightsConfirmed: true,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_u, id) =>
+						Promise.resolve({ subjectId: id ?? SUBJECT_UUID }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			// Document checkedAt (NOW - 2000) is BEFORE local optOut recordedAt (NOW - 1000)
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 2000,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			expect(kernel.getBrowserRecords().optOut?.heldBy).toBe('device');
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// a GPC device record survives
+	test('a GPC browser device opt-out survives an account document with null optOut', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_gpc', identityToken: 'tok_gpc' };
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: NOW - 5000,
+						rights: ['sale', 'share', 'targeted_ads'],
+					},
+					optOutRightsConfirmed: true,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_u, id) =>
+						Promise.resolve({ subjectId: id ?? SUBJECT_UUID }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			expect(kernel.getBrowserRecords().optOut?.method).toBe('gpc');
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// an unlinked browser keeps its record
+	test('an unlinked browser keeps its device opt-out when an account document has null optOut', () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_unlinked' };
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 5000,
+						rights: ['sale', 'share', 'targeted_ads'],
+					},
+					optOutRightsConfirmed: true,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: user,
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			expect(kernel.getBrowserRecords().optOut?.heldBy).toBe('device');
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// a non-null legacy optOut keeps the browser device record
+	test('a non-null legacy optOut on the account document keeps the linked browser device opt-out', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_legacy', identityToken: 'tok_legacy' };
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 5000,
+						rights: ['sale', 'share', 'targeted_ads'],
+					},
+					optOutRightsConfirmed: true,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_u, id) =>
+						Promise.resolve({ subjectId: id ?? SUBJECT_UUID }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			// sync.optOut is null, but legacy optOut is non-null (proven device still holds opt-out)
+			kernel.syncUserConsent({
+				categories: {},
+				optOut: {
+					advertising: true,
+					limitSensitive: false,
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share', 'targeted_ads'],
+					sale: true,
+				},
+				sync: {
+					checkedAt: NOW,
+					choices: {},
+					externalId: user.externalId,
+					optOut: null,
+					vendors: {},
+				},
+			});
+			expect(kernel.getBrowserRecords().optOut?.heldBy).toBe('device');
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// optOut() while account layer is active fills requested device rights from a both answer without copying account extra rights
+	test('optOut() with active account layer fills requested device rights from a both answer without copying account extra rights', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'u_item2', identityToken: 'tok_item2' };
+
+		// Case A: active account layer with optOut: null (e2e Site A case) -> fills device rights from both answer
+		const kEmpty = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: user,
+				now: NOW,
+				transport: {
+					optOut: (payload) =>
+						Promise.resolve({
+							link: { stored: true, verifiedBy: 'identity_token' },
+							ok: true,
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW,
+								rights: ['sale', 'share', 'targeted_ads'],
+							},
+							recordId: RECORD_UUID,
+							subjectId: payload.subjectId,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kEmpty.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 1000,
+					externalId: user.externalId,
+					optOut: null,
+				})
+			);
+			const res = await kEmpty.commands.optOut({ actionAt: NOW });
+			expect(res.ok).toBe(true);
+			expect(kEmpty.getOptOutReceiptData().rightsConfirmed).toBe(true);
+			expect(kEmpty.getBrowserRecords().optOut?.rights).toEqual([
+				'sale',
+				'share',
+				'targeted_ads',
+			]);
+			expect(kEmpty.getSnapshot().optOut?.rights).toEqual([
+				'sale',
+				'share',
+				'targeted_ads',
+			]);
+		} finally {
+			kEmpty.dispose();
+		}
+
+		// Case B: active account layer already holds extra right ('share'), both answer returns union ['sale', 'share', 'targeted_ads'] -> account right is not copied into browser device record
+		const kWithAccountExtra = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: user,
+				now: NOW,
+				transport: {
+					optOut: (payload) =>
+						Promise.resolve({
+							link: { stored: true, verifiedBy: 'identity_token' },
+							ok: true,
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW,
+								rights: ['sale', 'share', 'targeted_ads'],
+							},
+							recordId: RECORD_UUID,
+							subjectId: payload.subjectId,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kWithAccountExtra.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 1000,
+					externalId: user.externalId,
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 4000,
+						rights: ['share'],
+					},
+				})
+			);
+			const res = await kWithAccountExtra.commands.optOut({ actionAt: NOW });
+			expect(res.ok).toBe(true);
+			expect(kWithAccountExtra.getOptOutReceiptData().rightsConfirmed).toBe(
+				true
+			);
+			// Browser device record fills only the rights not already held solely by the account (never copies 'share')
+			expect(kWithAccountExtra.getBrowserRecords().optOut?.rights).toEqual([
+				'sale',
+				'targeted_ads',
+			]);
+			// Effective snapshot still includes the union while signed in
+			expect(kWithAccountExtra.getSnapshot().optOut?.rights).toEqual([
+				'sale',
+				'share',
+				'targeted_ads',
+			]);
+		} finally {
+			kWithAccountExtra.dispose();
+		}
+	});
+});

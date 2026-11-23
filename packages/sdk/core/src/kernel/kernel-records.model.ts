@@ -241,8 +241,12 @@ export interface RecordsBoundary {
 	noteRecordedSubject: (id: string | undefined) => void;
 	/** Whether `subjectId` was proven linked to `externalId` in this session. */
 	isSubjectLinked: (subjectId: string | null, externalId: string) => boolean;
+	/** Verified external user ID linked to `subjectId`, when known. */
+	getLinkedExternalId: (subjectId: string | null) => string | undefined;
 	/** Record a proven link between `subjectId` and `externalId` in this session. */
 	markSubjectLinked: (subjectId: string, externalId: string) => void;
+	/** Subscribe to newly verified subject links so persistence can store them. */
+	onSubjectLinked: (listener: () => void) => () => void;
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
@@ -259,8 +263,19 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
 	// Proven (subjectId -> externalId) links established with an identityToken
-	// in this session, cleared when records or subject are reset.
+	// (or restored from persisted local opt-out metadata), cleared when records
+	// or subject are reset.
 	const verifiedLinks = new Map<string, string>();
+	const subjectLinkListeners = new Set<() => void>();
+	const recordVerifiedLink = (subjectId: string, externalId: string): void => {
+		if (verifiedLinks.get(subjectId) === externalId) {
+			return;
+		}
+		verifiedLinks.set(subjectId, externalId);
+		for (const listener of subjectLinkListeners) {
+			listener();
+		}
+	};
 
 	const applyHydratedGpcMark = function applyHydratedGpcMark(
 		before: ConsentSnapshot,
@@ -350,6 +365,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			accountLayer: incomingAccountLayer,
 			choice,
 			optOutGpcReported: _gpcMark,
+			optOutLinkedExternalId,
 			optOutLocalAct: _localAct,
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
@@ -392,6 +408,13 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		const reset = choice === null || rest.subject === null;
 		if (reset) {
 			verifiedLinks.clear();
+		}
+		const hydratedSubjectId =
+			validated.subject === undefined
+				? before.subject?.subjectId
+				: validated.subject?.subjectId;
+		if (optOutLinkedExternalId && hydratedSubjectId) {
+			verifiedLinks.set(hydratedSubjectId, optOutLinkedExternalId);
 		}
 		if (reset && before.iab) {
 			patch.iab = { ...before.iab, authority: null, tcString: null };
@@ -549,7 +572,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			linkedId !== null &&
 			effectiveSubjectId !== null
 		) {
-			verifiedLinks.set(effectiveSubjectId, user.externalId);
+			recordVerifiedLink(effectiveSubjectId, user.externalId);
 		}
 		if (attempt === identifyGeneration() && linked?.optOut !== undefined) {
 			applySyncedOptOut(runtime, linked.optOut, {
@@ -619,6 +642,34 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		return applyLiftFloorToIncoming(currentAccount, normalized);
 	};
 
+	/**
+	 * Whether applying `rawDoc` / `normalized` should drop this browser's own
+	 * device opt-out because a verified remote lift on another domain cleared
+	 * both the person opt-out and this linked device's opt-out.
+	 */
+	const shouldDropDeviceOptOutOnAccountDoc = (
+		snapshot: ConsentSnapshot,
+		rawDoc: UserConsent,
+		normalized: AccountConsentLayer
+	): boolean => {
+		if (rawDoc.optOut !== null || normalized.optOut !== null) {
+			return false;
+		}
+		const browserOptOut = runtime.getBrowserRecords().optOut;
+		if (
+			!browserOptOut ||
+			browserOptOut.heldBy !== 'device' ||
+			browserOptOut.method === 'gpc'
+		) {
+			return false;
+		}
+		const subjectId = snapshot.subject?.subjectId ?? null;
+		if (!subjectId || verifiedLinks.get(subjectId) !== normalized.externalId) {
+			return false;
+		}
+		return browserOptOut.recordedAt < normalized.checkedAt - normalized.skew;
+	};
+
 	const syncUserConsent = function syncUserConsent(
 		value: UserConsent | null | undefined,
 		options?: SyncUserConsentOptions
@@ -664,19 +715,30 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			return false;
 		}
 
+		const dropDeviceOptOut = shouldDropDeviceOptOutOnAccountDoc(
+			before,
+			value,
+			normalized
+		);
 		const patch: SnapshotPatch = { now: at };
 		if (clearPending) {
 			patch.userConsentPending = false;
 		}
+		if (dropDeviceOptOut) {
+			patch.optOut = null;
+		}
 		let changed = false;
 		runtime.batch(() => {
+			if (dropDeviceOptOut) {
+				runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
+			}
 			changed = commit(patch, {
 				accountLayer: normalized,
 				accountLayerSource: 'incoming',
 				preserveDialog: true,
 			});
 			const after = getSnapshot();
-			if (!sameOptOutRecord(before.optOut, after.optOut)) {
+			if (dropDeviceOptOut || !sameOptOutRecord(before.optOut, after.optOut)) {
 				emit({
 					optOut: after.optOut,
 					snapshot: after,
@@ -705,6 +767,9 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				patch.iab = { ...iab, authority: null, tcString: null };
 			}
 			commit(patch);
+		},
+		getLinkedExternalId(subjectId) {
+			return subjectId === null ? undefined : verifiedLinks.get(subjectId);
 		},
 
 		getProvisionalSubject: () => provisionalSubjectId,
@@ -757,13 +822,20 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		},
 
 		markSubjectLinked(subjectId, externalId) {
-			verifiedLinks.set(subjectId, externalId);
+			recordVerifiedLink(subjectId, externalId);
 		},
 
 		noteRecordedSubject(id) {
 			if (id !== undefined && id === provisionalSubjectId) {
 				provisionalSubjectId = null;
 			}
+		},
+
+		onSubjectLinked(listener) {
+			subjectLinkListeners.add(listener);
+			return () => {
+				subjectLinkListeners.delete(listener);
+			};
 		},
 
 		setSubjectId(id) {
@@ -797,6 +869,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			const patch: SnapshotPatch = { now: at, user: nextUser };
 			let commitOptions: RuntimeCommitOptions | undefined;
 
+			let dropDeviceOptOut = false;
 			if (resolvedOptions?.userConsent === null) {
 				patch.userConsentPending = false;
 				commitOptions = {
@@ -813,6 +886,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 					nextUser !== null &&
 					incoming.externalId === nextUser.externalId
 				) {
+					let adoptedAccount: AccountConsentLayer | null = null;
 					if (sameUser) {
 						const currentAccount = runtime.getAccountLayer();
 						if (
@@ -824,19 +898,25 @@ export const createRecordsBoundary = function createRecordsBoundary({
 								userExternalId: nextUser.externalId,
 							})
 						) {
-							commitOptions = {
-								accountLayer: applyLiftFloorToIncoming(
-									currentAccount,
-									incoming
-								),
-								accountLayerSource: 'incoming',
-								preserveDialog: true,
-								suppressAccountDropOptOutSynced: true,
-							};
+							adoptedAccount = applyLiftFloorToIncoming(
+								currentAccount,
+								incoming
+							);
 						}
 					} else {
+						adoptedAccount = incoming;
+					}
+					if (adoptedAccount !== null) {
+						dropDeviceOptOut = shouldDropDeviceOptOutOnAccountDoc(
+							before,
+							resolvedOptions.userConsent,
+							adoptedAccount
+						);
+						if (dropDeviceOptOut) {
+							patch.optOut = null;
+						}
 						commitOptions = {
-							accountLayer: incoming,
+							accountLayer: adoptedAccount,
 							accountLayerSource: 'incoming',
 							preserveDialog: true,
 							suppressAccountDropOptOutSynced: true,
@@ -850,11 +930,15 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 
 			runtime.batch(() => {
+				if (dropDeviceOptOut) {
+					runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
+				}
 				commit(patch, commitOptions);
 				const after = getSnapshot();
 				if (
-					resolvedOptions?.userConsent !== undefined &&
-					!sameOptOutRecord(before.optOut, after.optOut)
+					dropDeviceOptOut ||
+					(resolvedOptions?.userConsent !== undefined &&
+						!sameOptOutRecord(before.optOut, after.optOut))
 				) {
 					emit({
 						optOut: after.optOut,

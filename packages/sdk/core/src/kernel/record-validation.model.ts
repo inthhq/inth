@@ -46,6 +46,7 @@ export interface ValidatedRecords {
 	optOutReference?: string | null;
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
+	optOutLinkedExternalId?: string | null;
 	vendorChoice?: VendorChoice | null;
 	vendorDeclared?: readonly string[] | null;
 	vendorTimes?: Readonly<Record<string, number>> | null;
@@ -182,6 +183,20 @@ const validateOptOutMetaFields = function validateOptOutMetaFields(
 			records.optOutRightsConfirmed = input.optOutRightsConfirmed;
 		} else {
 			issues.push({ code: 'invalid-boolean', path: 'optOutRightsConfirmed' });
+		}
+	}
+	if (input.optOutLinkedExternalId !== undefined) {
+		if (
+			input.optOutLinkedExternalId === null ||
+			(typeof input.optOutLinkedExternalId === 'string' &&
+				input.optOutLinkedExternalId.length > 0)
+		) {
+			records.optOutLinkedExternalId = input.optOutLinkedExternalId;
+		} else {
+			issues.push({
+				code: 'invalid-identifier',
+				path: 'optOutLinkedExternalId',
+			});
 		}
 	}
 };

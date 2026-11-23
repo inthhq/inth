@@ -3,6 +3,7 @@
  * liftability checks, payload builders, answer application and the live GPC
  * recording trigger.
  */
+import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type {
@@ -281,6 +282,13 @@ export interface OptOutAnswerFence {
 	 * the held categories unless it names the same act.
 	 */
 	ownAct?: boolean;
+	/**
+	 * Whether this answer responds directly to this device's own pending
+	 * opt-out request (`sendOptOut` / queued `record` replay). Allows a `'both'`
+	 * answer to fill the browser device record's unconfirmed rights without
+	 * copying pre-existing account-only rights.
+	 */
+	fromOptOutRequest?: boolean;
 }
 
 /**
@@ -414,6 +422,21 @@ const receiptChangedFrom = function receiptChangedFrom(
 	);
 };
 
+const confirmedDeviceRightsFromBoth = function confirmedDeviceRightsFromBoth(
+	browserOptOut: Readonly<OptOutRecord>,
+	answerRights: readonly OptOutRight[],
+	accountOptOutRights: readonly OptOutRight[] | undefined
+): OptOutRight[] {
+	const answerSet = new Set<OptOutRight>(answerRights);
+	if (browserOptOut.rights.length > 0) {
+		return browserOptOut.rights.filter((right) => answerSet.has(right));
+	}
+	const accountOnly = new Set<OptOutRight>(accountOptOutRights);
+	return OPT_OUT_RIGHTS.filter(
+		(right) => answerSet.has(right) && !accountOnly.has(right)
+	);
+};
+
 const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	runtime: KernelRuntime,
 	current: ConsentSnapshot,
@@ -421,10 +444,13 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	fence: OptOutAnswerFence
 ): boolean {
 	// While an account layer for the current `externalId` is active, server
-	// opt-out answers held by `'person'` or `'both'` never write to browser
-	// records and never mutate the account layer (`appliedAt` or `optOut`).
-	// When a `'both'` answer covers every right on the browser device record,
-	// mark that browser record's receipt confirmed without copying rights.
+	// opt-out answers held by `'person'` or `'both'` never copy account rights
+	// into browser records and never mutate the account layer (`appliedAt` or
+	// `optOut`). When a `'both'` answer confirms this device's own pending
+	// opt-out request, fill the device record with the requested rights
+	// intersected with the answer's rights (never adding pre-existing account
+	// rights). Otherwise, when a `'both'` answer covers every right already on
+	// the browser device record, mark its receipt confirmed without copying.
 	const browserOptOut = runtime.getBrowserRecords().optOut;
 	const effectiveBrowserOptOut =
 		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
@@ -434,16 +460,54 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 			next.heldBy === 'both' &&
 			effectiveBrowserOptOut !== null &&
 			fence.confirmed !== false &&
-			!currentReceipt.rightsConfirmed &&
-			effectiveBrowserOptOut.rights.every((right) =>
-				next.rights.includes(right)
-			)
+			!currentReceipt.rightsConfirmed
 		) {
-			runtime.setOptOutReceiptData({
-				...currentReceipt,
-				rightsConfirmed: true,
-			});
-			return true;
+			if (fence.fromOptOutRequest === true) {
+				const accountRights = runtime.getAccountLayer()?.optOut?.rights;
+				const nextRights = confirmedDeviceRightsFromBoth(
+					effectiveBrowserOptOut,
+					next.rights,
+					accountRights
+				);
+				const rightsChanged =
+					nextRights.length !== effectiveBrowserOptOut.rights.length ||
+					nextRights.some(
+						(right, index) => right !== effectiveBrowserOptOut.rights[index]
+					);
+				const nextReceipt: OptOutReceiptData = {
+					...currentReceipt,
+					rightsConfirmed: true,
+				};
+				if (!rightsChanged) {
+					runtime.setOptOutReceiptData(nextReceipt);
+					return true;
+				}
+				runtime.batch(() => {
+					runtime.setOptOutReceiptData(nextReceipt);
+					runtime.commit({
+						now: runtime.now(),
+						optOut: { ...effectiveBrowserOptOut, rights: nextRights },
+					});
+					const after = runtime.getSnapshot();
+					runtime.emit({
+						optOut: after.optOut,
+						snapshot: after,
+						type: 'opt-out:synced',
+					});
+				});
+				return true;
+			}
+			if (
+				effectiveBrowserOptOut.rights.every((right) =>
+					next.rights.includes(right)
+				)
+			) {
+				runtime.setOptOutReceiptData({
+					...currentReceipt,
+					rightsConfirmed: true,
+				});
+				return true;
+			}
 		}
 		return false;
 	}

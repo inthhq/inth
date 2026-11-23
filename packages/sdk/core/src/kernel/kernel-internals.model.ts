@@ -131,6 +131,10 @@ export interface InternalKernel extends ConsentKernel {
 	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
 	/** Browser-made consent records kept apart from the account consent layer. */
 	getBrowserRecords: () => BrowserConsentRecords;
+	/** Verified external user ID linked to `subjectId`, when known. */
+	getLinkedExternalId: (subjectId: string | null) => string | undefined;
+	/** Subscribe to newly verified subject links so persistence can store them. */
+	onSubjectLinked: (listener: () => void) => () => void;
 	/** Current account consent layer, or `null` when none is held. */
 	getAccountLayer: () => AccountConsentLayer | null;
 	/** Provenance (`'incoming' | 'stored'`) of the current account consent layer. */

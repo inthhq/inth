@@ -837,6 +837,7 @@ const copyOptOutMeta = function copyOptOutMeta(
 	records.optOutReference = stored.optOutReference ?? null;
 	records.optOutLocalAct = stored.optOutLocalAct ?? null;
 	records.optOutRightsConfirmed = stored.optOutRightsConfirmed === true;
+	records.optOutLinkedExternalId = stored.optOutLinkedExternalId ?? null;
 };
 
 const reconcileOptOutRecord = function reconcileOptOutRecord(

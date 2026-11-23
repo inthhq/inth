@@ -379,6 +379,8 @@ export interface HydrationRecords {
 	 * answer. Local fallback rights are not confirmation.
 	 */
 	optOutRightsConfirmed?: boolean;
+	/** Verified external user ID linked to the opt-out record's subject. */
+	optOutLinkedExternalId?: string | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/**
@@ -848,6 +850,8 @@ export interface LiftOptOutPayload {
 export interface OptOutTransportResult {
 	ok: boolean;
 	subjectId?: string;
+	/** Verified subject link confirmation returned by the backend, when present. */
+	link?: { readonly stored?: boolean; readonly verifiedBy?: string };
 	/** Authoritative effective opt-out returned by the backend, when valid. */
 	optOut?: OptOutRecord;
 	/** `true` when the backend answered 404 (does not store opt-outs). */

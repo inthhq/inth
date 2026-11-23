@@ -139,6 +139,12 @@ export type StoredOptOutRecord = OptOutRecord & {
 	localAct?: OptOutLocalAct;
 	/** Whether `rights` were confirmed by a backend answer. */
 	rightsConfirmed?: boolean;
+	/**
+	 * Verified external user ID linked to `subject.subjectId`. Stored in
+	 * localStorage only so a reloaded page knows this device's opt-out belongs
+	 * to a verified linked subject.
+	 */
+	linkedExternalId?: string;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -1055,6 +1061,7 @@ const OPT_OUT_STORED_KEYS = [
 	'reference',
 	'localAct',
 	'rightsConfirmed',
+	'linkedExternalId',
 ] as const;
 
 const readOptionalOptOutBoolean = function readOptionalOptOutBoolean(
@@ -1078,6 +1085,7 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 	issues: StorageIssue[]
 ): {
 	gpcReported: boolean;
+	linkedExternalId: string | undefined;
 	localAct: OptOutLocalAct | undefined;
 	reference: string | undefined;
 	rightsConfirmed: boolean;
@@ -1097,6 +1105,15 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-identifier', path: 'reference' });
 		}
 	}
+	const rawLinkedExternalId = ownValue(input, 'linkedExternalId');
+	let linkedExternalId: string | undefined;
+	if (rawLinkedExternalId !== undefined) {
+		if (isNonEmptyString(rawLinkedExternalId)) {
+			linkedExternalId = rawLinkedExternalId;
+		} else {
+			issues.push({ code: 'invalid-identifier', path: 'linkedExternalId' });
+		}
+	}
 	const rawLocalAct = ownValue(input, 'localAct');
 	let localAct: OptOutLocalAct | undefined;
 	if (rawLocalAct !== undefined) {
@@ -1106,7 +1123,13 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-value', path: 'localAct' });
 		}
 	}
-	return { gpcReported, localAct, reference, rightsConfirmed };
+	return {
+		gpcReported,
+		linkedExternalId,
+		localAct,
+		reference,
+		rightsConfirmed,
+	};
 };
 
 /**
@@ -1170,6 +1193,9 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	}
 	if (meta.rightsConfirmed) {
 		record.rightsConfirmed = true;
+	}
+	if (meta.linkedExternalId) {
+		record.linkedExternalId = meta.linkedExternalId;
 	}
 	return { ok: true, record };
 };

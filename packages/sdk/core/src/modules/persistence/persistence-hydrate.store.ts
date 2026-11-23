@@ -137,6 +137,7 @@ const kernelOptOutRecord = function kernelOptOutRecord(
 	}
 	const {
 		gpcReported: _gpcReported,
+		linkedExternalId: _linkedExternalId,
 		localAct: _localAct,
 		reference: _reference,
 		rightsConfirmed: _rightsConfirmed,
@@ -213,6 +214,9 @@ const attachOptOutMeta = function attachOptOutMeta(
 	}
 	if (optOutRecord.rightsConfirmed) {
 		records.optOutRightsConfirmed = true;
+	}
+	if (optOutRecord.linkedExternalId) {
+		records.optOutLinkedExternalId = optOutRecord.linkedExternalId;
 	}
 };
 

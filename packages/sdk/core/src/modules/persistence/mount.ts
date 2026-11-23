@@ -503,6 +503,13 @@ export const mountPersistence = function mountPersistence(
 				request('optOut');
 			}
 		}),
+		kernel.onSubjectLinked(() => {
+			if (kernel.getBrowserRecords().optOut !== null) {
+				state.optOutRecorded = true;
+				state.optOutSynced = true;
+				request('optOut');
+			}
+		}),
 		kernel.onAccountLayerChange((layer, fromHydration) => {
 			if (fromHydration) {
 				return;
@@ -744,6 +751,9 @@ export const mountPersistence = function mountPersistence(
 		if (records.optOutRightsConfirmed) {
 			patch.optOutRightsConfirmed = true;
 		}
+		if (records.optOutLinkedExternalId) {
+			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
+		}
 	};
 
 	/**
@@ -785,6 +795,16 @@ export const mountPersistence = function mountPersistence(
 			!currentReceipt.rightsConfirmed
 		) {
 			patch.optOutRightsConfirmed = true;
+		}
+		if (
+			records.optOutLinkedExternalId &&
+			kernel.getLinkedExternalId(
+				records.subject?.subjectId ??
+					kernel.getSnapshot().subject?.subjectId ??
+					null
+			) !== records.optOutLinkedExternalId
+		) {
+			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
 		}
 	};
 

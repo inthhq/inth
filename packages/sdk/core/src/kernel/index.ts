@@ -200,6 +200,9 @@ export const createKernel = function createKernel(
 	const outbox = createSaveOutbox({
 		// Tests pass `() => import('./save-outbox/queue')` or a fake of it.
 		loadQueue: seams.loadOutboxQueue as SaveOutboxOptions['loadQueue'],
+		markSubjectLinked: (subjectId, externalId) =>
+			// oxlint-disable-next-line no-use-before-define -- Called only after a send, once records exists.
+			records.markSubjectLinked(subjectId, externalId),
 		// oxlint-disable-next-line no-use-before-define -- Called only after a send, once the lifecycle exists.
 		retryWhenOnline: () => lifecycle.retryWhenOnline(),
 		runtime,
@@ -292,6 +295,7 @@ export const createKernel = function createKernel(
 		getAccountLayerSource: runtime.getAccountLayerSource,
 		getAccountSyncGeneration: runtime.getAccountSyncGeneration,
 		getBrowserRecords: runtime.getBrowserRecords,
+		getLinkedExternalId: records.getLinkedExternalId,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
 		getProvisionalSubject: records.getProvisionalSubject,
@@ -309,6 +313,7 @@ export const createKernel = function createKernel(
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
 		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
+		onSubjectLinked: records.onSubjectLinked,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,
 		set: {
