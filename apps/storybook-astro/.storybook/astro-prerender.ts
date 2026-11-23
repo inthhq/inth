@@ -111,13 +111,13 @@ const storyFetch = ((input: RequestInfo | URL) =>
 	)) as typeof fetch;
 
 /**
- * The options of a Privacy Choices story, as React's stories configure
- * their provider: the design, the prompt's container, the page's legal
+ * The options of a regime story, as React's stories configure their
+ * provider: the prompt's container, the page's legal
  * links and, for the dialog, the stories' vendors.
  */
-const privacyChoicesOptions = function privacyChoicesOptions(
+const promptStoryOptions = function promptStoryOptions(
 	variant: AstroStoryVariant,
-	story: NonNullable<AstroStoryVariant['privacyChoices']>,
+	story: NonNullable<AstroStoryVariant['prompt']>,
 	context: {
 		mode: { manifest: (options: { snapshot: unknown }) => unknown };
 		snapshot: unknown;
@@ -133,7 +133,6 @@ const privacyChoicesOptions = function privacyChoicesOptions(
 		},
 		mode: context.mode.manifest({ snapshot: context.snapshot }),
 		presentation: {
-			design: 'privacy-choices',
 			prompt: {
 				blockUntilChoice: story.blockUntilChoice,
 				container: story.container,
@@ -142,7 +141,7 @@ const privacyChoicesOptions = function privacyChoicesOptions(
 		},
 		projectUrl: 'https://consent.example',
 		routePrefix: false,
-		ui: variant.ui ?? 'svelte',
+		ui: variant.ui ?? 'react',
 		vendors: story.dialog ? context.vendors : undefined,
 	};
 };
@@ -151,7 +150,7 @@ const buildVariantOptions = function buildVariantOptions(
 	variant: AstroStoryVariant,
 	context: {
 		mode: { manifest: (options: { snapshot: unknown }) => unknown };
-		privacyChoicesSnapshot?: unknown;
+		promptSnapshot?: unknown;
 		storyIABSnapshot: unknown;
 		storyOptOutSnapshot: unknown;
 		storySnapshot: unknown;
@@ -171,10 +170,10 @@ const buildVariantOptions = function buildVariantOptions(
 		storySnapshot,
 		storybook,
 	} = context;
-	if (variant.privacyChoices) {
-		return privacyChoicesOptions(variant, variant.privacyChoices, {
+	if (variant.prompt) {
+		return promptStoryOptions(variant, variant.prompt, {
 			mode,
-			snapshot: context.privacyChoicesSnapshot,
+			snapshot: context.promptSnapshot,
 			vendors: storybook.storybookVendors,
 		});
 	}
@@ -202,7 +201,7 @@ const buildVariantOptions = function buildVariantOptions(
 		projectUrl: 'https://consent.example',
 		reloadOnConsentRevoked: variant.options?.reloadOnConsentRevoked,
 		routePrefix: false,
-		ui: variant.ui ?? 'svelte',
+		ui: variant.ui ?? 'react',
 	};
 	if (variant.options?.iab) {
 		astroOptions.presentation = storybook.storybookIABPresentation;
@@ -219,26 +218,26 @@ const variantHeaders = function variantHeaders(
 	variant: AstroStoryVariant
 ): Headers {
 	const gpc =
-		variant.privacyChoices?.gpc === true ||
+		variant.prompt?.gpc === true ||
 		variant.openOptOutConfirmation === 'signal' ||
 		variant.optOutState === 'gpc' ||
 		variant.optOutState === 'signal';
 	return new Headers(gpc ? { 'sec-gpc': '1' } : {});
 };
 
-/** Where `<PrivacyChoicesLink />` lives, for the Privacy Choices pages. */
+/** Where `<PrivacyChoicesLink />` lives, for the regime pages. */
 const PRIVACY_CHOICES_LINK_FILE = 'components/privacy-choices-link.astro';
 
 /**
- * The page under a Privacy Choices story, as React's stories render it: a
+ * The page under a regime story, as React's stories render it: a
  * heading, the page text and the persistent `<PrivacyChoicesLink />`, then
  * the prompt and, for the dialog stories, `<ConsentDialog />`. The dialog
  * stories' EU and US opt-in pages link the dialog themselves, with a plain
  * button the story wires up the way React's `SettingsLink` calls
  * `setActiveUI`.
  */
-const privacyChoicesPage = async function privacyChoicesPage(
-	story: NonNullable<AstroStoryVariant['privacyChoices']>,
+const promptPage = async function promptPage(
+	story: NonNullable<AstroStoryVariant['prompt']>,
 	prompt: string,
 	renderPart: (
 		file: string,
@@ -322,7 +321,7 @@ const renderVariants = async function renderVariants(
 					path.resolve(astroSrc, '../../schema/src/types.ts')
 				),
 				server.ssrLoadModule(
-					path.resolve(storybookDir, '../src/privacy-choices-policies.ts')
+					path.resolve(storybookDir, '../src/region-policies.ts')
 				),
 			]);
 		// The stories' policy as a manifest the server resolves: a static
@@ -355,11 +354,11 @@ const renderVariants = async function renderVariants(
 			}
 			// oxlint-disable-next-line no-await-in-loop -- One shared container.
 			const component = await server.ssrLoadModule(path.join(astroSrc, file));
-			const story = variant.privacyChoices;
-			const privacyChoicesSnapshot = story
+			const story = variant.prompt;
+			const promptSnapshot = story
 				? // oxlint-disable-next-line no-await-in-loop -- One rule per story.
 					await snapshotOf([
-						policies.privacyChoicesPolicy(
+						policies.regionPolicy(
 							storybook.storybookPolicy,
 							story.region,
 							story.dialog === true
@@ -368,7 +367,7 @@ const renderVariants = async function renderVariants(
 				: undefined;
 			const astroOptions = buildVariantOptions(variant, {
 				mode,
-				privacyChoicesSnapshot,
+				promptSnapshot,
 				storyIABSnapshot,
 				storyOptOutSnapshot,
 				storySnapshot,
@@ -438,7 +437,7 @@ const renderVariants = async function renderVariants(
 			}
 			if (story) {
 				// oxlint-disable-next-line no-await-in-loop -- See above.
-				html = await privacyChoicesPage(story, html, renderPart, clean);
+				html = await promptPage(story, html, renderPart, clean);
 			}
 			out[variant.id] = {
 				config: extractConfig(raw),

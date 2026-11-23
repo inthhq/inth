@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 const render = () => renderAstroStory('consent-banner--docs-bottom-bar');
 
-/** Stock banner, `variant: 'bar'`. */
+/** Stock prompt, `container: { type: 'banner' }`. */
 export const BottomBarDesign: Story = { play: recipeRenders, render };
 export const BottomBarAccept: Story = { play: recipeAccepts, render };
 export const BottomBarReject: Story = { play: recipeRejects, render };
