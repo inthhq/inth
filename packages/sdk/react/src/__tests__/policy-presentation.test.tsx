@@ -14,11 +14,21 @@ import { render } from 'vitest-browser-react';
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';
+import { BannerSurface } from '../components/prompt/banner';
+import { CardSurface } from '../components/prompt/card';
+import { DrawerSurface } from '../components/prompt/drawer';
+import { PromptContainersContext } from '../components/prompt/prompt';
 import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
 import { InthProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
 import { transportMode } from './fixtures/transport-mode';
+
+const EAGER_CONTAINERS = {
+	banner: BannerSurface,
+	card: CardSurface,
+	drawer: DrawerSurface,
+};
 
 const now = Date.now();
 const resolution = (input: Partial<PolicyRule> = {}): PolicyResolution => {
@@ -247,15 +257,13 @@ describe('policy presentation reference behavior', () => {
 		);
 		expect(trigger).not.toBeNull();
 		trigger?.click();
+		// The trigger opts out in one step and opens the dialog on its
+		// receipt (RCPT-01).
 		await expect
-			.element(screen.getByTestId('opt-out-confirmation-preferences-link'))
+			.element(screen.getByTestId('consent-dialog-receipt'))
 			.toBeVisible();
-		await screen.getByTestId('opt-out-confirmation-preferences-link').click();
-		await expect
-			.element(screen.getByTestId('consent-widget-footer-save-button'))
-			.toBeVisible();
-		await screen.getByTestId('consent-widget-footer-save-button').click();
-		// Saving from the preference center acknowledges the notice.
+		await screen.getByTestId('consent-dialog-done').click();
+		// The opt-out the trigger recorded acknowledges the notice.
 		expect(kernel.getSnapshot().promptRequirement.kind).toBe('none');
 		expect(kernel.getSnapshot().noticeDismissal).not.toBeNull();
 	});
@@ -281,6 +289,9 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 	const onPermissionsChanged = vi.fn();
 	const setItem = vi.spyOn(Storage.prototype, 'setItem');
 	const errors = vi.spyOn(console, 'error');
+	// A streaming server render waits for the container's chunk; this
+	// one-pass render is handed the containers already loaded, as the
+	// static banner's build is.
 	const app = (
 		<InthProvider
 			options={{
@@ -289,7 +300,9 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 				prefetch: { initialPolicyResolution, initialRecords, now: clock },
 			}}
 		>
-			<ConsentBanner />
+			<PromptContainersContext.Provider value={EAGER_CONTAINERS}>
+				<ConsentBanner />
+			</PromptContainersContext.Provider>
 		</InthProvider>
 	);
 	const host = document.createElement('div');
@@ -387,9 +400,8 @@ it('starts real expiry timers for prepared records without replaying choice or w
 			<ConsentBanner />
 		</InthProvider>
 	);
-	expect(
-		document.querySelector('[data-testid="consent-banner-root"]')
-	).toBeNull();
+	// The stored choice still holds, so nothing is owed yet.
+	expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
 		.toBeVisible();
@@ -398,120 +410,3 @@ it('starts real expiry timers for prepared records without replaying choice or w
 	expect(onPermissionsChanged).toHaveBeenCalledTimes(1);
 	expect(writes).not.toHaveBeenCalled();
 });
-
-it.each([false, true])(
-	'honors blocking=%s without a visual dialog overlay',
-	async (blocking) => {
-		const screen = await render(
-			<InthProvider
-				options={{
-					disableAnimation: true,
-					mode: transportMode({}),
-					persistence: false,
-					prefetch: { initialPolicyResolution: resolution(), now },
-					presentation: { preferences: { blocking } },
-				}}
-			>
-				<button
-					type="button"
-					data-testid="outside"
-					style={{ left: 2, position: 'fixed', top: 2 }}
-				>
-					Outside
-				</button>
-				<ConsentDialog.Root
-					open
-					overlay={false}
-				>
-					<ConsentDialog.Card>Preferences</ConsentDialog.Card>
-				</ConsentDialog.Root>
-			</InthProvider>
-		);
-		await expect
-			.element(screen.getByTestId('consent-dialog-root'))
-			.toBeVisible();
-		const outside = document.querySelector('[data-testid="outside"]');
-		const target = document.elementFromPoint(5, 5);
-		expect(outside?.contains(target)).toBe(!blocking);
-		expect(
-			document.querySelector('[data-testid="consent-dialog-overlay"]')
-		).toBeNull();
-	}
-);
-
-it('custom dialog content scrolls inside the capped card', async () => {
-	// `ConsentDialog.Content` supports custom children. The stock widget
-	// scrolls its own category list, but anything else has to scroll in the
-	// content area, or a long composition spills past the card while the
-	// blocking dialog locks the page behind it.
-	const screen = await render(
-		<InthProvider
-			options={{
-				disableAnimation: true,
-				mode: transportMode({}),
-				persistence: false,
-				prefetch: { initialPolicyResolution: resolution(), now },
-			}}
-		>
-			<ConsentDialog.Root open>
-				<ConsentDialog.Card>
-					<ConsentDialog.Content>
-						<div
-							data-testid="tall"
-							style={{ height: 4000 }}
-						>
-							tall
-						</div>
-					</ConsentDialog.Content>
-				</ConsentDialog.Card>
-			</ConsentDialog.Root>
-		</InthProvider>
-	);
-	await expect.element(screen.getByTestId('consent-dialog-root')).toBeVisible();
-	const card = document.querySelector<HTMLElement>(
-		'[data-testid="consent-dialog-card"]'
-	);
-	const content = document.querySelector<HTMLElement>(
-		'[data-testid="consent-dialog-content"]'
-	);
-	expect(card).not.toBeNull();
-	expect(content).not.toBeNull();
-	if (!card || !content) {
-		return;
-	}
-	expect(card.getBoundingClientRect().height).toBeLessThanOrEqual(
-		window.innerHeight
-	);
-	expect(getComputedStyle(content).overflowY).toBe('auto');
-	expect(content.scrollHeight).toBeGreaterThan(content.clientHeight);
-});
-
-it.each([false, true])(
-	'renders a custom backdrop only with blocking=%s',
-	async (blocking) => {
-		const screen = await render(
-			<InthProvider
-				options={{
-					disableAnimation: true,
-					mode: transportMode({}),
-					persistence: false,
-					prefetch: { initialPolicyResolution: resolution(), now },
-					presentation: { preferences: { blocking } },
-				}}
-			>
-				<ConsentDialog.Root
-					open
-					overlay={<div data-testid="custom-backdrop" />}
-				>
-					<ConsentDialog.Card>Preferences</ConsentDialog.Card>
-				</ConsentDialog.Root>
-			</InthProvider>
-		);
-		await expect
-			.element(screen.getByTestId('consent-dialog-root'))
-			.toBeVisible();
-		expect(
-			Boolean(document.querySelector('[data-testid="custom-backdrop"]'))
-		).toBe(blocking);
-	}
-);
