@@ -10,7 +10,7 @@ import {
 	symbolSnapshot,
 } from '../utils/consent-symbols.model';
 import type { ConsentBannerView } from '../vue-consent-kernel-context.model';
-import { LazyConsentBanner, loadConsentBanner } from './lazy-consent-banner';
+import { LazyConsentBanner, loadConsentBanner } from './lazy-prompt';
 
 /** The banner a deferred context renders, one per view. */
 const deferredBanners = new WeakMap<ConsentBannerView, Component>();

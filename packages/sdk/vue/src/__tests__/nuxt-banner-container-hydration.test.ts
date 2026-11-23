@@ -18,7 +18,7 @@ import { createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { ConsentBannerHost } from '../runtime/components/consent-banner-host';
+import { ConsentBannerHost } from '../runtime/components/prompt-host';
 import {
 	promptContainers,
 	promptContainersKey,

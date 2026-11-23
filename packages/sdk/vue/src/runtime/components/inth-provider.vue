@@ -15,13 +15,13 @@ import {
 } from '../composables/use-consent-kernel';
 import { useMounted } from '../composables/use-mounted';
 import { symbolConfirmationHosted } from '../utils/consent-symbols.model';
-import { LazyConsentDialogTrigger } from './lazy-consent-dialog-trigger';
-import { LazyConsentManager } from './lazy-consent-manager';
-import { LazyIabConsentBanner } from './lazy-iab-consent-banner';
-import { LazyIabConsentDialog } from './lazy-iab-consent-dialog';
+import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
+import { LazyConsentManager } from './lazy-manager';
+import { LazyIabConsentBanner } from './lazy-iab-prompt';
+import { LazyIabConsentDialog } from './lazy-iab-panel';
 import { OptInConfirmationHost } from './opt-in-confirmation-host';
 import { useAdoptOptOutConfirmation } from './parts/use-adopt-opt-out-confirmation';
-import { prefetchIabConsentDialog } from './prefetch-iab-consent-dialog';
+import { prefetchIabConsentDialog } from './prefetch-iab-panel';
 import ConsentBanner from './prompt/prompt.vue';
 
 // The default slot renders after the surfaces, so a root that wraps the

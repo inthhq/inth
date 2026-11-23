@@ -11,7 +11,7 @@ import { describe, expect, test } from 'vitest';
 import { breakEntryImportCycles } from '../prefetch/break-entry-import-cycles';
 import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
 import { preloadBrowserResolver } from '../prefetch/preload-browser-resolver';
-import { preloadConsentBanner } from '../prefetch/preload-consent-banner';
+import { preloadConsentBanner } from '../prefetch/preload-prompt';
 import { stopPrefetchingConsentChunks } from '../prefetch/stop-prefetching-consent-chunks';
 
 /** The shared parts @inth/sdk installs under its `lib/`. */
