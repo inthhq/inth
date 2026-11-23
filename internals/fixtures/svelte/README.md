@@ -12,7 +12,7 @@ bun turbo run build --filter='./packages/sdk/*'
 ```
 
 Replace `https://your-project.inth.app` in `src/App.svelte` and
-`src/ExperimentApp.svelte` with your Inth backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
+`src/experiment-app.svelte` with your Inth backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
 project key and X Pixel ID in `src/scripts.ts`. Then run:
 
 ```sh
