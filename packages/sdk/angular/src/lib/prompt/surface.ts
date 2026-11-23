@@ -494,6 +494,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 				<button
 					inth-choice-button
 					[consentAction]="'customize'"
+					[earlyTap]="true"
 					[primary]="true"
 					[attr.aria-expanded]="bool(expanded())"
 					[attr.aria-controls]="inBar ? null : ids.panel"
@@ -544,6 +545,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 			<button
 				inth-choice-button
 				[consentAction]="'reject'"
+				[earlyTap]="true"
 				data-testid="consent-banner-reject-button"
 				(click)="commit('refuse')"
 			>
@@ -557,6 +559,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 			<button
 				inth-choice-button
 				[consentAction]="'accept'"
+				[earlyTap]="true"
 				data-testid="consent-banner-accept-button"
 				(click)="commit('allow')"
 			>
@@ -567,6 +570,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 			<button
 				inth-choice-button
 				[consentAction]="'dismiss'"
+				[earlyTap]="true"
 				[primary]="true"
 				data-testid="consent-banner-dismiss-button"
 				(click)="acknowledge()"

@@ -35,7 +35,7 @@ const EARLY_TAP_ACTIONS = new Set(['accept', 'customize', 'dismiss', 'reject']);
 	host: {
 		'[attr.class]': 'part().className',
 		'[attr.data-action]': 'consentAction() ?? null',
-		'[attr.data-early-tap]': 'earlyTap()',
+		'[attr.data-early-tap]': 'earlyTapOptOut()',
 		'[attr.data-mode]': 'resolvedNoStyle() ? null : appearance().mode',
 		'[attr.data-size]': 'resolvedNoStyle() ? null : "small"',
 		'[attr.data-variant]': 'resolvedNoStyle() ? null : appearance().variant',
@@ -62,6 +62,11 @@ export class ChoiceButton {
 	readonly baseClass = input<string | undefined>(undefined);
 	/** Drop the stock classes. Defaults to the surface's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
+	/**
+	 * The surface replays a tap the early-tap script held on this button,
+	 * as the consent prompt does, so the button leaves the script on.
+	 */
+	readonly earlyTap = input(false);
 
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
@@ -95,7 +100,9 @@ export class ChoiceButton {
 	);
 
 	/** @internal */
-	protected readonly earlyTap = computed(() =>
-		EARLY_TAP_ACTIONS.has(this.consentAction() ?? '') ? 'off' : null
+	protected readonly earlyTapOptOut = computed(() =>
+		!this.earlyTap() && EARLY_TAP_ACTIONS.has(this.consentAction() ?? '')
+			? 'off'
+			: null
 	);
 }
