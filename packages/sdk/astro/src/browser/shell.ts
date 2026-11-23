@@ -11,17 +11,20 @@
  *   config. The shell puts a client on `window` that reads that snapshot,
  *   so `getConsentClient()`, `getConsent()` and `subscribe()` work as soon
  *   as the page script has run, as they did when it booted the engine.
- * - For a visitor the banner asks to choose, with nothing optional granted
+ * - For a visitor the prompt asks to choose, with nothing optional granted
  *   and nothing that needs the engine, the engine loads after the page's
  *   `img[fetchpriority=high]` images, at the first input or scroll outside
- *   the banner, on dialog intent, after a banner tap, or after 10 seconds.
- * - An accept, reject or save before then is committed in the tap's own
- *   task (`planInstantCommit`): the snapshot changes, listeners hear it,
- *   the banner hides and the plain `scripts` the choice allows start. The
+ *   the prompt, on a press on one of the prompt's buttons, on a tap the
+ *   prompt's early-tap script held, on dialog intent, or after 10 seconds.
+ *   The prompt's chunk then replays the held tap through its own handlers.
+ * - An accept, reject or save the page asks for before then
+ *   (`acceptAll()`, `rejectAll()`, `save()`) is committed in its own task
+ *   (`planInstantCommit`): the snapshot changes, listeners hear it, the
+ *   prompt hides and the plain `scripts` the choice allows start. The
  *   commit chunk (`./commit`) stores the record and queues the save a task
  *   later, and the engine starts from that record without recording it
  *   again.
- * - Customize opens the preference dialog against a stand-in runtime
+ * - A dialog link opens the preference dialog against a stand-in runtime
  *   (`./stand-in`) that reads the same snapshot, without the engine: only
  *   the dialog's chunks share the connection with the page. The engine
  *   loads once the dialog is on screen and takes the dialog over; a save
@@ -40,7 +43,11 @@
 
 import type { ConsentSnapshot, ResolvedVendor } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { EARLY_TAP_ROOT } from '@inth/sdk/runtime/page-globals';
+import {
+	EARLY_TAP_NOTIFY_KEY,
+	EARLY_TAP_ROOT,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import {
 	generateUuidV7,
 	hasStoredClearEpoch,
@@ -80,11 +87,7 @@ import {
 } from './page-state';
 import type * as StandInModule from './stand-in';
 import type { DialogStandIn } from './stand-in';
-import {
-	scheduleDeferredEngine,
-	takeEarlyTaps,
-	unhideEarlyTap,
-} from './trigger';
+import { scheduleDeferredEngine, unhideEarlyTap } from './trigger';
 
 /** Attribute on the boot data block. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
@@ -348,7 +351,6 @@ export const startDeferredClient = function startDeferredClient(
 		engine = real;
 		earlyDialog?.standIn.attach(real.runtime);
 		real.subscribe(notify);
-		unhideEarlyTap();
 		for (const choice of replays.splice(0)) {
 			void replay(real, choice);
 		}
@@ -397,6 +399,9 @@ export const startDeferredClient = function startDeferredClient(
 				await start();
 			} catch (error) {
 				if (!disposed) {
+					// The prompt that would replay a held tap never mounts: show
+					// it again rather than leave it hidden for good.
+					unhideEarlyTap();
 					console.warn(
 						'@inth/astro: the consent engine failed to load.',
 						error
@@ -727,37 +732,12 @@ export const startDeferredClient = function startDeferredClient(
 		},
 	});
 
-	// Taps the banner's inline script held before this ran: the last
-	// choice wins, else the last Customize.
-	const replayEarlyTap = (): void => {
-		const taps = takeEarlyTaps();
-		const choices = taps.filter((entry) => entry.action !== 'customize');
-		const tap = choices.at(-1) ?? taps.at(-1);
-		if (tap?.action === 'accept' || tap?.action === 'reject') {
-			const choice = tap.action === 'accept' ? 'all' : 'none';
-			if (!commitEarly(choice, tap.at)) {
-				replays.push(choice);
-				request();
-			}
-		} else if (tap?.action === 'opt-out') {
-			void client.optOut();
-		} else if (tap?.action === 'customize') {
-			void client.openDialog();
-		} else if (tap?.action === 'dismiss') {
-			void (async () => {
-				const real = await start();
-				await real.runtime.kernel.commands.dismissNotice();
-			})();
-		}
-	};
-	replayEarlyTap();
-
 	if (waits) {
-		// An accept or reject loads nothing on the press: the click commits
-		// in its own task, and the scripts it allows ask for their files
-		// before the commit chunk does. Once the page's priority images are
-		// in, the engine loads and the commit chunk follows at idle, so a tap
-		// before the engine attaches usually finds it cached.
+		// Once the page's priority images are in, or the visitor presses one
+		// of the prompt's buttons, the engine loads, and the commit chunk
+		// follows at idle: an accept or reject the page asks for before the
+		// engine attaches commits in its own task and usually finds it
+		// cached.
 		const startEngine = (): void => {
 			request();
 			whenIdle(async () => {
@@ -773,6 +753,16 @@ export const startDeferredClient = function startDeferredClient(
 				void warmDialog(client);
 			}
 		});
+		// A tap the prompt's early-tap script held needs the engine, which
+		// mounts the prompt that replays it. The script calls this after it
+		// records each one; one may be queued already.
+		const queue = earlyTapQueue();
+		if (queue?.taps) {
+			queue[EARLY_TAP_NOTIFY_KEY] = startEngine;
+			if (queue.taps.length > 0) {
+				startEngine();
+			}
+		}
 	} else {
 		request();
 	}

@@ -17,6 +17,10 @@ import type { PolicyRule } from '@inth/sdk/schema/types';
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+} from '../../../core/src/libs/page-globals';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
 import * as promptChunk from '../browser/prompt';
 import { loadContainerSheets } from '../browser/prompt';
@@ -235,6 +239,76 @@ afterEach(() => {
 	document.head
 		.querySelectorAll('style[data-inth-styles]')
 		.forEach((style) => style.remove());
+});
+
+describe('a tap before the prompt chunk mounted', () => {
+	/**
+	 * What the early-tap script leaves after it held `action` on the
+	 * server-rendered prompt: the tap, and the style that hides the prompt
+	 * after a choice.
+	 */
+	const holdTap = function holdTap(
+		action: 'accept' | 'reject' | 'customize',
+		policy: { model: string | null; prompt: string | null } = {
+			model: null,
+			prompt: null,
+		}
+	) {
+		const stop = vi.fn();
+		globals[EARLY_TAPS_WINDOW_KEY] = {
+			stop,
+			taps: [{ action, at: Date.now() - 50, ...policy }],
+		};
+		if (action !== 'customize') {
+			const style = document.createElement('style');
+			style.id = EARLY_TAP_STYLE_ID;
+			document.head.append(style);
+		}
+		return stop;
+	};
+
+	afterEach(() => {
+		globals[EARLY_TAPS_WINDOW_KEY] = undefined;
+		document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+	});
+
+	it('[BNR-13] an Allow commits through the prompt once it mounts', async () => {
+		const stop = holdTap('accept');
+		const page = await mount();
+		await vi.waitFor(() =>
+			expect(page.getConsent().explicitChoice).not.toBeNull()
+		);
+		expect(stop).toHaveBeenCalledOnce();
+		expect(page.getConsent().effectivePermissions.marketing).toBe(true);
+		expect(page.getConsent().activeUI).toBe('none');
+		// The prompt leaves, then the style that hid it goes.
+		await vi.waitFor(
+			() => expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull(),
+			{ timeout: 4000 }
+		);
+	});
+
+	it('[BNR-15] a Customize opens the options in place, not the dialog', async () => {
+		holdTap('customize');
+		const page = await mount();
+		await waitForPanel();
+		await vi.waitFor(() =>
+			expect(root().getAttribute('data-expanded')).toBe('true')
+		);
+		expect(page.getConsent().activeUI).toBe('banner');
+		expect(page.getConsent().explicitChoice).toBeNull();
+	});
+
+	it('drops a tap made under another policy, and shows the prompt again', async () => {
+		holdTap('reject', { model: 'opt-out', prompt: 'notice' });
+		const page = await mount();
+		await waitForController();
+		await vi.waitFor(() =>
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull()
+		);
+		expect(page.getConsent().explicitChoice).toBeNull();
+		expect(page.getConsent().activeUI).toBe('banner');
+	});
 });
 
 describe('no prompt', () => {

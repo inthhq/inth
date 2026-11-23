@@ -1,11 +1,10 @@
 /**
- * Stylesheets the deferred dialogs need beyond the first-paint rules.
- *
- * The preference dialog and IAB panel have separate sheets. The Svelte
- * dialog also renders the `@inth/sdk/ui/styles/primitives` class maps, whose
- * rules ship separately. The islands cannot bring them along
- * themselves: Astro's production build drops the CSS a page script reaches
- * through a dynamic import, so the Svelte and Vue islands arrive with none.
+ * Stylesheets the deferred dialogs need beyond the sheets the client puts
+ * in: the IAB panel's rules, and any a custom surface registers. The
+ * preferences dialog of every built-in island needs none. The islands
+ * cannot bring their stylesheets along themselves: Astro's production
+ * build drops the CSS a page script reaches through a dynamic import, so
+ * the Svelte and Vue islands arrive with none.
  * Where a chunk does keep its CSS, the `<link>` Vite adds for it lives in
  * `<head>`, which the ClientRouter replaces on the next navigation, and
  * Vite never adds it again.

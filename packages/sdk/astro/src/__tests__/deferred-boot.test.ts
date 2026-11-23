@@ -45,10 +45,10 @@ const bootOf = function bootOf(html: string): { d: boolean; s: unknown } {
 };
 
 describe('canDeferEngine', () => {
-	it('loads the engine at once while the consent prompt shows, whose options and commits run on it', async () => {
+	it('lets the engine wait for a visitor the prompt asks to choose, whose taps the early-tap script holds', async () => {
 		const { options, snapshot } = await buildLocals();
 		expect(snapshot.activeUI).toBe('banner');
-		expect(canDeferEngine(snapshot, options)).toBe(false);
+		expect(canDeferEngine(snapshot, options)).toBe(true);
 	});
 
 	it.each([
@@ -112,27 +112,28 @@ describe('canDeferEngine', () => {
 });
 
 describe('<ConsentBanner /> boot data', () => {
-	it('leaves the snapshot ahead of the prompt, which loads the engine at once', async () => {
+	it('leaves the snapshot ahead of the prompt, lets the engine wait, and holds taps until the prompt takes over', async () => {
 		const locals = await buildLocals();
 		const html = await container.renderToString(ConsentBanner, {
 			locals: { inth: { ...locals, nonce: 'n0' } },
 		});
 		const boot = bootOf(html);
-		expect(boot.d).toBe(false);
+		expect(boot.d).toBe(true);
 		expect(boot.s).toEqual(JSON.parse(JSON.stringify(locals.snapshot)));
 		expect(html.indexOf(CONSENT_BOOT_ATTRIBUTE)).toBeGreaterThan(-1);
-		expect(html.indexOf('data-testid="consent-banner-root"')).toBeGreaterThan(
-			html.indexOf(CONSENT_BOOT_ATTRIBUTE)
-		);
-		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
+		const root = html.indexOf('data-testid="consent-banner-root"');
+		expect(root).toBeGreaterThan(html.indexOf(CONSENT_BOOT_ATTRIBUTE));
+		// Ahead of the prompt, so it holds a tap the moment the prompt paints.
+		expect(html.indexOf(EARLY_CONSENT_TAP_SCRIPT)).toBeGreaterThan(-1);
+		expect(html.indexOf(EARLY_CONSENT_TAP_SCRIPT)).toBeLessThan(root);
 	});
 
-	it('marks a banner the engine must serve at once, without the early-tap script', async () => {
+	it('holds taps on a prompt the engine must serve at once, until its chunk mounts', async () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: { inth: await buildLocals({ gpp: true }) },
 		});
 		expect(bootOf(html).d).toBe(false);
-		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
+		expect(html).toContain(EARLY_CONSENT_TAP_SCRIPT);
 	});
 
 	it('leaves no early-tap script inside a server island, which arrives after the page script', async () => {

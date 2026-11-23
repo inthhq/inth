@@ -120,7 +120,8 @@ describe('the server-rendered prompt', () => {
 		const reject = $(document, 'consent-banner-reject-button');
 		expect(reject?.getAttribute('data-action')).toBe('reject');
 		expect(reject?.getAttribute('data-size')).toBe('small');
-		expect(reject?.getAttribute('data-early-tap')).toBe('off');
+		// The early-tap script holds a tap on it until the prompt replays it.
+		expect(reject?.hasAttribute('data-early-tap')).toBe(false);
 		// No delegated action: the controller owns the clicks.
 		expect(reject?.hasAttribute('data-inth-action')).toBe(false);
 		expect(
@@ -221,6 +222,26 @@ describe('the server-rendered prompt', () => {
 		expect($(document, 'consent-banner-reject-button')).toBeNull();
 	});
 
+	it('marks the root with its policy and the rights link as Customize, so an early tap replays only under the policy it was made in', async () => {
+		const document = await render(
+			await buildLocals(PC, {
+				model: 'opt-out',
+				prompt: 'notice',
+				rights: ['disclosure', 'preferences', 'opt-out'],
+			})
+		);
+		const root = $(document, 'consent-banner-root');
+		expect(root?.getAttribute('data-model')).toBe('opt-out');
+		expect(root?.getAttribute('data-prompt')).toBe('notice');
+		// The early-tap script holds a tap on it, and the prompt opens the
+		// rights in place when it replays it.
+		expect(
+			$(document, 'consent-banner-right-link-opt-out')?.getAttribute(
+				'data-action'
+			)
+		).toBe('customize');
+	});
+
 	it('drops the stock classes with noStyle, and keeps theme slots', async () => {
 		const document = await render(
 			await buildLocals(
@@ -277,7 +298,7 @@ describe('the server-rendered prompt', () => {
 });
 
 describe('the engine', () => {
-	it('loads at once for the consent prompt', async () => {
+	it('waits for the page under the consent prompt, whose early-tap script holds a tap', async () => {
 		const locals = await buildLocals(
 			PC,
 			{},
@@ -287,7 +308,7 @@ describe('the engine', () => {
 		);
 		expect(
 			canDeferEngine(locals.snapshot, locals.options, Date.now(), locals.config)
-		).toBe(false);
+		).toBe(true);
 	});
 });
 

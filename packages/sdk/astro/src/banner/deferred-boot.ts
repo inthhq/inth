@@ -31,17 +31,18 @@ const declaresVendors = function declaresVendors(
 
 /**
  * Whether the browser may answer this visitor from the server's snapshot
- * and load the engine after the page: nothing optional is granted yet, no
- * consent prompt shows, and no option needs the engine at once (IAB, an
- * experiment, GPP, the network blocker, declared vendors, or a configured
- * script that may run now). The browser adds what only it knows, such as
- * the `clientEntrypoint` options.
+ * and load the engine after the page: the prompt asks the visitor to
+ * choose, nothing optional is granted yet, an accept and a reject are both
+ * something the first-load shell can record on its own, and no option needs
+ * the engine at once (IAB, an experiment, GPP, the network blocker,
+ * declared vendors, or a configured script that may run now). The browser
+ * adds what only it knows, such as the `clientEntrypoint` options.
  *
- * The consent prompt never waits: its options, rights rows and commits run
- * on the kernel's surface session, which only the engine has. The core
- * check already asks for a visitor the prompt asks to choose, so today the
- * engine loads at once wherever a page could defer it; the shell keeps its
- * deferred path for a prompt that can run without the engine.
+ * Until the engine loads, the server-rendered prompt is inert markup. Its
+ * inline early-tap script holds a tap on it, and a press on one of its
+ * buttons loads the engine at once; the prompt's chunk replays the tap
+ * through its own handlers once the engine mounts it, as React's and Vue's
+ * deferred roots do.
  *
  * Vendors are checked on the options and the config as well as the
  * snapshot: the server's snapshot leaves out the vendors `inth()` declares,
@@ -59,7 +60,6 @@ export const canDeferEngine = function canDeferEngine(
 	config: Pick<KernelConfig, 'initialVendors'> = {}
 ): boolean {
 	return (
-		snapshot.activeUI !== 'banner' &&
 		!declaresVendors(options, config) &&
 		// Astro's server starts no script: every script waits for the engine.
 		canDeferCoreEngine(
