@@ -10,8 +10,15 @@ import type {
 	ConsentEdgeStyle,
 	ConsentPresentation,
 } from '@inth/sdk/engine';
+import {
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+} from '@inth/sdk/runtime/page-globals';
 import type { PolicyRule } from '@inth/sdk/schema/types';
-import { openOptInConfirmation } from '@inth/sdk/surface-actions';
+import {
+	EARLY_CONSENT_TAP_SCRIPT,
+	openOptInConfirmation,
+} from '@inth/sdk/surface-actions';
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
@@ -198,7 +205,29 @@ beforeEach(async () => {
 
 afterEach(() => {
 	document.documentElement.removeAttribute('dir');
+	document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+	const host = window as unknown as Record<
+		string,
+		{ stop?: () => void } | undefined
+	>;
+	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
+	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
 });
+
+/**
+ * A tap on the server-rendered prompt before it hydrated: the inline
+ * script runs, the visitor taps a button of the server's markup, and that
+ * markup goes away as React takes the page.
+ */
+const tapBeforeHydration = (action: string) => {
+	const server = document.createElement('div');
+	server.innerHTML = `<div data-testid="consent-banner-root" data-design="privacy-choices"><button type="button" data-action="${action}">${action}</button></div>`;
+	document.body.append(server);
+	// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
+	new Function(EARLY_CONSENT_TAP_SCRIPT)();
+	server.querySelector('button')?.click();
+	server.remove();
+};
 
 describe('opt-in', () => {
 	test('the classic design stays the default', async () => {
@@ -1055,5 +1084,59 @@ describe('wave B round 1', () => {
 		) as HTMLElement;
 		expect(body.getAttribute('style')).toBeNull();
 		expect(getComputedStyle(body).paddingTop).toBe('8px');
+	});
+});
+
+describe('[BNR-06] a tap before hydration', () => {
+	test('the server markup lets the inline script hold taps on the prompt buttons', async () => {
+		await mount({ region: 'us-opt-in' });
+		await waitForRoot();
+		for (const testId of [
+			'consent-banner-reject-button',
+			'consent-banner-accept-button',
+			'consent-banner-customize-button',
+		]) {
+			expect(must(testId)).not.toHaveAttribute('data-early-tap');
+		}
+	});
+
+	test('a Reject replays through the Privacy Choices commit', async () => {
+		tapBeforeHydration('reject');
+		await mount({ region: 'us-opt-in' });
+		await vi.waitFor(() => expect(probe.snapshot?.explicitChoice).toBeTruthy());
+		expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
+			false
+		);
+		expect(probe.snapshot?.explicitChoice?.categories?.measurement?.value).toBe(
+			false
+		);
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		await vi.waitFor(() =>
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull()
+		);
+	});
+
+	test('an Accept replays through the Privacy Choices commit', async () => {
+		tapBeforeHydration('accept');
+		await mount();
+		await vi.waitFor(() =>
+			expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
+				true
+			)
+		);
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+	});
+
+	test('a Customize expands the options in place, with no dialog', async () => {
+		tapBeforeHydration('customize');
+		await mount();
+		await waitForRoot();
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-expanded', 'true')
+		);
+		await waitForPanel();
+		expect(probe.snapshot?.activeUI).toBe('banner');
+		expect(probe.snapshot?.explicitChoice).toBeFalsy();
+		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	});
 });

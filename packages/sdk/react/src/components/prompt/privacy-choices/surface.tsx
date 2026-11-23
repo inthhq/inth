@@ -21,6 +21,7 @@ import type {
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
 import {
 	announcementText,
 	defaultTranslationConfig,
@@ -88,6 +89,7 @@ import {
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
+import { EarlyTapScript } from '../atoms/early-tap-script';
 import { removeStaticBanner } from '../static-banner-shell';
 
 /**
@@ -550,6 +552,21 @@ const SurfaceContent = ({
 		void panelModule.preload();
 		warmDialogChunk();
 	};
+	// A tap on the server-rendered prompt before it hydrated, which the
+	// inline script held. It replays through this prompt's own handlers,
+	// so a choice commits through this design's plan and Customize opens
+	// the options in place.
+	const replayTap = (tap: EarlyConsentTap) => {
+		if (tap.action === 'accept') {
+			commit('allow');
+		} else if (tap.action === 'reject') {
+			commit('refuse');
+		} else if (tap.action === 'dismiss') {
+			acknowledge();
+		} else if (tap.action === 'customize' && !allInOne) {
+			expand();
+		}
+	};
 
 	// The page's status region outlives the prompt, so the outcome of a
 	// choice is read after the prompt leaves (BNR-06). It keeps its node.
@@ -594,6 +611,7 @@ const SurfaceContent = ({
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="customize"
+			earlyTap
 			isPrimary={!notice}
 			variant={notice ? 'neutral' : undefined}
 			mode={notice ? 'ghost' : undefined}
@@ -618,6 +636,7 @@ const SurfaceContent = ({
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="reject"
+			earlyTap
 			isPrimary={false}
 			data-testid="consent-banner-reject-button"
 			onClick={() => commit('refuse')}
@@ -631,6 +650,7 @@ const SurfaceContent = ({
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="accept"
+			earlyTap
 			isPrimary={false}
 			data-testid="consent-banner-accept-button"
 			onClick={() => commit('allow')}
@@ -643,6 +663,7 @@ const SurfaceContent = ({
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="dismiss"
+			earlyTap
 			isPrimary
 			data-testid="consent-banner-dismiss-button"
 			onClick={acknowledge}
@@ -889,6 +910,8 @@ const SurfaceContent = ({
 		<>
 			{pageStatus}
 			<>
+				{/* Before the buttons, so a tap on them is never missed. */}
+				<EarlyTapScript act={replayTap} />
 				<SurfaceStyles
 					sheets={sheets}
 					noStyle={noStyle}

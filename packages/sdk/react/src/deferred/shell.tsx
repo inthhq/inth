@@ -183,7 +183,10 @@ const warmForEarlyTaps = function warmForEarlyTaps(): void {
 		return;
 	}
 	const warm = (): void => {
-		const actions = (earlyTapQueue()?.taps ?? []).map((tap) => tap.action);
+		// The Privacy Choices banner replays its taps itself, with the engine.
+		const actions = (earlyTapQueue()?.taps ?? [])
+			.filter((tap) => tap.design !== 'privacy-choices')
+			.map((tap) => tap.action);
 		if (actions.includes('accept') || actions.includes('reject')) {
 			void import('./commit');
 		} else if (actions.includes('customize')) {
@@ -904,6 +907,13 @@ const createSession = function createSession<EngineModule>(
 		const decided = taps.filter((entry) => entry.action !== 'customize');
 		const tap = decided[decided.length - 1] ?? taps[taps.length - 1];
 		if (!tap || routing) {
+			return;
+		}
+		// The Privacy Choices banner replays the tap through its own
+		// handlers once the engine renders it: its commit plan and its
+		// in-place options are not the stock banner's.
+		if (tap.design === 'privacy-choices') {
+			start();
 			return;
 		}
 		if (
