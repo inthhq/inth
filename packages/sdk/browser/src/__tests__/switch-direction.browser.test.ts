@@ -1,9 +1,11 @@
 /**
- * A checked switch keeps its thumb inside the track in right-to-left copy.
+ * A checked switch moves its thumb toward the inline end in either writing
+ * direction, so it stays inside the track in right-to-left copy.
  *
- * The thumb starts at the inline start of the track, which is the right
- * edge in RTL, so the checked state has to move it left there. No adapter
- * puts `dir` on the switch itself: it inherits it from the dialog.
+ * The thumb is the switch's `::after`. It starts at the inline start of
+ * the track, which is the right edge in RTL, so the checked state has to
+ * move it left there. No adapter puts `dir` on the switch itself: it
+ * inherits it from the dialog.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -19,33 +21,15 @@ afterEach(() => {
 	clearBrowserConsentStorage();
 });
 
-/** How far each checked thumb sits outside its track, in pixels. */
-const thumbOverflow = function thumbOverflow(root: ParentNode): number[] {
-	return [
-		...root.querySelectorAll<HTMLElement>(
-			'[role="switch"][data-state="checked"]'
-		),
-	].map((control) => {
-		const track = control.querySelector('[data-slot="switch-track"]');
-		const thumb = control.querySelector('[data-slot="switch-thumb"]');
-		if (!(track && thumb)) {
-			return Number.POSITIVE_INFINITY;
-		}
-		const outer = track.getBoundingClientRect();
-		const inner = thumb.getBoundingClientRect();
-		return Math.round(
-			Math.max(0, outer.left - inner.left, inner.right - outer.right)
-		);
-	});
-};
-
 const openDialog = async function openDialog(
 	language: string
 ): Promise<ParentNode> {
 	client = init({
+		consentCategories: ['necessary', 'measurement', 'marketing'],
 		// Offline mode renders a language only when it has copy for it.
 		i18n: { messages: { he: { consentManagerDialog: { title: 'פרטיות' } } } },
 		overrides: { country: 'DE', language },
+		policy: ['europeOptIn'],
 		ui: { colorScheme: 'light', disableAnimation: true },
 	});
 	await client.ready();
@@ -54,35 +38,52 @@ const openDialog = async function openDialog(
 	if (!root) {
 		throw new Error('The UI did not mount');
 	}
+	// The dialog loads on demand.
 	await expect
-		.poll(() => root.querySelector('[role="switch"][data-state="checked"]'))
+		.poll(() => root.querySelector('[role="switch"][data-state="unchecked"]'), {
+			timeout: 4000,
+		})
 		.toBeTruthy();
 	return root;
 };
 
 describe('switch thumb direction', () => {
-	it.each(['en', 'he'])(
-		'keeps checked thumbs inside the track in %s',
-		async (language) => {
+	it.each([
+		['en', 'ltr', '16px'],
+		['he', 'rtl', '-16px'],
+	])(
+		'moves a checked thumb toward the inline end in %s',
+		async (language, dir, translate) => {
 			const root = await openDialog(language);
-			const panel = root.querySelector('[data-testid="consent-dialog-root"]');
-			expect(panel?.getAttribute('dir')).toBe(
-				language === 'he' ? 'rtl' : 'ltr'
+			expect(
+				root
+					.querySelector('[data-testid="consent-dialog-root"]')
+					?.getAttribute('dir')
+			).toBe(dir);
+
+			const control = root.querySelector<HTMLElement>(
+				'[role="switch"][data-state="unchecked"]'
 			);
-
-			// Check an optional category too, so an enabled checked switch is
-			// measured next to the disabled necessary one.
-			root
-				.querySelector<HTMLElement>('[role="switch"][data-state="unchecked"]')
-				?.click();
-
+			control?.click();
 			await expect
-				.poll(() => thumbOverflow(root))
-				.toSatisfy(
-					(overflows: number[]) =>
-						overflows.length > 0 &&
-						overflows.every((overflow) => overflow === 0)
-				);
+				.poll(() =>
+					root.querySelector<HTMLElement>(
+						'[role="switch"][aria-checked="true"]'
+					)
+				)
+				.toBeTruthy();
+			const thumb = root.querySelector<HTMLElement>(
+				'[role="switch"][aria-checked="true"]'
+			);
+			if (!thumb) {
+				throw new Error('No checked switch');
+			}
+			// Once the thumb's slide has run.
+			await expect
+				.poll(() => getComputedStyle(thumb, '::after').translate, {
+					timeout: 2000,
+				})
+				.toBe(translate);
 		}
 	);
 });

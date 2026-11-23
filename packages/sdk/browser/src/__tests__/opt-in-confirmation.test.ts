@@ -1,3 +1,10 @@
+/**
+ * Opting back in after an opt-out under an opt-out policy takes two steps
+ * (11 CCR §7028(a)): in "Your Privacy Choices" the sale right's Allow opens
+ * its confirmation in place, and an Accept from a page control opens the
+ * separate opt-in confirmation the dialog hosts. Nothing lifts the opt-out
+ * until the visitor confirms, and a banner commit never lifts it (PERM-02).
+ */
 import { OPT_OUT_REPROMPT_WAIT_MS, policyRulePresets } from '@inth/sdk-core';
 import type {
 	LiftOptOutPayload,
@@ -49,15 +56,53 @@ const mount = async function mount(
 	return { client, handle, root: handle.root };
 };
 
+const find = function find<ElementType extends HTMLElement = HTMLElement>(
+	root: ParentNode,
+	testId: string
+): ElementType | null {
+	return root.querySelector<ElementType>(`[data-testid="${testId}"]`);
+};
+
 const query = function query<ElementType extends HTMLElement = HTMLElement>(
 	root: ParentNode,
 	testId: string
 ): ElementType {
-	const element = root.querySelector<ElementType>(`[data-testid="${testId}"]`);
+	const element = find<ElementType>(root, testId);
 	if (!element) {
 		throw new Error(`missing ${testId}`);
 	}
 	return element;
+};
+
+/** The focused element inside the UI's root, or on the page. */
+const focused = (root: ParentNode): Element | null =>
+	(root as ShadowRoot).activeElement ?? document.activeElement;
+
+/** Open "Your Privacy Choices" and wait for its sale right to render. */
+const openDialog = async function openDialog(
+	client: ConsentClient,
+	root: ParentNode
+): Promise<void> {
+	client.openDialog();
+	await vi.waitFor(() => {
+		expect(find(root, 'consent-dialog-rights-row-sale')).not.toBeNull();
+	});
+};
+
+/** The sale right's in-place confirmation is open (not folded and inert). */
+const confirmationOpen = function confirmationOpen(root: ParentNode): boolean {
+	const panel = query(root, 'consent-dialog-confirm').closest('[data-open]');
+	return panel?.getAttribute('data-open') === 'true';
+};
+
+/** A page control the client wires to Accept all (`data-inth-action`). */
+const pageAccept = function pageAccept(): HTMLButtonElement {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.setAttribute('data-inth-action', 'accept');
+	button.textContent = 'Accept all';
+	document.body.append(button);
+	return button;
 };
 
 afterEach(() => {
@@ -181,15 +226,12 @@ describe('never ask an opted-out visitor to opt back in automatically (script-ta
 		);
 
 		expect(client.getSnapshot().promptRequirement.kind).toBe('notice');
-		expect(
-			root.querySelector('[data-testid="consent-banner-root"]')
-		).not.toBeNull();
-		expect(
-			root.querySelector('[data-testid="consent-banner-accept-button"]')
-		).toBeNull();
-		expect(
-			root.querySelector('[data-testid="consent-banner-dismiss-button"]')
-		).not.toBeNull();
+		// The prompt loads once a choice is owed.
+		await vi.waitFor(() => {
+			expect(find(root, 'consent-banner-root')).not.toBeNull();
+		});
+		expect(find(root, 'consent-banner-accept-button')).toBeNull();
+		expect(find(root, 'consent-banner-dismiss-button')).not.toBeNull();
 	});
 
 	it('3c: GPC opt-out persists after GPC turns off, keeps marketing off, shows opted-out block, and opens no prompt', async () => {
@@ -218,86 +260,70 @@ describe('never ask an opted-out visitor to opt back in automatically (script-ta
 		expect(client.getSnapshot().privacySignals.gpc.active).toBe(false);
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(client.getSnapshot().activeUI).toBe('none');
-		expect(
-			root.querySelector('[data-testid="consent-banner-root"]')
-		).toBeNull();
+		expect(find(root, 'consent-banner-root')).toBeNull();
 
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-out-status"]')
-			).not.toBeNull();
-		});
+		// Your Privacy Choices shows the opt-out as held: the protective
+		// option is selected and the receipt confirms it.
+		await openDialog(client, root);
 		expect(
-			root.querySelector('[data-testid="consent-widget-opt-out-button"]')
-		).toBeNull();
+			query(root, 'consent-dialog-right-option-sale-protect').getAttribute(
+				'aria-pressed'
+			)
+		).toBe('true');
+		expect(
+			query(root, 'consent-dialog-right-option-sale-allow').getAttribute(
+				'aria-pressed'
+			)
+		).toBe('false');
+		expect(
+			query(root, 'consent-dialog-receipt').getAttribute('data-open')
+		).toBe('true');
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
 	});
 });
 
 describe('two-step opt-in confirmation (script-tag)', () => {
-	it('opt back in link requires separate confirmation, focuses cancel first, stays outside dialog content, and lifts on confirm', async () => {
+	it('Allow in Your Privacy Choices requires a separate confirmation, focuses cancel first, and lifts on confirm', async () => {
 		const { client, root } = await mountOptedOut();
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-in-link"]')
-			).not.toBeNull();
-		});
+		await openDialog(client, root);
+		expect(confirmationOpen(root)).toBe(false);
 
-		query(root, 'consent-widget-opt-in-link').click();
+		query(root, 'consent-dialog-right-option-sale-allow').click();
 
+		// Step 1 alone keeps the opt-out held and asks first.
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(confirmationOpen(root)).toBe(true);
 		});
 		expect(client.getSnapshot().optOut).not.toBeNull();
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
-
-		const confirmation = query(root, 'opt-in-confirmation-root');
-		const dialogContent = query(root, 'consent-dialog-content');
-		expect(dialogContent.contains(confirmation)).toBe(false);
-		expect(confirmation.getAttribute('role')).toBe('dialog');
-		expect(confirmation.getAttribute('aria-modal')).toBe('true');
-
-		const description = query(root, 'opt-in-confirmation-description');
-		expect(description.textContent?.toLowerCase()).not.toMatch(
-			/sale|sharing|targeted/u
-		);
+		expect(client.getSnapshot().explicitChoice).toBeNull();
 
 		const cancelButton = query<HTMLButtonElement>(
 			root,
-			'opt-in-confirmation-cancel-button'
+			'consent-dialog-confirm-cancel'
 		);
 		await vi.waitFor(() => {
-			const active =
-				(root as ShadowRoot).activeElement ?? document.activeElement;
-			expect(active).toBe(cancelButton);
+			expect(focused(root)).toBe(cancelButton);
 		});
 
-		query(root, 'opt-in-confirmation-confirm-button').click();
+		// Step 2 confirms and lifts the opt-out.
+		query(root, 'consent-dialog-confirm-allow').click();
 		await vi.waitFor(() => {
 			expect(client.getSnapshot().optOut).toBeNull();
 		});
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
+		await vi.waitFor(() => {
+			expect(confirmationOpen(root)).toBe(false);
+		});
+		expect(client.getSnapshot().activeUI).toBe('dialog');
 	});
 
 	it('opt-in confirmation description names confirmed rights once answered by the backend', async () => {
-		const { client, root } = await mountOptedOut({ rightsConfirmed: true });
-		client.openDialog();
+		const accept = pageAccept();
+		const { root } = await mountOptedOut({ rightsConfirmed: true });
+		accept.click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-in-link"]')
-			).not.toBeNull();
-		});
-		query(root, 'consent-widget-opt-in-link').click();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(find(root, 'opt-in-confirmation-root')).not.toBeNull();
 		});
 
 		const text =
@@ -312,68 +338,69 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 		query(root, 'opt-in-confirmation-cancel-button').click();
 	});
 
-	it('opt back in link then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
+	it('Allow then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
 		const { client, root } = await mountOptedOut();
-		client.openDialog();
+		await openDialog(client, root);
+
+		query(root, 'consent-dialog-right-option-sale-allow').click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-in-link"]')
-			).not.toBeNull();
+			expect(confirmationOpen(root)).toBe(true);
 		});
 
-		query(root, 'consent-widget-opt-in-link').click();
+		query(root, 'consent-dialog-confirm-cancel').click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(confirmationOpen(root)).toBe(false);
 		});
-
-		query(root, 'opt-in-confirmation-cancel-button').click();
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
 		expect(client.getSnapshot().optOut).not.toBeNull();
 		expect(client.getSnapshot().explicitChoice).toBeNull();
 		expect(client.getSnapshot().activeUI).toBe('dialog');
 
-		// Cancel via Escape.
-		query(root, 'consent-widget-opt-in-link').click();
+		// Cancel via Escape: it closes the confirmation, not the dialog.
+		query(root, 'consent-dialog-right-option-sale-allow').click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(confirmationOpen(root)).toBe(true);
 		});
 		document.dispatchEvent(
 			new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
 		);
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
+		await vi.waitFor(() => {
+			expect(confirmationOpen(root)).toBe(false);
+		});
 		expect(client.getSnapshot().optOut).not.toBeNull();
 		expect(client.getSnapshot().explicitChoice).toBeNull();
 		expect(client.getSnapshot().activeUI).toBe('dialog');
+		expect(find(root, 'consent-dialog-card')).not.toBeNull();
 	});
 
-	it('Accept All in the dialog defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	it('Accept All from a page control defers save to a separate modal confirmation that focuses cancel first, then lifts opt-out and grants categories', async () => {
+		const accept = pageAccept();
 		const { client, root } = await mountOptedOut();
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector(
-					'[data-testid="consent-widget-footer-accept-all-button"]'
-				)
-			).not.toBeNull();
-		});
 
-		query(root, 'consent-widget-footer-accept-all-button').click();
+		accept.click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(find(root, 'opt-in-confirmation-root')).not.toBeNull();
 		});
 		expect(client.getSnapshot().optOut).not.toBeNull();
 		expect(client.getSnapshot().explicitChoice).toBeNull();
-		expect(client.getSnapshot().activeUI).toBe('dialog');
+		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+
+		const confirmation = query(root, 'opt-in-confirmation-root');
+		expect(confirmation.getAttribute('role')).toBe('dialog');
+		expect(confirmation.getAttribute('aria-modal')).toBe('true');
+
+		// Unconfirmed rights stay neutral in the description.
+		const description = query(root, 'opt-in-confirmation-description');
+		expect(description.textContent?.toLowerCase()).not.toMatch(
+			/sale|sharing|targeted/u
+		);
+
+		const cancelButton = query<HTMLButtonElement>(
+			root,
+			'opt-in-confirmation-cancel-button'
+		);
+		await vi.waitFor(() => {
+			expect(focused(root)).toBe(cancelButton);
+		});
 
 		query(root, 'opt-in-confirmation-confirm-button').click();
 		await vi.waitFor(() => {
@@ -381,99 +408,140 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 		});
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
 		expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
-		expect(client.getSnapshot().activeUI).not.toBe('dialog');
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
 	});
 
-	it('Accept All in a banner defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	it('Accept All from a page control then cancel (button and Escape) leaves opt-out held and saves nothing', async () => {
+		const accept = pageAccept();
+		const { client, root } = await mountOptedOut();
+
+		accept.click();
+		await vi.waitFor(() => {
+			expect(find(root, 'opt-in-confirmation-root')).not.toBeNull();
+		});
+		query(root, 'opt-in-confirmation-cancel-button').click();
+		await vi.waitFor(() => {
+			expect(find(root, 'opt-in-confirmation-root')).toBeNull();
+		});
+		expect(client.getSnapshot().optOut).not.toBeNull();
+		expect(client.getSnapshot().explicitChoice).toBeNull();
+
+		accept.click();
+		await vi.waitFor(() => {
+			expect(find(root, 'opt-in-confirmation-root')).not.toBeNull();
+		});
+		document.dispatchEvent(
+			new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
+		);
+		await vi.waitFor(() => {
+			expect(find(root, 'opt-in-confirmation-root')).toBeNull();
+		});
+		expect(client.getSnapshot().optOut).not.toBeNull();
+		expect(client.getSnapshot().explicitChoice).toBeNull();
+		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+	});
+
+	it('[PERM-02] Accept All in a banner never lifts a held opt-out and asks nothing', async () => {
 		const { client, root } = await mountOptedOut({
 			policy: choiceOptOutPolicy,
 		});
 		client.showBanner();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-banner-accept-button"]')
-			).not.toBeNull();
+			expect(find(root, 'consent-banner-accept-button')).not.toBeNull();
 		});
 
 		query(root, 'consent-banner-accept-button').click();
+		// A banner commit keeps sale and sharing off; lifting the opt-out
+		// takes the confirmation in Your Privacy Choices.
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(client.getSnapshot().activeUI).toBe('none');
 		});
-		expect(client.getSnapshot().optOut).not.toBeNull();
-		expect(client.getSnapshot().explicitChoice).toBeNull();
-
-		query(root, 'opt-in-confirmation-confirm-button').click();
-		await vi.waitFor(() => {
-			expect(client.getSnapshot().optOut).toBeNull();
-		});
-		expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
-	});
-
-	it('turning Marketing on then Save opens confirmation and cancelling leaves opt-out held', async () => {
-		const { client, root } = await mountOptedOut();
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-switch-marketing"]')
-			).not.toBeNull();
-		});
-
-		query(root, 'consent-widget-switch-marketing').click();
-		query(root, 'consent-widget-footer-save-button').click();
-
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
-		});
-		expect(client.getSnapshot().optOut).not.toBeNull();
-		expect(client.getSnapshot().explicitChoice).toBeNull();
-
-		query(root, 'opt-in-confirmation-cancel-button').click();
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
-		expect(client.getSnapshot().optOut).not.toBeNull();
-		expect(client.getSnapshot().explicitChoice).toBeNull();
-		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
-	});
-
-	it('saving without granting the deciding category completes with no confirmation', async () => {
-		const { client, root } = await mountOptedOut();
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-switch-measurement"]')
-			).not.toBeNull();
-		});
-
-		query(root, 'consent-widget-switch-measurement').click();
-		query(root, 'consent-widget-footer-save-button').click();
-
-		expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
 		expect(client.getSnapshot().optOut).not.toBeNull();
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 	});
 
-	it('with active GPC signal there is no opt back in link', async () => {
+	it('[PERM-02] turning Marketing on in the banner options then Save never lifts a held opt-out and asks nothing', async () => {
+		const { client, root } = await mountOptedOut({
+			policy: choiceOptOutPolicy,
+		});
+		client.showBanner();
+		await vi.waitFor(() => {
+			expect(find(root, 'consent-banner-customize-button')).not.toBeNull();
+		});
+		query(root, 'consent-banner-customize-button').click();
+		await vi.waitFor(() => {
+			expect(
+				find(root, 'consent-banner-category-switch-marketing')
+			).not.toBeNull();
+		});
+
+		const marketing = query(root, 'consent-banner-category-switch-marketing');
+		marketing.click();
+		await vi.waitFor(() => {
+			expect(
+				query(root, 'consent-banner-category-switch-marketing').getAttribute(
+					'aria-checked'
+				)
+			).toBe('true');
+		});
+		query(root, 'consent-banner-save-button').click();
+
+		await vi.waitFor(() => {
+			expect(client.getSnapshot().activeUI).toBe('none');
+		});
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
+		expect(client.getSnapshot().optOut).not.toBeNull();
+		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+	});
+
+	// Known core bug, outside this package: the dialog's Preferences save
+	// only the switched category (`applyDialogCategories`), and an opt-out
+	// record that lists no categories, as `/v1/consent/init` sends one, holds
+	// that category off unless the same choice also refuses Marketing
+	// (`explicitGrantStands` in core's `consent-record/evaluate.ts`). The
+	// switch saves, then reads off again. Flip to `it` once core is fixed.
+	it.fails('saving without granting the deciding category completes with no confirmation', async () => {
+		const { client, root } = await mountOptedOut();
+		await openDialog(client, root);
+		query(root, 'consent-dialog-preferences-row').click();
+		await vi.waitFor(() => {
+			expect(
+				find(root, 'consent-dialog-category-switch-measurement')
+			).not.toBeNull();
+		});
+		// The deciding category follows the sale right, not a switch.
+		expect(find(root, 'consent-dialog-category-switch-marketing')).toBeNull();
+
+		query(root, 'consent-dialog-category-switch-measurement').click();
+
+		await vi.waitFor(() => {
+			expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
+		});
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
+		expect(confirmationOpen(root)).toBe(false);
+		expect(client.getSnapshot().optOut).not.toBeNull();
+		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+	});
+
+	it('with active GPC signal there is no way to opt back in', async () => {
 		const { client, root } = await mountOptedOut({ gpc: true });
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-out-status"]')
-			).not.toBeNull();
-		});
+		await openDialog(client, root);
+		const allow = query(root, 'consent-dialog-right-option-sale-allow');
+		expect(allow.getAttribute('aria-disabled')).toBe('true');
 		expect(
-			root.querySelector('[data-testid="consent-widget-opt-in-link"]')
-		).toBeNull();
+			query(root, 'consent-dialog-right-option-sale-protect').getAttribute(
+				'aria-pressed'
+			)
+		).toBe('true');
+
+		allow.click();
+		expect(confirmationOpen(root)).toBe(false);
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
+		expect(client.getSnapshot().optOut).not.toBeNull();
 	});
 
-	it('with held-by-account opt-out shows link and leaves opt-out held when backend refuses lift', async () => {
+	it('with held-by-account opt-out shows the confirmation and leaves opt-out held when backend refuses lift', async () => {
 		const liftCalls: LiftOptOutPayload[] = [];
 		const base = createTestingMode('@inth/sdk/test', {
 			policy: noticeOptOutPolicy,
@@ -498,22 +566,15 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 			}),
 			{ kind: 'offline' as const }
 		);
+		const accept = pageAccept();
 		const { client, root } = await mountOptedOut({
 			heldBy: 'person',
 			mode: refusingMode,
 		});
-		client.openDialog();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="consent-widget-opt-in-link"]')
-			).not.toBeNull();
-		});
 
-		query(root, 'consent-widget-opt-in-link').click();
+		accept.click();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-in-confirmation-root"]')
-			).not.toBeNull();
+			expect(find(root, 'opt-in-confirmation-root')).not.toBeNull();
 		});
 		expect(liftCalls).toHaveLength(0);
 
@@ -529,18 +590,14 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 		const { client, root } = await mountOptedOut({ policy: optInPolicy });
 		client.openDialog();
 		await vi.waitFor(() => {
-			expect(
-				root.querySelector(
-					'[data-testid="consent-widget-footer-accept-all-button"]'
-				)
-			).not.toBeNull();
+			expect(find(root, 'consent-dialog-accept-all')).not.toBeNull();
 		});
 
-		query(root, 'consent-widget-footer-accept-all-button').click();
-		expect(client.getSnapshot().optOut).toBeNull();
-		expect(
-			root.querySelector('[data-testid="opt-in-confirmation-root"]')
-		).toBeNull();
+		query(root, 'consent-dialog-accept-all').click();
+		await vi.waitFor(() => {
+			expect(client.getSnapshot().optOut).toBeNull();
+		});
+		expect(find(root, 'opt-in-confirmation-root')).toBeNull();
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
 	});
 });

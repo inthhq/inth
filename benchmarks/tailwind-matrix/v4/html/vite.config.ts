@@ -7,9 +7,9 @@ import type { Plugin } from 'vite';
 
 /**
  * The script-tag build's files a page with a backend loads. `inth.js` loads
- * `inth.hosted.js` from its own folder, which loads `inth.dialog.js`.
+ * `inth.hosted.js` from its own folder, which loads `inth.choices.js`.
  */
-const SCRIPT_FILES = ['inth.js', 'inth.hosted.js', 'inth.dialog.js'];
+const SCRIPT_FILES = ['inth.js', 'inth.hosted.js', 'inth.choices.js'];
 
 /**
  * Stands in for the CDN: emits `@inth/sdk`'s script-tag build next to

@@ -159,7 +159,10 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 
 		expect(client.mode).toBe(mode);
 		expect(client.started).toBe(true);
-		expect(query(client, 'consent-banner-root').isConnected).toBe(true);
+		// The prompt loads on demand.
+		await vi.waitFor(() =>
+			expect(query(client, 'consent-banner-root').isConnected).toBe(true)
+		);
 		expect(fetchSpy).toHaveBeenCalledTimes(mode === 'hosted' ? 1 : 0);
 	});
 
@@ -201,18 +204,24 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		document.body.append(link);
 		link.click();
 		expect(client.getSnapshot().activeUI).toBe('dialog');
-		expect(query(client, 'consent-dialog-root').getAttribute('role')).toBe(
-			'dialog'
-		);
-		query(client, 'consent-widget-switch-measurement').click();
+		// The dialog loads on demand.
+		const card = await vi.waitFor(() => query(client, 'consent-dialog-card'));
+		expect(card.getAttribute('role')).toBe('dialog');
+		query(client, 'consent-dialog-category-switch-measurement').click();
 		expect(client.has('measurement')).toBe(false);
-		query(client, 'consent-widget-footer-save-button').click();
-		expect(client.has('measurement')).toBe(true);
+		const save = query(client, 'consent-dialog-save-button');
+		await vi.waitFor(() =>
+			expect((save as HTMLButtonElement).disabled).toBe(false)
+		);
+		save.click();
+		await vi.waitFor(() => expect(client.has('measurement')).toBe(true));
 		expect(client.has('marketing')).toBe(false);
 		expect(client.getSnapshot().activeUI).toBe('none');
-		expect(
-			client.ui?.root.querySelector('[data-testid="consent-dialog-root"]')
-		).toBeNull();
+		await vi.waitFor(() =>
+			expect(
+				client.ui?.root.querySelector('[data-testid="consent-dialog-card"]')
+			).toBeNull()
+		);
 		await vi.waitFor(() =>
 			expect(
 				document.querySelectorAll(

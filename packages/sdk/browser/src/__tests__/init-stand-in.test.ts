@@ -1,14 +1,9 @@
 /**
  * The init script (`inth.js`) from source, in jsdom: what its stand-in
- * does with a tap whose save the outbox cannot keep, and with `dispose()`
- * before the engine arrives. The built files run in Chromium in
- * `init-script.browser.test.ts`.
+ * does when `/v1/consent/init` owes a banner, with a choice made before
+ * the engine, and with `dispose()` before the engine arrives. The built
+ * files run in Chromium in `init-script.browser.test.ts`.
  */
-import type { SaveResult } from '@inth/sdk-core';
-import {
-	planEarlyCommit,
-	storeEarlyCommit,
-} from '@inth/sdk-core/surface-actions/early-commit';
 import {
 	policyRulePresets,
 	resolvePolicyRules,
@@ -79,54 +74,10 @@ const loaded = (file: string) =>
 		.map(({ src }) => src)
 		.filter((src) => src.includes(file));
 
-const banner = () =>
-	document
-		.querySelector('[data-inth-ui]')
-		?.shadowRoot?.querySelector('[data-testid="consent-banner-root"]') ?? null;
-
 const settle = () =>
 	new Promise((resolve) => {
 		setTimeout(resolve, 10);
 	});
-
-/** Answers `/v1/consent/init` and waits for the init script's banner. */
-const showBanner = async () => {
-	answerInit.resolve(initBody());
-	await vi.waitFor(() => {
-		expect(banner()).not.toBeNull();
-	});
-};
-
-/** Hands the init script `inth.commit.js`, as the file does when it runs. */
-const provideCommit = (standIn: StandIn) => {
-	standIn.__inthBoot.provide({
-		name: 'commit',
-		planEarlyCommit,
-		storeEarlyCommit,
-		version,
-	});
-	document.head
-		.querySelector('script[src*="inth.commit.js"]')
-		?.dispatchEvent(new Event('load'));
-};
-
-/** Blocked or full storage for the outbox's key only. */
-const refuseOutboxWrites = () => {
-	const { setItem } = Storage.prototype;
-	vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function refuse(
-		this: Storage,
-		key: string,
-		value: string
-	) {
-		if (key === PENDING_SAVES_STORAGE_KEY) {
-			throw new DOMException(
-				'The quota has been exceeded.',
-				'QuotaExceededError'
-			);
-		}
-		setItem.call(this, key, value);
-	});
-};
 
 const queuedSaves = (): unknown[] =>
 	JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]');
@@ -187,106 +138,66 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('the banner before the engine', () => {
-	it('announces its impression once, and hands the stamp to the engine', async () => {
-		const onSurfaceShown = vi.fn();
-		const standIn = start([['config', { callbacks: { onSurfaceShown } }]]);
-		await showBanner();
+const preloaded = (file: string) =>
+	[...document.head.querySelectorAll<HTMLLinkElement>('link[rel="preload"]')]
+		.filter(({ href }) => href.includes(file))
+		.map((link) => ({ as: link.as, href: link.href, nonce: link.nonce }));
 
-		expect(onSurfaceShown).toHaveBeenCalledTimes(1);
-		const [impression] = onSurfaceShown.mock.calls[0] as [
-			{ shownAt: number; surface: string },
-		];
-		expect(impression.surface).toBe('banner');
-		const shownAt = standIn.getSnapshot().surfaceShownAt.banner;
-		expect(shownAt).toBe(impression.shownAt);
-		// The engine starts from the stamp instead of stamping its own.
-		expect(standIn.__inthBoot.prefetch?.config.initialSurfaceShownAt).toEqual({
-			banner: shownAt,
-			dialog: null,
-		});
-		// Nothing loaded the engine: stop the input listener that would.
-		standIn.dispose();
-	});
-});
-
-describe('a tap recorded before the engine', () => {
-	it('times the choice from the banner impression', async () => {
-		const standIn = start();
-		await showBanner();
-		const shownAt = standIn.getSnapshot().surfaceShownAt.banner as number;
-
-		const saved = standIn.acceptAll() as Promise<SaveResult>;
-		provideCommit(standIn);
-		await expect(saved).resolves.toMatchObject({ ok: true });
-
-		const [queued] = queuedSaves() as [
-			{ payload: { timeToDecisionMs?: number; uiSource?: string } },
-		];
-		const save = queued.payload;
-		expect(save.uiSource).toBe('banner');
-		expect(save.timeToDecisionMs).toBeTypeOf('number');
-		expect(save.timeToDecisionMs).toBeGreaterThanOrEqual(0);
-		expect(save.timeToDecisionMs).toBeLessThanOrEqual(Date.now() - shownAt);
-	});
-
-	it('announces the choice once its save is queued, then loads the engine', async () => {
-		let queuedWhenHeard: unknown[] | undefined;
-		const onChoiceRecorded = vi.fn(() => {
-			queuedWhenHeard = queuedSaves();
-		});
-		const onPermissionsChanged = vi.fn();
-		const standIn = start([
-			['config', { callbacks: { onChoiceRecorded, onPermissionsChanged } }],
-		]);
-		await showBanner();
+describe('a banner owed before the engine', () => {
+	it('renders nothing, and fetches the engine and the consent UI side by side', async () => {
+		const standIn = start([['config', { nonce: 'n0nce' }]]);
 		expect(loaded('inth.hosted.js')).toEqual([]);
 
-		const saved = standIn.acceptAll() as Promise<SaveResult>;
-		provideCommit(standIn);
-
-		await expect(saved).resolves.toMatchObject({ ok: true });
-		expect(onChoiceRecorded).toHaveBeenCalledTimes(1);
-		expect(onPermissionsChanged).toHaveBeenCalledTimes(1);
-		// Heard after the write, not before it.
-		expect(queuedWhenHeard).toHaveLength(1);
-		expect(queuedSaves()).toHaveLength(1);
-		expect(storedChoice()?.categories).toMatchObject({
-			marketing: { value: true },
+		answerInit.resolve(initBody());
+		await vi.waitFor(() => {
+			expect(loaded('inth.hosted.js')).toHaveLength(1);
 		});
-		// Nothing for the engine to record again.
-		expect(queuedForEngine(standIn)).toEqual([]);
-		expect(loaded('inth.hosted.js')).toHaveLength(1);
+
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
+		// Next to `inth.hosted.js`, where the engine looks for it.
+		expect(preloaded('inth.choices.js')).toEqual([
+			{
+				as: 'script',
+				href: new URL(`inth.choices.js?v=${version}`, OWN_SRC).href,
+				nonce: 'n0nce',
+			},
+		]);
+		expect(standIn.getSnapshot().activeUI).toBe('banner');
+		// The engine stamps the impression when it renders the banner.
+		expect(standIn.getSnapshot().surfaceShownAt.banner).toBeNull();
+		standIn.dispose();
 	});
 
-	it.each([
-		['acceptAll', true],
-		['rejectAll', false],
-	] as const)(
-		'hands %s to the engine when the outbox cannot keep its save',
-		async (method, granted) => {
-			const onChoiceRecorded = vi.fn();
-			const onPermissionsChanged = vi.fn();
-			const standIn = start([
-				['config', { callbacks: { onChoiceRecorded, onPermissionsChanged } }],
-			]);
-			await showBanner();
-			refuseOutboxWrites();
-
-			const saved = standIn[method]() as Promise<SaveResult>;
-			provideCommit(standIn);
-
-			// The tap resolves and the record is stored, but no save is queued.
-			await expect(saved).resolves.toMatchObject({ ok: true });
-			expect(storedChoice()?.categories).toMatchObject({
-				marketing: { value: granted },
-			});
-			expect(queuedSaves()).toEqual([]);
-			// The engine records the tap itself and announces it once.
-			expect(queuedForEngine(standIn)).toEqual([[method]]);
-			expect(onChoiceRecorded).not.toHaveBeenCalled();
-			expect(onPermissionsChanged).not.toHaveBeenCalled();
+	it('fetches no consent UI when the page turns the banner off', async () => {
+		const standIn = start([['config', { ui: { banner: false } }]]);
+		answerInit.resolve(initBody());
+		await vi.waitFor(() => {
 			expect(loaded('inth.hosted.js')).toHaveLength(1);
+		});
+		expect(preloaded('inth.choices.js')).toEqual([]);
+		standIn.dispose();
+	});
+
+	it.each(['acceptAll', 'rejectAll'] as const)(
+		'leaves %s to the engine, which records it once it has loaded',
+		async (method) => {
+			const onChoiceRecorded = vi.fn();
+			const standIn = start([['config', { callbacks: { onChoiceRecorded } }]]);
+			answerInit.resolve(initBody());
+			await vi.waitFor(() => {
+				expect(loaded('inth.hosted.js')).toHaveLength(1);
+			});
+
+			const saved = standIn[method]() as Promise<unknown>;
+
+			// Nothing commits before the engine is ready.
+			expect(queuedForEngine(standIn).map(([name]) => name)).toEqual([method]);
+			expect(storedChoice()).toBeNull();
+			expect(queuedSaves()).toEqual([]);
+			expect(onChoiceRecorded).not.toHaveBeenCalled();
+			standIn.dispose();
+			// What waits for the engine is rejected when the page disposes first.
+			await expect(saved).rejects.toThrow(/dispose\(\) ran before/u);
 		}
 	);
 });
@@ -334,7 +245,6 @@ describe('dispose() before the engine', () => {
 		answerInit.resolve(initBody());
 		await settle();
 
-		expect(banner()).toBeNull();
 		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(() => standIn.getSnapshot()).toThrow(/init/u);
 		expect(standIn.__inthBoot.prefetch).toBeNull();
@@ -367,75 +277,13 @@ describe('dispose() before the engine', () => {
 		await settle();
 
 		expect(api.client).toBeNull();
-		expect(banner()).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(standIn.__inthBoot.disposed).toBe(true);
 		api.dispose();
 	});
 });
 
-describe('early opt-out tap before the engine loads', () => {
-	const optOutInitBody = () => ({
-		branding: 'inth',
-		location: { countryCode: 'US', regionCode: 'CA' },
-		policyResolution: writePolicyResolutionWire(
-			resolvePolicyRules({
-				countryCode: 'US',
-				regionCode: 'CA',
-				rules: [
-					{
-						...policyRulePresets.usPrivacyStatesOptOut(),
-						prompt: 'notice',
-					},
-				],
-			})
-		),
-		translations: { language: 'en', translations: enTranslations },
-	});
-
-	it('queues optOut and loads the engine when the banner opt-out link is tapped early', async () => {
-		const standIn = start([['config', { reloadOnConsentRevoked: false }]]);
-		answerInit.resolve(optOutInitBody());
-		await vi.waitFor(() => {
-			expect(banner()).not.toBeNull();
-		});
-		const optOutButton = banner()?.querySelector<HTMLButtonElement>(
-			'[data-testid="consent-banner-right-opt-out-button"]'
-		);
-		expect(optOutButton?.getAttribute('data-action')).toBe('opt-out');
-
-		optOutButton?.dispatchEvent(
-			new Event('pointerdown', { bubbles: true, composed: true })
-		);
-		expect(loaded('inth.commit.js')).toEqual([]);
-		expect(loaded('inth.dialog.js')).toEqual([]);
-		expect(loaded('inth.hosted.js')).toHaveLength(1);
-
-		optOutButton?.click();
-		expect(queuedForEngine(standIn).map(([method]) => method)).toEqual([
-			'optOut',
-		]);
-
-		// When the engine takes over, it replays optOut, records the opt-out
-		// and opens the confirmation view.
-		const api = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
-		autoInit(api);
-		await vi.waitFor(() => {
-			expect(api.client?.getSnapshot().optOut?.method).toBe('button');
-		});
-		const { client } = api;
-		expect(client?.getSnapshot().effectivePermissions.marketing).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(client?.getSnapshot().effectivePermissions.measurement).toBe(true);
-		await vi.waitFor(() => {
-			expect(
-				client?.ui?.root.querySelector(
-					'[data-testid="opt-out-confirmation-root"]'
-				)
-			).not.toBeNull();
-		});
-		api.dispose();
-	});
-
+describe('an opt-out page action before the engine loads', () => {
 	it('queues optOut and loads the engine for a data-inth-action="opt-out" link before the engine loads', () => {
 		const standIn = start();
 		const link = document.createElement('a');
@@ -449,7 +297,6 @@ describe('early opt-out tap before the engine loads', () => {
 			'optOut',
 		]);
 		expect(loaded('inth.hosted.js')).toHaveLength(1);
-		expect(loaded('inth.dialog.js')).toEqual([]);
 		standIn.dispose();
 	});
 });

@@ -1,17 +1,14 @@
 /**
- * Every Privacy Choices story of the script tag renders its surface: the
+ * Every consent banner and dialog story of the script tag renders its surface: the
  * banner in its placement, or the dialog open over the page. The stories
- * carry React's names (`fixtures/privacy-choices-stories.ts`).
+ * carry React's names (`fixtures/stories.ts`).
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import type { ConsentClient } from '../types';
-import {
-	mountPrivacyChoicesStory,
-	PRIVACY_CHOICES_STORIES,
-} from './fixtures/privacy-choices-stories';
+import { mountStory, CONSENT_STORIES } from './fixtures/stories';
 
 const clients: ConsentClient[] = [];
 
@@ -28,7 +25,7 @@ const start = async (name: string, phone = false): Promise<ConsentClient> => {
 	if (phone) {
 		await page.viewport(390, 800);
 	}
-	const client = await mountPrivacyChoicesStory(name);
+	const client = await mountStory(name);
 	clients.push(client);
 	return client;
 };
@@ -36,7 +33,7 @@ const start = async (name: string, phone = false): Promise<ConsentClient> => {
 const find = (client: ConsentClient, testId: string) =>
 	client.ui?.root.querySelector(`[data-testid="${testId}"]`) ?? null;
 
-const stories = Object.entries(PRIVACY_CHOICES_STORIES);
+const stories = Object.entries(CONSENT_STORIES);
 const openDialogs = stories.filter(
 	([, story]) => story.group === 'Dialog' && !story.flow
 );
@@ -44,16 +41,13 @@ const banners = stories.filter(
 	([, story]) => story.group === 'Banner' || story.flow
 );
 
-describe('Privacy Choices stories', () => {
+describe('consent stories', () => {
 	test.each(banners)(
 		'%s shows the banner in its placement',
 		async (name, story) => {
 			const client = await start(name, story.phone);
 			await vi.waitFor(() =>
-				expect(find(client, 'consent-banner-root')).toHaveAttribute(
-					'data-design',
-					'privacy-choices'
-				)
+				expect(find(client, 'consent-banner-root')).not.toBeNull()
 			);
 			expect(
 				find(client, 'consent-banner-root')?.getAttribute('data-placement')
@@ -64,10 +58,7 @@ describe('Privacy Choices stories', () => {
 	test.each(openDialogs)('%s opens the dialog', async (name, story) => {
 		const client = await start(name, story.phone);
 		await vi.waitFor(() =>
-			expect(find(client, 'consent-dialog-root')).toHaveAttribute(
-				'data-design',
-				'privacy-choices'
-			)
+			expect(find(client, 'consent-dialog-root')).not.toBeNull()
 		);
 	});
 });

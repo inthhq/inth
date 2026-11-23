@@ -1,6 +1,6 @@
 /**
  * Dev-server routes for `init-script.browser.test.ts`: the built
- * `inth.js` and `inth.hosted.js`, a backend that answers
+ * `inth.js`, `inth.hosted.js` and the files they load, a backend that answers
  * `/v1/consent/init` and `/v1/consent/records`, and gated scripts that
  * report when they run.
  *
@@ -9,19 +9,14 @@
  *   loads get a 404.
  * - `/__inth-init__/page?<query>`: a page whose `inth.js` tag uses the
  *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`,
- *   `hosted-fail` (that many 404s for `inth.hosted.js`), `commit`,
- *   `records`, `dialog` and `choices` (a delay for that file in ms, `fail`
- *   for a 404, `fail-once` for a 404 then the file, or for `dialog`,
- *   `stale` for a file from another release),
- *   `pc` (a `window.inth` queue that sets `presentation.design:
- *   'privacy-choices'` with a Card),
+ *   `hosted-fail` (that many 404s for `inth.hosted.js`), `records` and
+ *   `choices` (a delay for that file in ms, `fail` for a 404, or
+ *   `fail-once` for a 404 then the file),
  *   `queue` (a `window.inth` queue before the tag that records `ready`) and
  *   `hero` (a `fetchpriority="high"` image held back that many ms, so the
  *   engine waits for it).
  * - `/__inth-init__/hero.svg?delay=<ms>`: a small image, held back.
  * - `/__inth-init__/missing.js`: a 404.
- * - `/__inth-init__/stale-dialog.js`: a `inth.dialog.js` from another
- *   release.
  * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/v1/consent/init` answers.
  * - `/__inth-init__/backend/v1/consent/init`: the init answer, an opt-in policy for
  *   measurement and marketing with English copy.
@@ -29,8 +24,8 @@
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
  *   last read.
- * - `/__inth-init__/hosted-requests`: how many `fail=<n>` requests arrived
- *   since the last read.
+ * - `/__inth-init__/hosted-requests`: how many `fail=<n>` requests (for
+ *   `inth.hosted.js` or `inth.choices.js`) arrived since the last read.
  * - `/__inth-init__/gated.js?name=<name>`: pushes `name` onto
  *   `window.__ran`.
  */
@@ -86,18 +81,13 @@ let hostedRequests = 0;
 let failsSincePage = 0;
 
 const page = (query: URLSearchParams): string => {
-	const queue = `${
-		query.has('queue')
-			? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
-			: ''
-	}${
-		query.has('pc')
-			? `<script>window.inth = window.inth || []; window.inth.push(['config', { presentation: { design: 'privacy-choices', prompt: { container: { type: 'card' } } } }]);</script>`
-			: ''
-	}`;
-	// `commit` and `records`: a delay in ms, or `fail` for a 404. Without
-	// either, `inth.js` finds the file next to itself.
-	const part = (name: 'commit' | 'records' | 'dialog' | 'choices'): string => {
+	const queue = query.has('queue')
+		? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
+		: '';
+	// `records` and `choices`: a delay in ms, `fail` for a 404, or
+	// `fail-once` for a 404 then the file. Without either, the file is found
+	// next to `inth.js` (`records`) or `inth.hosted.js` (`choices`).
+	const part = (name: 'records' | 'choices'): string => {
 		const value = query.get(name);
 		if (value === null) {
 			return '';
@@ -107,12 +97,10 @@ const page = (query: URLSearchParams): string => {
 			src = '/__inth-init__/missing.js';
 		} else if (value === 'fail-once') {
 			src = `/__inth-dist__/inth.${name}.js?fail=1`;
-		} else if (value === 'stale') {
-			src = '/__inth-init__/stale-dialog.js';
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${part('choices')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('records')}${part('choices')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>
@@ -182,13 +170,6 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		response.setHeader('Content-Type', 'image/svg+xml');
 		response.end(
 			'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>'
-		);
-		return;
-	}
-	if (url.pathname === '/__inth-init__/stale-dialog.js') {
-		response.setHeader('Content-Type', 'text/javascript');
-		response.end(
-			"window.__inthDialog = { version: '0.0.0-stale', createDialog() { throw new Error('stale'); }, openEarlyDialog() { throw new Error('stale'); } };"
 		);
 		return;
 	}
