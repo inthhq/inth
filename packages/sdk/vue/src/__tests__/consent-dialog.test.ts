@@ -14,7 +14,7 @@ import {
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 
-import { useOptOut } from '../runtime/composables/kernel';
+import { useOptOut } from '../runtime/composables/use-consent-kernel';
 import type { MountOptions } from './consent-ui-fixture';
 import {
 	$,

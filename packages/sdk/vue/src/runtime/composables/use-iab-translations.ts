@@ -4,7 +4,7 @@ import type { Translations } from '@inth/sdk/translations';
 import { computed, toValue } from 'vue';
 import type { ComputedRef } from 'vue';
 
-import { useConsentInit } from './init';
+import { useConsentInit } from './use-consent-init';
 
 /**
  * The IAB copy for the active language, each key the bundle leaves out

@@ -3,8 +3,8 @@ declare module '#inth/composables' {
 		consentConfigKey,
 		useConsentConfig,
 	} from './runtime/composables/config';
-	export { useConsentActiveUI } from './runtime/composables/activeUI';
-	export { useConsentComponent } from './runtime/composables/component';
+	export { useConsentActiveUI } from './runtime/composables/use-consent-active-ui';
+	export { useConsentComponent } from './runtime/composables/use-consent-component';
 	export {
 		createDefaultIabSelection,
 		useConsentIabSave,
@@ -13,16 +13,16 @@ declare module '#inth/composables' {
 		type ConsentIabSelection,
 		type IabConsentSaveInput,
 		type IabPreferenceTab,
-	} from './runtime/composables/iabSelection';
+	} from './runtime/composables/use-consent-iab-selection';
 	export {
 		useConsent,
 		useConsentSave,
 		type ConsentSaveInput,
-	} from './runtime/composables/consent';
-	export { useIabTranslations } from './runtime/composables/iab-translations';
-	export { useConsentInit } from './runtime/composables/init';
-	export { useConsentLanguage } from './runtime/composables/language';
-	export { useRequestRegion } from './runtime/composables/region';
+	} from './runtime/composables/use-consent';
+	export { useIabTranslations } from './runtime/composables/use-iab-translations';
+	export { useConsentInit } from './runtime/composables/use-consent-init';
+	export { useConsentLanguage } from './runtime/composables/use-consent-language';
+	export { useRequestRegion } from './runtime/composables/use-request-region';
 }
 
 /** A Nuxt template the server render reads without a consent route. */

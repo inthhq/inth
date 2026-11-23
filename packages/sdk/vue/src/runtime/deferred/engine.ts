@@ -16,9 +16,9 @@ import { readStoredRecordsFromCookieHeader } from '@inth/sdk/modules/persistence
 import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
-import { withClientData } from '../client-data';
+import { withClientData } from '../with-client-data';
 import type { ConsentConfig } from '../config';
-import { NUXT_PROJECT_URL_ENV } from '../env-names';
+import { NUXT_PROJECT_URL_ENV } from '../env-names.model';
 import { createVueConsentKernelContext } from '../kernel';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
 import type { NuxtMode } from '../nuxt-mode';

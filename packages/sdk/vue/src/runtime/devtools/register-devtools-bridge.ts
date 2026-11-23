@@ -1,7 +1,7 @@
 import { createDevTools } from '@inth/sdk/devtools';
 import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk/devtools';
 
-import { DEVTOOLS_BRIDGE_KEY } from './constants';
+import { DEVTOOLS_BRIDGE_KEY } from './devtools.model';
 
 /** What the app exposes to a same-origin DevTools tab page. */
 export interface DevToolsBridge {

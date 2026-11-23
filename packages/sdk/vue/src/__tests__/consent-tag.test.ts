@@ -13,7 +13,7 @@ import { renderToString } from 'vue/server-renderer';
 import ConsentTag from '../runtime/components/tag.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
-import { symbolInit } from '../runtime/utils/symbols';
+import { symbolInit } from '../runtime/utils/consent-symbols.model';
 
 const provides = function provides(branding: InitOutput['branding']) {
 	return {

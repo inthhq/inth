@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import type { Ref } from 'vue';
 
-import { useConsentKernelContext } from './kernel';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 export interface RequestRegion {
 	region?: string;

@@ -3,7 +3,7 @@ import { getDataDisabled } from '@inth/sdk/ui/primitives';
 import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import { computed, ref, useId, watch } from 'vue';
 
-import { provideTabsRootContext } from './context';
+import { provideTabsRootContext } from './use-tabs-root-context';
 
 const props = withDefaults(
 	defineProps<{

@@ -3,7 +3,7 @@ import type { CompleteTranslations } from '@inth/sdk/translations';
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 
-import { useConsentInit } from './init';
+import { useConsentInit } from './use-consent-init';
 
 /**
  * The copy a consent surface renders: the init translations for the

@@ -10,10 +10,10 @@ import {
 	useConsentKernel,
 	useHasOptOutConfirmationHost,
 	useOptOutConfirmationOpen,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import { useMounted } from '../composables/use-mounted';
-import { applyRootOverrides } from '../root-overrides';
-import { consentConfigKey, symbolConfirmationHosted } from '../utils/symbols';
+import { applyRootOverrides } from '../apply-root-overrides';
+import { consentConfigKey, symbolConfirmationHosted } from '../utils/consent-symbols.model';
 import {
 	ConsentBannerHost as ConsentBanner,
 	LazyConsentDialogTrigger,

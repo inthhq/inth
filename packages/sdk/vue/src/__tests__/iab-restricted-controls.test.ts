@@ -21,7 +21,7 @@ import { createIAB } from '../../../iab/src/index';
 import type { IABHandle } from '../../../iab/src/index';
 import IabPurposeItem from '../runtime/components/iab-purpose-item.vue';
 import IabVendorList from '../runtime/components/iab-vendor-list.vue';
-import { symbolInit } from '../runtime/utils/symbols';
+import { symbolInit } from '../runtime/utils/consent-symbols.model';
 
 // Vendor 755 must use legitimate interest for purpose 7.
 const publisherRestrictions = [

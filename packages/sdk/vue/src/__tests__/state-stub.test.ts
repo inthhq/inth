@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { defineComponent, h } from 'vue';
 import type { Ref } from 'vue';
 
-import { useState as createVueState } from '../runtime/composables/stubs/state';
+import { useState as createVueState } from '../runtime/composables/stubs/use-state';
 
 const mountConsumer = function mountConsumer(onSetup: () => void) {
 	return mount(

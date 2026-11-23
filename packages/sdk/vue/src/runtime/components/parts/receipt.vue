@@ -10,7 +10,7 @@ import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
-import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';
+import { useConsentKernel, useConsentSnapshot } from '../../composables/use-consent-kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
 import {

@@ -29,11 +29,11 @@ import {
 	useConsentKernel,
 	useConsentSnapshot,
 } from '../composables';
-import { useResolvedPresentation } from '../composables/experiment';
+import { useResolvedPresentation } from '../composables/use-experiment';
 import {
 	useOptOutConfirmationOpen,
 	useOptOutState,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import {

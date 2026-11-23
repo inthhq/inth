@@ -14,7 +14,7 @@ import type { OptOutReceiptData, RightsBundle } from '@inth/sdk/surface-state';
 import { onMounted, onScopeDispose, shallowRef } from 'vue';
 import type { ShallowRef } from 'vue';
 
-import { useConsentKernel } from '../../composables/kernel';
+import { useConsentKernel } from '../../composables/use-consent-kernel';
 
 /**
  * The kernel's surface session and its current state. Every prompt and

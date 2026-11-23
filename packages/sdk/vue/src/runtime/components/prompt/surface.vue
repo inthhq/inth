@@ -54,23 +54,23 @@ import {
 } from 'vue';
 
 import { useConsentConfig } from '../../composables/config';
-import { useConsentInit } from '../../composables/init';
+import { useConsentInit } from '../../composables/use-consent-init';
 import {
 	useConsentKernel,
 	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
-} from '../../composables/kernel';
+} from '../../composables/use-consent-kernel';
 import { useMounted } from '../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import type { RuntimeConsentConfig } from '../../kernel';
 import { slotAttrs } from '../../utils/slot-attrs';
-import { loadConsentDialog } from '../dialog/load';
+import { loadConsentDialog } from '../dialog/load-consent-dialog';
 import ChoiceButton from '../parts/choice-button.vue';
-import { provideChoiceDraft } from '../parts/draft';
-import { useHydrationHold } from '../parts/hydration-hold';
+import { provideChoiceDraft } from '../parts/use-choice-draft';
+import { useHydrationHold } from '../parts/use-hydration-hold';
 import InlineLegalLinks from '../parts/inline-legal-links.vue';
-import { useRetryableComponent } from '../parts/retryable-component';
+import { useRetryableComponent } from '../parts/use-retryable-component';
 import { usePhoneLayout } from '../parts/use-phone-layout';
 import {
 	rightsBundleOf,
@@ -78,9 +78,9 @@ import {
 	useSurfaceSession,
 } from '../parts/use-surface-session';
 import EarlyTapScript from './early-tap-script';
-import { bannerPageRegionKey } from './page-region';
+import { bannerPageRegionKey } from './banner-page-region-key';
 import BannerTag from './tag.vue';
-import type { ActionGroups, ContainerStyles, PromptContainer } from './types';
+import type { ActionGroups, ContainerStyles, PromptContainer } from './prompt.model';
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
 const loadPanel = () => import('./panel.vue');

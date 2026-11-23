@@ -6,10 +6,10 @@
  * stub signature).
  */
 
-export * from '../composables/stubs/cookie';
+export * from '../composables/stubs/use-cookie';
 export * from '../composables/stubs/fetch';
-export * from '../composables/stubs/requestHeaders';
-export * from '../composables/stubs/state';
+export * from '../composables/stubs/use-request-headers';
+export * from '../composables/stubs/use-state';
 
 export const useHead = function useHead(_input?: unknown): void {
 	// Plain Vue does not have Nuxt head management; the Vue plugin adds the

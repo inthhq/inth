@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import type { Ref } from 'vue';
 
-import { useConsentKernelContext } from './kernel';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 /**
  * The visitor's consent language as a writable ref.

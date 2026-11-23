@@ -1,8 +1,8 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 
-import type { IabPreferenceTab } from './iabSelection';
-import { useConsentKernelContext } from './kernel';
+import type { IabPreferenceTab } from './use-consent-iab-selection';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 /**
  * One tab per kernel. `InthProvider` mounts the banner and the dialog one at a

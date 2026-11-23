@@ -2,12 +2,12 @@ import { getIABControls } from '@inth/sdk/engine';
 import { computed } from 'vue';
 import type { Ref } from 'vue';
 
-import { useIabPreferenceTab } from './iab-preference-tab';
+import { useIabPreferenceTab } from './use-iab-preference-tab';
 // Imported from the sibling module (not `#imports`) to avoid a circular
 // evaluation through the plain-Vue `#imports` shim, which re-exports this
 // file: `iabSelection -> #imports -> composables/index -> iabSelection`.
-import { useConsentInit } from './init';
-import { useConsentKernel, useConsentKernelContext } from './kernel';
+import { useConsentInit } from './use-consent-init';
+import { useConsentKernel, useConsentKernelContext } from './use-consent-kernel';
 
 export type IabPreferenceTab = 'purposes' | 'vendors';
 

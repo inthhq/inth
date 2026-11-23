@@ -57,7 +57,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';

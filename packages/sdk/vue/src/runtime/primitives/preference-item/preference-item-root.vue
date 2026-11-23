@@ -7,8 +7,8 @@ import {
 } from '@inth/sdk/ui/primitives';
 import { computed, ref, useId, watch } from 'vue';
 
-import { providePreferenceItemContext } from './context';
-import { preferenceItemVariants } from './variants';
+import { providePreferenceItemContext } from './use-preference-item-context';
+import { preferenceItemVariants } from './preference-item-variants';
 
 const props = withDefaults(
 	defineProps<{

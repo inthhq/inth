@@ -16,7 +16,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../utils/symbols';
+} from '../utils/consent-symbols.model';
 import { useConsentConfig } from './config';
 
 /**

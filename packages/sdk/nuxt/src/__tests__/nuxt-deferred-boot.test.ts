@@ -13,8 +13,8 @@ import { describe, expect, test } from 'vitest';
 
 import { canDeferEngine } from '../../../core/src/surface-actions/can-defer-engine';
 import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';
-import { DEFERRED_ENGINE_MANIFEST_KEY } from '../../../vue/src/runtime/deferred/boot';
-import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/lazy-modules';
+import { DEFERRED_ENGINE_MANIFEST_KEY } from '../../../vue/src/runtime/deferred/deferred-boot.model';
+import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/is-deferred-banner-module';
 import type { RuntimeConsentConfig } from '../../../vue/src/runtime/kernel';
 import {
 	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,

@@ -46,14 +46,14 @@ import {
 	useConsentInit,
 	useHasConsentUi,
 } from '../composables';
-import { useConsentDraft } from '../composables/draft';
+import { useConsentDraft } from '../composables/use-consent-draft';
 import {
 	useConsentKernel,
 	useConsentSnapshot,
 	useOptInConfirmationHost,
 	useOptOut,
 	useOptOutState,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { switchVariants } from '../primitives/switch-variants';

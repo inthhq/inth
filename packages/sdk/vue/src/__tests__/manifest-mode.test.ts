@@ -9,7 +9,7 @@ import {
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';
-import { manifest, selectedMode } from '../runtime/modes';
+import { manifest, selectedMode } from '../runtime/modes.model';
 import {
 	readNuxtMode,
 	readNuxtRoutePrefix,

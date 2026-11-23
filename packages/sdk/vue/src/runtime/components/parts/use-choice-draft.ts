@@ -6,8 +6,8 @@ import type {
 import { inject, onScopeDispose, provide, shallowRef, watch } from 'vue';
 import type { InjectionKey, ShallowRef } from 'vue';
 
-import { useResolvedPresentation } from '../../composables/experiment';
-import { useConsentKernel } from '../../composables/kernel';
+import { useResolvedPresentation } from '../../composables/use-experiment';
+import { useConsentKernel } from '../../composables/use-consent-kernel';
 
 /** A prompt's or dialog's preference draft and its current state. */
 export interface ChoiceDraft {

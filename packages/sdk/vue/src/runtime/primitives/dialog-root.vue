@@ -5,7 +5,7 @@
  */
 import { provide } from 'vue';
 
-import { dialogContextKey } from './keys';
+import { dialogContextKey } from './primitive-keys.model';
 
 const props = withDefaults(
 	defineProps<{

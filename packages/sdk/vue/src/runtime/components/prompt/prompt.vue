@@ -33,15 +33,15 @@ import {
 import {
 	useConsentSnapshot,
 	useOptInConfirmationHost,
-} from '../../composables/kernel';
+} from '../../composables/use-consent-kernel';
 import { useConsentPolicyActions } from '../../composables/use-consent-policy-actions';
 import { useMounted } from '../../composables/use-mounted';
-import { useHydrationHold } from '../parts/hydration-hold';
-import { useRetryableComponent } from '../parts/retryable-component';
-import type { RetryableComponent } from '../parts/retryable-component';
-import { promptContainers, promptContainersKey } from './containers';
-import type { PromptContainers } from './containers';
-import { bannerPageRegionKey } from './page-region';
+import { useHydrationHold } from '../parts/use-hydration-hold';
+import { useRetryableComponent } from '../parts/use-retryable-component';
+import type { RetryableComponent } from '../parts/use-retryable-component';
+import { promptContainers, promptContainersKey } from './prompt-containers';
+import type { PromptContainers } from './prompt-containers';
+import { bannerPageRegionKey } from './banner-page-region-key';
 
 /**
  * Local overrides for the prompt. Each one beats `presentation.prompt` and

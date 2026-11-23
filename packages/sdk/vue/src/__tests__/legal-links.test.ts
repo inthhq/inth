@@ -8,7 +8,7 @@ import ConsentLegalLinks from '../runtime/components/legal-links.vue';
 import ConsentLink from '../runtime/components/link.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
-import { symbolInit } from '../runtime/utils/symbols';
+import { symbolInit } from '../runtime/utils/consent-symbols.model';
 
 const global = {
 	provide: {

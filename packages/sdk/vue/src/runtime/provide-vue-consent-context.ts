@@ -8,7 +8,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from './utils/symbols';
+} from './utils/consent-symbols.model';
 
 export const provideVueConsentContext = function provideVueConsentContext(
 	app: App,

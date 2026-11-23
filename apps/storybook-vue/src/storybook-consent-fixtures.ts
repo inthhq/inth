@@ -25,7 +25,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../../../packages/sdk/vue/src/runtime/utils/symbols';
+} from '../../../packages/sdk/vue/src/runtime/utils/consent-symbols.model';
 import {
 	storybookChoiceRecord,
 	storybookIABPolicy,

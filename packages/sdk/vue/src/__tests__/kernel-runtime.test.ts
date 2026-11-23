@@ -18,7 +18,7 @@ import { renderToString } from 'vue/server-renderer';
 
 import InthProvider from '../runtime/components/inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import { useHasConsent as getConsentedCategories } from '../runtime/composables/consent';
+import { useHasConsent as getConsentedCategories } from '../runtime/composables/use-consent';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolActiveUI,
@@ -27,7 +27,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 import type {
 	RuntimeConsentConfig,

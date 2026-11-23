@@ -22,9 +22,9 @@ import { ConsentBannerHost } from '../runtime/components/lazy-surfaces';
 import {
 	promptContainers,
 	promptContainersKey,
-} from '../runtime/components/prompt/containers';
-import type { PromptContainerLoader } from '../runtime/components/prompt/containers';
-import { createDeferredContext } from '../runtime/deferred/shell';
+} from '../runtime/components/prompt/prompt-containers';
+import type { PromptContainerLoader } from '../runtime/components/prompt/prompt-containers';
+import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
 import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
@@ -37,7 +37,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

@@ -12,7 +12,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { testing } from '../testing';
 import { createVueConsentKernelContext } from './test-kernel';
 

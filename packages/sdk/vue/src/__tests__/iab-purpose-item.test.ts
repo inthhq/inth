@@ -11,7 +11,7 @@ import { ref } from 'vue';
 
 import IabPurposeItem from '../runtime/components/iab-purpose-item.vue';
 import IabStackItem from '../runtime/components/iab-stack-item.vue';
-import { symbolInit } from '../runtime/utils/symbols';
+import { symbolInit } from '../runtime/utils/consent-symbols.model';
 
 const purpose = (hasConsentBasis: boolean) => ({
 	description: '',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, provide } from 'vue';
 
-import { accordionContextKey, accordionItemContextKey } from './keys';
+import { accordionContextKey, accordionItemContextKey } from './primitive-keys.model';
 
 const props = defineProps<{
 	value: string;

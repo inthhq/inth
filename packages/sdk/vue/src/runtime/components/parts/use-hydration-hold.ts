@@ -1,6 +1,6 @@
 import { onScopeDispose } from 'vue';
 
-import { useConsentKernelContext } from '../../composables/kernel';
+import { useConsentKernelContext } from '../../composables/use-consent-kernel';
 
 /**
  * Keep the Nuxt plugin's deferred banner on the server's snapshot until

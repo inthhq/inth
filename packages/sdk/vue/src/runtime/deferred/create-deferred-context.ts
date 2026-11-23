@@ -66,17 +66,17 @@ import {
 	snapshotToDisplayData,
 	toKernelActiveUI,
 	toVueActiveUI,
-} from '../display-data';
-import type { VueConsentDisplayData } from '../display-data';
+} from '../display-data.model';
+import type { VueConsentDisplayData } from '../display-data.model';
 import type {
 	ConsentBannerView,
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
 } from '../kernel';
-import { withRegisteredScripts } from '../registered-scripts';
-import type { RegisteredScripts } from '../registered-scripts';
-import { removePlainScripts } from './scripts';
-import { scheduleDeferredEngine } from './trigger';
+import { withRegisteredScripts } from '../with-registered-scripts';
+import type { RegisteredScripts } from '../with-registered-scripts';
+import { removePlainScripts } from './remove-plain-scripts';
+import { scheduleDeferredEngine } from './schedule-deferred-engine';
 
 /** Builds the engine's context, from a commit made before it, if any. @internal */
 export type DeferredEngineFactory = (

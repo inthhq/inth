@@ -6,7 +6,7 @@ import { defineNitroPlugin } from 'nitropack/runtime';
 
 import bannerFiles from '#inth/banner-preload-files';
 
-import { quietBannerHead } from './banner-preload-priority';
+import { quietBannerHead } from './banner-preload-priority.model';
 
 export default defineNitroPlugin((nitroApp) => {
 	if (bannerFiles.length === 0) {

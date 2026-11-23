@@ -6,7 +6,7 @@ import type {
 import { toValue } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
-import { useConsentKernelContext } from './kernel';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 /**
  * Get the app's event dispatcher.

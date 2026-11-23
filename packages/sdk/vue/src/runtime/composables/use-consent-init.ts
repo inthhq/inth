@@ -1,6 +1,6 @@
 import { inject } from 'vue';
 
-import { symbolInit } from '../utils/symbols';
+import { symbolInit } from '../utils/consent-symbols.model';
 
 export const useConsentInit = function useConsentInit() {
 	const init = inject(symbolInit);

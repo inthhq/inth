@@ -3,7 +3,7 @@ import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
 import { inth, manifest } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
-import { symbolKernel } from '../runtime/utils/symbols';
+import { symbolKernel } from '../runtime/utils/consent-symbols.model';
 
 const cleanups: (() => void)[] = [];
 

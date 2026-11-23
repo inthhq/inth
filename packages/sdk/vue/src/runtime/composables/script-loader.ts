@@ -3,7 +3,7 @@ import { onScopeDispose, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
 import type { RegisteredScripts } from '../kernel';
-import { useConsentKernelContext } from './kernel';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 /** What {@link useScriptLoader} returns. */
 export interface ScriptLoaderHandle {

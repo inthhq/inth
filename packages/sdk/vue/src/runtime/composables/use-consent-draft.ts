@@ -3,8 +3,8 @@ import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { PreferenceDraftSaveOptions } from '@inth/sdk/preference-draft';
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
 
-import { useResolvedPresentation } from './experiment';
-import { useConsentKernelContext } from './kernel';
+import { useResolvedPresentation } from './use-experiment';
+import { useConsentKernelContext } from './use-consent-kernel';
 
 /**
  * Editable, unmasked choices scoped to the categories the visitor reviewed,

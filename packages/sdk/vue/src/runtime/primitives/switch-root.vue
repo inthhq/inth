@@ -7,7 +7,7 @@
  */
 import { provide } from 'vue';
 
-import { switchCheckedKey } from './keys';
+import { switchCheckedKey } from './primitive-keys.model';
 
 const props = defineProps<{
 	disabled?: boolean;

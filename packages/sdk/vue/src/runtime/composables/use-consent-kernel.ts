@@ -25,7 +25,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../utils/symbols';
+} from '../utils/consent-symbols.model';
 
 export const useConsentKernel = function useConsentKernel() {
 	const kernel = inject(symbolKernel);

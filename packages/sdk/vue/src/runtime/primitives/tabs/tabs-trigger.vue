@@ -6,7 +6,7 @@ import {
 } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
-import { useTabsRootContext } from './context';
+import { useTabsRootContext } from './use-tabs-root-context';
 
 const props = withDefaults(defineProps<{ class?: string; value: string }>(), {
 	class: undefined,

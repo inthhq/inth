@@ -31,7 +31,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 
 const initFixture: InitOutput = {
 	branding: 'inth',

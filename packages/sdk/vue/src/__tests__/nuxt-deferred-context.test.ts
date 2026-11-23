@@ -22,12 +22,12 @@ import type { MockInstance } from 'vitest';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import { useEventDispatcher } from '../runtime/composables/event-dispatcher';
-import type { EventDispatcher } from '../runtime/composables/event-dispatcher';
-import { useConsentLanguage } from '../runtime/composables/language';
+import { useEventDispatcher } from '../runtime/composables/use-event-dispatcher';
+import type { EventDispatcher } from '../runtime/composables/use-event-dispatcher';
+import { useConsentLanguage } from '../runtime/composables/use-consent-language';
 import { useScriptLoader } from '../runtime/composables/script-loader';
-import { createDeferredContext } from '../runtime/deferred/shell';
-import type { DeferredEngineFactory } from '../runtime/deferred/shell';
+import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
+import type { DeferredEngineFactory } from '../runtime/deferred/create-deferred-context';
 import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
@@ -36,7 +36,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

@@ -12,7 +12,7 @@
 import { cloneVNode, defineComponent, inject, mergeProps } from 'vue';
 import type { VNode } from 'vue';
 
-import { accordionItemContextKey } from './keys';
+import { accordionItemContextKey } from './primitive-keys.model';
 
 const firstElementVNode = function firstElementVNode(
 	nodes: VNode[] | undefined

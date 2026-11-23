@@ -3,7 +3,7 @@ import { isVendorAllowed } from '@inth/sdk/engine';
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 
-import { useConsentKernel, useConsentKernelContext } from './kernel';
+import { useConsentKernel, useConsentKernelContext } from './use-consent-kernel';
 
 const useStoredConsent = function useStoredConsent() {
 	return useConsentKernelContext().storedConsent;

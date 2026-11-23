@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue';
 
-import { accordionItemContextKey } from './keys';
+import { accordionItemContextKey } from './primitive-keys.model';
 
 const item = inject(accordionItemContextKey);
 </script>

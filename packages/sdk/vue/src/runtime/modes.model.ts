@@ -25,7 +25,7 @@ import type {
 	BrowserManifestOptions,
 } from '@inth/sdk/transports/manifest-browser';
 
-import { VITE_PROJECT_URL_ENV } from './env-names';
+import { VITE_PROJECT_URL_ENV } from './env-names.model';
 
 export type {
 	HostedModeFactory,

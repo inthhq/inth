@@ -20,13 +20,13 @@ import {
 	useState as useNuxtState,
 } from '#imports';
 
-import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme';
+import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme-script-key';
 import { loadConsentBanner } from './components/lazy-surfaces';
-import type { NuxtConsentBoot } from './deferred/boot';
+import type { NuxtConsentBoot } from './deferred/deferred-boot.model';
 import type { NuxtEngineInput } from './deferred/engine';
-import { isDeferredBannerModule } from './deferred/lazy-modules';
-import { createDeferredContext } from './deferred/shell';
-import { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers';
+import { isDeferredBannerModule } from './deferred/is-deferred-banner-module';
+import { createDeferredContext } from './deferred/create-deferred-context';
+import { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers.model';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from './kernel';
 import {
 	readNuxtMode,
@@ -34,13 +34,13 @@ import {
 	resolvesOnServer,
 } from './nuxt-mode';
 import type { NuxtConsentModeConfig } from './nuxt-mode';
-import { provideVueConsentContext } from './provide';
-import type { NuxtConsentRequest } from './server-consent';
-import { isSharedNuxtRender } from './shared-render';
+import { provideVueConsentContext } from './provide-vue-consent-context';
+import type { NuxtConsentRequest } from './resolve-nuxt-consent';
+import { isSharedNuxtRender } from './is-shared-nuxt-render';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
-import { consentConfigKey } from './utils/symbols';
+import { consentConfigKey } from './utils/consent-symbols.model';
 
-export { withClientData } from './client-data';
+export { withClientData } from './with-client-data';
 
 /**
  * Development only: after the first init, warn when the `/v1/consent/init` request the
@@ -217,7 +217,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// generator only when the config changes.
 	const tokensCSS = shallowRef<string>();
 	const renderTokens = async (): Promise<void> => {
-		const { generateTokensCSS } = await import('./theme-tokens');
+		const { generateTokensCSS } = await import('./generate-tokens-css');
 		const { colorScheme, theme, tokens } = config.value;
 		tokensCSS.value = generateTokensCSS(tokens, { colorScheme, theme });
 	};
@@ -318,7 +318,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			Date.now()
 		);
 		if (serverResolves) {
-			const { resolveNuxtConsent } = await import('./server-consent');
+			const { resolveNuxtConsent } = await import('./resolve-nuxt-consent');
 			// The consent route's backend: a private `NUXT_INTH_PROJECT_URL`
 			// gives the server an address of its own.
 			const serverProjectUrl = (
@@ -396,7 +396,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		// starts from the server's snapshot; the engine loads after the page.
 		const [{ DEFERRED_ENGINE_MANIFEST_KEY }, { canDeferEngine }] =
 			await Promise.all([
-				import('./deferred/boot'),
+				import('./deferred/deferred-boot.model'),
 				import('@inth/sdk/server'),
 			]);
 		const snapshot = context.kernel.getSnapshot();
@@ -419,7 +419,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			snapshot.activeUI !== 'banner'
 		) {
 			const { QUIET_BANNER_CONTEXT_KEY } =
-				await import('./server/banner-preload-priority');
+				await import('./server/banner-preload-priority.model');
 			event.context[QUIET_BANNER_CONTEXT_KEY] = true;
 		}
 	} else {

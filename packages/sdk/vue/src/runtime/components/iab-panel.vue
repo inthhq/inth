@@ -27,13 +27,13 @@ import {
 	useIabTranslations,
 } from '#inth/composables';
 
-import { useIabPreferenceTab } from '../composables/iab-preference-tab';
+import { useIabPreferenceTab } from '../composables/use-iab-preference-tab';
 import {
 	useConsentKernel,
 	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import {
 	useConsentPolicyActions,
 	useFocusBlocking,

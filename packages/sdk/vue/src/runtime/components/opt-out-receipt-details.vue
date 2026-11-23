@@ -6,7 +6,7 @@ import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import { computed } from 'vue';
 
 import { useConsentInit } from '../composables';
-import { useOptOutState } from '../composables/kernel';
+import { useOptOutState } from '../composables/use-consent-kernel';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 
 withDefaults(

@@ -67,17 +67,17 @@ import {
 	snapshotToDisplayData,
 	toKernelActiveUI,
 	toVueActiveUI,
-} from './display-data';
-import type { VueConsentDisplayData } from './display-data';
-import { pickAllowedInitHeaders } from './init-headers';
-import { withRegisteredScripts } from './registered-scripts';
-import type { RegisteredScripts } from './registered-scripts';
+} from './display-data.model';
+import type { VueConsentDisplayData } from './display-data.model';
+import { pickAllowedInitHeaders } from './init-headers.model';
+import { withRegisteredScripts } from './with-registered-scripts';
+import type { RegisteredScripts } from './with-registered-scripts';
 
-export type { VueConsentDisplayData } from './display-data';
-export { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers';
-export { provideVueConsentContext } from './provide';
-export type { RegisteredScripts } from './registered-scripts';
-export { withRegisteredScripts } from './registered-scripts';
+export type { VueConsentDisplayData } from './display-data.model';
+export { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers.model';
+export { provideVueConsentContext } from './provide-vue-consent-context';
+export type { RegisteredScripts } from './with-registered-scripts';
+export { withRegisteredScripts } from './with-registered-scripts';
 
 /**
  * What the stock banner reads while it waits to hydrate under the Nuxt

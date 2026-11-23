@@ -4,7 +4,7 @@ import type {
 	ConsentManifestPluginOptions,
 } from '@inth/sdk/build';
 
-import { VITE_PROJECT_URL_ENV } from './runtime/env-names';
+import { VITE_PROJECT_URL_ENV } from './runtime/env-names.model';
 
 export type {
 	ConsentManifest,

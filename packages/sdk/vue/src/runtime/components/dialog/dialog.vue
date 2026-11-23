@@ -55,20 +55,20 @@ import {
 } from 'vue';
 
 import { useConsentConfig } from '../../composables/config';
-import { useResolvedPresentation } from '../../composables/experiment';
-import { useConsentInit } from '../../composables/init';
+import { useResolvedPresentation } from '../../composables/use-experiment';
+import { useConsentInit } from '../../composables/use-consent-init';
 import {
 	useConsentKernel,
 	useConsentSnapshot,
 	useHasConsentUi,
-} from '../../composables/kernel';
+} from '../../composables/use-consent-kernel';
 import { useMounted } from '../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
 import AdvertisingRow from '../parts/advertising-row.vue';
 import CategoryGroup from '../parts/category-group.vue';
 import ChoiceButton from '../parts/choice-button.vue';
-import { provideChoiceDraft } from '../parts/draft';
+import { provideChoiceDraft } from '../parts/use-choice-draft';
 import { takeReceiptFocus } from '../parts/receipt-focus';
 import RightsReceipt from '../parts/receipt.vue';
 import SaleRightsRow from '../parts/rights-row.vue';

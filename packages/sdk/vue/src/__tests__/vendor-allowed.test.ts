@@ -12,8 +12,8 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 import type { ComputedRef } from 'vue';
 
-import { useVendorAllowed } from '../runtime/composables/consent';
-import { symbolKernelContext } from '../runtime/utils/symbols';
+import { useVendorAllowed } from '../runtime/composables/use-consent';
+import { symbolKernelContext } from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const resolution = (patch: Partial<PolicyRule> = {}): PolicyResolution => {

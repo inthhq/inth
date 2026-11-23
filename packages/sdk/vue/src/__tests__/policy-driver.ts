@@ -66,7 +66,7 @@ import OptOutConfirmation from '../runtime/components/opt-out-confirmation.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import { useOptOutConfirmationOpen } from '../runtime/composables/kernel';
+import { useOptOutConfirmationOpen } from '../runtime/composables/use-consent-kernel';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolKernelContext,
@@ -75,7 +75,7 @@ import {
 	symbolInit,
 	symbolActiveUI,
 	symbolConsent,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { serializeWithoutComments } from './serialize-without-comments';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';

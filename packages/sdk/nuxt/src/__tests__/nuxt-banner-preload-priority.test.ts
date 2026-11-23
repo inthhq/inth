@@ -7,7 +7,7 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority';
+import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority.model';
 import { GLOBAL_COMPONENTS } from '../global-components';
 import { bannerOnlyFiles, preloadDeferredEngine } from '../prefetch';
 import type { ClientManifestChunk } from '../prefetch';

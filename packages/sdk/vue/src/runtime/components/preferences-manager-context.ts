@@ -1,7 +1,7 @@
 import type { PresentationAction } from '@inth/sdk/engine';
 import type { InjectionKey } from 'vue';
 
-import type { ConsentDraft } from '../composables/draft';
+import type { ConsentDraft } from '../composables/use-consent-draft';
 
 /**
  * Manager-owned draft and completion behavior for its inline widget.

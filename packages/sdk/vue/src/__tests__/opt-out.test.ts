@@ -22,7 +22,7 @@ import { defineComponent, h } from 'vue';
 
 import ConsentWidget from '../runtime/components/preferences.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import { useOptOutState } from '../runtime/composables/kernel';
+import { useOptOutState } from '../runtime/composables/use-consent-kernel';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolActiveUI,
@@ -31,7 +31,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';
 

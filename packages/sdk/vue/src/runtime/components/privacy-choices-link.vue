@@ -23,7 +23,7 @@ import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
 import { useConsentActiveUI, useConsentSnapshot } from '../composables';
-import { useResolvedPresentation } from '../composables/experiment';
+import { useResolvedPresentation } from '../composables/use-experiment';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import OptOutIcon from './opt-out-icon.vue';
 

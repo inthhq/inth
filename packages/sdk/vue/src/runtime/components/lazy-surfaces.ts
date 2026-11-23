@@ -30,7 +30,7 @@ import {
 	useConsentKernel,
 	useConsentKernelContext,
 	useOptInConfirmationHost,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import type { ConsentBannerView } from '../kernel';
 import {
 	symbolActiveUI,
@@ -38,7 +38,7 @@ import {
 	symbolInit,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../utils/symbols';
+} from '../utils/consent-symbols.model';
 import type OptOutConfirmationComponent from './opt-out-confirmation.vue';
 
 /**

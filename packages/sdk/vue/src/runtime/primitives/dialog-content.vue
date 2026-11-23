@@ -10,7 +10,7 @@ import {
 } from '@inth/sdk/ui/primitives/dialog';
 import { inject, ref, watchEffect } from 'vue';
 
-import { dialogContextKey } from './keys';
+import { dialogContextKey } from './primitive-keys.model';
 import { useFocusTrap } from './use-focus-trap';
 
 const dialog = inject(dialogContextKey);

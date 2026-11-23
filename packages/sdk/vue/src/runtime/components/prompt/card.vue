@@ -14,7 +14,7 @@ import '@inth/sdk/ui/styles/components/consent-surface.css';
 import '@inth/sdk/ui/styles/components/consent-card.css';
 
 import PromptSurface from './surface.vue';
-import type { ActionGroups, PromptContainer } from './types';
+import type { ActionGroups, PromptContainer } from './prompt.model';
 
 defineProps<{
 	container: PromptContainer;
