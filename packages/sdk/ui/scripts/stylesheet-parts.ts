@@ -1,14 +1,18 @@
 /**
- * Where each component's rules sit in `styles.css`. Names are the flat files
- * in `dist/styles/components` (`prompt` is the consent banner, `panel` the
+ * Where each component's rules sit. Names are the flat files in
+ * `dist/styles/components` (`prompt` is the consent banner, `panel` the
  * consent dialog, `manager` the preference widget, `consent-gate` the
  * ConsentGate placeholder).
  *
- * Every group goes into `styles.css`: first-paint rules, then the v6
- * presentation rules, then the dialog rules. The order matters where a
- * dialog rule and a first-paint rule match the same element with the same
- * specificity: the dialog rule wins, as it did while it shipped in a
- * stylesheet that loaded later.
+ * `styles.css` holds the first-paint rules, then the dialog rules. The order
+ * matters where a dialog rule and a first-paint rule match the same element
+ * with the same specificity: the dialog rule wins, as it did while it
+ * shipped in a stylesheet that loaded later.
+ *
+ * The v6 Privacy Choices rules (`PRESENTATION_SHEETS` and
+ * `PRIVACY_CHOICES_DIALOG_COMPONENTS`) stay out of `styles.css`, so an app
+ * that imports it doesn't pay for UI it doesn't render yet. They ship in
+ * `styles/privacy-choices.css` and in sheets of their own.
  *
  * `generate-css-entrypoints.ts` fails the build when a component is in
  * none of the lists, so a new component needs a deliberate choice.
@@ -59,9 +63,8 @@ export const SURFACE_SHEETS = {
  * Drawer's scroll area). A page that renders a Card carries `tokens`,
  * `button`, `surface` and `card`, and no Banner or Drawer rule.
  *
- * Their rules sit in `styles.css` between the first-paint and the dialog
- * rules. They stay out of `first-paint` until a surface renders them, so
- * the hosts that inline that sheet don't carry them yet.
+ * Their rules open `styles/privacy-choices.css`; `styles.css` and
+ * `first-paint` don't carry them.
  */
 export const PRESENTATION_SHEETS = {
 	bar: ['consent-bar'],
@@ -71,7 +74,7 @@ export const PRESENTATION_SHEETS = {
 	surface: ['consent-surface'],
 } as const satisfies Record<string, readonly string[]>;
 
-/** Every component in `PRESENTATION_SHEETS`, in `styles.css` order. */
+/** Every component in `PRESENTATION_SHEETS`, in `styles/privacy-choices.css` order. */
 export const PRESENTATION_COMPONENTS = [
 	'consent-surface',
 	'consent-card',
@@ -82,8 +85,7 @@ export const PRESENTATION_COMPONENTS = [
 
 /**
  * Rendered only inside the consent dialog or the preference widget. Their
- * rules follow the first-paint rules in `styles.css`. `privacy-choices` is
- * the v6 dialog body; it renders over the `expand` sheet.
+ * rules follow the first-paint rules in `styles.css`.
  */
 export const DIALOG_COMPONENTS = [
 	'accordion',
@@ -92,11 +94,21 @@ export const DIALOG_COMPONENTS = [
 	'opt-out-confirmation',
 	'panel',
 	'preference-item',
-	'privacy-choices',
 	'switch',
 	'tabs',
 	'vendor-list',
 ] as const;
+
+/**
+ * The v6 "Your Privacy Choices" dialog body, in the
+ * `styles/sheets/privacy-choices-dialog.js` sheet and after the
+ * presentation rules in `styles/privacy-choices.css`. It renders over the
+ * `expand` sheet, whose `scroll` and `group` classes it reuses.
+ */
+export const PRIVACY_CHOICES_DIALOG_COMPONENTS = ['privacy-choices'] as const;
+
+/** The sheet that holds `PRIVACY_CHOICES_DIALOG_COMPONENTS`. */
+export const PRIVACY_CHOICES_DIALOG_SHEET = 'privacy-choices-dialog';
 
 /** Prefix of the IAB TCF components, which go into `iab/styles.css`. */
 export const IAB_PREFIX = 'iab-';

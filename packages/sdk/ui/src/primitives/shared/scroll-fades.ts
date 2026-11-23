@@ -1,8 +1,11 @@
 /**
  * Scroll-edge fades for consent scroll areas (LAY-08).
  *
- * The fade is a `mask-image` driven by `--fade-top` and `--fade-bottom`;
- * the stylesheet sets their lengths (20px and 28px) when the area carries
+ * The fade is a `mask-image` driven by `--inth-fade-top` and
+ * `--inth-fade-bottom`, which the stylesheet registers with `@property` so
+ * they animate. The prefix keeps the registration from claiming a name a
+ * host page already uses. The stylesheet sets their lengths (20px and 28px)
+ * when the area carries
  * `data-fade-top` or `data-fade-bottom`, and animates them over 150ms. This
  * controller only says which edges have more content beyond them, so the
  * lengths stay themeable in CSS.

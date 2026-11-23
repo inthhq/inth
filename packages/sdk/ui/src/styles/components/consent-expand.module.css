@@ -21,13 +21,13 @@
  *   --consent-expand-group-border-color  (--inth-border-strong)
  */
 
-@property --fade-top {
+@property --inth-fade-top {
 	syntax: '<length>';
 	inherits: false;
 	initial-value: 0px;
 }
 
-@property --fade-bottom {
+@property --inth-fade-bottom {
 	syntax: '<length>';
 	inherits: false;
 	initial-value: 0px;
@@ -70,8 +70,8 @@
 
 	/* A mask, not an overlay colour, so the fade works on any surface. */
 	.scroll {
-		--fade-top: 0px;
-		--fade-bottom: 0px;
+		--inth-fade-top: 0px;
+		--inth-fade-bottom: 0px;
 		flex: 1 1 auto;
 		min-height: 0;
 		max-height: var(--_consent-scroll-height, 360px);
@@ -85,31 +85,31 @@
 		-webkit-mask-image: linear-gradient(
 			to bottom,
 			transparent 0,
-			#000 var(--fade-top),
-			#000 calc(100% - var(--fade-bottom)),
+			#000 var(--inth-fade-top),
+			#000 calc(100% - var(--inth-fade-bottom)),
 			transparent 100%
 		);
 		mask-image: linear-gradient(
 			to bottom,
 			transparent 0,
-			#000 var(--fade-top),
-			#000 calc(100% - var(--fade-bottom)),
+			#000 var(--inth-fade-top),
+			#000 calc(100% - var(--inth-fade-bottom)),
 			transparent 100%
 		);
 		scrollbar-width: thin;
 		scrollbar-color: color-mix(in srgb, var(--inth-text) 18%, transparent)
 			transparent;
 		transition:
-			--fade-top var(--inth-duration-normal) var(--inth-easing-out),
-			--fade-bottom var(--inth-duration-normal) var(--inth-easing-out);
+			--inth-fade-top var(--inth-duration-normal) var(--inth-easing-out),
+			--inth-fade-bottom var(--inth-duration-normal) var(--inth-easing-out);
 	}
 
 	.scroll[data-fade-top] {
-		--fade-top: 20px;
+		--inth-fade-top: 20px;
 	}
 
 	.scroll[data-fade-bottom] {
-		--fade-bottom: var(--_consent-fade-end, 28px);
+		--inth-fade-bottom: var(--_consent-fade-end, 28px);
 	}
 
 	.scroll:focus-visible {

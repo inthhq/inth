@@ -21,7 +21,11 @@ import { describe, expect, test } from 'vitest';
 const SRC_DIR = join(__dirname, '..');
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 
-const ENTRYPOINTS = ['styles.css', join('iab', 'styles.css')];
+const ENTRYPOINTS = [
+	'styles.css',
+	join('iab', 'styles.css'),
+	join('styles', 'privacy-choices.css'),
+];
 
 const read = function read(path: string): string {
 	if (!existsSync(path)) {

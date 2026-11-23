@@ -95,7 +95,15 @@
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
-	:global(.inth-dark) .card::after {
+	/* The dark palette dims harder. No token carries this mix, so the rule
+	   lists every selector the dark tokens answer to: the SDK's class, a
+	   host's own `.dark`, and both on the script tag's shadow host. The
+	   pseudo-element keeps the minifier from folding the list into an
+	   `:is()`, which some engines don't match against a shadow host. */
+	:global(.dark) .card::after,
+	:global(.inth-dark) .card::after,
+	:global(:host(.dark)) .card::after,
+	:global(:host(.inth-dark)) .card::after {
 		background: color-mix(in srgb, var(--inth-overlay) 57%, transparent);
 	}
 
@@ -445,15 +453,6 @@
 		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #dc2626);
 		animation: privacy-choices-shake calc(var(--inth-duration-slow) * 1.8)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
-	}
-
-	:global(.inth-dark) .confirm[data-nudged='true'] {
-		background: color-mix(
-			in srgb,
-			var(--inth-danger, #f87171) 5%,
-			var(--inth-surface-hover)
-		);
-		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #f87171);
 	}
 
 	.confirmTitle {
@@ -909,6 +908,19 @@
 			width: 20px;
 			opacity: 1;
 		}
+	}
+
+	/* Theme switches flip the dialog in the same frame as the page
+	   (VIS-06), on <html> or on the script tag's shadow host. */
+	:global(html[data-theme-switching]) .backdrop,
+	:global(html[data-theme-switching]) .backdrop *,
+	:global(html[data-theme-switching]) .backdrop *::before,
+	:global(html[data-theme-switching]) .backdrop *::after,
+	:global(:host([data-theme-switching])) .backdrop,
+	:global(:host([data-theme-switching])) .backdrop *,
+	:global(:host([data-theme-switching])) .backdrop *::before,
+	:global(:host([data-theme-switching])) .backdrop *::after {
+		transition: none !important;
 	}
 
 	@keyframes privacy-choices-fade-in {

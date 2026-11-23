@@ -670,6 +670,8 @@
 			"default": "./lib/ui/dist/styles/dialog.js"
 		},
 		"./ui/styles/primitives.css": "./lib/ui/dist/styles/primitives.css",
+		"./ui/styles/privacy-choices.css": "./lib/ui/dist/styles/privacy-choices.css",
+		"./ui/styles/privacy-choices.tw3.css": "./lib/ui/dist/styles/privacy-choices.tw3.css",
 		"./ui/styles/sheets/*.css": "./lib/ui/dist/styles/sheets/*.css",
 		"./ui/styles/sheets/*": {
 			"types": "./lib/ui/dist-types/styles/sheets/*.d.ts",

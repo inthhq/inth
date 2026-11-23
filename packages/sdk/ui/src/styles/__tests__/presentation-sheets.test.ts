@@ -171,8 +171,20 @@ describe('v6 presentation sheets', async () => {
 	) as Record<keyof typeof PRESENTATION_SHEETS, Sheet>;
 	const tokens = await importSheet('tokens');
 	const button = await importSheet('button');
-	const styles = readDist(join(DIST_DIR, 'styles.css'));
-	const declaredOnRoot = rootVariables(styles);
+	// The variables a page that imports whole stylesheets declares.
+	const declaredOnRoot = rootVariables(
+		[
+			readDist(join(DIST_DIR, 'styles.css')),
+			readDist(join(DIST_DIR, 'styles', 'privacy-choices.css')),
+		].join('\n')
+	);
+	const dialogSource = readFileSync(
+		join(SOURCE_DIR, 'privacy-choices.module.css'),
+		'utf8'
+	);
+	const privacyChoices = readDist(
+		join(DIST_DIR, 'styles', 'privacy-choices.css')
+	);
 
 	test('each sheet has its own id, and its deferred twin the same one', async () => {
 		const deferred = await Promise.all(
@@ -241,14 +253,10 @@ describe('v6 presentation sheets', async () => {
 				/card-bottom-(?:left|right)|drawer-(?:left|right)|from-(?:left|right)|to-(?:left|right)/u
 			);
 		}
-		const dialog = readFileSync(
-			join(SOURCE_DIR, 'privacy-choices.module.css'),
-			'utf8'
-		);
 		expect(
-			declarations(dialog).filter((entry) => physical.test(entry))
+			declarations(dialogSource).filter((entry) => physical.test(entry))
 		).toEqual([]);
-		expect(dialog).toMatch(
+		expect(dialogSource).toMatch(
 			/\.segmented:dir\(rtl\)\[data-selected='1'\] \.segmentedThumb \{\s*transform: translateX\(-100%\);/u
 		);
 
@@ -428,6 +436,130 @@ describe('v6 presentation sheets', async () => {
 		expect(reduced).toContainEqual(
 			expect.stringMatching(/\|background\|var\(--inth-overlay-block-solid,/u)
 		);
+	});
+
+	test('the top Drawer spaces its tag by logical margins, so RTL mirrors it', () => {
+		const tag = declarations(sheets.drawer.css).filter((entry) =>
+			/\[data-placement=drawer-top\] \.inth-ui-tag-[\w-]+\|margin/u.test(entry)
+		);
+
+		expect(tag.map((entry) => entry.split('|').slice(2).join('|'))).toEqual([
+			'margin-block|var(--inth-space-sm) 0',
+			'margin-inline|0 var(--_consent-gutter)',
+		]);
+	});
+
+	test('[LAY-08] the scroll fades register prefixed properties only', () => {
+		// `@property` is document-wide, so `--fade-top` would retype a host's
+		// own variable of that name.
+		const registered = [
+			...sheets.expand.css.matchAll(/@property\s+(?<name>--[\w-]+)/gu),
+		].map((match) => match.groups?.name);
+
+		expect(registered).toEqual(['--inth-fade-top', '--inth-fade-bottom']);
+		expect(sheets.expand.css).toMatch(/var\(--inth-fade-top\)/u);
+		for (const [name, sheet] of Object.entries(sheets)) {
+			expect({
+				name,
+				unprefixed: /--fade-(?:top|bottom)/u.test(sheet.css),
+			}).toEqual({ name, unprefixed: false });
+		}
+		expect(privacyChoices).not.toMatch(/--fade-(?:top|bottom)/u);
+	});
+
+	test('[VIS-05] dark values reach every selector the dark tokens answer to', () => {
+		// The theme's dark tokens apply under `.dark`, `.inth-dark` and both
+		// on a shadow host. A rule keyed to one of them leaves the others
+		// with the light value.
+		const darkSelectors = [
+			'.dark',
+			'.inth-dark',
+			':host(.dark)',
+			':host(.inth-dark)',
+		];
+		const darkRules = (css: string) => {
+			const found: string[][] = [];
+			parse(css).walkRules((rule) => {
+				if (/(?:^|[\s,(])\.(?:inth-)?dark\b/u.test(rule.selector)) {
+					found.push(
+						rule.selectors.map((part) => part.trim().split(' ')[0] ?? '')
+					);
+				}
+			});
+			return found;
+		};
+		const v6 = [
+			...Object.values(sheets).map((sheet) => sheet.css),
+			privacyChoices,
+		].join('\n');
+
+		// Only the nested-sheet dim has no dark token; it lists all four.
+		const dim: string[][] = [];
+		parse(privacyChoices).walkDecls('background', (node) => {
+			const rule = node.parent as Container & { selectors?: string[] };
+			if (node.value.includes('57%') && rule.selectors) {
+				dim.push(rule.selectors.map((part) => part.split(' ')[0] ?? ''));
+			}
+		});
+		expect(dim).toEqual([darkSelectors]);
+		for (const prefixes of darkRules(v6)) {
+			expect(prefixes).toEqual(darkSelectors);
+		}
+		// A minifier that folds the list into `:is()` would put `:host` where
+		// some engines don't match it against the shadow host.
+		expect(v6).not.toMatch(/:is\([^{]*:host/u);
+		// The scrim and the nudge take their dark values from tokens the
+		// dark palette sets.
+		const tokenReads = declarations(v6).filter((entry) =>
+			/\|(?:background|box-shadow)\|.*var\(--inth-(?:overlay-block|overlay-block-solid|danger),/u.test(
+				entry
+			)
+		);
+		expect(tokenReads.length).toBeGreaterThanOrEqual(3);
+		for (const token of ['overlay-block', 'overlay-block-solid', 'danger']) {
+			expect(tokens.css).toMatch(
+				new RegExp(`html\\.inth-dark[^{]*\\{[^}]*--inth-${token}:`, 'u')
+			);
+		}
+	});
+
+	test('[VIS-06] the theme-switch guard covers the surface and the dialog, in a shadow root too', () => {
+		const guarded = (css: string, className: string) => {
+			const selectors: string[] = [];
+			parse(css).walkRules((rule) => {
+				const reset = rule.nodes.some(
+					(node) =>
+						node.type === 'decl' &&
+						node.prop === 'transition' &&
+						node.value === 'none' &&
+						node.important
+				);
+				if (reset) {
+					selectors.push(
+						...rule.selectors.filter((selector) => selector.includes(className))
+					);
+				}
+			});
+			return selectors.map((selector) => selector.replace(className, '.root'));
+		};
+		// The minifier writes `.root *::before` as `.root :before`.
+		const expected = [
+			'html[data-theme-switching]',
+			':host([data-theme-switching])',
+		].flatMap((scope) =>
+			['', ' *', ' :before', ' :after'].map((part) => `${scope} .root${part}`)
+		);
+		const surfaceRoot = classNamesOf('consent-surface').find((name) =>
+			name.startsWith('inth-ui-root-')
+		);
+		const dialogRoot = classNamesOf('privacy-choices').find((name) =>
+			name.startsWith('inth-ui-backdrop-')
+		);
+
+		expect(surfaceRoot).toBeDefined();
+		expect(dialogRoot).toBeDefined();
+		expect(guarded(sheets.surface.css, `.${surfaceRoot}`)).toEqual(expected);
+		expect(guarded(privacyChoices, `.${dialogRoot}`)).toEqual(expected);
 	});
 
 	test("the phone rules, the dialog's too, use the resolver breakpoint", () => {

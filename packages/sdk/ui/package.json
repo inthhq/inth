@@ -56,6 +56,8 @@
 			"default": "./dist/styles/dialog.js"
 		},
 		"./styles/primitives.css": "./dist/styles/primitives.css",
+		"./styles/privacy-choices.css": "./dist/styles/privacy-choices.css",
+		"./styles/privacy-choices.tw3.css": "./dist/styles/privacy-choices.tw3.css",
 		"./styles/sheets/*.css": "./dist/styles/sheets/*.css",
 		"./styles/sheets/*": {
 			"types": "./dist-types/styles/sheets/*.d.ts",

@@ -66,7 +66,10 @@
 		pointer-events: none;
 	}
 
-	/* One page-wide overlay for every presentation while blocking. */
+	/* One page-wide overlay for every presentation while blocking. The
+	   overlay tokens carry the dark values, under every selector the dark
+	   palette answers to (`.dark`, `.inth-dark`, and both on the script
+	   tag's shadow host). */
 	.scrim {
 		position: fixed;
 		inset: 0;
@@ -76,10 +79,6 @@
 		backdrop-filter: blur(3px);
 		animation: consent-surface-fade-in var(--inth-duration-slow)
 			var(--_consent-ease);
-	}
-
-	:global(.inth-dark) .scrim {
-		background: var(--inth-overlay-block, rgba(0, 0, 0, 0.72));
 	}
 
 	.root[data-state='closed'] .scrim {
@@ -92,10 +91,6 @@
 			-webkit-backdrop-filter: none;
 			backdrop-filter: none;
 			background: var(--inth-overlay-block-solid, rgba(15, 23, 42, 0.78));
-		}
-
-		:global(.inth-dark) .scrim {
-			background: var(--inth-overlay-block-solid, rgba(0, 0, 0, 0.85));
 		}
 	}
 
@@ -362,11 +357,17 @@
 		}
 	}
 
-	/* Theme switches flip every surface in the same frame (VIS-06). */
+	/* Theme switches flip every surface in the same frame (VIS-06). The
+	   guard sets the attribute on <html>, or on the shadow host when the
+	   script tag renders into a shadow root. */
 	:global(html[data-theme-switching]) .root,
 	:global(html[data-theme-switching]) .root *,
 	:global(html[data-theme-switching]) .root *::before,
-	:global(html[data-theme-switching]) .root *::after {
+	:global(html[data-theme-switching]) .root *::after,
+	:global(:host([data-theme-switching])) .root,
+	:global(:host([data-theme-switching])) .root *,
+	:global(:host([data-theme-switching])) .root *::before,
+	:global(:host([data-theme-switching])) .root *::after {
 		transition: none !important;
 	}
 
