@@ -397,11 +397,7 @@ export const buildInitialKernelState = function buildInitialKernelState(
 		user,
 		evaluationPolicy
 	);
-	const {
-		choice: explicitChoice,
-		optOut,
-		vendorChoice,
-	} = derivedRecords;
+	const { choice: explicitChoice, optOut, vendorChoice } = derivedRecords;
 
 	const iab = buildInitialIab(
 		config.initialExternalPermissions === undefined

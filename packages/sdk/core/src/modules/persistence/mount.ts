@@ -21,7 +21,10 @@ import {
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
 import { generateUuidV7 } from '../../libs/subject-uuid.model';
-import { clearStoredRecords } from './persistence-clear.store';
+import {
+	clearStoredAccountLayer,
+	clearStoredRecords,
+} from './persistence-clear.store';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
@@ -349,24 +352,25 @@ export const mountPersistence = function mountPersistence(
 		}
 	};
 
-	/** Writes the stored records again under the kernel's subject ID. */
+	/** Writes the stored browser records again under the kernel's subject ID. */
 	const rekeyRecords = function rekeyRecords(snapshot: ConsentSnapshot): void {
 		// The vendor record carries the subject only once a vendor decision
 		// exists. Scheduling without one would run the writer's clear branch
 		// and delete a stored denial this kernel never hydrated. The notice
 		// record carries it for a visitor who only acknowledged a notice.
 		// Without any of them, the subject lives in memory only.
+		const browserRecords = kernel.getBrowserRecords();
 		const kinds: WriteKind[] = [];
-		if (snapshot.explicitChoice) {
+		if (browserRecords.choice) {
 			kinds.push('choice');
 		}
 		if (snapshot.noticeDismissal) {
 			kinds.push('notice');
 		}
-		if (snapshot.optOut) {
+		if (browserRecords.optOut) {
 			kinds.push('optOut');
 		}
-		if (snapshot.vendorChoice) {
+		if (browserRecords.vendorChoice) {
 			kinds.push('vendors');
 		}
 		if (kinds.length > 0) {
@@ -484,18 +488,34 @@ export const mountPersistence = function mountPersistence(
 			request('optOut');
 		}),
 		kernel.onOptOutGpcReportedChange(() => {
-			if (kernel.getSnapshot().optOut !== null) {
+			if (kernel.getBrowserRecords().optOut !== null) {
 				state.optOutRecorded = true;
 				state.optOutSynced = true;
 				request('optOut');
 			}
 		}),
 		kernel.onOptOutReceiptDataChange((_data, fromHydration) => {
-			if (!fromHydration && kernel.getSnapshot().optOut !== null) {
+			if (!fromHydration && kernel.getBrowserRecords().optOut !== null) {
 				state.optOutRecorded = true;
 				state.optOutSynced = true;
 				request('optOut');
 			}
+		}),
+		kernel.onAccountLayerChange((layer, fromHydration) => {
+			if (fromHydration) {
+				return;
+			}
+			if (layer === null) {
+				// Logout / user switch deletes account cookies and localStorage
+				// synchronously and cancels any queued lazy-writer account write.
+				requested.delete('account');
+				landedWriter()?.cancelAccountWrite();
+				if (browser) {
+					clearStoredAccountLayer(storageConfig);
+				}
+				return;
+			}
+			request('account');
 		}),
 	];
 
@@ -509,17 +529,21 @@ export const mountPersistence = function mountPersistence(
 		const queued = queuedWrites.get(consentKey);
 		const snapshot = queued?.getSnapshot();
 		const receipt = queued?.getOptOutReceiptData();
-		// The snapshot's subject, notice and vendor records under their
+		const queuedBrowser = queued?.getBrowserRecords();
+		// The snapshot's subject, notice and browser records under their
 		// hydration names; hydration ignores every other field.
-		return snapshot && queued && receipt
+		return snapshot && queued && receipt && queuedBrowser
 			? {
 					...records,
 					...snapshot,
-					choice: snapshot.explicitChoice,
+					accountLayer: queued.getAccountLayer(),
+					choice: queuedBrowser.choice,
+					optOut: queuedBrowser.optOut,
 					optOutGpcReported: queued.isOptOutGpcReported(),
 					optOutLocalAct: receipt.localAct,
 					optOutReference: receipt.reference,
 					optOutRightsConfirmed: receipt.rightsConfirmed,
+					vendorChoice: queuedBrowser.vendorChoice,
 				}
 			: records;
 	};
@@ -823,7 +847,14 @@ export const mountPersistence = function mountPersistence(
 			const read = readStoredRecordsForReconcile(storageConfig, at);
 			baseline = [read, false];
 			const records = withQueued(read.records);
-			const snapshot = kernel.getSnapshot();
+			const rawSnapshot = kernel.getSnapshot();
+			const browserRecords = kernel.getBrowserRecords();
+			const snapshot: ConsentSnapshot = {
+				...rawSnapshot,
+				explicitChoice: browserRecords.choice,
+				optOut: browserRecords.optOut,
+				vendorChoice: browserRecords.vendorChoice,
+			};
 			const { epochs, outranks } = weighSeed(
 				configuredFamilyHolds(read, at),
 				read.epoch,
@@ -870,6 +901,20 @@ export const mountPersistence = function mountPersistence(
 				outranks.optOut,
 				patch
 			);
+			const storedAccount = records.accountLayer;
+			const currentAccount = kernel.getAccountLayer();
+			if (
+				storedAccount &&
+				rawSnapshot.user &&
+				storedAccount.externalId === rawSnapshot.user.externalId &&
+				(currentAccount === null ||
+					storedAccount.checkedAt > currentAccount.checkedAt ||
+					(storedAccount.checkedAt === currentAccount.checkedAt &&
+						Object.keys(storedAccount.vendors).length >
+							Object.keys(currentAccount.vendors).length))
+			) {
+				patch.accountLayer = storedAccount;
+			}
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });
 			}
@@ -1216,6 +1261,7 @@ export const mountPersistence = function mountPersistence(
 					family.vendors,
 					family.epoch,
 				]),
+				keys.accountState,
 				// Another page called `localStorage.clear()`.
 				null,
 			]);

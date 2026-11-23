@@ -10,7 +10,17 @@ import type { mergeNewestChoice } from '../../../kernel/record-validation.model'
 import type { deleteCookie, writeCookie } from '../../../libs/cookie';
 import type { removeLocalStorageKey } from '../../../libs/local-storage.store';
 import type { ResolvedStorageKeys } from '../../../libs/storage-keys';
-import type { clearStoredRecords } from '../persistence-clear.store';
+import type {
+	createAccountRevision,
+	encodeAccountChoicesCookie,
+	encodeAccountLocalJson,
+	encodeAccountOptOutCookie,
+	encodeAccountVendorsCookie,
+} from '../account-codec';
+import type {
+	clearStoredAccountLayer,
+	clearStoredRecords,
+} from '../persistence-clear.store';
 import type {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
@@ -57,6 +67,13 @@ export interface PersistenceTools {
 	removeLocal: typeof removeLocalStorageKey;
 	/** `clearStoredRecords`: first-load code, since `clear()` runs it at once. */
 	clear: typeof clearStoredRecords;
+	/** `clearStoredAccountLayer`: first-load code for synchronous logout cleanup. */
+	clearAccount: typeof clearStoredAccountLayer;
+	createAccountRevision: typeof createAccountRevision;
+	encodeAccountChoicesCookie: typeof encodeAccountChoicesCookie;
+	encodeAccountVendorsCookie: typeof encodeAccountVendorsCookie;
+	encodeAccountOptOutCookie: typeof encodeAccountOptOutCookie;
+	encodeAccountLocalJson: typeof encodeAccountLocalJson;
 }
 
 /** What {@link createRecordStore} calls. @internal */
@@ -71,10 +88,21 @@ export type RecordStoreTools = Pick<
 	| 'removeLocal'
 	| 'validateEnvelope'
 	| 'writeCookie'
->;
+> &
+	Partial<
+		Pick<
+			PersistenceTools,
+			| 'clearAccount'
+			| 'createAccountRevision'
+			| 'encodeAccountChoicesCookie'
+			| 'encodeAccountLocalJson'
+			| 'encodeAccountOptOutCookie'
+			| 'encodeAccountVendorsCookie'
+		>
+	>;
 
 /** A record the writer stores on its own schedule. */
-export type WriteKind = 'choice' | 'notice' | 'optOut' | 'vendors';
+export type WriteKind = 'account' | 'choice' | 'notice' | 'optOut' | 'vendors';
 
 /**
  * What the kernel's events told persistence since the last write. The
@@ -125,6 +153,8 @@ export interface PersistenceWriter {
 	schedule: (kind: WriteKind) => void;
 	/** Run every scheduled write now. */
 	flush: () => void;
+	/** Cancel any pending scheduled write for the account layer. */
+	cancelAccountWrite: () => void;
 	/**
 	 * Drop scheduled writes, remove every stored record and store the clear
 	 * epoch for a clear made at `at`. The caller resets the event state and

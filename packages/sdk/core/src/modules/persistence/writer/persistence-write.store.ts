@@ -10,6 +10,7 @@
  */
 
 import type { ConsentSnapshot } from '../../../consent-kernel.model';
+import type { AccountConsentLayer } from '../../../kernel/account-layer';
 import type { OptOutReceiptData } from '../../../libs/opt-out-state.model';
 import type { StorageConfig } from '../persistence.model';
 import type {
@@ -180,4 +181,24 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 		return true;
 	}
 	return Boolean(result.written?.cookie || result.written?.localStorage);
+};
+
+/**
+ * Write the account consent layer across its split cookies and localStorage,
+ * or remove them when cleared (`null`). No-op outside the browser.
+ */
+export const writeAccountLayerToStorage = function writeAccountLayerToStorage(
+	store: RecordStore,
+	layer: AccountConsentLayer | null,
+	storageConfig: StorageConfig | undefined,
+	now: number
+): void {
+	if (typeof document === 'undefined') {
+		return;
+	}
+	if (!layer) {
+		store.clearStoredAccountLayer(storageConfig);
+		return;
+	}
+	store.writeStoredAccountLayer(layer, storageConfig, now);
 };

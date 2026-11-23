@@ -44,10 +44,8 @@ import type {
 	RestrictionReason,
 } from './consent-record/types';
 import type { AllConsentNames } from './consent/consent-types';
+import type { AccountConsentLayer } from './kernel/account-layer';
 import type { ExperimentAssignment, ExperimentGate } from './libs/experiment';
-import type {
-	AccountConsentLayer,
-} from './kernel/account-layer';
 import type { HasCondition } from './libs/has';
 import type { VendorDetails } from './libs/script-loader/script.model';
 import type { PublisherRestriction } from './options/iab-tcf-options.model';

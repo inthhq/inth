@@ -8,10 +8,7 @@
  * @internal
  */
 
-import {
-	OPT_OUT_METHODS,
-	OPT_OUT_RIGHTS,
-} from '@inth/sdk-schema/types';
+import { OPT_OUT_METHODS, OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type {
 	OptOutMethod,
 	OptOutRecord,
@@ -272,7 +269,8 @@ const normalizeAccountOptOut = function normalizeAccountOptOut(
 	}
 	return {
 		ok: true,
-		record: rights.length > 0 ? { method, rawRecordedAt: recordedAt, rights } : null,
+		record:
+			rights.length > 0 ? { method, rawRecordedAt: recordedAt, rights } : null,
 	};
 };
 
@@ -425,7 +423,12 @@ const sameAccountVendors = function sameAccountVendors(
 	for (const id of leftVendors) {
 		const a = left[id];
 		const b = Object.hasOwn(right, id) ? right[id] : undefined;
-		if (!a || !b || a.value !== b.value || a.rawConfirmedAt !== b.rawConfirmedAt) {
+		if (
+			!a ||
+			!b ||
+			a.value !== b.value ||
+			a.rawConfirmedAt !== b.rawConfirmedAt
+		) {
 			return false;
 		}
 	}
@@ -446,9 +449,7 @@ const sameAccountOptOutContent = function sameAccountOptOutContent(
 		left.method === right.method &&
 		left.rawRecordedAt === right.rawRecordedAt &&
 		left.rights.length === right.rights.length &&
-		left.rights.every(
-			(rightName, index) => rightName === right.rights[index]
-		)
+		left.rights.every((rightName, index) => rightName === right.rights[index])
 	);
 };
 
@@ -542,7 +543,10 @@ const deriveEffectiveChoice = function deriveEffectiveChoice(
 		let accountDecision: CategoryDecision | undefined;
 		if (rawAccount) {
 			// Drop incompatible account grants before merging; keep denials.
-			if (!rawAccount.value || isChoiceBasisCompatible(rawAccount.basis, policy)) {
+			if (
+				!rawAccount.value ||
+				isChoiceBasisCompatible(rawAccount.basis, policy)
+			) {
 				const confirmedAt = accountOrderingTime(
 					rawAccount.rawConfirmedAt,
 					account
@@ -551,7 +555,12 @@ const deriveEffectiveChoice = function deriveEffectiveChoice(
 				accountDecision =
 					expiresAt === undefined
 						? { basis: rawAccount.basis, confirmedAt, value: rawAccount.value }
-						: { basis: rawAccount.basis, confirmedAt, expiresAt, value: rawAccount.value };
+						: {
+								basis: rawAccount.basis,
+								confirmedAt,
+								expiresAt,
+								value: rawAccount.value,
+							};
 			}
 		}
 		const winner = pickNewerCategory(browserDecision, accountDecision);
@@ -675,19 +684,88 @@ const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 	};
 };
 
+const sameEffectiveChoice = function sameEffectiveChoice(
+	left: Readonly<ExplicitChoice> | null,
+	right: Readonly<ExplicitChoice> | null
+): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	for (const category of OPTIONAL_CONSENT_CATEGORIES) {
+		const a = left.categories[category];
+		const b = right.categories[category];
+		if (a === b) {
+			continue;
+		}
+		if (
+			!a ||
+			!b ||
+			a.value !== b.value ||
+			a.confirmedAt !== b.confirmedAt ||
+			a.expiresAt !== b.expiresAt ||
+			!sameBasis(a.basis, b.basis)
+		) {
+			return false;
+		}
+	}
+	return true;
+};
+
+const sameEffectiveVendors = function sameEffectiveVendors(
+	left: Readonly<VendorChoice> | null,
+	right: Readonly<VendorChoice> | null
+): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	return (
+		left.confirmedAt === right.confirmedAt &&
+		left.denied.length === right.denied.length &&
+		left.denied.every((id, index) => id === right.denied[index])
+	);
+};
+
+const sameEffectiveOptOut = function sameEffectiveOptOut(
+	left: Readonly<OptOutRecord> | null,
+	right: Readonly<OptOutRecord> | null
+): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	return (
+		left.heldBy === right.heldBy &&
+		left.method === right.method &&
+		left.recordedAt === right.recordedAt &&
+		left.rights.length === right.rights.length &&
+		left.rights.every((rightName, index) => rightName === right.rights[index])
+	);
+};
+
 /**
  * Effective consent records derived from `browser` and `account` under
  * `user` and `policy`.
  *
  * The identity gate requires `account.externalId === user.externalId`; when
  * it fails or no account layer is present, the browser records pass through
- * unchanged.
+ * unchanged. When `previous` is provided, unchanged derived objects keep
+ * their previous frozen reference so unrelated commits do not look like a
+ * choice change.
  */
 export const deriveEffectiveRecords = function deriveEffectiveRecords(
 	browser: BrowserConsentRecords,
 	account: AccountConsentLayer | null,
 	user: Readonly<KernelUser> | null,
-	policy: EvaluationPolicy
+	policy: EvaluationPolicy,
+	previous?: BrowserConsentRecords
 ): {
 	readonly activeAccount: AccountConsentLayer | null;
 	readonly choice: Readonly<ExplicitChoice> | null;
@@ -695,27 +773,32 @@ export const deriveEffectiveRecords = function deriveEffectiveRecords(
 	readonly optOut: Readonly<OptOutRecord> | null;
 } {
 	const activeAccount =
-		account !== null &&
-		user !== null &&
-		account.externalId === user.externalId
+		account !== null && user !== null && account.externalId === user.externalId
 			? account
 			: null;
-	if (!activeAccount) {
-		return {
-			activeAccount: null,
-			choice: browser.choice,
-			optOut: browser.optOut,
-			vendorChoice: browser.vendorChoice,
-		};
-	}
+	const rawChoice = activeAccount
+		? deriveEffectiveChoice(browser.choice, activeAccount, policy)
+		: browser.choice;
+	const rawOptOut = activeAccount
+		? deriveEffectiveOptOut(browser.optOut, activeAccount)
+		: browser.optOut;
+	const rawVendorChoice = activeAccount
+		? deriveEffectiveVendorChoice(browser.vendorChoice, activeAccount)
+		: browser.vendorChoice;
 	return {
 		activeAccount,
-		choice: deriveEffectiveChoice(browser.choice, activeAccount, policy),
-		optOut: deriveEffectiveOptOut(browser.optOut, activeAccount),
-		vendorChoice: deriveEffectiveVendorChoice(
-			browser.vendorChoice,
-			activeAccount
-		),
+		choice:
+			previous && sameEffectiveChoice(previous.choice, rawChoice)
+				? previous.choice
+				: rawChoice,
+		optOut:
+			previous && sameEffectiveOptOut(previous.optOut, rawOptOut)
+				? previous.optOut
+				: rawOptOut,
+		vendorChoice:
+			previous && sameEffectiveVendors(previous.vendorChoice, rawVendorChoice)
+				? previous.vendorChoice
+				: rawVendorChoice,
 	};
 };
 

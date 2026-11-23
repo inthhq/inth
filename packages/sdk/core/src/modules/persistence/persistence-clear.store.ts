@@ -41,12 +41,37 @@ import { readStoredClearEpoch } from './record-storage.store';
  *
  * @internal
  */
+/**
+ * Synchronously remove the account consent layer cookies and localStorage.
+ * Runs in first-load code so logout and user switch clear account storage
+ * immediately without waiting for the lazy writer.
+ *
+ * @internal
+ */
+export const clearStoredAccountLayer = function clearStoredAccountLayer(
+	config?: StorageConfig
+): void {
+	if (typeof document === 'undefined') {
+		return;
+	}
+	const keys = resolveStorageKeys(config);
+	for (const key of [
+		keys.accountChoices,
+		keys.accountVendors,
+		keys.accountOptOut,
+	]) {
+		deleteCookie(key, config);
+	}
+	removeLocalStorageKey(keys.accountState);
+};
+
 export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
+	clearStoredAccountLayer(config);
 	for (const [index, family] of storageKeyFamilies(
 		resolveStorageKeys(config)
 	).entries()) {

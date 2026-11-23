@@ -1240,15 +1240,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					context?.categories
 				);
 				({ consentAction } = selection);
-				recorded = recordCategoryPatch(
-					browserBefore.choice,
-					selection.values,
-					{
-						actionAt,
-						now: currentTime,
-						policy: before.evaluationPolicy,
-					}
-				);
+				recorded = recordCategoryPatch(browserBefore.choice, selection.values, {
+					actionAt,
+					now: currentTime,
+					policy: before.evaluationPolicy,
+				});
 			}
 			if (recorded.ok === false) {
 				const result: SaveResult = { issues: recorded.issues, ok: false };

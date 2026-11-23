@@ -10,6 +10,7 @@
  *
  * @internal
  */
+import type { AccountConsentLayer } from '../../../kernel/account-layer';
 import type { CookieWriteReport } from '../../../libs/cookie';
 import type { StorageConfig } from '../persistence.model';
 import type {
@@ -114,6 +115,16 @@ export interface RecordStore {
 		now: number
 	) => DecodeResult<StoredOptOutRecord> & { written?: AuxiliaryWriteReport };
 	clearStoredOptOutRecord: (config?: StorageConfig) => void;
+	/**
+	 * Writes the account consent layer across its three compact cookies and
+	 * localStorage under one shared revision. Empty parts are written explicitly.
+	 */
+	writeStoredAccountLayer: (
+		layer: AccountConsentLayer,
+		config: StorageConfig | undefined,
+		now: number
+	) => void;
+	clearStoredAccountLayer: (config?: StorageConfig) => void;
 }
 
 const hasLocalStorage = function hasLocalStorage(): boolean {
@@ -206,9 +217,57 @@ export const createRecordStore = function createRecordStore(
 		removeBoth(keys.optOutCategories, config);
 	};
 
+	const clearStoredAccountLayer: RecordStore['clearStoredAccountLayer'] = (
+		config
+	) => {
+		tools.clearAccount?.(config);
+	};
+
+	const writeStoredAccountLayer: RecordStore['writeStoredAccountLayer'] = (
+		layer,
+		config,
+		now
+	) => {
+		if (
+			!tools.createAccountRevision ||
+			!tools.encodeAccountLocalJson ||
+			!tools.encodeAccountChoicesCookie ||
+			!tools.encodeAccountVendorsCookie ||
+			!tools.encodeAccountOptOutCookie
+		) {
+			return;
+		}
+		const keys = tools.keys(config);
+		const rev = tools.createAccountRevision(now);
+		const encodeChoices = tools.encodeAccountChoicesCookie;
+		const encodeVendors = tools.encodeAccountVendorsCookie;
+		const encodeOptOut = tools.encodeAccountOptOutCookie;
+		writeLocalStorageText(
+			keys.accountState,
+			tools.encodeAccountLocalJson(layer, rev)
+		);
+		writeCookieText(
+			keys.accountChoices,
+			cookieText(() => encodeChoices(layer, rev)),
+			config
+		);
+		writeCookieText(
+			keys.accountVendors,
+			cookieText(() => encodeVendors(layer, rev)),
+			config
+		);
+		writeCookieText(
+			keys.accountOptOut,
+			cookieText(() => encodeOptOut(layer, rev)),
+			config
+		);
+	};
+
 	return {
+		clearStoredAccountLayer,
 		clearStoredOptOutRecord,
 		clearStoredVendorChoice,
+		writeStoredAccountLayer,
 		writeStoredConsentEnvelope(envelope, options) {
 			const validated = tools.validateEnvelope(envelope, options.now);
 			if (validated.ok === false) {

@@ -13,6 +13,10 @@ import type { HydrationRecords } from '../../consent-kernel.model';
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {
+	readStoredAccountLayer,
+	readStoredAccountLayerFromCookieHeader,
+} from './account-codec';
+import {
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
@@ -337,6 +341,11 @@ const readRecords = function readRecords(
 		clearEpoch,
 		now
 	);
+	const accountLayer = readStoredAccountLayer(storageConfig);
+	if (accountLayer !== null) {
+		stored.records.accountLayer = accountLayer;
+		stored.found = true;
+	}
 	// An absent value only clears memory when every candidate was readable.
 	// A valid record from an available source can still hydrate normally.
 	if (!selection.selected && choiceUnavailable) {
@@ -397,7 +406,7 @@ const composeFromCookieHeader = function composeFromCookieHeader(
 	storageConfig: StorageConfig | undefined,
 	now: number
 ): StoredRecords {
-	return composeRecords(
+	const stored = composeRecords(
 		readStoredConsentRecordFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredNoticeDismissalFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredVendorChoiceFromCookieHeader(cookieHeader, storageConfig, now),
@@ -405,6 +414,15 @@ const composeFromCookieHeader = function composeFromCookieHeader(
 		readStoredClearEpochFromCookieHeader(cookieHeader, storageConfig, now),
 		now
 	);
+	const accountLayer = readStoredAccountLayerFromCookieHeader(
+		cookieHeader,
+		storageConfig
+	);
+	if (accountLayer !== null) {
+		stored.records.accountLayer = accountLayer;
+		stored.found = true;
+	}
+	return stored;
 };
 
 /**

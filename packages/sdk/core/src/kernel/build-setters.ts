@@ -246,10 +246,7 @@ export const buildSetters = function buildSetters(
 		},
 		user(nextUser: KernelUser | null): void {
 			const current = getSnapshot().user;
-			if (
-				current === null &&
-				nextUser === null
-			) {
+			if (current === null && nextUser === null) {
 				return;
 			}
 			if (

@@ -37,10 +37,7 @@ import {
 	generateUuidV7,
 } from '../libs/subject-uuid.model';
 import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import {
-	deriveEffectiveRecords,
-	freezeAccountLayer,
-} from './account-layer';
+import { deriveEffectiveRecords, freezeAccountLayer } from './account-layer';
 import type {
 	AccountConsentLayer,
 	BrowserConsentRecords,
@@ -239,8 +236,7 @@ export const createRuntime = function createRuntime(
 		| undefined;
 	let live = false;
 	let gpcReported =
-		options.initialOptOutGpcReported === true &&
-		browserRecords.optOut !== null;
+		options.initialOptOutGpcReported === true && browserRecords.optOut !== null;
 	// Process-only latch so a failed outbox write does not retry in a loop on
 	// this page load while keeping the persisted mark unset.
 	let gpcReportAttempted = gpcReported;
@@ -581,8 +577,7 @@ export const createRuntime = function createRuntime(
 				patch.explicitChoice === undefined
 					? browserRecords.choice
 					: patch.explicitChoice,
-			optOut:
-				patch.optOut === undefined ? browserRecords.optOut : patch.optOut,
+			optOut: patch.optOut === undefined ? browserRecords.optOut : patch.optOut,
 			vendorChoice:
 				patch.vendorChoice === undefined
 					? browserRecords.vendorChoice
@@ -613,7 +608,12 @@ export const createRuntime = function createRuntime(
 			nextBrowser,
 			nextAccount,
 			nextUser,
-			nextPolicy
+			nextPolicy,
+			{
+				choice: current.explicitChoice,
+				optOut: current.optOut,
+				vendorChoice: current.vendorChoice,
+			}
 		);
 		const effectivePatch: SnapshotPatch = {
 			...patch,

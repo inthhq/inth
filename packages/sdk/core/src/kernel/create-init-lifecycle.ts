@@ -590,7 +590,9 @@ export const createInitLifecycle = function createInitLifecycle({
 		);
 	};
 
-	const activeAccountOf = (current: ConsentSnapshot): AccountConsentLayer | null => {
+	const activeAccountOf = (
+		current: ConsentSnapshot
+	): AccountConsentLayer | null => {
 		const accountBefore = runtime.getAccountLayer();
 		return accountBefore !== null &&
 			current.user !== null &&
