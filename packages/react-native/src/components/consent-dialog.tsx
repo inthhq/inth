@@ -15,17 +15,16 @@ import { Text, View } from 'react-native';
 
 import { useSaveConsents } from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
-import {
-	isConsentCategoryRowsEqual,
-	selectConsentCategoryRows,
-} from './internal/consent-category-rows.model';
-import { useCategorySelection } from './internal/use-category-selection';
 import { ConsentBrandingTag } from './internal/consent-branding-tag';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
 	ConsentButton,
 } from './internal/consent-button';
 import { ConsentCategoryRow } from './internal/consent-category-row';
+import {
+	isConsentCategoryRowsEqual,
+	selectConsentCategoryRows,
+} from './internal/consent-category-rows.model';
 import {
 	isConsentCopyEqual,
 	selectConsentCopy,
@@ -40,6 +39,7 @@ import {
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
 import { useAnnounceOnOpen } from './internal/use-announce-on-open';
+import { useCategorySelection } from './internal/use-category-selection';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';

@@ -63,9 +63,9 @@ import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
 import { uniqueId } from '../core/unique-id';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
 import type { OpenVendorsRequest } from '../parts/category-group';
-import { ChoiceButton } from '../parts/choice-button';
 import { CheckIcon } from '../parts/check-icon';
 import { ChevronIcon } from '../parts/chevron-icon';
+import { ChoiceButton } from '../parts/choice-button';
 import {
 	injectPhoneLayout,
 	injectSurfaceSession,

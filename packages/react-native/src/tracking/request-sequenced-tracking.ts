@@ -18,7 +18,10 @@ import {
 	isConsentScreenBusy,
 	onConsentScreenChange,
 } from '../provider/configure-auto-present';
-import { isRepromptDue, shouldRequestTracking } from './tracking-sequence.model';
+import {
+	isRepromptDue,
+	shouldRequestTracking,
+} from './tracking-sequence.model';
 import type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
