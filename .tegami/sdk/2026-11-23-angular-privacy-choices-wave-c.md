@@ -17,3 +17,4 @@ These fixes apply when you use `design: 'privacy-choices'` (or set `presentation
 - On a server-rendered page, the banner keeps the desktop layout until hydration is complete, then switches to the phone layout. The receipt and the "Selling, sharing and targeted ads" text also show the server's values until hydration is complete.
 - The opt-out icon in `<inth-privacy-choices-link>` is 14px tall when the page has no classic banner stylesheet. With `noStyle`, you size it.
 - The dialog's root has `data-inth-surface="dialog"`, as the classic dialog's root has. The `consentDialog` theme slot styles it.
+- Setting `open` on `<inth-consent-dialog>` to `false` right after it asked to show the dialog now closes it, as Close does, even before the dialog has shown, so an unanswered banner comes back.

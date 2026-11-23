@@ -849,6 +849,63 @@ describe('loading', () => {
 	});
 });
 
+describe('controlled open while the dialog loads', () => {
+	test('[PERM-01] a controlled open turning false before the dialog loads leaves the banner up, and the dialog that arrives stays closed', async () => {
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const privacyChoices = vi.fn(async () => {
+			await gate;
+			return await ɵloadPrivacyChoicesDialog();
+		});
+		fixtureId += 1;
+		stubViewport(false);
+		hostConfig = { ...DEFAULT_HOST, banner: true };
+		TestBed.configureTestingModule({
+			providers: [
+				provideInth({
+					consentCategories: [...ALL_CATEGORIES],
+					mode: offlineMode([
+						{
+							id: `pcd-pending-${fixtureId}`,
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+					]),
+					persistence: false,
+					presentation: {
+						design: 'privacy-choices',
+						prompt: { container: { type: 'card' } },
+					},
+				}),
+				{ provide: PRIVACY_CHOICES_DIALOG, useValue: privacyChoices },
+			],
+		});
+		const fixture = TestBed.createComponent(DialogHost);
+		const consent = TestBed.inject(ConsentManager);
+		await fixture.whenStable();
+		await waitFor(() => expect($('consent-banner-root')).not.toBeNull());
+
+		fixture.componentInstance.open.set(true);
+		fixture.detectChanges();
+		await waitFor(() => expect(privacyChoices).toHaveBeenCalledTimes(1));
+		fixture.componentInstance.open.set(false);
+		fixture.detectChanges();
+
+		release();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 50);
+		});
+		fixture.detectChanges();
+		await fixture.whenStable();
+		expect(consent.activeUI()).toBe('banner');
+		expect($('consent-banner-root')).not.toBeNull();
+		expect($('consent-dialog-card')).toBeNull();
+	});
+});
+
 describe('design switch', () => {
 	const closeDialog = async (consent: ConsentManager) => {
 		consent.setActiveUI('none');

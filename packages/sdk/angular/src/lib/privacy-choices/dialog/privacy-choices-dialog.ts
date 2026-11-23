@@ -762,6 +762,7 @@ export class PrivacyChoicesDialog {
 				return;
 			}
 			requested = true;
+			this.#claimed = true;
 			untracked(() => {
 				const kernel = this.#consent.kernel();
 				if (kernel.getSnapshot().activeUI !== 'dialog') {
@@ -772,18 +773,33 @@ export class PrivacyChoicesDialog {
 	}
 
 	/**
-	 * A controlled `open` turning false closes a shown dialog through the
-	 * consent manager, as Close does, so an unanswered banner comes back and
-	 * no sheet stays pushed under a hidden dialog.
+	 * Whether the consent manager's dialog is this one's: asked for by a
+	 * controlled `open`, or shown. It is held from the request, not from the
+	 * first render, so `open` turning false before the dialog shows closes
+	 * it too, and the banner comes back.
+	 */
+	#claimed = false;
+
+	/**
+	 * A controlled `open` turning false closes the dialog it asked for or
+	 * showed through the consent manager, as Close does, so an unanswered
+	 * banner comes back and no sheet stays pushed under a hidden dialog. A
+	 * dialog the consent manager opened while `open` was already false
+	 * stays its own.
 	 */
 	#followControlledClose(): void {
-		let shown = false;
 		effect(() => {
-			const wasShown = shown;
-			shown = this.isOpen();
-			if (!wasShown || this.open() !== false) {
+			if (this.isOpen()) {
+				this.#claimed = true;
+			}
+			if (this.#consent.activeUI() !== 'dialog') {
+				this.#claimed = false;
 				return;
 			}
+			if (this.open() !== false || !this.#claimed) {
+				return;
+			}
+			this.#claimed = false;
 			untracked(() => {
 				const kernel = this.#consent.kernel();
 				if (kernel.getSnapshot().activeUI !== 'dialog') {
