@@ -2,11 +2,12 @@
 // packages in this repository, so a template that drifts from the SDK's API
 // fails here. Build the SDK first: `pnpm turbo run build --filter='./packages/sdk/*'`.
 //
-// Each scaffold is written over the matching app in examples/, which already
-// depends on the workspace SDK packages, then built and typechecked. The
-// example is restored from git afterwards, so start with a clean examples/.
+// Each scaffold is written into a scratch copy of the matching app in
+// examples/, which links the example's node_modules and so builds against the
+// workspace SDK packages. The scratch copy is deleted afterwards; the example
+// itself is only read.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -47,26 +48,47 @@ const run = (command: string, args: string[], cwd: string): boolean => {
   return result.status === 0;
 };
 
-const git = (args: string[]): string =>
-  spawnSync("git", args, { cwd: repository, encoding: "utf-8" }).stdout;
+// Build output and installed packages stay out of the scratch copy.
+const SKIPPED = new Set([
+  ".astro",
+  ".next",
+  ".nuxt",
+  ".output",
+  ".svelte-kit",
+  ".tanstack",
+  ".turbo",
+  "dist",
+  "node_modules",
+]);
 
-// List untracked files whatever status.showUntrackedFiles says, because the
-// cleanup below deletes untracked files in each example.
-if (
-  git([
-    "status",
-    "--porcelain",
-    "--untracked-files=all",
-    "--",
+/**
+ * Copy an example beside it, at the same depth so relative paths still
+ * resolve, and link its installed packages.
+ */
+const scratchCopy = (example: string): string => {
+  const source = path.join(repository, "examples", example);
+  const scratch = path.join(
+    repository,
     "examples",
-  ]).trim()
-) {
-  throw new Error("examples/ has local changes. Commit or remove them first.");
-}
+    `.scaffold-check-${example}`
+  );
+  rmSync(scratch, { force: true, recursive: true });
+  cpSync(source, scratch, {
+    filter: (file) =>
+      path.dirname(file) !== source || !SKIPPED.has(path.basename(file)),
+    recursive: true,
+  });
+  symlinkSync(
+    path.join(source, "node_modules"),
+    path.join(scratch, "node_modules"),
+    "junction"
+  );
+  return scratch;
+};
 
 const failed: string[] = [];
 for (const [framework, example] of EXAMPLES) {
-  const directory = path.join(repository, "examples", example);
+  const directory = scratchCopy(example);
   const plan = generate({ backendURL: PROJECT_URL, framework, mode: "hosted" });
   const files =
     framework === "solid"
@@ -92,8 +114,7 @@ for (const [framework, example] of EXAMPLES) {
       failed.push(framework);
     }
   } finally {
-    git(["checkout", "--", `examples/${example}`]);
-    git(["clean", "-fdq", "--", `examples/${example}`]);
+    rmSync(directory, { force: true, recursive: true });
   }
 }
 if (failed.length) {

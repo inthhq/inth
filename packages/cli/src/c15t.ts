@@ -89,7 +89,7 @@ const setupHelp = (
     "  --codex, --claude, --cursor, --grok, --fx",
     `            Start that coding agent here with the ${name} setup prompt`,
     "  prompt    Print the setup prompt for any other agent",
-    `  scaffold  Write framework quickstart files and install ${name} packages`,
+    `  scaffold  Write framework quickstart files and install ${command === "init" ? "the latest Inth" : "c15t v3"} packages`,
     ...extraActions,
     "",
     "Options:",

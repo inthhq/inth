@@ -47,16 +47,21 @@ const keepExisting = (
     ),
     [existing]: { type: "keep" },
   };
-  // A file that already matches the quickstart needs no changes.
-  if (readFileSync(join(cwd, existing), "utf-8") === generated) {
+  const matches = readFileSync(join(cwd, existing), "utf-8") === generated;
+  // A quickstart file setup wrote earlier keeps its own description.
+  if (matches && existing === name) {
     return;
   }
-  generation.instructions = [
-    ...generation.instructions.filter(
-      (instruction) => !instruction.startsWith(`${name} renders`)
-    ),
-    `Update ${existing}: ${guidance} The quickstart's version:\n${generated.trimEnd()}`,
-  ];
+  const instructions = generation.instructions.filter(
+    (instruction) => !instruction.startsWith(`${name} renders`)
+  );
+  // A file that already matches the quickstart needs no changes.
+  generation.instructions = matches
+    ? instructions
+    : [
+        ...instructions,
+        `Update ${existing}: ${guidance} The quickstart's version:\n${generated.trimEnd()}`,
+      ];
 };
 
 /** Use Vite's conventional default App export when the project contains it. */

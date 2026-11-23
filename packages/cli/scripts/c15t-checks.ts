@@ -1875,7 +1875,9 @@ const verifyExistingViteApp = async (
   const matched = envelope.parse(JSON.parse(matching.stdout)).data;
   assert.deepEqual(matched.created?.toSorted(), [".env", "src/consent.tsx"]);
   assert.ok(
-    !matched.plan?.instructions.some((line) => line.startsWith("Update ")),
+    !matched.plan?.instructions.some(
+      (line) => line.startsWith("Update ") || line.includes("src/main.tsx")
+    ),
     JSON.stringify(matched.plan?.instructions)
   );
 };
