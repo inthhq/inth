@@ -13,15 +13,16 @@ const explorer = readFileSync(
 );
 
 // Fixed frame height and synchronous animation frames, so geometry is stable.
-const marker = "<script>\n    const BUSINESS";
-if (!explorer.includes(marker)) {
+const marker = /<script>\s*const BUSINESS/u;
+if (!marker.test(explorer)) {
   throw new Error("Explorer script marker not found; update build.mjs.");
 }
 const base = explorer
   .replace("calc(100vh - 32px)", "740px")
   .replace(
     marker,
-    `<script>window.requestAnimationFrame=(f)=>{f();return 0};</script>\n  ${marker}`
+    (match) =>
+      `<script>window.requestAnimationFrame=(f)=>{f();return 0};</script>\n${match}`
   );
 
 const out = join(here, "out");

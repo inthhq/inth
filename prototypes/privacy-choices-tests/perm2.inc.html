@@ -1,332 +1,956 @@
 <script>
-// Cross-flow permutations: dialog round-trip from the page link, start=dialog, GPC / signed-in expanded panels,
-// theme switch mid-state, presentation change while expanded, vendor accordion fades inside banners.
-window.addEventListener('load', () => {
-  window.setTimeout = (fn) => { fn(); return 0; };
-  const $ = (q, r = document) => r.querySelector(q);
-  const $$ = (q, r = document) => [...r.querySelectorAll(q)];
-  const ctl = (g, v) => { const b = document.querySelector(`[data-group="${g}"] [data-val="${v}"]`); if (!b) throw new Error('no ctl ' + g + '=' + v); b.click(); };
-  const key = (k, shift = false) => { const t = document.activeElement || document.body; t.dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey: shift, bubbles: true, cancelable: true })); };
-  const settle = () => { document.getAnimations().forEach((a) => { try { a.finish(); } catch (e) {} }); };
-  const errors = []; window.addEventListener('error', (e) => errors.push(e.message));
-  const fails = {}; let total = 0, passed = 0;
-  const check = (name, ok, combo, detail = '') => { total += 1; if (ok) { passed += 1; return; } (fails[name] ||= []).push(combo + (detail ? ` [${detail}]` : '')); };
-  const PLACES = [['card', 'bottom-left'], ['card', 'bottom-right'], ['card', 'center'], ['banner', 'bottom'], ['banner', 'top'], ['drawer', 'left'], ['drawer', 'right'], ['drawer', 'top'], ['drawer', 'bottom']];
-  const setup = (vp, ui, pos, edge, block, reg, usb, extra = {}) => {
-    ctl('start', 'banner'); ctl('vp', vp); ctl('theme', 'light'); ctl('signedIn', extra.signedIn || 'no');
-    ctl('regime', 'eu'); ctl('presUi', ui);
-    if (ui === 'card') ctl('cardPos', pos); else if (ui === 'banner') ctl('barPos', pos); else ctl('loc', pos);
-    ctl('drawerStyle', edge);
-    if (!(ui === 'card' && pos === 'center')) ctl('block', block);
-    ctl('usBanner', usb); ctl('regime', reg);
-    ctl('saleStart', extra.saleStart || (reg === 'us-opt-in' ? 'allow-default' : 'allow-default'));
-    settle();
-  };
-  const banner = () => $('#banner');
-
-  for (const vp of ['macbook', 'phone']) for (const [ui, pos] of PLACES) for (const reg of ['eu', 'us-opt-in']) {
-    const combo = `${vp}/${ui}-${pos}/${reg}`;
-    try {
-      // 1. Dialog round-trip from the page link (non-blocking only: the page is inert while blocking).
-      if (!(ui === 'card' && pos === 'center')) {
-        setup(vp, ui, pos, 'inset', 'off', reg, 'none');
-        const exp = $('[data-bn=expand]', banner());
-        if (exp) { exp.click(); settle(); }
-        const wasExpanded = banner().hasAttribute('data-expanded');
-        $('#reopen').click(); settle();
-        check('page link: dialog open, banner hidden', S.open && banner().hidden, combo);
-        check('page link: no blocking scrim under dialog', $('#banner-backdrop').hidden, combo);
-        $('[data-layer=main] [data-act=close]').click(); settle();
-        check('dialog closed undecided: banner returns', !banner().hidden && !S.open, combo);
-        check('banner returns in same presentation', banner().dataset.pres === (ui === 'card' ? 'card' : ui === 'banner' ? pos : (vp === 'phone' && (pos === 'left' || pos === 'right') ? 'bottom' : pos)), combo, banner().dataset.pres);
-        check('banner returns: focus on banner', banner().contains(document.activeElement), combo, document.activeElement?.id || document.activeElement?.className);
-        check('banner returns: expansion state preserved', banner().hasAttribute('data-expanded') === wasExpanded, combo, `was ${wasExpanded}`);
-        // Esc after return still folds
-        if (wasExpanded) { key('Escape'); settle(); check('after return: Esc folds', !banner().hasAttribute('data-expanded') && !banner().hidden, combo); }
+  // Cross-flow permutations: dialog round-trip from the page link, start=dialog, GPC / signed-in expanded panels,
+  // theme switch mid-state, presentation change while expanded, vendor accordion fades inside banners.
+  window.addEventListener("load", () => {
+    window.setTimeout = (fn) => {
+      fn();
+      return 0;
+    };
+    const $ = (q, r = document) => r.querySelector(q);
+    const $$ = (q, r = document) => [...r.querySelectorAll(q)];
+    const ctl = (g, v) => {
+      const b = document.querySelector(`[data-group="${g}"] [data-val="${v}"]`);
+      if (!b) throw new Error("no ctl " + g + "=" + v);
+      b.click();
+    };
+    const key = (k, shift = false) => {
+      const t = document.activeElement || document.body;
+      t.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: k,
+          shiftKey: shift,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    };
+    const settle = () => {
+      document.getAnimations().forEach((a) => {
+        try {
+          a.finish();
+        } catch (e) {}
+      });
+    };
+    const errors = [];
+    window.addEventListener("error", (e) => errors.push(e.message));
+    const fails = {};
+    let total = 0,
+      passed = 0;
+    const check = (name, ok, combo, detail = "") => {
+      total += 1;
+      if (ok) {
+        passed += 1;
+        return;
       }
-      // 2. Blocking variant: dialog opened from the expanded panel is impossible (Customize never opens dialog) — check no path to dialog while blocking.
-      setup(vp, ui, pos, 'inset', 'on', reg, 'none');
-      check('blocking: page link inert', $('.fake-site').inert && $('#reopen').closest('[inert]') !== null, combo);
-      const exp2 = $('[data-bn=expand]', banner()); if (exp2) { exp2.click(); settle(); }
-      check('blocking expanded: dialog never opens', !S.open, combo);
-      // theme switch while blocking + expanded: VIS-08 ring flips, still blocking, still expanded
-      ctl('theme', 'dark'); settle();
-      const cs = getComputedStyle($('.banner-card'));
-      check('theme switch mid-state: still blocking + same expansion', banner().hasAttribute('data-blocking') && banner().hasAttribute('data-expanded') === !!exp2, combo);
-      check('theme switch mid-state: dark ring', cs.boxShadow.includes('rgba(255, 255, 255, 0.1)'), combo);
-      ctl('theme', 'light');
-      // 3. Vendor accordion inside the banner panel/aio: fades update after toggle
-      const panelBody = $('#card-panel .card-body, .aio-wrap .card-body', banner());
-      const vbtn = $('[data-act^="vendors"], [data-vendors], .vendor-trigger', panelBody || banner());
-      if (panelBody && vbtn) {
-        vbtn.click(); settle();
-        panelBody.dispatchEvent(new Event('transitionend'));
-        const b = $('#card-panel .card-body, .aio-wrap .card-body', banner());
-        const more = b.scrollTop + b.clientHeight < b.scrollHeight - 1;
-        check('vendor accordion in banner: fade tracks content', b.hasAttribute('data-fade-bottom') === more, combo, `more=${more}`);
-      }
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-
-  // 4. start=dialog with every presentation: dialog open, no banner, no blocking scrim; close -> nothing comes back (explorer: link-click scenario)
-  for (const [ui, pos] of PLACES) for (const block of ['off', 'on']) {
-    const combo = `start-dialog/${ui}-${pos}/block-${block}`;
-    try {
-      setup('macbook', ui, pos, 'inset', block, 'eu', 'none'); ctl('start', 'dialog'); settle();
-      check('start=dialog: dialog open, banner hidden, no banner scrim', S.open && banner().hidden && $('#banner-backdrop').hidden && !banner().hasAttribute('data-blocking'), combo);
-      check('start=dialog: page scroll not locked by banner', !$('#vp').hasAttribute('data-scroll-locked'), combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-
-  // 5. GPC / signed-in in expanded panels (US opt-out notice + US opt-in)
-  for (const vp of ['macbook', 'phone']) for (const [ui, pos] of PLACES) for (const [reg, usb, saleStart, signedIn] of [['us-opt-out', 'notice', 'gpc', 'no'], ['us-opt-out', 'notice', 'gpc-past', 'yes'], ['us-opt-in', 'none', 'allow-default', 'yes']]) {
-    const combo = `${vp}/${ui}-${pos}/${reg}/${saleStart}/signed-${signedIn}`;
-    try {
-      setup(vp, ui, pos, 'inset', 'off', reg, usb, { saleStart, signedIn });
-      const exp = $('[data-bn=expand]', banner()); if (exp) { exp.click(); settle(); }
-      const card = $('.banner-card'), C = card.getBoundingClientRect(), F = $('#vp').getBoundingClientRect();
-      check('gpc/signed: card inside frame', C.top >= F.top - 0.5 && C.bottom <= F.bottom + 0.5 && C.left >= F.left - 0.5 && C.right <= F.right + 0.5, combo, `top ${Math.round(C.top - F.top)} h ${Math.round(C.height)}`);
-      if (saleStart === 'gpc') {
-        const allow = $('[data-seg=sale][data-val=allow]', banner());
-        check('gpc: Allow aria-disabled in banner panel', allow?.getAttribute('aria-disabled') === 'true', combo);
-        allow?.click(); settle();
-        check('gpc: Allow does not open confirm', S.confirm === null && S.sale === 'optout', combo);
-        check('gpc: note shown, description replaced', /Global Privacy Control/.test(banner().textContent), combo);
-      }
-      if (signedIn === 'yes' && saleStart !== 'gpc') check('signed in: scope mentions account', /account/.test(banner().textContent), combo);
-      const over = $$('*', card).filter((el) => { if (el.closest('.sr-only') || el.closest('[inert]')) return false; const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > C.right + 0.5 || r.left < C.left - 0.5); });
-      check('gpc/signed: no horizontal overflow', over.length === 0, combo, over.slice(0, 2).map((e) => e.className).join(','));
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-
-  // 6. Presentation change while expanded: new presentation starts collapsed, focus not stranded
-  for (const [ui, pos] of PLACES) {
-    const combo = `switch-from-expanded-card/${ui}-${pos}`;
-    try {
-      setup('macbook', 'card', 'bottom-left', 'inset', 'off', 'eu', 'none');
-      $('[data-bn=expand]').click(); settle();
-      ctl('presUi', ui); if (ui === 'card') ctl('cardPos', pos); else if (ui === 'banner') ctl('barPos', pos); else ctl('loc', pos); settle();
-      check('presentation change: starts collapsed', !banner().hasAttribute('data-expanded'), combo);
-      check('presentation change: focus not on a detached node', document.activeElement && document.activeElement.isConnected, combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-
-  // ---- council round 1 regressions
-  for (const [ui, pos] of PLACES) for (const reg of ['eu', 'us-opt-in']) {
-    const combo = `r1/phone/${ui}-${pos}/${reg}`;
-    try {
-      setup('phone', ui, pos, 'inset', 'off', reg, 'none');
-      $('[data-bn=expand]', banner())?.click(); settle();
-      const trig = reg === 'eu' ? $('[data-act=vendors]', banner()) : $('[data-act=cookies]', banner());
-      check('[R1] phone banner panel: rows are accordions, not sheet triggers', trig && !trig.hasAttribute('aria-haspopup') && trig.hasAttribute('aria-expanded'), combo);
-      trig?.click(); settle();
-      const t2 = reg === 'eu' ? $('[data-act=vendors]', banner()) : $('[data-act=cookies]', banner());
-      check('[R1] phone banner panel: tap opens inline, no hidden stack', S.stack.length === 0 && t2?.getAttribute('aria-expanded') === 'true' && !!document.getElementById(t2.getAttribute('aria-controls')), combo, `stack=${S.stack}`);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of PLACES) for (const saleStart of ['gpc', 'gpc-past', 'optout-user']) for (const act of ['accept', 'reject']) for (const expand of [false, true]) {
-    const combo = `r1/gpc/${ui}-${pos}/${saleStart}/${act}/${expand ? 'expanded' : 'collapsed'}`;
-    try {
-      setup('macbook', ui, pos, 'inset', 'off', 'us-opt-in', 'none', { saleStart });
-      if (expand) { $('[data-bn=expand]', banner())?.click(); settle(); }
-      const before = `${S.sale}/${S.saleSrc}`;
-      $(`[data-bn=${act}]`, banner()).click(); settle();
-      check('[R1] banner Allow never overrides GPC or a recorded opt-out', S.sale === 'optout', combo, `${before} -> ${S.sale}/${S.saleSrc}`);
-      if (act === 'reject' && saleStart === 'gpc-past') check('[R1] explicit Don’t allow clears GPC provenance (GPC-07)', S.viaGpc === false, combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const pos of ['left', 'right']) for (const block of ['off', 'on']) {
-    const combo = `r1/aio-esc/${pos}/block-${block}`;
-    try {
-      setup('macbook', 'drawer', pos, 'inset', block, 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      $('[data-seg=sale][data-val=allow]', banner()).click(); settle();
-      check('[R1] aio: Allow opens confirm', S.confirm === 'sale', combo);
-      key('Escape'); settle();
-      check('[R1] aio: Esc closes confirm, focus back on Allow, banner stays', S.confirm === null && !banner().hidden && document.activeElement?.dataset?.seg === 'sale', combo, document.activeElement?.className);
-      $('[data-seg=sale][data-val=allow]', banner()).click(); settle();
-      $('[data-bn=accept]', banner()).click(); settle();
-      check('[R1] commit clears open confirm + expanded state', S.confirm === null && !S.bannerExpanded && banner().hidden, combo);
-      key('Escape');
-      check('[R1] focus stays on page link after stray Esc', document.activeElement === $('#reopen'), combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of [['drawer', 'right'], ['card', 'bottom-left']]) for (const ok of [true, false]) {
-    const combo = `r1/copy/${ui}-${pos}/${ok ? 'ok' : 'fail'}`;
-    try {
-      Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => ({ then: (a, b) => (ok ? a() : b(new Error('denied'))) }) }, configurable: true });
-      setup('macbook', ui, pos, 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      $('[data-bn=expand]', banner())?.click(); settle();
-      $('[data-act=receipt]', banner()).click(); settle();
-      window.setTimeout = () => 0; $('[data-act=copy]', banner()).click(); window.setTimeout = (fn) => { fn(); return 0; }; settle();
-      if (ok) check('[R1] copy in banner: success state', S.copied === true, combo);
-      else check('[R1] copy in banner: visible fallback field focused', S.copyFailed === true && !!$('#ref-field', banner()) && document.activeElement?.id === 'ref-field', combo, document.activeElement?.id);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of PLACES) {
-    if (ui === 'card' && pos === 'center') continue;
-    const combo = `r1/handoff/${ui}-${pos}`;
-    try {
-      setup('macbook', ui, pos, 'inset', 'off', 'eu', 'none');
-      window.setTimeout = () => 0; // timers never fire: a 170ms exit would still be in the DOM
-      $('#reopen').click();
-      const ids = $$('[id]').map((e) => e.id); const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
-      check('[R1] dialog open: banner + scrim gone at once, unique IDs', banner().hidden && !banner().hasAttribute('data-leaving') && $('#banner-backdrop').hidden && dup.length === 0, combo, dup.slice(0, 3).join(','));
-      window.setTimeout = (fn) => { fn(); return 0; };
-      $('[data-layer=main] [data-act=close]').click(); settle();
-      check('[R1] dialog closed: no stale announcement in returning banner', !$$('[role=status]', banner()).some((n) => n.textContent.replace(/​/g, '').trim()), combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); } finally { window.setTimeout = (fn) => { fn(); return 0; }; }
-  }
-  try {
-    setup('macbook', 'banner', 'top', 'flush', 'off', 'us-opt-out', 'notice', { saleStart: 'gpc' });
-    check('[R1] slim notice bar acknowledges GPC (GPC-08)', /Global Privacy Control/.test($('.bar-text').textContent), 'r1/notice-gpc');
-  } catch (err) { (fails['ERROR'] ||= []).push('notice-gpc: ' + err.message); }
-
-  // ---- council round 2 regressions
-  for (const pos of ['left', 'right']) {
-    const combo = `r2/footer-refuse/${pos}`;
-    try {
-      setup('macbook', 'drawer', pos, 'inset', 'off', 'us-opt-in', 'none');
-      $('[data-seg=sale][data-val=allow]', banner()).click(); settle();
-      $('[data-act=confirm-ok], [data-act=confirm-yes], .confirm [data-act^=confirm]:not([data-act=confirm-cancel])', banner())?.click(); settle();
-      check('[R2] confirm granted sale', S.sale === 'allow', combo, `${S.sale}/${S.confirm}`);
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R2] footer Don’t allow always applies (one action)', S.sale === 'optout' && S.saleSrc === 'user', combo, `${S.sale}/${S.saleSrc}`);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of [['drawer', 'right'], ['card', 'bottom-left'], ['banner', 'bottom']]) for (const block of ['off', 'on']) {
-    const combo = `r2/handoff-during-exit/${ui}-${pos}/block-${block}`;
-    try {
-      setup('macbook', ui, pos, 'inset', block, 'eu', 'none');
-      $('[data-bn=expand]', banner())?.click(); settle();
-      window.setTimeout = () => 0; // the 170ms exit never finishes on its own
-      $('[data-bn=accept]', banner()).click();
-      check('[R2] commit starts exit, focus on page link', document.activeElement === $('#reopen'), combo);
-      $('#reopen').click();
-      const ids = $$('[id]').map((e) => e.id); const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
-      check('[R2] reopen during exit: banner + scrim gone, unique IDs', banner().hidden && $('#banner-backdrop').hidden && dup.length === 0, combo, dup.slice(0, 3).join(','));
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); } finally { window.setTimeout = (fn) => { fn(); return 0; }; }
-  }
-  for (const via of ['reopen', 'save']) {
-    const combo = `r2/copy-in-flight/${via}`;
-    try {
-      let rejectLater;
-      Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => ({ then: (a, b) => { rejectLater = b; } }) }, configurable: true });
-      setup('macbook', 'drawer', 'right', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      $('[data-act=receipt]', banner()).click(); settle();
-      $('[data-act=copy]', banner()).click(); settle();
-      if (via === 'save') $('[data-bn=save]', banner()).click();
-      $('#reopen').click(); settle();
-      if (!S.receiptOpen) { $('[data-layer=main] [data-act=receipt]')?.click(); settle(); }
-      rejectLater?.(new Error('late'));
-      check('[R2] late banner copy result ignored by dialog', S.copyFailed === false && document.activeElement?.id !== 'ref-field', combo, `copyFailed=${S.copyFailed}`);
-      $('[data-layer=main] [data-act=close]')?.click(); settle();
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  {
-    const combo = 'r2/dialog-confirm-carryover';
-    try {
-      setup('macbook', 'drawer', 'right', 'inset', 'off', 'us-opt-in', 'none');
-      $('#reopen').click(); settle();
-      $('[data-layer=main] [data-seg=sale][data-val=allow]').click(); settle();
-      check('[R2] dialog confirm open', S.confirm === 'sale', combo);
-      $('[data-layer=main] [data-act=close]').click(); settle();
-      check('[R2] closing dialog drops its open confirm', S.confirm === null && !$('.confirm[data-open="true"]', banner()), combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of [['card', 'bottom-left'], ['drawer', 'right']]) {
-    const combo = `r2/esc-from-page/${ui}-${pos}`;
-    try {
-      setup('macbook', ui, pos, 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      $('[data-bn=expand]', banner())?.click(); settle();
-      $('[data-seg=sale][data-val=allow]', banner()).click(); settle();
-      const exp0 = banner().hasAttribute('data-expanded'), conf0 = S.confirm;
-      $('#reopen').focus(); key('Escape'); settle();
-      check('[R2] Esc on the page leaves a non-blocking banner alone', document.activeElement === $('#reopen') && S.confirm === conf0 && banner().hasAttribute('data-expanded') === exp0, combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  for (const [ui, pos] of PLACES) {
-    const combo = `r2/modal-boundary/${ui}-${pos}`;
-    try {
-      setup('macbook', ui, pos, 'inset', 'on', 'eu', 'none');
-      const modal = $('[aria-modal="true"]', banner());
-      check('[R2] blocking: the tag is inside the aria-modal boundary', !!modal && modal.contains($('.brand-tag', banner())), combo);
-      check('[R2] blocking: one aria-modal, labelled', $$('[aria-modal="true"]', banner()).length === 1 && modal.getAttribute('aria-labelledby') === 'bn-title', combo);
-      $('.banner-card', banner()).focus(); key('Tab');
-      check('[R2] first Tab from the card goes into the card', $('.banner-card', banner()).contains(document.activeElement), combo, document.activeElement?.className);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-
-  // ---- council round 3 regressions
-  for (const pos of ['right', 'left']) {
-    const combo = `r3/sens-refuse/${pos}`;
-    try {
-      setup('macbook', 'drawer', pos, 'inset', 'off', 'us-opt-in', 'none');
-      ctl('sensMode', 'beyond'); settle();
-      $('[data-seg=sens][data-val=allow]', banner())?.click(); settle();
-      $('.confirm[data-kind=sens] [data-act=confirm-ok]', banner())?.click(); settle();
-      check('[R3] sensitive granted in panel', S.sens === 'allow', combo, `${S.sens}/${S.sensSrc}`);
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R3] footer Don’t allow also revokes a sensitive grant', S.sens === 'limit' && S.sensSrc === 'user' && S.sale === 'optout', combo, `${S.sens}/${S.sensSrc}`);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  {
-    const combo = 'r3/collapsed-reject-keeps-sens-default';
-    try {
-      setup('macbook', 'card', 'bottom-left', 'inset', 'off', 'us-opt-in', 'none');
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R3] collapsed Reject leaves untouched sensitive default (LAW-09)', S.sensSrc === 'default', combo, S.sensSrc);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  {
-    const combo = 'r3/save-keeps-receipt-time';
-    try {
-      setup('macbook', 'drawer', 'right', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      ctl('sensStart', 'limit-user'); settle();
-      S.rightsNow = false;
-      const t = $('[data-cat-toggle=measurement]', banner()); t?.click(); settle();
-      $('[data-bn=save]', banner()).click(); settle();
-      check('[R3] Save with rights already recorded keeps the receipt time', S.rightsNow === false, combo);
-      setup('macbook', 'drawer', 'right', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      S.rightsNow = false;
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R3] Reject on an already-recorded opt-out keeps the receipt time', S.rightsNow === false, combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  {
-    const combo = 'r3/dialog-state-into-banner';
-    try {
-      let pending = [];
-      const realST = window.setTimeout;
-      setup('phone', 'drawer', 'top', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      $('[data-bn=expand]', banner())?.click(); settle();
-      window.setTimeout = (fn) => { pending.push(fn); return 0; }; // hold delayed reveals
-      $('#reopen').click();
-      $('[data-layer=main] [data-act=receipt]')?.click();
-      $('[data-layer=main] [data-seg=sale][data-val=allow]')?.click();
-      $('[data-layer=main] [data-act=close]').click();
-      window.setTimeout = realST;
-      check('[R3] returning banner: receipt Details closed', S.receiptOpen === false, combo);
-      const body = $('#card-panel .card-body', banner()); const before = body ? body.scrollTop : 0;
-      pending.forEach((fn) => { try { fn(); } catch (e) {} });
+      (fails[name] ||= []).push(combo + (detail ? ` [${detail}]` : ""));
+    };
+    const PLACES = [
+      ["card", "bottom-left"],
+      ["card", "bottom-right"],
+      ["card", "center"],
+      ["banner", "bottom"],
+      ["banner", "top"],
+      ["drawer", "left"],
+      ["drawer", "right"],
+      ["drawer", "top"],
+      ["drawer", "bottom"],
+    ];
+    const setup = (vp, ui, pos, edge, block, reg, usb, extra = {}) => {
+      ctl("start", "banner");
+      ctl("vp", vp);
+      ctl("theme", "light");
+      ctl("signedIn", extra.signedIn || "no");
+      ctl("regime", "eu");
+      ctl("presUi", ui);
+      if (ui === "card") ctl("cardPos", pos);
+      else if (ui === "banner") ctl("barPos", pos);
+      else ctl("loc", pos);
+      ctl("drawerStyle", edge);
+      if (!(ui === "card" && pos === "center")) ctl("block", block);
+      ctl("usBanner", usb);
+      ctl("regime", reg);
+      ctl(
+        "saleStart",
+        extra.saleStart ||
+          (reg === "us-opt-in" ? "allow-default" : "allow-default")
+      );
       settle();
-      check('[R3] stale dialog reveal timer does not scroll the banner', !body || body.scrollTop === before, combo, `${before} -> ${body?.scrollTop}`);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); } finally { window.setTimeout = (fn) => { fn(); return 0; }; }
-  }
+    };
+    const banner = () => $("#banner");
 
-  {
-    const combo = 'r4/gpc-past-reject';
+    for (const vp of ["macbook", "phone"])
+      for (const [ui, pos] of PLACES)
+        for (const reg of ["eu", "us-opt-in"]) {
+          const combo = `${vp}/${ui}-${pos}/${reg}`;
+          try {
+            // 1. Dialog round-trip from the page link (non-blocking only: the page is inert while blocking).
+            if (!(ui === "card" && pos === "center")) {
+              setup(vp, ui, pos, "inset", "off", reg, "none");
+              const exp = $("[data-bn=expand]", banner());
+              if (exp) {
+                exp.click();
+                settle();
+              }
+              const wasExpanded = banner().hasAttribute("data-expanded");
+              $("#reopen").click();
+              settle();
+              check(
+                "page link: dialog open, banner hidden",
+                S.open && banner().hidden,
+                combo
+              );
+              check(
+                "page link: no blocking scrim under dialog",
+                $("#banner-backdrop").hidden,
+                combo
+              );
+              $("[data-layer=main] [data-act=close]").click();
+              settle();
+              check(
+                "dialog closed undecided: banner returns",
+                !banner().hidden && !S.open,
+                combo
+              );
+              check(
+                "banner returns in same presentation",
+                banner().dataset.pres ===
+                  (ui === "card"
+                    ? "card"
+                    : ui === "banner"
+                      ? pos
+                      : vp === "phone" && (pos === "left" || pos === "right")
+                        ? "bottom"
+                        : pos),
+                combo,
+                banner().dataset.pres
+              );
+              check(
+                "banner returns: focus on banner",
+                banner().contains(document.activeElement),
+                combo,
+                document.activeElement?.id || document.activeElement?.className
+              );
+              check(
+                "banner returns: expansion state preserved",
+                banner().hasAttribute("data-expanded") === wasExpanded,
+                combo,
+                `was ${wasExpanded}`
+              );
+              // Esc after return still folds
+              if (wasExpanded) {
+                key("Escape");
+                settle();
+                check(
+                  "after return: Esc folds",
+                  !banner().hasAttribute("data-expanded") && !banner().hidden,
+                  combo
+                );
+              }
+            }
+            // 2. Blocking variant: dialog opened from the expanded panel is impossible (Customize never opens dialog) — check no path to dialog while blocking.
+            setup(vp, ui, pos, "inset", "on", reg, "none");
+            check(
+              "blocking: page link inert",
+              $(".fake-site").inert && $("#reopen").closest("[inert]") !== null,
+              combo
+            );
+            const exp2 = $("[data-bn=expand]", banner());
+            if (exp2) {
+              exp2.click();
+              settle();
+            }
+            check("blocking expanded: dialog never opens", !S.open, combo);
+            // theme switch while blocking + expanded: VIS-08 ring flips, still blocking, still expanded
+            ctl("theme", "dark");
+            settle();
+            const cs = getComputedStyle($(".banner-card"));
+            check(
+              "theme switch mid-state: still blocking + same expansion",
+              banner().hasAttribute("data-blocking") &&
+                banner().hasAttribute("data-expanded") === !!exp2,
+              combo
+            );
+            check(
+              "theme switch mid-state: dark ring",
+              cs.boxShadow.includes("rgba(255, 255, 255, 0.1)"),
+              combo
+            );
+            ctl("theme", "light");
+            // 3. Vendor accordion inside the banner panel/aio: fades update after toggle
+            const panelBody = $(
+              "#card-panel .card-body, .aio-wrap .card-body",
+              banner()
+            );
+            const vbtn = $(
+              '[data-act^="vendors"], [data-vendors], .vendor-trigger',
+              panelBody || banner()
+            );
+            if (panelBody && vbtn) {
+              vbtn.click();
+              settle();
+              panelBody.dispatchEvent(new Event("transitionend"));
+              const b = $(
+                "#card-panel .card-body, .aio-wrap .card-body",
+                banner()
+              );
+              const more = b.scrollTop + b.clientHeight < b.scrollHeight - 1;
+              check(
+                "vendor accordion in banner: fade tracks content",
+                b.hasAttribute("data-fade-bottom") === more,
+                combo,
+                `more=${more}`
+              );
+            }
+          } catch (err) {
+            (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+          }
+        }
+
+    // 4. start=dialog with every presentation: dialog open, no banner, no blocking scrim; close -> nothing comes back (explorer: link-click scenario)
+    for (const [ui, pos] of PLACES)
+      for (const block of ["off", "on"]) {
+        const combo = `start-dialog/${ui}-${pos}/block-${block}`;
+        try {
+          setup("macbook", ui, pos, "inset", block, "eu", "none");
+          ctl("start", "dialog");
+          settle();
+          check(
+            "start=dialog: dialog open, banner hidden, no banner scrim",
+            S.open &&
+              banner().hidden &&
+              $("#banner-backdrop").hidden &&
+              !banner().hasAttribute("data-blocking"),
+            combo
+          );
+          check(
+            "start=dialog: page scroll not locked by banner",
+            !$("#vp").hasAttribute("data-scroll-locked"),
+            combo
+          );
+        } catch (err) {
+          (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+        }
+      }
+
+    // 5. GPC / signed-in in expanded panels (US opt-out notice + US opt-in)
+    for (const vp of ["macbook", "phone"])
+      for (const [ui, pos] of PLACES)
+        for (const [reg, usb, saleStart, signedIn] of [
+          ["us-opt-out", "notice", "gpc", "no"],
+          ["us-opt-out", "notice", "gpc-past", "yes"],
+          ["us-opt-in", "none", "allow-default", "yes"],
+        ]) {
+          const combo = `${vp}/${ui}-${pos}/${reg}/${saleStart}/signed-${signedIn}`;
+          try {
+            setup(vp, ui, pos, "inset", "off", reg, usb, {
+              saleStart,
+              signedIn,
+            });
+            const exp = $("[data-bn=expand]", banner());
+            if (exp) {
+              exp.click();
+              settle();
+            }
+            const card = $(".banner-card"),
+              C = card.getBoundingClientRect(),
+              F = $("#vp").getBoundingClientRect();
+            check(
+              "gpc/signed: card inside frame",
+              C.top >= F.top - 0.5 &&
+                C.bottom <= F.bottom + 0.5 &&
+                C.left >= F.left - 0.5 &&
+                C.right <= F.right + 0.5,
+              combo,
+              `top ${Math.round(C.top - F.top)} h ${Math.round(C.height)}`
+            );
+            if (saleStart === "gpc") {
+              const allow = $("[data-seg=sale][data-val=allow]", banner());
+              check(
+                "gpc: Allow aria-disabled in banner panel",
+                allow?.getAttribute("aria-disabled") === "true",
+                combo
+              );
+              allow?.click();
+              settle();
+              check(
+                "gpc: Allow does not open confirm",
+                S.confirm === null && S.sale === "optout",
+                combo
+              );
+              check(
+                "gpc: note shown, description replaced",
+                /Global Privacy Control/.test(banner().textContent),
+                combo
+              );
+            }
+            if (signedIn === "yes" && saleStart !== "gpc")
+              check(
+                "signed in: scope mentions account",
+                /account/.test(banner().textContent),
+                combo
+              );
+            const over = $$("*", card).filter((el) => {
+              if (el.closest(".sr-only") || el.closest("[inert]")) return false;
+              const r = el.getBoundingClientRect();
+              return (
+                r.width > 0 &&
+                (r.right > C.right + 0.5 || r.left < C.left - 0.5)
+              );
+            });
+            check(
+              "gpc/signed: no horizontal overflow",
+              over.length === 0,
+              combo,
+              over
+                .slice(0, 2)
+                .map((e) => e.className)
+                .join(",")
+            );
+          } catch (err) {
+            (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+          }
+        }
+
+    // 6. Presentation change while expanded: new presentation starts collapsed, focus not stranded
+    for (const [ui, pos] of PLACES) {
+      const combo = `switch-from-expanded-card/${ui}-${pos}`;
+      try {
+        setup("macbook", "card", "bottom-left", "inset", "off", "eu", "none");
+        $("[data-bn=expand]").click();
+        settle();
+        ctl("presUi", ui);
+        if (ui === "card") ctl("cardPos", pos);
+        else if (ui === "banner") ctl("barPos", pos);
+        else ctl("loc", pos);
+        settle();
+        check(
+          "presentation change: starts collapsed",
+          !banner().hasAttribute("data-expanded"),
+          combo
+        );
+        check(
+          "presentation change: focus not on a detached node",
+          document.activeElement && document.activeElement.isConnected,
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+
+    // ---- council round 1 regressions
+    for (const [ui, pos] of PLACES)
+      for (const reg of ["eu", "us-opt-in"]) {
+        const combo = `r1/phone/${ui}-${pos}/${reg}`;
+        try {
+          setup("phone", ui, pos, "inset", "off", reg, "none");
+          $("[data-bn=expand]", banner())?.click();
+          settle();
+          const trig =
+            reg === "eu"
+              ? $("[data-act=vendors]", banner())
+              : $("[data-act=cookies]", banner());
+          check(
+            "[R1] phone banner panel: rows are accordions, not sheet triggers",
+            trig &&
+              !trig.hasAttribute("aria-haspopup") &&
+              trig.hasAttribute("aria-expanded"),
+            combo
+          );
+          trig?.click();
+          settle();
+          const t2 =
+            reg === "eu"
+              ? $("[data-act=vendors]", banner())
+              : $("[data-act=cookies]", banner());
+          check(
+            "[R1] phone banner panel: tap opens inline, no hidden stack",
+            S.stack.length === 0 &&
+              t2?.getAttribute("aria-expanded") === "true" &&
+              !!document.getElementById(t2.getAttribute("aria-controls")),
+            combo,
+            `stack=${S.stack}`
+          );
+        } catch (err) {
+          (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+        }
+      }
+    for (const [ui, pos] of PLACES)
+      for (const saleStart of ["gpc", "gpc-past", "optout-user"])
+        for (const act of ["accept", "reject"])
+          for (const expand of [false, true]) {
+            const combo = `r1/gpc/${ui}-${pos}/${saleStart}/${act}/${expand ? "expanded" : "collapsed"}`;
+            try {
+              setup("macbook", ui, pos, "inset", "off", "us-opt-in", "none", {
+                saleStart,
+              });
+              if (expand) {
+                $("[data-bn=expand]", banner())?.click();
+                settle();
+              }
+              const before = `${S.sale}/${S.saleSrc}`;
+              $(`[data-bn=${act}]`, banner()).click();
+              settle();
+              check(
+                "[R1] banner Allow never overrides GPC or a recorded opt-out",
+                S.sale === "optout",
+                combo,
+                `${before} -> ${S.sale}/${S.saleSrc}`
+              );
+              if (act === "reject" && saleStart === "gpc-past")
+                check(
+                  "[R1] explicit Don’t allow clears GPC provenance (GPC-07)",
+                  S.viaGpc === false,
+                  combo
+                );
+            } catch (err) {
+              (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+            }
+          }
+    for (const pos of ["left", "right"])
+      for (const block of ["off", "on"]) {
+        const combo = `r1/aio-esc/${pos}/block-${block}`;
+        try {
+          setup("macbook", "drawer", pos, "inset", block, "us-opt-in", "none", {
+            saleStart: "optout-user",
+          });
+          $("[data-seg=sale][data-val=allow]", banner()).click();
+          settle();
+          check("[R1] aio: Allow opens confirm", S.confirm === "sale", combo);
+          key("Escape");
+          settle();
+          check(
+            "[R1] aio: Esc closes confirm, focus back on Allow, banner stays",
+            S.confirm === null &&
+              !banner().hidden &&
+              document.activeElement?.dataset?.seg === "sale",
+            combo,
+            document.activeElement?.className
+          );
+          $("[data-seg=sale][data-val=allow]", banner()).click();
+          settle();
+          $("[data-bn=accept]", banner()).click();
+          settle();
+          check(
+            "[R1] commit clears open confirm + expanded state",
+            S.confirm === null && !S.bannerExpanded && banner().hidden,
+            combo
+          );
+          key("Escape");
+          check(
+            "[R1] focus stays on page link after stray Esc",
+            document.activeElement === $("#reopen"),
+            combo
+          );
+        } catch (err) {
+          (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+        }
+      }
+    for (const [ui, pos] of [
+      ["drawer", "right"],
+      ["card", "bottom-left"],
+    ])
+      for (const ok of [true, false]) {
+        const combo = `r1/copy/${ui}-${pos}/${ok ? "ok" : "fail"}`;
+        try {
+          Object.defineProperty(navigator, "clipboard", {
+            value: {
+              writeText: () => ({
+                then: (a, b) => (ok ? a() : b(new Error("denied"))),
+              }),
+            },
+            configurable: true,
+          });
+          setup("macbook", ui, pos, "inset", "off", "us-opt-in", "none", {
+            saleStart: "optout-user",
+          });
+          $("[data-bn=expand]", banner())?.click();
+          settle();
+          $("[data-act=receipt]", banner()).click();
+          settle();
+          window.setTimeout = () => 0;
+          $("[data-act=copy]", banner()).click();
+          window.setTimeout = (fn) => {
+            fn();
+            return 0;
+          };
+          settle();
+          if (ok)
+            check(
+              "[R1] copy in banner: success state",
+              S.copied === true,
+              combo
+            );
+          else
+            check(
+              "[R1] copy in banner: visible fallback field focused",
+              S.copyFailed === true &&
+                !!$("#ref-field", banner()) &&
+                document.activeElement?.id === "ref-field",
+              combo,
+              document.activeElement?.id
+            );
+        } catch (err) {
+          (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+        }
+      }
+    for (const [ui, pos] of PLACES) {
+      if (ui === "card" && pos === "center") continue;
+      const combo = `r1/handoff/${ui}-${pos}`;
+      try {
+        setup("macbook", ui, pos, "inset", "off", "eu", "none");
+        window.setTimeout = () => 0; // timers never fire: a 170ms exit would still be in the DOM
+        $("#reopen").click();
+        const ids = $$("[id]").map((e) => e.id);
+        const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+        check(
+          "[R1] dialog open: banner + scrim gone at once, unique IDs",
+          banner().hidden &&
+            !banner().hasAttribute("data-leaving") &&
+            $("#banner-backdrop").hidden &&
+            dup.length === 0,
+          combo,
+          dup.slice(0, 3).join(",")
+        );
+        window.setTimeout = (fn) => {
+          fn();
+          return 0;
+        };
+        $("[data-layer=main] [data-act=close]").click();
+        settle();
+        check(
+          "[R1] dialog closed: no stale announcement in returning banner",
+          !$$("[role=status]", banner()).some((n) =>
+            n.textContent.replace(/​/g, "").trim()
+          ),
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      } finally {
+        window.setTimeout = (fn) => {
+          fn();
+          return 0;
+        };
+      }
+    }
     try {
-      setup('macbook', 'card', 'bottom-left', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'gpc-past' });
-      S.rightsNow = false;
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R4] Reject on a GPC-earlier opt-out: provenance becomes the visitor, receipt time moves', S.viaGpc === false && S.rightsNow === true, combo);
-      setup('macbook', 'card', 'bottom-left', 'inset', 'off', 'us-opt-in', 'none', { saleStart: 'optout-user' });
-      S.rightsNow = false;
-      $('[data-bn=reject]', banner()).click(); settle();
-      check('[R4] Reject on a visitor opt-out: receipt time unchanged', S.rightsNow === false, combo);
-    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
-  }
-  console.log(`PERM2 ${passed}/${total} pass, ${Object.keys(fails).length} failing checks, js errors: ${errors.length ? errors.slice(0, 3).join(' | ') : 'none'}`);
-  Object.entries(fails).forEach(([k, v]) => console.log(`FAIL ${k} ×${v.length}: ${v.slice(0, 4).join(' ; ')}`));
-});
+      setup(
+        "macbook",
+        "banner",
+        "top",
+        "flush",
+        "off",
+        "us-opt-out",
+        "notice",
+        { saleStart: "gpc" }
+      );
+      check(
+        "[R1] slim notice bar acknowledges GPC (GPC-08)",
+        /Global Privacy Control/.test($(".bar-text").textContent),
+        "r1/notice-gpc"
+      );
+    } catch (err) {
+      (fails["ERROR"] ||= []).push("notice-gpc: " + err.message);
+    }
+
+    // ---- council round 2 regressions
+    for (const pos of ["left", "right"]) {
+      const combo = `r2/footer-refuse/${pos}`;
+      try {
+        setup("macbook", "drawer", pos, "inset", "off", "us-opt-in", "none");
+        $("[data-seg=sale][data-val=allow]", banner()).click();
+        settle();
+        $(
+          "[data-act=confirm-ok], [data-act=confirm-yes], .confirm [data-act^=confirm]:not([data-act=confirm-cancel])",
+          banner()
+        )?.click();
+        settle();
+        check(
+          "[R2] confirm granted sale",
+          S.sale === "allow",
+          combo,
+          `${S.sale}/${S.confirm}`
+        );
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R2] footer Don’t allow always applies (one action)",
+          S.sale === "optout" && S.saleSrc === "user",
+          combo,
+          `${S.sale}/${S.saleSrc}`
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    for (const [ui, pos] of [
+      ["drawer", "right"],
+      ["card", "bottom-left"],
+      ["banner", "bottom"],
+    ])
+      for (const block of ["off", "on"]) {
+        const combo = `r2/handoff-during-exit/${ui}-${pos}/block-${block}`;
+        try {
+          setup("macbook", ui, pos, "inset", block, "eu", "none");
+          $("[data-bn=expand]", banner())?.click();
+          settle();
+          window.setTimeout = () => 0; // the 170ms exit never finishes on its own
+          $("[data-bn=accept]", banner()).click();
+          check(
+            "[R2] commit starts exit, focus on page link",
+            document.activeElement === $("#reopen"),
+            combo
+          );
+          $("#reopen").click();
+          const ids = $$("[id]").map((e) => e.id);
+          const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+          check(
+            "[R2] reopen during exit: banner + scrim gone, unique IDs",
+            banner().hidden && $("#banner-backdrop").hidden && dup.length === 0,
+            combo,
+            dup.slice(0, 3).join(",")
+          );
+        } catch (err) {
+          (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+        } finally {
+          window.setTimeout = (fn) => {
+            fn();
+            return 0;
+          };
+        }
+      }
+    for (const via of ["reopen", "save"]) {
+      const combo = `r2/copy-in-flight/${via}`;
+      try {
+        let rejectLater;
+        Object.defineProperty(navigator, "clipboard", {
+          value: {
+            writeText: () => ({
+              then: (a, b) => {
+                rejectLater = b;
+              },
+            }),
+          },
+          configurable: true,
+        });
+        setup(
+          "macbook",
+          "drawer",
+          "right",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none",
+          { saleStart: "optout-user" }
+        );
+        $("[data-act=receipt]", banner()).click();
+        settle();
+        $("[data-act=copy]", banner()).click();
+        settle();
+        if (via === "save") $("[data-bn=save]", banner()).click();
+        $("#reopen").click();
+        settle();
+        if (!S.receiptOpen) {
+          $("[data-layer=main] [data-act=receipt]")?.click();
+          settle();
+        }
+        rejectLater?.(new Error("late"));
+        check(
+          "[R2] late banner copy result ignored by dialog",
+          S.copyFailed === false && document.activeElement?.id !== "ref-field",
+          combo,
+          `copyFailed=${S.copyFailed}`
+        );
+        $("[data-layer=main] [data-act=close]")?.click();
+        settle();
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    {
+      const combo = "r2/dialog-confirm-carryover";
+      try {
+        setup(
+          "macbook",
+          "drawer",
+          "right",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none"
+        );
+        $("#reopen").click();
+        settle();
+        $("[data-layer=main] [data-seg=sale][data-val=allow]").click();
+        settle();
+        check("[R2] dialog confirm open", S.confirm === "sale", combo);
+        $("[data-layer=main] [data-act=close]").click();
+        settle();
+        check(
+          "[R2] closing dialog drops its open confirm",
+          S.confirm === null && !$('.confirm[data-open="true"]', banner()),
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    for (const [ui, pos] of [
+      ["card", "bottom-left"],
+      ["drawer", "right"],
+    ]) {
+      const combo = `r2/esc-from-page/${ui}-${pos}`;
+      try {
+        setup("macbook", ui, pos, "inset", "off", "us-opt-in", "none", {
+          saleStart: "optout-user",
+        });
+        $("[data-bn=expand]", banner())?.click();
+        settle();
+        $("[data-seg=sale][data-val=allow]", banner()).click();
+        settle();
+        const exp0 = banner().hasAttribute("data-expanded"),
+          conf0 = S.confirm;
+        $("#reopen").focus();
+        key("Escape");
+        settle();
+        check(
+          "[R2] Esc on the page leaves a non-blocking banner alone",
+          document.activeElement === $("#reopen") &&
+            S.confirm === conf0 &&
+            banner().hasAttribute("data-expanded") === exp0,
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    for (const [ui, pos] of PLACES) {
+      const combo = `r2/modal-boundary/${ui}-${pos}`;
+      try {
+        setup("macbook", ui, pos, "inset", "on", "eu", "none");
+        const modal = $('[aria-modal="true"]', banner());
+        check(
+          "[R2] blocking: the tag is inside the aria-modal boundary",
+          !!modal && modal.contains($(".brand-tag", banner())),
+          combo
+        );
+        check(
+          "[R2] blocking: one aria-modal, labelled",
+          $$('[aria-modal="true"]', banner()).length === 1 &&
+            modal.getAttribute("aria-labelledby") === "bn-title",
+          combo
+        );
+        $(".banner-card", banner()).focus();
+        key("Tab");
+        check(
+          "[R2] first Tab from the card goes into the card",
+          $(".banner-card", banner()).contains(document.activeElement),
+          combo,
+          document.activeElement?.className
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+
+    // ---- council round 3 regressions
+    for (const pos of ["right", "left"]) {
+      const combo = `r3/sens-refuse/${pos}`;
+      try {
+        setup("macbook", "drawer", pos, "inset", "off", "us-opt-in", "none");
+        ctl("sensMode", "beyond");
+        settle();
+        $("[data-seg=sens][data-val=allow]", banner())?.click();
+        settle();
+        $(".confirm[data-kind=sens] [data-act=confirm-ok]", banner())?.click();
+        settle();
+        check(
+          "[R3] sensitive granted in panel",
+          S.sens === "allow",
+          combo,
+          `${S.sens}/${S.sensSrc}`
+        );
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R3] footer Don’t allow also revokes a sensitive grant",
+          S.sens === "limit" && S.sensSrc === "user" && S.sale === "optout",
+          combo,
+          `${S.sens}/${S.sensSrc}`
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    {
+      const combo = "r3/collapsed-reject-keeps-sens-default";
+      try {
+        setup(
+          "macbook",
+          "card",
+          "bottom-left",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none"
+        );
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R3] collapsed Reject leaves untouched sensitive default (LAW-09)",
+          S.sensSrc === "default",
+          combo,
+          S.sensSrc
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    {
+      const combo = "r3/save-keeps-receipt-time";
+      try {
+        setup(
+          "macbook",
+          "drawer",
+          "right",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none",
+          { saleStart: "optout-user" }
+        );
+        ctl("sensStart", "limit-user");
+        settle();
+        S.rightsNow = false;
+        const t = $("[data-cat-toggle=measurement]", banner());
+        t?.click();
+        settle();
+        $("[data-bn=save]", banner()).click();
+        settle();
+        check(
+          "[R3] Save with rights already recorded keeps the receipt time",
+          S.rightsNow === false,
+          combo
+        );
+        setup(
+          "macbook",
+          "drawer",
+          "right",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none",
+          { saleStart: "optout-user" }
+        );
+        S.rightsNow = false;
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R3] Reject on an already-recorded opt-out keeps the receipt time",
+          S.rightsNow === false,
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    {
+      const combo = "r3/dialog-state-into-banner";
+      try {
+        let pending = [];
+        const realST = window.setTimeout;
+        setup("phone", "drawer", "top", "inset", "off", "us-opt-in", "none", {
+          saleStart: "optout-user",
+        });
+        $("[data-bn=expand]", banner())?.click();
+        settle();
+        window.setTimeout = (fn) => {
+          pending.push(fn);
+          return 0;
+        }; // hold delayed reveals
+        $("#reopen").click();
+        $("[data-layer=main] [data-act=receipt]")?.click();
+        $("[data-layer=main] [data-seg=sale][data-val=allow]")?.click();
+        $("[data-layer=main] [data-act=close]").click();
+        window.setTimeout = realST;
+        check(
+          "[R3] returning banner: receipt Details closed",
+          S.receiptOpen === false,
+          combo
+        );
+        const body = $("#card-panel .card-body", banner());
+        const before = body ? body.scrollTop : 0;
+        pending.forEach((fn) => {
+          try {
+            fn();
+          } catch (e) {}
+        });
+        settle();
+        check(
+          "[R3] stale dialog reveal timer does not scroll the banner",
+          !body || body.scrollTop === before,
+          combo,
+          `${before} -> ${body?.scrollTop}`
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      } finally {
+        window.setTimeout = (fn) => {
+          fn();
+          return 0;
+        };
+      }
+    }
+
+    {
+      const combo = "r4/gpc-past-reject";
+      try {
+        setup(
+          "macbook",
+          "card",
+          "bottom-left",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none",
+          { saleStart: "gpc-past" }
+        );
+        S.rightsNow = false;
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R4] Reject on a GPC-earlier opt-out: provenance becomes the visitor, receipt time moves",
+          S.viaGpc === false && S.rightsNow === true,
+          combo
+        );
+        setup(
+          "macbook",
+          "card",
+          "bottom-left",
+          "inset",
+          "off",
+          "us-opt-in",
+          "none",
+          { saleStart: "optout-user" }
+        );
+        S.rightsNow = false;
+        $("[data-bn=reject]", banner()).click();
+        settle();
+        check(
+          "[R4] Reject on a visitor opt-out: receipt time unchanged",
+          S.rightsNow === false,
+          combo
+        );
+      } catch (err) {
+        (fails["ERROR"] ||= []).push(combo + ": " + err.message);
+      }
+    }
+    console.log(
+      `PERM2 ${passed}/${total} pass, ${Object.keys(fails).length} failing checks, js errors: ${errors.length ? errors.slice(0, 3).join(" | ") : "none"}`
+    );
+    Object.entries(fails).forEach(([k, v]) =>
+      console.log(`FAIL ${k} ×${v.length}: ${v.slice(0, 4).join(" ; ")}`)
+    );
+  });
 </script>
