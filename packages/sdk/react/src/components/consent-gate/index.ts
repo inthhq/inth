@@ -1,6 +1,6 @@
 'use client';
 
-import * as atoms from './atoms';
+import * as atoms from './consent-gate-button';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
 import type { ConsentGateCompoundComponent } from './consent-gate.model';
 
@@ -28,7 +28,7 @@ const ConsentGate = Object.assign(ConsentGateComponent, {
 	Title: atoms.ConsentGateTitle,
 }) as ConsentGateCompoundComponent;
 
-export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
+export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './consent-gate-button';
 export type {
 	ConsentGateCompoundComponent,
 	ConsentGateProps,

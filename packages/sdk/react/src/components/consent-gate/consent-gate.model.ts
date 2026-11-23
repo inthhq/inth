@@ -3,7 +3,7 @@ import type { ComponentPropsWithRef, FC, ReactNode } from 'react';
 
 import type { Theme } from '~/types/theme';
 
-import type * as Atom from './atoms';
+import type * as Atom from './consent-gate-button';
 
 export interface ConsentGateProps extends ComponentPropsWithRef<'div'> {
 	/**

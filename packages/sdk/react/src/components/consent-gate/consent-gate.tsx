@@ -5,7 +5,7 @@ import { forwardRef as createForwardRef } from 'react';
 
 import { useConsentGate } from '~/component-hooks/use-consent-gate';
 
-import { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
+import { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './consent-gate-button';
 import type { ConsentGateProps } from './consent-gate.model';
 
 const DefaultPlaceholder = ({

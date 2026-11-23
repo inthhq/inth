@@ -8,7 +8,7 @@
 import { forwardRef as createForwardRef } from 'react';
 import type { ElementType } from 'react';
 
-import * as atoms from './atoms';
+import * as atoms from './consent-gate-button';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
 import type {
 	ConsentGateCompoundComponent,
