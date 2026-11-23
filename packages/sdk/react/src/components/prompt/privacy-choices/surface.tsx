@@ -595,9 +595,6 @@ const SurfaceContent = ({
 				ref={expandRef}
 				type="button"
 				className={cx(noStyle, surfaceStyles.rightLink)}
-				// The pre-hydration script holds a tap on it, which expands
-				// the rights in place once the prompt hydrates.
-				data-action="customize"
 				aria-expanded={expanded}
 				// The collapsed bar has no panel to point at (PERM-09).
 				aria-controls={inBar ? undefined : ids.panel}
