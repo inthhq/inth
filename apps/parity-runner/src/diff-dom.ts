@@ -402,35 +402,19 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// A modal surface makes the page around it inert by setting `inert` on
 		// each sibling along its path to <body> (page-block.ts). Above a
 		// captured root, that path runs through each adapter's own wrappers,
-		// so a root may carry `inert` itself or inherit it from a wrapper.
-		// React's announcement region is a sibling on the dialog's path, so it
-		// gets the attribute itself. Two adapters put it elsewhere:
-		//
-		// - Angular's region sits inside the `<inth-consent-banner>` host,
-		//   which gets it instead. Only a custom-element host counts, so an
-		//   ordinary page element holding `inert` stays a difference.
-		// - Astro portals its surfaces differently, so any wrapper above a
-		//   tagged root counts there.
-		//
-		// The root then records that it is inert, as React's does. Inside a
-		// surface every element is compared as written, and on any other page
-		// an inherited `inert` stays a difference.
-		const inheritsInert = (element: Element): boolean => {
-			if (
-				element.hasAttribute('inert') ||
-				element.parentElement?.closest('[data-testid]')
-			) {
-				return false;
-			}
-			const holder = element.parentElement?.closest('[inert]');
-			if (!holder) {
-				return false;
-			}
-			if (angularPage) {
-				return holder.tagName.includes('-');
-			}
-			return astroPage && element.hasAttribute('data-testid');
-		};
+		// which this snapshot already treats as framework-specific: React's
+		// announcement region is a sibling on the dialog's path and carries
+		// the attribute itself, Angular's sits inside the
+		// `<inth-consent-banner>` host, which gets it instead, and Astro's
+		// portalled roots inherit it from a wrapper. So a tagged root records
+		// whether it is inert at all, on every page, and the baseline and each
+		// adapter compare the same fact. Inside a root, `inert` stays as
+		// written.
+		const taggedRoot = (element: Element): boolean =>
+			element.hasAttribute('data-testid') &&
+			!element.parentElement?.closest('[data-testid]');
+		const rootInert = (element: Element): boolean =>
+			taggedRoot(element) && element.closest('[inert]') !== null;
 
 		const needsSwitchSize = (element: Element): boolean =>
 			element.getAttribute('role') === 'switch' &&
@@ -494,6 +478,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			STRIP.has(attribute.name) ||
 			angularSelectorMarker(attribute) ||
 			astroBootHook(attribute) ||
+			(attribute.name === 'inert' && taggedRoot(element)) ||
 			// The flag that pairs with the end marker above. It changes
 			// nothing once the marker is in the DOM.
 			(attribute.name === 'data-inth-streamed' &&
@@ -552,7 +537,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			if (needsSwitchSize(element)) {
 				attrs.push('data-size="small"');
 			}
-			if (inheritsInert(element)) {
+			if (rootInert(element)) {
 				attrs.push('inert=""');
 			}
 			attrs.push(...triggerEvidence(element));

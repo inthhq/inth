@@ -119,18 +119,11 @@ test('a captured root inert through an Angular host matches one inert itself', a
 	);
 	expect(await captureDomSnapshot(page, 'body')).toBe(react);
 
-	// Not inert at all, an ordinary element holding it, or outside Angular:
-	// still a difference.
-	for (const content of [
-		`${angularRoot}<inth-consent-banner>${region}</inth-consent-banner>`,
-		`${angularRoot}<main inert="">${region}</main>`,
-		`<inth-consent-banner inert="">${region}</inth-consent-banner>`,
-	]) {
-		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
-		await page.setContent(content);
-		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
-		expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
-	}
+	// A host that is not inert leaves the region live: still a difference.
+	await page.setContent(
+		`${angularRoot}<inth-consent-banner>${region}</inth-consent-banner>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
 	// Inside a surface, an element's own inertness is compared as it is.
 	await page.setContent(
 		`${angularRoot}<div data-testid="consent-banner-root"><inth-x inert="">${region.replace('data-testid="consent-banner-announcement" ', '')}</inth-x></div>`
@@ -202,28 +195,23 @@ test("Astro's fixed prompt id prefix matches React's generated one only on an As
 	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
 });
 
-test('a tagged root on an Astro page compares whether it is inert, not which element carries it', async ({
+test('a tagged root compares whether it is inert, not which element carries it', async ({
 	page,
 }) => {
 	const status =
 		'<div data-testid="consent-banner-announcement" role="status"></div>';
-	const astroConfig =
-		'<script data-inth-config type="application/json">{}</script>';
 	await page.setContent(
 		`<div>${status.replace('role=', 'inert="" role=')}</div>`
 	);
 	const own = await captureDomSnapshot(page, 'body');
-	await page.setContent(`${astroConfig}<div inert="">${status}</div>`);
-	expect(await captureDomSnapshot(page, 'body')).toBe(own);
-	// Off an Astro page an inherited `inert` is a difference.
 	await page.setContent(`<div inert="">${status}</div>`);
-	expect(await captureDomSnapshot(page, 'body')).not.toBe(own);
+	expect(await captureDomSnapshot(page, 'body')).toBe(own);
 	// A root that is not inert at all still differs.
-	await page.setContent(`${astroConfig}<div>${status}</div>`);
+	await page.setContent(`<div>${status}</div>`);
 	expect(await captureDomSnapshot(page, 'body')).not.toBe(own);
 	// Inside a root, `inert` stays as written.
 	const panel = (attributes: string) =>
-		`${astroConfig}<section data-testid="consent-banner-card"><div ${attributes}><button>Save</button></div></section>`;
+		`<section data-testid="consent-banner-card"><div ${attributes}><button>Save</button></div></section>`;
 	await page.setContent(panel(''));
 	const open = await captureDomSnapshot(page, 'body');
 	await page.setContent(panel('inert=""'));
