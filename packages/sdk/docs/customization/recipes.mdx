@@ -15,7 +15,7 @@ Each screenshot and code snippet comes from Storybook stories that CI runs to ve
 | [Bottom bar](#bottom-bar) | Props | React, Vue, Astro, Svelte |
 | [Branded card](#branded-card) | Theme tokens | React |
 | [Choice wall](#choice-wall) | Props | React |
-| [Slim bar](#slim-bar) | Slots | Vue, Svelte |
+| [Slim bar](#slim-bar) | Slots | Svelte |
 | [Headless bar](#headless-bar) | Headless | React, Vue, Svelte, HTML |
 
 Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tanstack-start`. Nuxt uses the Vue code and SvelteKit uses the Svelte code. See [customize the interface](/docs/customization/overview) to choose a level. Your Inth policy controls which actions appear, and nothing saves consent until a visitor clicks.
@@ -24,7 +24,7 @@ Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tans
 
 ![Full-width white consent bar along the bottom edge](../assets/v3/bottom-bar.png)
 
-In React, set `container={{ type: 'banner', edge: 'bottom' }}` to render a full-width bottom banner. Vue, Astro, and Svelte take `variant="bar"` and `position="bottom"`.
+In React and Vue, set `container` to `{ type: 'banner', edge: 'bottom' }` to render a full-width bottom banner. Astro and Svelte take `variant="bar"` and `position="bottom"`.
 
 <Tabs items={['React', 'Vue', 'Astro', 'Svelte']}>
   <Tab value="React">
@@ -92,23 +92,13 @@ A centred Card always blocks. Notices never block, so a centred Card on a notice
 
 ![Single-row white bottom bar with heading, copy, and buttons inline](../assets/v3/slim-bar.png)
 
-The slim bar places heading, copy, and actions on one row. Vue and Svelte pass slot classes. Both share one stylesheet and preserve required policy actions. In React, use the stock banner, `container={{ type: 'banner', edge: 'bottom' }}`, or render your own markup with the [headless bar](#headless-bar).
+The slim bar places heading, copy, and actions on one row. Svelte passes slot classes and preserves required policy actions. In React and Vue, use the stock banner with `container` set to `{ type: 'banner', edge: 'bottom' }`, or render your own markup with the [headless bar](#headless-bar).
 
-<Tabs items={['Vue', 'Svelte']}>
-  <Tab value="Vue">
-    Spread `slimBar` into `app.use(inth, ...)`. `InthProvider` renders the slim bar.
+Spread `slimBar` into `InthProvider` props and place the CSS rules in a global stylesheet.
 
-    <include src="../shared/examples/storybook-vue/slim-bar.mdx" />
-  </Tab>
+<include src="../shared/examples/storybook-svelte/slim-bar.mdx" />
 
-  <Tab value="Svelte">
-    Spread `slimBar` into `InthProvider` props and place the CSS rules in a global stylesheet.
-
-    <include src="../shared/examples/storybook-svelte/slim-bar.mdx" />
-  </Tab>
-</Tabs>
-
-<include src="../shared/examples/storybook-vue/slim-bar-css.mdx" />
+<include src="../shared/examples/storybook-svelte/slim-bar-css.mdx" />
 
 ## Headless bar
 

@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth first-layer consent banner directly in Vue, configure its variant and position, and style its parts.
+description: Render the Inth first-layer consent banner directly in Vue, choose its container, and style its parts.
 group: frameworks
 ---
 
@@ -10,13 +10,13 @@ using `InthProvider`.
 ## Import the banner into your root component
 
 `InthProvider` already renders `ConsentBanner`. Import it from
-`@inth/vue/vue-plugin` only when you want to set its variant in the template
+`@inth/vue/vue-plugin` only when you want to set its container in the template
 or manage surface placement yourself:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
 Mount this in `src/App.vue` instead of `InthProvider`, alongside
-`ConsentManager` so Customize opens the dialog. Statically importing
+`ConsentManager` so your page links can open the dialog. Statically importing
 `ConsentManager` includes it in your main bundle, whereas `InthProvider`
 code-splits it. Direct composition does not switch to IAB surfaces under an
 IAB policy. `inth` still injects your `tokens`.
@@ -25,7 +25,7 @@ IAB policy. `inth` still injects your `tokens`.
 
 <import src="../../../shared/vue/components/consent-banner.mdx#props" />
 
-To configure the banner variant globally without importing `ConsentBanner`,
+To configure the banner container globally without importing `ConsentBanner`,
 set `presentation.prompt` in `inth`. See
 [change the banner layout](/docs/frameworks/vue/customize#change-the-banner-layout).
 
@@ -38,7 +38,7 @@ set `presentation.prompt` in `inth`. See
 ## Next steps
 
 - [ConsentManager](/docs/frameworks/vue/components/consent-manager): the
-  dialog opened by Customize.
+  "Your Privacy Choices" dialog.
 - [Headless](/docs/frameworks/vue/headless): build a banner with your own
   markup.
 - [Banner designs](/docs/customization/recipes): explore five ready-made
