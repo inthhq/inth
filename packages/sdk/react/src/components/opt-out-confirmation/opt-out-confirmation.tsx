@@ -14,7 +14,7 @@ import {
 	OptOutConfirmationPreferencesLink,
 	OptOutConfirmationStatus,
 	OptOutConfirmationTitle,
-} from './atoms/parts';
+} from './atoms/opt-out-confirmation-details';
 import { OptOutConfirmationRoot } from './atoms/root';
 
 /**

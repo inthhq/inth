@@ -22,7 +22,7 @@ import {
 	PreferencesLink,
 	Status,
 	Title,
-} from './atoms/parts';
+} from './atoms/opt-out-confirmation-details';
 import { OptOutConfirmationRoot, Root } from './atoms/root';
 import { OptOutConfirmation as OptOutConfirmationComponent } from './opt-out-confirmation';
 import type { OptOutConfirmationProps } from './opt-out-confirmation';
@@ -33,7 +33,7 @@ export type {
 	OptOutConfirmationDetailsProps,
 	OptOutConfirmationDoneButtonProps,
 	OptOutConfirmationPreferencesLinkProps,
-} from './atoms/parts';
+} from './atoms/opt-out-confirmation-details';
 export type { OptOutConfirmationRootProps } from './atoms/root';
 
 export interface OptOutConfirmationCompoundComponent extends FC<OptOutConfirmationProps> {
