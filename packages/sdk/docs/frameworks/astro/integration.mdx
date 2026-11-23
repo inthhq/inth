@@ -119,8 +119,6 @@ IAB TCF configuration, or `false`. Accepts `cmpId`, `cmpVersion`, `vendors`, `pu
 | `enabled` | `boolean` | `true` | Registers the middleware that sets `Astro.locals.inth` |
 | `skip` | `string[]` | `[]` | Path prefixes the middleware skips. `'/api'` covers `/api/health` but not `/apidocs` |
 | `timeoutMs` | `number \| false` | `500` | Longest a server render waits for the policy. `false` or `Infinity` waits indefinitely; any non-finite or negative value falls back to the default |
-| `trustForwardedHeaders` | `boolean` | `false` | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
-| `subjectCookie` | `boolean` | None | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
 
 The integration's own route under `routePrefix` is always skipped. On a skipped route, `Astro.locals.inth` is unset and `ConsentBanner` throws, so skip only routes that render no consent components. See [Server API](/docs/frameworks/astro/server).
 

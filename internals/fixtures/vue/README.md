@@ -9,12 +9,12 @@ consent flow with different styling. For the smallest setup to copy, see
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
-Replace `https://your-project.inth.app` in `src/main.ts`, `src/branded.ts`
-and `src/headless.ts` with your Inth backend URL, and allow this app's origin
+Replace `https://your-project.inth.app` in `src/main.ts`, `src/branded.ts`,
+`src/headless.ts` and `src/experiment-main.ts` with your Inth backend URL, and allow this app's origin
 in Inth. Replace the PostHog project key and X Pixel ID placeholders in
 `src/scripts.ts` with your own. Then run:
 
@@ -65,4 +65,4 @@ the way a flag provider would (`assignedBy: host`); any other `arm` value runs
 `src/experiment.ts`, whose `onSurfaceShown` and `onChoiceRecorded` callbacks
 list each impression and choice under the arm as `inth_surface_shown` and
 `inth_choice_recorded` and push the same events to `window.dataLayer`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.

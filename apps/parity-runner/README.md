@@ -113,7 +113,7 @@ PARITY_FRAMEWORKS=react,svelte,vue,astro,angular PARITY_SKIP_PIXEL=1 \
 | `SOLID_STORYBOOK_URL` | `http://127.0.0.1:6009` |
 | `ASTRO_STORYBOOK_URL` | `http://127.0.0.1:6010` |
 | `ANGULAR_STORYBOOK_URL` | `http://127.0.0.1:6011` |
-| `PARITY_FRAMEWORKS` | `react,svelte` |
+| `PARITY_FRAMEWORKS` | `react,svelte,vue` (`react,svelte` in `tests/visual-parity.spec.ts`) |
 | `PARITY_SKIP_PIXEL` | unset |
 | `PARITY_DEBUG` | unset — prints the first DOM/a11y diff |
 
@@ -156,9 +156,8 @@ PARITY_FRAMEWORKS=react,svelte,vue bun run --cwd apps/parity-runner test:parity 
 ```
 
 This checks all seven tabs and the circular launcher at desktop and mobile
-sizes, in light and dark mode. The Angular Storybook has no DevTools story
-yet, so this comparison leaves Angular out even when `PARITY_FRAMEWORKS`
-names it. It compares the floating panel itself, including
+sizes, in light and dark mode. Astro ships no DevTools component, so this
+comparison leaves Astro out even when `PARITY_FRAMEWORKS` names it. It compares the floating panel itself, including
 its portaled content, through DOM, accessibility, computed styles, and exact
 screenshots. It also rejects horizontal overflow and off-screen placement.
 

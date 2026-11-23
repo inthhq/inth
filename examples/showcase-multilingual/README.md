@@ -32,8 +32,8 @@ The rest is the shop: `proxy.ts` sends `/` to the browser's language,
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-multilingual dev
 ```
 
@@ -50,7 +50,7 @@ override it key by key.
 
 ## Docs
 
-- [Copy and translations](https://c15t.com/docs/customization/translations)
-- [Next.js translations](https://c15t.com/docs/frameworks/next/translations)
-- [Policies](https://c15t.com/docs/concepts/policies)
-- [Geography headers](https://c15t.com/docs/frameworks/next/geography-headers)
+- [Copy and translations](https://inth.com/docs/customization/translations)
+- [Next.js translations](https://inth.com/docs/frameworks/next/translations)
+- [Policies](https://inth.com/docs/concepts/policies)
+- [Geography headers](https://inth.com/docs/frameworks/next/geography-headers)

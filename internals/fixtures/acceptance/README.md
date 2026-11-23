@@ -7,8 +7,8 @@ test-only application.
 Install workspace dependencies and build package dependencies first:
 
 ```sh
-bun install
-bun turbo run build --filter='./packages/*'
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 bunx playwright@1.61.1 install chromium
 bun run --cwd internals/fixtures/acceptance test
 ```
@@ -79,21 +79,21 @@ it does not replace that compatibility coverage.
 ## Starter smoke tests
 
 `bun run --cwd internals/fixtures/acceptance test:starters` builds each
-starter in `examples/` for production, starts it, and checks that the banner
-shows, that Accept survives a reload, and that Privacy settings opens the
+starter in `examples/`, plus the Svelte and Angular compatibility apps in
+`internals/svelte-compat` and `internals/angular-compat`, for production,
+starts it, and checks that the banner shows, that Accept survives a reload, and that Privacy settings opens the
 dialog. Server-rendered starters must also have the banner in their first
 HTML, which the test reads with JavaScript disabled. Select starters with
 `STARTER_TARGET=react,nuxt`; the default is `all`. The full journeys above
 stay with the apps in `internals/fixtures`.
 
 `src/starter-targets.ts` holds each starter's directory, commands, routes and
-how it reaches the fixture. Server-rendered starters read their public backend
-URL variable. Client-only starters hardcode `https://your-project.inth.app`,
-so the test routes those browser requests to the fixture, and serves the HTML
-starter's jsDelivr script from `packages/sdk/browser/dist`. `self-host` needs
-PostgreSQL in production, so the test starts a throwaway container with
-Docker. To cover a showcase, add a target and let `scripts/ci-plan.ts` select
-its directory.
+how it reaches the fixture. Most starters read their public backend URL
+variable. The HTML starter hardcodes `https://your-project.inth.app`, so the
+test routes those browser requests to the fixture, and serves the hosted
+`inth.js` it loads from `packages/sdk/browser/dist`. CI skips the
+`examples/showcase-*` apps: to cover a showcase, add a target here and let the
+starter pattern in `tools/ci/browser-groups.ts` select its directory.
 
 ## SSR consent journeys
 
@@ -103,7 +103,7 @@ request-header and no-zombie-banner contracts. The Nuxt cases also check
 Nitro route methods, caching and version headers. Next cases also verify the
 backend receives one saved choice, with one init request for hosted SSR and
 zero for manifest SSR. Select hosts with
-`INTH_E2E_APPS=nextjs,nuxt`. `bun run e2e:consent` calls the same suite.
+`INTH_E2E_APPS=nextjs,nuxt`. `bun run --cwd scripts e2e:consent` calls the same suite.
 
 These journeys use benchmark hosts because they expose server observations
 that the public examples do not. Example acceptance owns vendor gating and
@@ -114,10 +114,10 @@ under `.ci-reports/`.
 ## Docs code comes from elsewhere
 
 These apps carry test hooks, so the docs publish nothing from them. Setup code
-in `docs/` comes from `#region docs:` markers in the starters under
+in `packages/sdk/docs/` comes from `#region docs:` markers in the starters under
 `examples/`, which the starter smoke tests cover, and in
 `internals/doc-snippets/<framework>`, which CI type-checks. See
-`examples/README.md` and the `writing-docs` skill; the marker syntax is
+`examples/README.md`; the marker syntax is
 documented in `scripts/example-doc-sources.ts`.
 
 The one exception runs the other way: the `script-tag` fixture serves the HTML

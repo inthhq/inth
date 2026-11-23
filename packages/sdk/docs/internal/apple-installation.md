@@ -152,5 +152,5 @@ Simulator tests exercise the iOS file-write branch and cold hydration. The
 simulator filesystem does not expose file protection attributes; that assertion
 is a separate physical-device check and is skipped on simulators. Successful
 simulator file I/O does not verify Data Protection or locked-device behavior.
-See `docs/internal/mobile-support.md` for remaining first-release gates. Full TCF
+See [mobile-support.md](mobile-support.md) for remaining first-release gates. Full TCF
 2.4 and Additional Consent v2 remain required.

@@ -14,13 +14,13 @@ provider" below.
 | Scenario | Route | What it measures |
 | --- | --- | --- |
 | `baseline` | `/baseline` | Page floor: identical shell, no consent code. |
-| `client` | `/client` | The `InthProvider` from `@inth/tanstack-start/react` with `hosted({ projectUrl: '/api/bench-consent' })`, `ssr: false`, so the provider mounts and runs init in the browser. |
+| `client` | `/client` | The `InthProvider` from `@inth/tanstack-start/react` with `mode: hosted()` and `projectUrl: '/api/bench-consent'`, `ssr: false`, so the provider mounts and runs init in the browser. |
 | `manifest-client` | `/manifest-client` | A provider with `createV1ManifestTransport(...)` as its transport, reading the same-origin `/api/inth/v1/consent/manifest` route, `ssr: false`. |
 | `ssr` | `/ssr` | Loader fetches `/api/bench-consent/v1/consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `InthProvider` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
 | `ssr-stream` | `/ssr-stream` | The streamed setup `InthProvider` documents: the same direct-init loader, returned unawaited (`loader: () => ({ consent: getDirectInitConsentState() })`), so the router streams the state in after the shell. The server HTML has no banner; it shows once the state reaches the hydrated root. Start only. |
 | `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/inth' })` through the in-process manifest cache; `InthProvider` reads the route prefix from the state. Saves post to the fixture directly. |
 | `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `InthProvider` at `/api/inth-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /v1/consent/records` takes one hop through the Start server. Start only. |
-| `repeat-visitor` | derived | After each measured `client` iteration a second browser context loads `/client` and the runner measures the Open Preferences click, exactly as the Next runner does. Note that neither runner preseeds the consent cookie for this arm. |
+| `saved-consent-accept`, `saved-consent-reject` | `/manifest-ssr` | An unmeasured visit accepts (or rejects) on the banner, then a new browser context carrying its cookies and localStorage loads `/manifest-ssr`. The server must omit the banner, and the runner measures the Open Preferences click, exactly as the Next runner does. |
 | `manifest-ssr-root` | `/manifest-ssr` in the `dist-root/` build | `--root-provider` only. Same route and metrics as `manifest-ssr`, but the provider and the manifest prefetch loader live in `__root.tsx` and the route renders only the page shell. Built with `INTH_BENCH_ROOT_PROVIDER=1` (`bun run build:root`). |
 
 The Next runner no longer has an `rsc-ssr` arm; older result tables in this
@@ -60,7 +60,7 @@ never reads `dist-root/`.
 For the head-to-head report run both arms, then:
 
 ```bash
-bun run bench:frameworks
+bun run --cwd scripts bench:frameworks
 ```
 
 which writes `.benchmarks/compare/frameworks.md` and `frameworks.json`.
@@ -77,26 +77,24 @@ which writes `.benchmarks/compare/frameworks.md` and `frameworks.json`.
 - **`ssr` on the server.** Both arms call `/api/bench-consent/v1/consent/init` on every
   request. Start uses a hand-written loader for this because the package
   helper always goes through the manifest cache; see `src/bench/loaders.ts`.
-- **`manifest-ssr` on the server.** Next's `resolveConsent` fetches
-  its own `/api/inth/v1/consent/manifest` route over HTTP each request and the route
-  answers from the in-process cache. Start's prefetch refuses self-fetches and
-  reads the same cache directly. That saved hop is a real adapter difference,
-  not a harness artefact.
-- **`manifest-ssr` saves.** The Next arm's root has no `projectUrl`, so
-  it runs in offline mode and the accept click never posts. The Start arm is
-  in hosted mode and posts to the fixture. Compare the Next number against
-  Start's `interactionLatencyMs` with that in mind, and use `manifest-ssr`
+- **`manifest-ssr` on the server.** Both arms read the fixture manifest
+  through the shared in-process manifest cache: Next's `resolveConsent` and
+  Start's prefetch never fetch the app's own `/api/inth` consent routes.
+- **`manifest-ssr` saves.** Both arms set `projectUrl: '/api/bench-consent'`,
+  so the accept click posts to the fixture in both. Use `manifest-ssr`
   versus `manifest-ssr-proxy` within Start to price the proxy hop.
-- **`initRequestsAfterLoad` on SSR arms.** The React provider dispatches init
-  eagerly on the client whenever the transport is hosted, even with an
-  authoritative prefetch, so every hosted SSR arm shows one browser init
-  request in both frameworks. Only Next's offline-mode `manifest-ssr` arm
-  shows zero. The `count-eq 0` budget copied from the Next runner therefore
-  fails on the hosted arms of both frameworks.
+- **`initRequestsAfterLoad` on SSR arms.** The provider uses the
+  authoritative prefetch, so Start's `ssr` and `manifest-ssr` arms make no
+  browser init request and meet their `count-eq 0` budget.
 - **Cache warmth.** Manifest arms warm the server cache during warmup
   iterations; the first cold fill is only visible with `--cold-manifest true`.
 
 ## Reference run
+
+This run and its notes record the harness as it was on that date. Some of
+it has changed since: the `repeat-visitor` arm is now the saved-consent
+visits, Next's `manifest-ssr` arm is no longer in offline mode, and Start's
+`ssr` and `manifest-ssr` arms no longer make a browser init request.
 
 Recorded on 5 September 2026 on an idle AMD Ryzen 7 2700 (16 threads) running
 Linux 7.2.2, Bun 1.3.11, Node 26.7.0, Next 16.2.10, TanStack Start 1.168.49

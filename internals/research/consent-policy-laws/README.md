@@ -5,7 +5,7 @@ the linked legislation and regulator guidance. The implementation follow-up adds
 presets, generic preference labels and missing-subdivision handling.
 The [verification resolutions](verification-resolutions.md) record the subsequent
 matcher, refusal and source corrections. The
-[public preset guide](../../../packages/sdk/docs/frameworks/javascript/concepts/policy-presets.mdx)
+[public policies guide](../../../packages/sdk/docs/concepts/policies.mdx)
 describes current behavior. Mixed-purpose defaults, timed deemed consent
 and independent legal permissions remain outside these presets. It replaces the earlier assumption that adding an
 opt-in country helper amounts to establishing that country's banner rules.

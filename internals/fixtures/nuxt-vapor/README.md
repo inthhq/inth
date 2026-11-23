@@ -17,16 +17,16 @@ Vapor needs Vue 3.6, which is a release candidate, so this example pins
 3.5.
 
 ```bash
-bun install
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 bun run --cwd internals/fixtures/nuxt-vapor dev
 ```
 
-Open `/consent-example`. Without a backend URL the demo uses a self-hosted
-`@c15t/backend` at `/api/self-host` with an embedded PGlite database, the same
-setup as `internals/fixtures/nuxt`. The route uses `defineEventHandler` from
-`nuxt/server`, whose event carries a standard `Request` for the backend
-handler. A production build needs `DATABASE_URL`, or set
-`NUXT_PUBLIC_INTH_PROJECT_URL` to a hosted backend.
+Open `/consent-example`. Without a backend URL the demo uses the
+`https://your-project.inth.app` placeholder, the same setup as
+`internals/fixtures/nuxt`. Set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth
+backend URL to run it by hand; the acceptance suite sets it to its mock
+backend.
 
 ## Nuxt 5 preview
 

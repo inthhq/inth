@@ -9,8 +9,8 @@ ClientRouter navigation.
 ## Run it
 
 ```bash
-bun install
-bun turbo run build --filter=inth
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 bun run --cwd internals/fixtures/astro-demo dev
 ```
 
@@ -57,7 +57,7 @@ dialog chunk graph can be walked from `dist/client/.vite/manifest.json`.
   `manifest()`. Used when `INTH_PROJECT_URL` is set.
 - `astro.static.config.mjs`: static output with no adapter and `hosted()`.
   Used when `INTH_PROJECT_URL` is set and `INTH_ASTRO_OUTPUT=static`.
-- `astro.showcase.config.mjs`: `offline()`, the IAB surfaces, the dialog
+- `astro.showcase.config.mjs`: `testing()`, the IAB surfaces, the dialog
   framework comparison and the banner experiment. Used when no backend URL is
   set, or when `INTH_IAB`, `INTH_UI` or `INTH_EXPERIMENT` is set.
 
@@ -93,7 +93,7 @@ and choice under the arm to `window.dataLayer` as `inth_surface_shown` and
 `inth_choice_recorded`, and the page lists them. The experiment needs server
 output: a prerendered page renders once for every visitor, so the middleware
 resolves no arm for it. With `INTH_PROJECT_URL` set the showcase uses `hosted()`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.
 
 ## IAB TCF
 
@@ -115,8 +115,8 @@ One request resolves one policy, so the whole demo switches together —
 that is why the flag exists rather than a per-page toggle.
 
 `demo-gvl.mjs` holds a two-vendor Global Vendor List. A real site never
-ships one: hosted and manifest mode fetch it through `/init`, and an
-offline site points `iab.gvlUrl` at where the real list lives, which goes
+ships one: hosted and manifest mode fetch it through `/init`, and a site
+with no backend points `iab.gvlUrl` at where the real list lives, which goes
 through the in-process cache in `@inth/sdk/server`.
 
 ## Consent example
@@ -154,10 +154,12 @@ absent before measurement permission. The example emits no custom conversion
 events. Script removal cannot undo SDK code that already ran; application event
 calls must also stop after withdrawal.
 
-Without a backend URL, the offline showcase runs instead. Offline mode is not
-recommended for production environments. `INTH_IAB=1` continues
-to select the existing IAB showcase. Astro has no dedicated DevTools component
-export; use the existing consent state showcase and browser Network panel.
+Without a backend URL, the showcase runs instead, with `testing()` in
+`astro dev`. `testing()` refuses a production build, so `astro build` without
+a backend points at the placeholder backend and renders no server-side banner.
+`INTH_IAB=1` continues to select the existing IAB showcase. This app does not
+mount DevTools (`mountDevTools()` in `@inth/astro/devtools` adds the panel);
+use the existing consent state showcase and browser Network panel.
 
 The example stylesheet preserves Astro's `hidden` state after a choice, so the
 banner's shared display class cannot keep it over the page controls.

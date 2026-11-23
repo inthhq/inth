@@ -13,7 +13,7 @@ require hosted setup and exclude the fixture picker.
 
 Android Debug builds also read three string extras from the launch intent, in any
 mode: `INTH_DEMO_FIRST_LAYER` (`page`, `sheet` or `prompt`),
-`INTH_DEMO_APPEARANCE` (`c15t` or `system`) and
+`INTH_DEMO_APPEARANCE` (`paper` or `system`) and
 `INTH_DEMO_SAVE_PLACEMENT` (`bottom` or `top`). For example, add
 `--es INTH_DEMO_FIRST_LAYER sheet --es INTH_DEMO_APPEARANCE system` to
 `adb shell am start`.
@@ -84,23 +84,22 @@ probe. The test checks PostHog's own opt-out state at each step, but it cannot
 see the traffic. It logs the run id, the expected outcome per step and the
 anonymous `distinct_id` under the `inth-vendor-evidence` logcat tag.
 
-Run it by dispatching the Depot CI workflow on `canary`:
+Run it by dispatching the Depot CI workflow on `main`:
 
 ```sh
-depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/c15t-private \
-  --workflow android-posthog-live.yml --ref canary
+depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/inth \
+  --workflow android-posthog-live.yml --ref main
 ```
 
-The key is the Depot CI secret `POSTHOG_E2E_PROJECT_KEY`. Its variant applies
-only to this repository, the `canary` branch and this workflow file, so pull
-request branches never receive it, and Depot CI does not run pull requests
-from forks. The workflow has only a manual trigger, and its job refuses every
-`pull_request` event. The same name is a GitHub Actions secret, which GitHub
-withholds from fork pull requests.
+The key is the Depot CI secret `POSTHOG_E2E_PROJECT_KEY`. Scope its variant
+to this repository, the `main` branch and this workflow file, so pull request
+branches never receive it; Depot CI does not run pull requests from forks.
+Without the secret the job prints a notice and skips. The workflow has only a
+manual trigger, and its job refuses every `pull_request` event.
 
 `depot ci run` from a working tree resolves only organization-wide and
 repository-wide variants, so it cannot read this key. To try changes before
-they reach `canary`, an organization owner can add a repository-wide variant,
+they reach `main`, an organization owner can add a repository-wide variant,
 run the job, and remove the variant afterwards:
 
 ```sh

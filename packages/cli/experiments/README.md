@@ -22,7 +22,7 @@ Node and yao-pkg use Keychain service `com.inth.cli.node`, account `oauth`, and 
 
 ## Tests that depend on these experiments
 
-`pnpm test:unit` runs Vitest over `../test/*.test.ts`. Fifteen of those forty files exercise `node/` rather than the Scriptc adapters in `../src/native/`. Removing `experiments/` removes them. The production adapters (`native-api.ts`, `native-http.ts`, `native-store.ts`, `native-state.ts`, `native-resource-output.ts`, `native-ui.ts`) and the production entry are covered only by the compiled suite in `../test/native/`, run by `pnpm --filter @inth/cli test`. The experiments import shared logic from `../src/`, so these tests reach that logic indirectly, but the HTTP, credential, state, and command adapters they drive are experiment code.
+`pnpm test:unit` runs Vitest over `../test/*.test.ts`. Fifteen of those files exercise `node/` rather than the Scriptc adapters in `../src/native/`. Removing `experiments/` removes them. The production adapters (`native-api.ts`, `native-http.ts`, `native-store.ts`, `native-state.ts`, `native-resource-output.ts`, `native-ui.ts`) and the production entry are covered only by the compiled suite in `../test/native/`, run by `pnpm --filter @inth/cli test`. The experiments import shared logic from `../src/`, so these tests reach that logic indirectly, but the HTTP, credential, state, and command adapters they drive are experiment code.
 
 Tests whose subject is experiment code. Each starts with a comment saying so.
 

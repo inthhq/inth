@@ -46,8 +46,8 @@ The rest is the shop: the product page, header, footer and
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-custom-banner dev
 ```
 
@@ -63,7 +63,6 @@ allow Analytics, and PostHog's config request returns a 404.
 
 ## Docs
 
-- [Headless](https://c15t.com/docs/frameworks/next/headless)
-- [Hooks](https://c15t.com/docs/frameworks/next/hooks)
-- [Banner designs](https://c15t.com/docs/customization/recipes)
-- [Local configuration](https://c15t.com/docs/frameworks/next/data-fetching-reference#local-configuration)
+- [Headless](https://inth.com/docs/frameworks/next/headless)
+- [Hooks](https://inth.com/docs/frameworks/next/hooks)
+- [Banner designs](https://inth.com/docs/customization/recipes)

@@ -7,12 +7,12 @@ to compare the same consent flow with different styling.
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
-Replace `https://your-project.inth.app` in `src/consent.tsx` with your Inth
-backend URL and allow this app's origin in Inth. Replace the PostHog project
+Replace `https://your-project.inth.app` in `src/consent.tsx` and
+`src/experiment-consent.tsx` with your Inth backend URL and allow this app's origin in Inth. Replace the PostHog project
 key and X Pixel ID placeholders in `src/scripts.ts` with your own. Then run:
 
 ```sh
@@ -49,4 +49,4 @@ way a flag provider would (`assignedBy: host`), and `?arm=off` leaves the
 visitor out. The provider's `onSurfaceShown` and `onChoiceRecorded` callbacks
 push each impression and choice under the arm to `window.dataLayer` as
 `inth_surface_shown` and `inth_choice_recorded`, and the page lists them. See
-https://c15t.com/docs/guides/banner-experiments.
+`packages/sdk/docs/guides/banner-experiments.mdx`.

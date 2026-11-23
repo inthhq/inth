@@ -88,7 +88,7 @@ already shows that arm. `lib/flags.ts` stands in for a flag provider and reads
 `onChoiceRecorded` callbacks that list each impression and choice under the
 arm and push them to `window.dataLayer` as `inth_surface_shown` and
 `inth_choice_recorded`. See
-https://c15t.com/docs/guides/banner-experiments.
+`packages/sdk/docs/guides/banner-experiments.mdx`.
 
 PostHog uses `loadMode: 'after-consent'`, so its SDK waits for measurement
 permission. X Pixel waits for marketing. The indicators show effective
