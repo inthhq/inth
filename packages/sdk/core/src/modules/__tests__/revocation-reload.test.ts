@@ -40,7 +40,7 @@ import {
 	markPendingOptOutConfirmation,
 	watchPendingOptOutConfirmation,
 } from '../../surface-actions/opt-out-reload';
-import { pressSaleRight } from '../../surface-session/commands';
+import { pressSaleRight } from '../../surface-session/surface-commands.model';
 import { watchRevocationReload } from '../revocation-reload';
 import { createScriptLoader } from '../script-loader';
 

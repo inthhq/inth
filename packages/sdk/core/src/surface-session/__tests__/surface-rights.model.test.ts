@@ -23,7 +23,7 @@ import {
 	commitDialogChoice,
 	confirmSaleRight,
 	pressSaleRight,
-} from '../commands';
+} from '../surface-commands.model';
 import { getSurfaceSession } from '../session';
 import {
 	resolveBannerCommit,

@@ -13,13 +13,13 @@ export {
 	confirmSaleRight,
 	copySurfaceReference,
 	pressSaleRight,
-} from './commands';
+} from './surface-commands.model';
 export type {
 	BannerCommitOptions,
 	BannerCommitOutcome,
 	RightCommandOptions,
 	RightPressResult,
-} from './commands';
+} from './surface-commands.model';
 export { resolveSurfaceEscape } from './resolve-surface-escape';
 export type {
 	SurfaceEscapeInput,
