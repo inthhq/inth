@@ -1,7 +1,8 @@
 import type {
 	ConsentKernel,
-	SurfacePresentation,
 	KernelActiveUI,
+	PreferencesPresentation,
+	PromptPresentation,
 } from '@inth/sdk/engine';
 import { useContext } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -15,8 +16,8 @@ import { testing } from '../../testing';
 import { useHeadlessConsentUI } from '../use-headless-consent-ui';
 
 const createWrapper = function createWrapper(ui: {
-	banner?: SurfacePresentation;
-	dialog?: SurfacePresentation;
+	banner?: PromptPresentation;
+	dialog?: PreferencesPresentation;
 	mode?: KernelActiveUI;
 }) {
 	return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,7 @@ describe('useHeadlessConsentUI', () => {
 		const { result } = await renderHook(() => useHeadlessConsentUI(), {
 			wrapper: createWrapper({
 				banner: {
-					blocking: true,
+					blockUntilChoice: true,
 					direction: 'row',
 					layout: [['reject', 'accept']],
 					primaryActions: ['accept'],
