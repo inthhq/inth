@@ -339,7 +339,7 @@ test('accepting right after hydration records the choice against the streamed po
 	});
 	await tick(100);
 
-	expect(page?.doc.querySelector(BANNER)).toBeNull();
+	await vi.waitFor(() => expect(page?.doc.querySelector(BANNER)).toBeNull());
 	expect(transportSave).toHaveBeenCalledTimes(1);
 	expect(JSON.stringify(transportSave.mock.calls[0])).toContain('gdpr');
 	await hydrated.unmount();
@@ -377,7 +377,7 @@ test('a click before the client has the data waits for it and records against th
 	expect(hydrated.recoverableErrors).toEqual([]);
 	expect(transportSave).toHaveBeenCalledTimes(1);
 	expect(JSON.stringify(transportSave.mock.calls[0])).toContain('gdpr');
-	expect(page.doc.querySelector(BANNER)).toBeNull();
+	await vi.waitFor(() => expect(page?.doc.querySelector(BANNER)).toBeNull());
 	await hydrated.unmount();
 });
 
@@ -409,7 +409,8 @@ test('a click in the same task hydration starts records against the streamed pol
 		expect(hydrated.recoverableErrors).toEqual([]);
 		expect(transportSave).toHaveBeenCalledTimes(1);
 		expect(JSON.stringify(transportSave.mock.calls[0])).toContain('gdpr');
-		expect(page.doc.querySelector(BANNER)).toBeNull();
+		// The banner plays its exit before it leaves the page.
+		await vi.waitFor(() => expect(page.doc.querySelector(BANNER)).toBeNull());
 	} finally {
 		(
 			globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -459,7 +460,8 @@ test('a choice only in localStorage: the streamed banner leaves once the browser
 	const seen = states(after(page?.timeline ?? [], 'streamed'));
 	expect(seen.at(0)).toMatch(/^banner:/u);
 	expect(seen.at(-1)).toBe('none');
-	expect(seen).toHaveLength(2);
+	// Shown, then its exit, then gone: never gone and back.
+	expect(seen.indexOf('none')).toBe(seen.length - 1);
 	await second.hydrated.unmount();
 });
 
