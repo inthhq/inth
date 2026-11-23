@@ -107,13 +107,13 @@ export const injectPhoneLayout = function injectPhoneLayout(): Signal<boolean> {
 		}
 	};
 	if (hydrating) {
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Fire and forget inside an injection context.
-		void inject(ApplicationRef)
-			.whenStable()
-			.then(() => {
-				ready = true;
-				sync();
-			});
+		const appRef = inject(ApplicationRef);
+		const afterHydration = async () => {
+			await appRef.whenStable();
+			ready = true;
+			sync();
+		};
+		void afterHydration();
 	}
 	query.addEventListener('change', sync);
 	inject(DestroyRef).onDestroy(() => {

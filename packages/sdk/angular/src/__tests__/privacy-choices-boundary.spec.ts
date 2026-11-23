@@ -39,8 +39,8 @@ const isV6Module = (file: string): boolean =>
 const V6_SPECIFIERS = [
 	/^@inth\/sdk\/ui\/styles\/components\/privacy-choices$/u,
 	/^@inth\/sdk\/ui\/styles\/sheets\/privacy-choices/u,
-	/^@inth\/sdk\/ui\/styles\/components\/consent-(card|bar|drawer|surface|expand)$/u,
-	/^@inth\/sdk\/ui\/styles\/sheets\/(card|bar|drawer|surface|expand)-/u,
+	/^@inth\/sdk\/ui\/styles\/components\/consent-(?:card|bar|drawer|surface|expand)$/u,
+	/^@inth\/sdk\/ui\/styles\/sheets\/(?:card|bar|drawer|surface|expand)-/u,
 ];
 
 /** The module specifiers a file imports or re-exports for values. */

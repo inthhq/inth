@@ -45,7 +45,9 @@ describe('injectPhoneLayout', () => {
 		const phone = TestBed.runInInjectionContext(injectPhoneLayout);
 		expect(phone()).toBe(false);
 		await Promise.resolve();
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
 		expect(phone()).toBe(false);
 		done();
 		await TestBed.inject(ApplicationRef).whenStable();
