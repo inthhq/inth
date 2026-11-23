@@ -44,15 +44,17 @@ const brotli = (text: string): number =>
 const gzip = (text: string): number => gzipSync(text, { level: 9 }).length;
 
 /**
- * Brotli 11 / gzip 9 bytes. Before v6, and still: `styles.css` 13,116 /
- * 15,266, `styles.tw3.css` 12,993 / 15,115, `first-paint` 8,066 / 9,203,
- * `dialog` 6,285 / 7,212. Raise these only for rules the classic UI needs.
+ * Brotli 11 / gzip 9 bytes. Before v6: `styles.css` 13,116 / 15,266,
+ * `styles.tw3.css` 12,993 / 15,115, `first-paint` 8,066 / 9,203, `dialog`
+ * 6,285 / 7,212. The opaque primary-tint `@supports` block (PR #128) adds
+ * about 50-90 B brotli to the first three. Raise these only for rules the
+ * classic UI needs.
  */
 const EXISTING = {
 	dialog: { brotli: 6300, gzip: 7250, sheet: 'dialog' },
-	'first-paint': { brotli: 8100, gzip: 9250, sheet: 'first-paint' },
-	'styles.css': { brotli: 13150, file: 'styles.css', gzip: 15300 },
-	'styles.tw3.css': { brotli: 13000, file: 'styles.tw3.css', gzip: 15150 },
+	'first-paint': { brotli: 8150, gzip: 9350, sheet: 'first-paint' },
+	'styles.css': { brotli: 13250, file: 'styles.css', gzip: 15400 },
+	'styles.tw3.css': { brotli: 13100, file: 'styles.tw3.css', gzip: 15250 },
 } as const;
 
 /**
