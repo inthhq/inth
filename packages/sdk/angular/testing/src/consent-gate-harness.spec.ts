@@ -73,7 +73,7 @@ describe('ConsentGateHarness', () => {
 
 		await gate.openPreferences();
 		const dialog = await loader.getHarness(ConsentDialogHarness);
-		await (await dialog.getWidget()).setCategory('marketing', true);
+		await dialog.setCategory('marketing', true);
 		await dialog.save();
 
 		expect(TestBed.inject(ConsentManager).has('marketing')).toBe(true);

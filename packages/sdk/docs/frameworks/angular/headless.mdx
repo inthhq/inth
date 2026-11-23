@@ -11,14 +11,13 @@ scripts.
 ## Choose how much to replace
 
 Try [customization](/docs/frameworks/angular/customize) first: tokens, slots,
-`presentation`, banner `ng-template` slots and translations cover most visual
-changes without custom markup. Go headless when you need markup the stock
+the banner's container inputs, `presentation` and translations cover most
+visual changes without custom markup. Go headless when you need markup the stock
 components cannot produce.
 
 | Goal | Approach |
 | --- | --- |
 | Keep the markup, drop Inth's styles | Set `noStyle` in `provideInth()` or on one component, and style `data-*` attributes and slot classes. |
-| Custom buttons in the stock banner | Use the `inthConsentBannerAction` template; see [customize](./customize#replace-parts-of-the-banners-markup). |
 | Custom banner, stock dialog | Use `HeadlessConsent` for the banner and `<inth-consent-dialog>` for preferences. |
 | Custom dialog too | Add `ConsentManager` for the category list and draft, plus [primitives](./components/primitives) for accessible parts. |
 
@@ -43,19 +42,27 @@ if you want the stock dialog to handle Customize and preferences links:
 
 | Member | Purpose |
 | --- | --- |
-| `banner()`, `dialog()` | Signals with resolved presentation for each surface and `isVisible`. |
+| `banner()`, `dialog()` | Signals with the resolved presentation (`ResolvedConsentPresentation`) for each surface, plus `isVisible`. |
 | `banner().actionGroups`, `banner().orderedActions` | Allowed actions, grouped or flat, in policy order. |
 | `banner().requiredActions`, `banner().primaryActions` | Actions you must show, and actions to emphasize. |
-| `banner().variant`, `banner().position`, `banner().blocking` | Resolved shape, position and blocking behavior. |
+| `banner().container` | The resolved layout for `desktop` and `phone`: `type`, `placement`, `flow`, `edgeStyle` and `blocking`. `null` on `dialog()`. |
+| `banner().blocking` | Whether the prompt blocks the page. Match it with a focus trap and scroll lock. |
 | `activeUI()` | `'banner'`, `'dialog'` or `'none'`. |
-| `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. `customize` opens the dialog. |
+| `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. `customize` opens the dialog, since a custom banner has no choices of its own to unfold. |
 | `openBanner()`, `openDialog()`, `closeUI()` | Show or hide a surface. |
-| `optOut()` | Record an opt-out in one click and open `<inth-opt-out-confirmation>` under an opt-out policy, or open the preference dialog under other models. |
+| `optOut()` | Under an opt-out policy, record an opt-out in one click and show its receipt in `<inth-consent-dialog>` (or a standalone `<inth-opt-out-confirmation>`). Under other models, open the dialog. |
 | `saveCustomPreferences()` | Record the dialog's draft. |
 
 Render from `actionGroups` or `orderedActions` instead of a fixed button
 list. Policies may require a reject button next to accept or show only a
 dismiss button for a notice.
+
+`banner().container` lets a custom banner sit where the stock one would, so a
+placement set in `presentation.prompt.container` or the policy's
+`surface.container` still applies. The stock banner traps focus and locks
+scroll while it blocks. To do the same, put `[inthFocusTrap]` and
+`[inthScrollLock]` from `@inth/angular` on your banner, bound to
+`banner().isVisible && banner().blocking`.
 
 `resolvePromptCopy` and `resolveActionLabels` from `@inth/angular` return the
 banner title, description and button labels in the active language with

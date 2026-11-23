@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
-	CONSENT_DIALOG_PANEL,
+	CONSENT_DIALOG_BODY,
 	ConsentDialog,
 } from '../../consent-dialog/src/consent-dialog';
 import { testOptions } from '../../src/__tests__/test-local';
-import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import type { InthProviderOptions } from '../../src/lib/core/options';
 import { provideInth } from '../../src/lib/core/provide-inth';
+import { ConsentBanner } from '../../src/lib/prompt/prompt';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentBanner } from './iab-consent-banner';
 import { IABConsentDialog } from './iab-consent-dialog';
@@ -108,12 +108,11 @@ describe('standard and IAB surfaces side by side', () => {
 			providers: [
 				provideInth(iabPolicy()),
 				{
-					provide: CONSENT_DIALOG_PANEL,
+					provide: CONSENT_DIALOG_BODY,
 					useValue: async () => {
 						loads.panel += 1;
-						return (
-							await import('../../consent-dialog/src/consent-dialog-panel')
-						).ConsentDialogPanel;
+						return (await import('../../src/lib/dialog/dialog'))
+							.ConsentDialogBody;
 					},
 				},
 			],
@@ -128,7 +127,7 @@ describe('standard and IAB surfaces side by side', () => {
 			providers: [
 				provideInth(iabPolicy()),
 				{
-					provide: CONSENT_DIALOG_PANEL,
+					provide: CONSENT_DIALOG_BODY,
 					useValue: () => Promise.reject(new Error('chunk failed')),
 				},
 			],

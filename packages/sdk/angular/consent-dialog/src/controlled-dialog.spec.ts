@@ -52,9 +52,8 @@ describe('<inth-consent-dialog [(open)]>', () => {
 			// The first test in the file waits for the dialog chunk's cold import.
 			{ timeout: 5000 }
 		);
-		// The parent opened it, so the consent state never moved to it.
-		consent.setActiveUI('none');
-		await fixture.whenStable();
+		// The parent's open goes through the consent manager.
+		expect(consent.activeUI()).toBe('dialog');
 		const root = document.querySelector(
 			'[data-testid="consent-dialog-root"]'
 		) as HTMLElement;
@@ -69,13 +68,17 @@ describe('<inth-consent-dialog [(open)]>', () => {
 		await fixture.whenStable();
 
 		expect(fixture.componentInstance.open()).toBe(false);
+		expect(consent.activeUI()).not.toBe('dialog');
+		expect(
+			document.querySelector('[data-testid="consent-dialog-root"]')
+		).toBeNull();
 	});
 
 	test.each([
-		['save', 'consent-widget-footer-save-button'],
-		['accept', 'consent-widget-footer-accept-all-button'],
-		['reject', 'consent-widget-reject-button'],
-	])("closes the parent's open after %s", async (_name, testId) => {
+		['save', 'consent-dialog-save-button'],
+		['accept', 'consent-dialog-accept-all'],
+		['reject', 'consent-dialog-reject-all'],
+	])("closes the parent's open after %s", async (name, testId) => {
 		TestBed.configureTestingModule({
 			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
@@ -87,6 +90,15 @@ describe('<inth-consent-dialog [(open)]>', () => {
 			).not.toBeNull();
 		});
 
+		if (name === 'save') {
+			// Save waits for a change to record (EU-03).
+			(
+				document.querySelector(
+					'[data-testid="consent-dialog-category-switch-measurement"]'
+				) as HTMLElement
+			).click();
+			await fixture.whenStable();
+		}
 		(
 			document.querySelector(`[data-testid="${testId}"]`) as HTMLElement
 		).click();

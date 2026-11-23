@@ -47,6 +47,7 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
+import { resetDialogWarmingForTests } from '../lib/core/dialog-warming';
 import type {
 	InthCallbacks,
 	InthOptions,
@@ -166,7 +167,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 			kernel.getSnapshot().promptRequirement.kind === 'notice'
 		),
 		preferencesOpen: !!document.querySelector(
-			'[data-testid="consent-widget-root"]'
+			'[data-testid="consent-dialog-root"]'
 		),
 		rights: (preferences?.getAttribute('data-inth-rights')?.split(' ') ??
 			[]) as PolicyDomEvidence['rights'],
@@ -290,6 +291,10 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		);
 	}
 	localStorage.removeItem('inth-iab-authority-v1');
+	// Each session is a new page load. A warm-up an earlier session started
+	// would otherwise load the dialog as this page mounts, which a page
+	// that has just loaded does not do.
+	resetDialogWarmingForTests();
 	const baseline = { logs: logs(), storage: storageBytes() };
 	const consentMode: Record<string, string> = {};
 	const previousGtag = window.gtag;
@@ -546,6 +551,74 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 			await click('opt-out-confirmation-preferences-link');
 		}
 	};
+	/** Waits for a control to render, then returns it. */
+	const rendered = (selector: string, name: string) =>
+		vi.waitFor(
+			async () => {
+				await steady();
+				const found = document.querySelector<HTMLButtonElement>(selector);
+				if (!found) {
+					throw new Error(`Required rendered control missing: ${name}`);
+				}
+				return found;
+			},
+			{ interval: 50, timeout: 5000 }
+		);
+	// Save stays disabled until a switch changes (EU-03), and the opt-out
+	// regime has no Save: its rows and switches record as they change. Without
+	// an enabled Save, the engine saves what is shown, and Done closes.
+	const saveCurrentInDialog = async () => {
+		await rendered(
+			'[data-testid="consent-dialog-root"]',
+			'consent-dialog-root'
+		);
+		const save = document.querySelector<HTMLButtonElement>(
+			'[data-testid="consent-dialog-save-button"]'
+		);
+		if (save && !save.disabled) {
+			save.click();
+		} else {
+			// What the switches show: each category's current permission,
+			// with a live signal's restrictions applied.
+			const snapshot = kernel.getSnapshot();
+			const shown = Object.fromEntries(
+				snapshot.policyRule.scope.map((category) => [
+					category,
+					snapshot.effectivePermissions[category] === true,
+				])
+			);
+			await kernel.commands.save(shown, { uiSource: 'dialog' });
+			document
+				.querySelector<HTMLButtonElement>(
+					'[data-testid="consent-dialog-done"], [data-testid="consent-dialog-close"]'
+				)
+				?.click();
+		}
+		await steady();
+	};
+	// The dialog offers the one-click pair under a choice model and the
+	// rights rows under a notice model, where allowing asks to confirm.
+	const chooseInDialog = async (choice: 'accept' | 'reject') => {
+		const oneClick =
+			choice === 'accept'
+				? 'consent-dialog-accept-all'
+				: 'consent-dialog-reject-all';
+		const row =
+			choice === 'accept'
+				? 'consent-dialog-right-option-sale-allow'
+				: 'consent-dialog-right-option-sale-protect';
+		const control = await rendered(
+			`[data-testid="${oneClick}"], [data-testid="${row}"]`,
+			oneClick
+		);
+		control.click();
+		await steady();
+		if (
+			document.querySelector('[data-testid="consent-dialog-confirm-allow"]')
+		) {
+			await click('consent-dialog-confirm-allow');
+		}
+	};
 	return {
 		baseline,
 		dispose() {
@@ -582,7 +655,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						await click('consent-banner-accept-button');
 					} else {
 						await openPreferencesFromTrigger();
-						await click('consent-widget-footer-accept-all-button');
+						await chooseInDialog('accept');
 					}
 					break;
 				case 'reject':
@@ -594,7 +667,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						await click('consent-banner-reject-button');
 					} else {
 						await openPreferencesFromTrigger();
-						await click('consent-widget-reject-button');
+						await chooseInDialog('reject');
 					}
 					break;
 				case 'save-current':
@@ -603,7 +676,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					if (kernel.getSnapshot().activeUI !== 'dialog') {
 						await openPreferencesFromTrigger();
 					}
-					await click('consent-widget-footer-save-button');
+					await saveCurrentInDialog();
 					break;
 				case 'dismiss-notice':
 					await click('consent-banner-dismiss-button');

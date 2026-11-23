@@ -22,9 +22,9 @@ import { isDialogDismissKey, onDialogDismiss } from '@inth/sdk/ui/primitives';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
-import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
+import * as parts from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
-import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
+import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
 	findFocusRestoreEquivalent,
@@ -46,8 +46,8 @@ import { ScrollLock } from '../overlay/scroll-lock';
 const OPT_IN_SHEETS: readonly SurfaceStyleSheet[] = [
 	tokens,
 	button,
-	banner,
-	dialog,
+	parts,
+	widget,
 ];
 
 /**

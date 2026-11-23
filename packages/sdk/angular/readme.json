@@ -4,6 +4,7 @@
 	"features": [
 		"Works with Angular 20, 21 and 22, zoneless or with zone.js",
 		"`provideInth()` sets up consent once; `inject(ConsentManager)` reads it as signals anywhere",
+		"A consent banner as a Card, Banner or Drawer, with the choices inside it, and a \"Your Privacy Choices\" dialog visitors reopen from your footer",
 		"Server rendering with `@angular/platform-server`: the banner is in the first HTML",
 		"Headless directives for switches (with Angular forms), accordions, tabs, dialogs and preference items",
 		"`*inthIfConsent` keeps content out of the DOM until the visitor agrees",
@@ -18,7 +19,7 @@
 	"usage": [
 		"Add `provideInth()` to your application providers with a `mode`",
 		"Read consent anywhere with `inject(ConsentManager)`",
-		"Render `<inth-consent-banner />` and `<inth-consent-dialog />` once in your root component, and add `inthConsentDialogLink` to a footer button",
+		"Render `<inth-consent-banner />` and `<inth-consent-dialog />` once in your root component, and add `<inth-privacy-choices-link />` to your footer",
 		"```ts\n// app.config.ts\nimport { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';\nimport { hosted, provideInth } from '@inth/angular';\n\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideZonelessChangeDetection(),\n    provideInth({ mode: hosted({ projectUrl: 'https://your-project.inth.app' }) }),\n  ],\n};\n```",
 		"```html\n<!-- Rendered only once the visitor allows marketing -->\n<iframe *inthIfConsent=\"'marketing'; else blocked\" src=\"https://www.youtube.com/embed/…\"></iframe>\n<ng-template #blocked>Allow marketing cookies to watch this video.</ng-template>\n```"
 	],

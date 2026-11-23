@@ -45,7 +45,7 @@ import { optInConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutReceiptSentence,
@@ -64,7 +64,7 @@ import {
 } from '@inth/sdk/ui/utils';
 
 import { ConsentVendorList } from './consent-vendor-list';
-import { DIALOG_SHEETS } from './dialog-sheets';
+import { WIDGET_SHEETS } from './widget-sheets';
 
 type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 
@@ -612,7 +612,7 @@ export class ConsentWidgetRoot {
 	}
 	/** @internal */
 	protected readonly presentation = computed(() =>
-		resolveLegacyConsentPresentation({
+		resolveConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			policy: this.consent.snapshot().policyRule,
 			presentation: this.consent.presentation(),
@@ -631,7 +631,7 @@ export class ConsentWidgetRoot {
 		// Again when `noStyle` turns off.
 		effect(() => {
 			this.#styles.ensure(
-				DIALOG_SHEETS,
+				WIDGET_SHEETS,
 				this.resolvedNoStyle(),
 				SURFACE_SCOPES.dialog
 			);

@@ -58,16 +58,46 @@ describe('ConsentBannerHarness', () => {
 		expect(await loader.getHarnessOrNull(ConsentBannerHarness)).toBeNull();
 	});
 
-	test('opens the dialog without recording a choice', async () => {
+	test('opens the options in place without recording a choice', async () => {
+		const { loader } = await bootHarnessTest(BannerHost);
+		const consent = TestBed.inject(ConsentManager);
+		const banner = await loader.getHarness(ConsentBannerHarness);
+		expect(await banner.isExpanded()).toBe(false);
+
+		await banner.openPreferences();
+
+		expect(await banner.isExpanded()).toBe(true);
+		expect(consent.activeUI()).toBe('banner');
+		expect(consent.explicitChoice()).toBeNull();
+		expect(await banner.getActions()).toEqual(
+			expect.arrayContaining(['reject', 'accept', 'save'])
+		);
+		expect(await loader.getHarnessOrNull(ConsentDialogHarness)).toBeNull();
+	});
+
+	test('stages a category in the options and saves it', async () => {
 		const { loader } = await bootHarnessTest(BannerHost);
 		const consent = TestBed.inject(ConsentManager);
 		const banner = await loader.getHarness(ConsentBannerHarness);
 
-		await banner.openPreferences();
+		await banner.setCategory('measurement', true);
 
-		expect(consent.activeUI()).toBe('dialog');
-		expect(consent.explicitChoice()).toBeNull();
-		expect(await loader.getHarness(ConsentDialogHarness)).toBeTruthy();
+		expect(await banner.isCategoryEnabled('measurement')).toBe(true);
+		expect(consent.has('measurement')).toBe(false);
+
+		await banner.save();
+
+		expect(consent.has('measurement')).toBe(true);
+		expect(consent.has('marketing')).toBe(false);
+		expect(await loader.getHarnessOrNull(ConsentBannerHarness)).toBeNull();
+	});
+
+	test('reads where the banner sits', async () => {
+		const { loader } = await bootHarnessTest(BannerHost);
+		const banner = await loader.getHarness(ConsentBannerHarness);
+
+		expect(await banner.getPlacement()).toBe('card-start');
+		expect(await banner.isBlocking()).toBe(false);
 	});
 
 	test('filters by title and throws for an action the policy leaves out', async () => {
@@ -89,12 +119,12 @@ describe('ConsentBannerHarness', () => {
 		);
 	});
 
-	test('is outside the fixture, so only the document root loader finds it', async () => {
+	test('renders where it sits, so the fixture loader finds it too', async () => {
 		const { fixture } = await bootHarnessTest(BannerHost);
 		const fixtureLoader = TestbedHarnessEnvironment.loader(fixture);
 
 		expect(
 			await fixtureLoader.getHarnessOrNull(ConsentBannerHarness)
-		).toBeNull();
+		).not.toBeNull();
 	});
 });

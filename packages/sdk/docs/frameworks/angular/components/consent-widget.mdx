@@ -9,13 +9,15 @@ Render consent category switches inline on a privacy settings page with
 
 ## Put preferences on a page
 
-`<inth-consent-widget>` renders the same controls used inside
-`<inth-consent-dialog>`, without a modal wrapper:
+`<inth-consent-widget>` renders the category switches and the policy's
+actions inline, for a settings page:
 
 <include src="../../../shared/examples/angular/privacy-page.mdx" />
 
-Mount it on any route. Keep `<inth-consent-dialog>` in your root component if
-you also want the banner's Customize button to open a dialog.
+Mount it on any route. It works without `<inth-consent-dialog>`. Keep the
+dialog in your root component if you also want
+[`<inth-privacy-choices-link>`](./privacy-choices-link) and other footer
+links to open it.
 
 ## Inputs
 

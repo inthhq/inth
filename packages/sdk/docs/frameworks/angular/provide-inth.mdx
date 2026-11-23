@@ -37,14 +37,14 @@ other option is optional.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. See [vendor consent](./vendor-consent). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. |
 | `theme` | `Theme` | none | Slot classes and `consentActions` button styles. Design tokens in it are not applied in the browser. See [customize](./customize). |
-| `presentation` | `ConsentPresentation` | the policy's defaults | Banner and dialog shape, position, button layout and blocking for every component. |
+| `presentation` | `ConsentPresentation` | the policy's defaults | `prompt.container`, `prompt.edgeStyle`, `prompt.blockUntilChoice` and `prompt.layout` place the banner and order its buttons for every page; `optOutLink` picks the opt-out link title. Component inputs win over it, and it wins over the policy's `surface` defaults. See [presentation](#presentation). |
 | `legalLinks` | `LegalLinks` | none | Privacy policy, cookie policy and terms links shown in the banner and dialog. |
 | `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language; see [translations](./translations). Read once. |
 | `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | mirrors a `dark` class on `<html>` | Toggles the `inth-dark` class on `<html>`. `null` leaves `<html>` alone. |
 | `noStyle` | `boolean` | `false` | Renders every component without `inth` classes. A component's own `noStyle` input wins. |
 | `styles` | `boolean` | `true` | `false` stops components from adding `<style>` elements, for apps that import `@inth/angular/styles.css` themselves. |
 | `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
-| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |
+| `scrollLock`, `trapFocus` | `boolean` | unset | Defaults for the IAB banner and dialog and the opt-in and opt-out confirmations. The consent banner uses `blockUntilChoice`, and the consent dialog always blocks. |
 | `preloadDialog` | `'idle'` or `'intent'` | `'idle'` | When the deferred dialog starts loading before its first open. See [ConsentDialog](./components/consent-dialog#how-the-dialog-loads). |
 | `nonce` | `string` | Angular's `CSP_NONCE` for styles | Content Security Policy nonce for `<script>` elements the script loader adds and `<style>` elements components add. See [Content Security Policy](./content-security-policy). |
 | `networkBlocker` | options or `false` | off | Holds `fetch` and XHR requests to listed domains until their category is allowed. See [network blocker](./network-blocker). |
@@ -70,6 +70,35 @@ other option is optional.
 Tests pass `testing({ policy })` from `@inth/angular/testing` as `mode`
 to resolve a policy without network requests. The `InthOptions` type from
 `@inth/angular` lists every option.
+
+## Presentation
+
+`presentation.prompt` places the banner for the whole app, so you set it once
+instead of on every `<inth-consent-banner>`:
+
+{/* example: fragment */}
+
+```ts
+provideInth({
+	projectUrl: 'https://your-project.inth.app',
+	presentation: {
+		prompt: {
+			container: { type: 'drawer', side: 'bottom' },
+			edgeStyle: 'flush',
+			blockUntilChoice: false,
+		},
+	},
+});
+```
+
+Each setting resolves in the same order: the banner's input first, then
+`presentation.prompt`, then the policy rule's `surface` block from the
+dashboard. `surface.container` and `surface.edgeStyle` are defaults that your
+code can override. `surface.blocking` is a constraint: `forbidden` means the
+banner never blocks and `required` means a choice prompt always blocks,
+whatever `blockUntilChoice` says. That keeps a regional rule from being
+undone by a site-wide setting. [ConsentBanner](./components/consent-banner#containers)
+lists every container.
 
 ## When the runtime starts
 

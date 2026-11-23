@@ -17,7 +17,6 @@ import {
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
-import { ConsentDialog } from './consent-dialog';
 
 const CATEGORIES = ['functionality', 'marketing', 'measurement'] as const;
 
@@ -55,15 +54,6 @@ const OPT_IN_RULE: PolicyRule = {
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentBanner, ConsentDialog],
-	selector: 'test-opt-in-dialog-host',
-	template: `<inth-consent-banner [disableAnimation]="true" />
-		<inth-consent-dialog [disableAnimation]="true" />`,
-})
-class BannerDialogHost {}
-
-@Component({
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentWidget],
 	selector: 'test-opt-in-widget-host',
 	template: `<inth-consent-banner [disableAnimation]="true" />
@@ -94,7 +84,6 @@ const renderOptOut = async (
 		mode?: ProviderTransportFactory;
 		rightsConfirmed?: boolean;
 		rule?: PolicyRule;
-		standaloneWidget?: boolean;
 	} = {}
 ) => {
 	const rule = params.rule ?? NOTICE_OPT_OUT_RULE;
@@ -132,9 +121,7 @@ const renderOptOut = async (
 			} as InthProviderOptions),
 		],
 	});
-	const fixture = TestBed.createComponent(
-		params.standaloneWidget ? BannerWidgetHost : BannerDialogHost
-	);
+	const fixture = TestBed.createComponent(BannerWidgetHost);
 	const consent = TestBed.inject(ConsentManager);
 	activeConsent = consent;
 	await fixture.whenStable();
@@ -150,9 +137,8 @@ const renderOptOut = async (
 };
 
 describe('two-step opt-in confirmation (Angular)', () => {
-	test('opt back in link requires separate confirmation, focuses cancel first, stays outside dialog content, and lifts on confirm', async () => {
+	test('opt back in link requires separate confirmation, focuses cancel first, stays outside the widget, and lifts on confirm', async () => {
 		const { consent, settle } = await renderOptOut();
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-opt-in-link')).not.toBeNull();
@@ -167,8 +153,8 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		expect(consent.effectivePermissions().marketing).toBe(false);
 
 		const confirmationRoot = query('opt-in-confirmation-root') as HTMLElement;
-		const dialogContent = query('consent-dialog-content') as HTMLElement;
-		expect(dialogContent.contains(confirmationRoot)).toBe(false);
+		const widget = query('consent-widget-root') as HTMLElement;
+		expect(widget.contains(confirmationRoot)).toBe(false);
 		expect(confirmationRoot.getAttribute('role')).toBe('dialog');
 		expect(confirmationRoot.getAttribute('aria-modal')).toBe('true');
 
@@ -194,8 +180,7 @@ describe('two-step opt-in confirmation (Angular)', () => {
 	});
 
 	test('opt-in confirmation description names confirmed rights once answered by the backend', async () => {
-		const { consent, settle } = await renderOptOut({ rightsConfirmed: true });
-		consent.setActiveUI('dialog');
+		const { settle } = await renderOptOut({ rightsConfirmed: true });
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-opt-in-link')).not.toBeNull();
@@ -218,9 +203,8 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		await settle();
 	});
 
-	test('opt back in link then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
+	test('opt back in link then cancel (button and Escape) leaves opt-out held and saves nothing', async () => {
 		const { consent, settle } = await renderOptOut();
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-opt-in-link')).not.toBeNull();
@@ -239,7 +223,6 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		});
 		expect(consent.optOut()).not.toBeNull();
 		expect(consent.explicitChoice()).toBeNull();
-		expect(consent.activeUI()).toBe('dialog');
 
 		query<HTMLButtonElement>('consent-widget-opt-in-link')?.click();
 		await vi.waitFor(async () => {
@@ -255,12 +238,10 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		});
 		expect(consent.optOut()).not.toBeNull();
 		expect(consent.explicitChoice()).toBeNull();
-		expect(consent.activeUI()).toBe('dialog');
 	});
 
-	test('Accept All in the dialog defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in the widget defers save until confirmed, then lifts opt-out and grants categories', async () => {
 		const { consent, settle } = await renderOptOut();
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-footer-accept-all-button')).not.toBeNull();
@@ -275,7 +256,6 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		});
 		expect(consent.optOut()).not.toBeNull();
 		expect(consent.explicitChoice()).toBeNull();
-		expect(consent.activeUI()).toBe('dialog');
 
 		query<HTMLButtonElement>('opt-in-confirmation-confirm-button')?.click();
 		await vi.waitFor(async () => {
@@ -285,10 +265,9 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		expect(consent.effectivePermissions().marketing).toBe(true);
 		expect(consent.effectivePermissions().measurement).toBe(true);
 		expect(consent.explicitChoice()?.categories.marketing?.value).toBe(true);
-		expect(consent.activeUI()).not.toBe('dialog');
 	});
 
-	test('Accept All in a banner defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in a banner never lifts a held opt-out and asks nothing', async () => {
 		const { consent, settle } = await renderOptOut({
 			rule: CHOICE_OPT_OUT_RULE,
 		});
@@ -299,23 +278,19 @@ describe('two-step opt-in confirmation (Angular)', () => {
 		});
 
 		query<HTMLButtonElement>('consent-banner-accept-button')?.click();
+		// A banner commit keeps sale and sharing off (PERM-02); lifting the
+		// opt-out takes the dialog's or the widget's own confirmation.
 		await vi.waitFor(async () => {
 			await settle();
-			expect(query('opt-in-confirmation-root')).not.toBeNull();
+			expect(consent.activeUI()).toBe('none');
 		});
+		expect(query('opt-in-confirmation-root')).toBeNull();
 		expect(consent.optOut()).not.toBeNull();
-		expect(consent.explicitChoice()).toBeNull();
-
-		query<HTMLButtonElement>('opt-in-confirmation-confirm-button')?.click();
-		await vi.waitFor(async () => {
-			await settle();
-			expect(consent.optOut()).toBeNull();
-		});
-		expect(consent.effectivePermissions().marketing).toBe(true);
+		expect(consent.effectivePermissions().marketing).toBe(false);
 	});
 
 	test('turning Marketing on then Save opens confirmation and cancelling leaves opt-out held', async () => {
-		const { consent, settle } = await renderOptOut({ standaloneWidget: true });
+		const { consent, settle } = await renderOptOut();
 		const marketing = query<HTMLButtonElement>(
 			'consent-widget-switch-marketing'
 		) as HTMLButtonElement;
@@ -344,7 +319,7 @@ describe('two-step opt-in confirmation (Angular)', () => {
 	});
 
 	test('saving without granting the deciding category completes with no confirmation', async () => {
-		const { consent, settle } = await renderOptOut({ standaloneWidget: true });
+		const { consent, settle } = await renderOptOut();
 		query<HTMLButtonElement>('consent-widget-switch-measurement')?.click();
 		await settle();
 
@@ -359,8 +334,7 @@ describe('two-step opt-in confirmation (Angular)', () => {
 	});
 
 	test('with active GPC signal there is no opt back in link', async () => {
-		const { consent, settle } = await renderOptOut({ gpc: true });
-		consent.setActiveUI('dialog');
+		const { settle } = await renderOptOut({ gpc: true });
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-opt-out-status')).not.toBeNull();
@@ -393,7 +367,6 @@ describe('two-step opt-in confirmation (Angular)', () => {
 			heldBy: 'person',
 			mode: refusingMode,
 		});
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-opt-in-link')).not.toBeNull();
@@ -417,7 +390,6 @@ describe('two-step opt-in confirmation (Angular)', () => {
 
 	test('under an opt-in policy with an opt-out held, Accept lifts in one step without confirmation', async () => {
 		const { consent, settle } = await renderOptOut({ rule: OPT_IN_RULE });
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await settle();
 			expect(query('consent-widget-footer-accept-all-button')).not.toBeNull();

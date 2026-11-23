@@ -17,11 +17,12 @@ lazy-loads before first open.
 
 | Selector | Class | Import from | Renders | Page |
 | --- | --- | --- | --- | --- |
-| `<inth-consent-banner>` | `ConsentBanner` | `@inth/angular` | First-layer banner when the policy requires one. | [ConsentBanner](./components/consent-banner) |
+| `<inth-consent-banner>` | `ConsentBanner` | `@inth/angular` | First-layer banner as a Card, Banner or Drawer when the policy requires one. | [ConsentBanner](./components/consent-banner) |
 | `[inthConsentDialogLink]` | `ConsentDialogLink` | `@inth/angular` | Button or link that reopens preferences. | [ConsentDialogLink](./components/consent-dialog-link) |
+| `<inth-privacy-choices-link>` | `PrivacyChoicesLink` | `@inth/angular` | "Your Privacy Choices" footer link that reopens the dialog. | [PrivacyChoicesLink](./components/privacy-choices-link) |
 | `*inthIfConsent` | `IfConsent` | `@inth/angular` | Template rendered only while a consent condition holds. | [Embeds](./embeds#render-content-only-while-consent-holds) |
 | `button[inth-consent-button]` | `ConsentButton` | `@inth/angular` | Button that accepts, rejects, saves or opens preferences. | [ConsentButton](./components/consent-button) |
-| `<inth-consent-dialog>` | `ConsentDialog` | `@inth/angular/consent-dialog` | Preference dialog that loads its body on demand. | [ConsentDialog](./components/consent-dialog) |
+| `<inth-consent-dialog>` | `ConsentDialog` | `@inth/angular/consent-dialog` | "Your Privacy Choices" dialog that loads its body on demand. | [ConsentDialog](./components/consent-dialog) |
 | `<inth-provider>` | `InthProvider` | `@inth/angular/provider` | Banner and preference dialog in one tag. | [InthProvider](./components/inth-provider) |
 | `<inth-consent-widget>` | `ConsentWidget` | `@inth/angular/consent-widget` | Inline preference controls for a settings page. | [ConsentWidget](./components/consent-widget) |
 | `<inth-consent-dialog-trigger>` | `ConsentDialogTrigger` | `@inth/angular/consent-dialog-trigger` | Floating, draggable button that reopens preferences. | [ConsentDialogTrigger](./components/consent-dialog-trigger) |
@@ -61,8 +62,8 @@ the policy requires no prompt and exposes no preferences. See
 | Input | Behavior |
 | --- | --- |
 | `noStyle` | Drops `inth` classes while keeping markup and behavior. Set on `provideInth()` or per component. |
-| `rootClass` | Adds a class to the component's root element. |
-| `hideBranding` | Hides the "Consent by" tag on banner and dialog (widget hides it by default). |
+| `rootClass` | Adds a class to the root element of the widget, the trigger, `<inth-privacy-choices-link>` and the IAB surfaces. The banner and dialog take theme slots instead. |
+| `hideBranding` | Hides the "Consent by" tag on the banner, the widget (hidden by default) and the IAB surfaces. The dialog has no tag. |
 | `models` | Policy models the surface renders for: `opt-in`, `opt-out`, `iab` and `none`. |
 | `legalLinks` | Provider `legalLinks` keys to display, or `null` for none. |
 | `disableAnimation` | Disables enter and exit transitions for that surface. |

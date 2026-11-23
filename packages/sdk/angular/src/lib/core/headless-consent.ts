@@ -6,7 +6,7 @@ import type {
 	ResolvedConsentPresentation,
 	SaveUISource,
 } from '@inth/sdk/engine';
-import { resolveLegacyConsentPresentation } from '@inth/sdk/surface-state';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from './consent-manager';
 
@@ -124,7 +124,7 @@ export class HeadlessConsent {
 
 	#resolve(surface: 'banner' | 'dialog'): HeadlessConsentSurfaceState {
 		return {
-			...resolveLegacyConsentPresentation({
+			...resolveConsentPresentation({
 				policy: this.#consent.policyRule(),
 				presentation: this.#consent.presentation(),
 				surface: surface === 'banner' ? 'prompt' : 'preferences',

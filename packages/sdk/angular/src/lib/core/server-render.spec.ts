@@ -16,9 +16,10 @@ import {
 import { describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../banner/consent-banner';
+import { CARD_CONTAINER } from '../prompt/card';
+import { ConsentBanner } from '../prompt/prompt';
 import { ConsentManager } from './consent-manager';
-import { BANNER_SHEETS, STYLE_ATTRIBUTE } from './consent-styles';
+import { STYLE_ATTRIBUTE } from './consent-styles';
 import { IfConsent } from './if-consent';
 import { provideInth } from './provide-inth';
 
@@ -106,9 +107,9 @@ describe('server render', () => {
 		expect(boot?.d).toBeUndefined();
 	});
 
-	test('writes the surface stylesheets, with their text, into the head', async () => {
+	test('writes the prompt stylesheets, with their text, into the head', async () => {
 		const html = await render('abc123', false);
-		for (const sheet of BANNER_SHEETS) {
+		for (const sheet of CARD_CONTAINER.sheets) {
 			expect(html).toContain(`${STYLE_ATTRIBUTE}="${sheet.id}"`);
 		}
 		expect(html).toContain('nonce="abc123"');

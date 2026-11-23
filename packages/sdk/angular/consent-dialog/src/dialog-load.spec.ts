@@ -4,12 +4,12 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
-import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { warmDialog } from '../../src/lib/core/dialog-warming';
 import { provideInth } from '../../src/lib/core/provide-inth';
-import { CONSENT_DIALOG_PANEL, ConsentDialog } from './consent-dialog';
-import { ConsentDialogPanel } from './consent-dialog-panel';
+import { ConsentDialogBody } from '../../src/lib/dialog/dialog';
+import { ConsentBanner } from '../../src/lib/prompt/prompt';
+import { CONSENT_DIALOG_BODY, ConsentDialog } from './consent-dialog';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,16 +45,16 @@ const boot = async (): Promise<{
 	settle: () => Promise<void>;
 }> => {
 	const loader = { loads: 0, works: false };
-	const load = (): Promise<Type<ConsentDialogPanel>> => {
+	const load = (): Promise<Type<ConsentDialogBody>> => {
 		loader.loads += 1;
 		return loader.works
-			? Promise.resolve(ConsentDialogPanel)
+			? Promise.resolve(ConsentDialogBody)
 			: Promise.reject(new Error('chunk failed'));
 	};
 	TestBed.configureTestingModule({
 		providers: [
 			provideInth({ ...testOptions(), disableAnimation: true }),
-			{ provide: CONSENT_DIALOG_PANEL, useValue: load },
+			{ provide: CONSENT_DIALOG_BODY, useValue: load },
 		],
 	});
 	const fixture = TestBed.createComponent(Host);
@@ -147,11 +147,11 @@ describe('the dialog body loading', () => {
 			providers: [
 				provideInth({ ...testOptions(), disableAnimation: true }),
 				{
-					provide: CONSENT_DIALOG_PANEL,
-					useValue: (): Promise<Type<ConsentDialogPanel>> => {
+					provide: CONSENT_DIALOG_BODY,
+					useValue: (): Promise<Type<ConsentDialogBody>> => {
 						loader.loads += 1;
 						return loader.works
-							? Promise.resolve(ConsentDialogPanel)
+							? Promise.resolve(ConsentDialogBody)
 							: Promise.reject(new Error('chunk failed'));
 					},
 				},

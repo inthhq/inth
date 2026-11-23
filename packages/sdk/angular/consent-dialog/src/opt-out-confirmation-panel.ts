@@ -21,7 +21,7 @@ import {
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
-import { DIALOG_SHEETS } from '@inth/angular/consent-widget';
+import { WIDGET_SHEETS } from '@inth/angular/consent-widget';
 import {
 	closeOptOutConfirmation,
 	isOptOutConfirmationOpen,
@@ -427,7 +427,7 @@ export class OptOutConfirmationPanel {
 	constructor() {
 		effect(() => {
 			this.#styles.ensure(
-				DIALOG_SHEETS,
+				WIDGET_SHEETS,
 				this.resolvedNoStyle(),
 				SURFACE_SCOPES.dialog
 			);

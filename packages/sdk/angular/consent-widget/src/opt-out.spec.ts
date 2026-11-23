@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConsentManager, provideInth } from '@inth/angular';
 import type { InthProviderOptions } from '@inth/angular';
-import { ConsentDialog } from '@inth/angular/consent-dialog';
 import { ConsentWidget } from '@inth/angular/consent-widget';
 import type {
 	OptOutPayload,
@@ -79,16 +78,6 @@ const choiceRecord = (values: Record<string, boolean>, confirmedAt: number) => {
 })
 class WidgetHost {}
 
-@Component({
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentDialog],
-	selector: 'test-opt-out-dialog-host',
-	template: '<inth-consent-dialog [disableAnimation]="true" [open]="open()" />',
-})
-class DialogHost {
-	readonly open = input<boolean | undefined>(undefined);
-}
-
 let activeConsent: ConsentManager | null = null;
 
 afterEach(() => {
@@ -102,10 +91,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-const bootHost = async <Host>(
-	host: new () => Host,
-	options: Partial<InthProviderOptions>
-) => {
+const boot = async (options: Partial<InthProviderOptions>) => {
 	TestBed.configureTestingModule({
 		providers: [
 			provideInth({
@@ -118,16 +104,13 @@ const bootHost = async <Host>(
 			} as InthProviderOptions),
 		],
 	});
-	const fixture = TestBed.createComponent(host);
+	const fixture = TestBed.createComponent(WidgetHost);
 	const consent = TestBed.inject(ConsentManager);
 	activeConsent = consent;
 	await fixture.whenStable();
 	fixture.detectChanges();
 	return { consent, fixture };
 };
-
-const boot = (options: Partial<InthProviderOptions>) =>
-	bootHost(WidgetHost, options);
 
 const docPart = <ElementType extends HTMLElement = HTMLElement>(
 	testId: string
@@ -402,15 +385,14 @@ describe('Angular consent widget opt-out parity', () => {
 	});
 });
 
-describe('sale-and-sharing block in dialog and widget', () => {
+describe('sale-and-sharing block in the widget', () => {
 	test('renders before the category list outside accordion items, opts out in one click, and shows the receipt on reopen', async () => {
-		const { consent, fixture } = await bootHost(DialogHost, {
+		const { consent, fixture } = await boot({
 			overrides: { country: 'US', gpc: false, region: 'CA' },
 			prefetch: { initialPolicyResolution: RESOLUTION },
 			presentation: { optOutLink: 'privacy-choices' },
 		});
 
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			fixture.detectChanges();
@@ -442,11 +424,9 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			expect(consent.optOut()).not.toBeNull();
 		});
 		expect(consent.effectivePermissions().marketing).toBe(false);
-		expect(consent.activeUI()).not.toBe('dialog');
 
-		// Reopen the dialog and confirm the block now shows status, time and reference without a button.
+		// The block now shows the status, time and reference without an opt-out button.
 		closeOptOutConfirmation(consent.kernel());
-		consent.setActiveUI('dialog');
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			fixture.detectChanges();
@@ -523,7 +503,7 @@ describe('sale-and-sharing block in dialog and widget', () => {
 
 	test('shows the signal status inside the block when GPC is active under a policy that maps it', async () => {
 		const now = Date.now();
-		const { fixture } = await bootHost(DialogHost, {
+		const { fixture } = await boot({
 			overrides: { country: 'US', gpc: true, region: 'CA' },
 			prefetch: {
 				initialOverrides: { gpc: true },
@@ -541,7 +521,6 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			},
 			presentation: { optOutLink: 'privacy-choices' },
 		});
-		fixture.componentRef.setInput('open', true);
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			fixture.detectChanges();
@@ -561,12 +540,11 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		).toBeNull();
 	});
 
-	test('omits the block under an opt-in policy and keeps the existing dialog structure', async () => {
-		const { fixture } = await bootHost(DialogHost, {
+	test('omits the block under an opt-in policy and keeps the widget structure', async () => {
+		const { fixture } = await boot({
 			mode: offlineMode([OPT_IN_RULE]),
 			prefetch: { initialPolicyResolution: OPT_IN_RESOLUTION },
 		});
-		fixture.componentRef.setInput('open', true);
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			fixture.detectChanges();
@@ -575,8 +553,6 @@ describe('sale-and-sharing block in dialog and widget', () => {
 
 		expect(docPart('consent-widget-opt-out')).toBeNull();
 		expect(docPart('consent-widget-opt-out-status')).toBeNull();
-		expect(docPart('consent-dialog-title')).not.toBeNull();
-		expect(docPart('consent-dialog-description')).not.toBeNull();
 		expect(docPart('consent-widget-accordion-item-necessary')).not.toBeNull();
 		expect(docPart('consent-widget-footer')).not.toBeNull();
 	});

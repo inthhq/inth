@@ -3,10 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentDialogTrigger } from '../../../consent-dialog-trigger/src/consent-dialog-trigger';
-import { ConsentDialogPanel } from '../../../consent-dialog/src/consent-dialog-panel';
 import { ConsentWidget } from '../../../consent-widget/src/consent-widget';
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../banner/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import { ConsentManager } from './consent-manager';
 import {
 	ensureSurfaceStyles,
@@ -43,14 +42,6 @@ class DefaultBanner {}
 class Trigger {
 	own: boolean | undefined = undefined;
 }
-
-@Component({
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentDialogPanel],
-	selector: 'test-default-panel',
-	template: `<inth-consent-dialog-panel [open]="true" />`,
-})
-class DefaultPanel {}
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -109,7 +100,6 @@ describe('ConsentStyles', () => {
 
 	test.each([
 		['banner', DefaultBanner],
-		['dialog panel', DefaultPanel],
 		['widget', DefaultWidget],
 	] as const)(
 		"the %s adds its sheets once the provider's noStyle turns off",
