@@ -30,6 +30,7 @@
  * | `styles/sheets/{button,parts,trigger,consent-gate,surface,card,banner,drawer}.js` | one surface's rules and the component variables they read, as a string (see `SURFACE_SHEETS`) | React surfaces |
  * | `styles/sheets/{widget,expand,dialog}.js`, and the same as `.css` | rules that load after the first paint, and the variables they read (see `LATER_SHEETS`) | the widget and confirmations, the options opened in place, the dialog; Astro links the files |
  * | `styles/sheets/*-deferred.js` | the same `id` as the sheet it names, no text, and a `load()` for it | browser bundles of server-rendered apps (the Next.js adapter aliases them) |
+ * | `styles/sheets/lazy/*.js` | the text of a sheet whose name content blockers match, under a neutral name, for its `load()` | the `-deferred` modules |
  * | `styles/sheets/primitives.js` | `styles/primitives.css`, as a string | the Svelte dialog |
  * | `styles/sheets/iab-first-paint.js` | IAB variables and banner rules, as a string | IAB banners and standalone dialogs |
  * | `styles/sheets/iab-dialog.js`, `styles/sheets/iab-dialog.css` | IAB dialog rules, as a string and file | IAB dialogs, with their lazy code; Astro links the file before opening |
@@ -645,6 +646,41 @@ const variablesFor = function variablesFor(rules: string): string {
 };
 
 /**
+ * Words content blockers match in a file name. A bundler names the chunk a
+ * `load()` imports after the module it imports, so no such module may
+ * carry one.
+ */
+const BLOCKED_CHUNK_WORDS = /banner|consent|cookie|privacy|gdpr/iu;
+
+/** Neutral names for the sheets whose own name has a blocked word. */
+const NEUTRAL_SHEET_NAMES: Record<string, string> = {
+	banner: 'strip',
+	'consent-gate': 'gate',
+};
+
+/**
+ * The module a deferred sheet's `load()` imports: the sheet itself, or,
+ * when its name has a word content blockers match, a neutrally named
+ * module in `styles/sheets/lazy/` that re-exports its text.
+ */
+const deferredTarget = function deferredTarget(name: string): string {
+	if (!BLOCKED_CHUNK_WORDS.test(name)) {
+		return `./${name}.js`;
+	}
+	const neutral = NEUTRAL_SHEET_NAMES[name];
+	if (!neutral || BLOCKED_CHUNK_WORDS.test(neutral)) {
+		throw new Error(
+			`The deferred sheet "${name}" loads a chunk named after it, which content blockers drop. Add a neutral name to NEUTRAL_SHEET_NAMES.`
+		);
+	}
+	writeDist(
+		`styles/sheets/lazy/${neutral}.js`,
+		`export { css } from ${JSON.stringify(`../${name}.js`)};\n`
+	);
+	return `./lazy/${neutral}.js`;
+};
+
+/**
  * Write `dist/styles/sheets/<name>-deferred.js`: the same `id` as `<name>`
  * and no text, with a `load()` that imports it. The Next.js adapter aliases
  * `<name>` to it in browser bundles, where the server-rendered HTML already
@@ -656,7 +692,7 @@ const writeDeferredSheet = function writeDeferredSheet(name: string): void {
 		[
 			`export const id = ${JSON.stringify(`inth-${name}`)};`,
 			'export const css = "";',
-			`export const load = () => import(${JSON.stringify(`./${name}.js`)}).then((sheet) => sheet.css);`,
+			`export const load = () => import(${JSON.stringify(deferredTarget(name))}).then((sheet) => sheet.css);`,
 			'',
 		].join('\n')
 	);

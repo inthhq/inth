@@ -58,7 +58,7 @@ afterEach(async () => {
 describe('consent banner stylesheets', () => {
 	test('each container component imports its own sheet and no other', () => {
 		expect(sheetsOf('card.vue')).toEqual(['consent-card']);
-		expect(sheetsOf('banner.vue')).toEqual(['consent-banner']);
+		expect(sheetsOf('strip.vue')).toEqual(['consent-banner']);
 		expect(sheetsOf('drawer.vue')).toEqual(['consent-drawer']);
 		// The shared shell brings no container's rules.
 		for (const file of ['prompt.vue', 'surface.vue', 'panel.vue', 'tag.vue']) {

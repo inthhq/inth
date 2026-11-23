@@ -76,7 +76,7 @@ export const PROMPT_LOADERS = new InjectionToken<PromptLoaders>(
 			container: async (type) => {
 				switch (type) {
 					case 'banner':
-						return (await import('./banner')).BANNER_CONTAINER;
+						return (await import('./strip')).BANNER_CONTAINER;
 					case 'drawer':
 						return (await import('./drawer')).DRAWER_CONTAINER;
 					default:

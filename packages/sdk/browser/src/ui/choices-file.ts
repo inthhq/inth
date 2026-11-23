@@ -26,10 +26,10 @@
 import type * as dialog from './dialog/dialog';
 import type * as optInConfirmation from './opt-in-confirmation';
 import type * as engine from './parts/engine';
-import type * as banner from './prompt/banner';
 import type * as card from './prompt/card';
 import type * as drawer from './prompt/drawer';
 import type * as panel from './prompt/panel';
+import type * as banner from './prompt/strip';
 
 /** Global `inth.choices.js` publishes its {@link ChoicesFile} on. */
 export const CHOICES_KEY = '__inthChoices';

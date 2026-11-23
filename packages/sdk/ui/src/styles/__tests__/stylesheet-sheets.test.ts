@@ -11,7 +11,7 @@
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -216,6 +216,36 @@ describe('styles/sheets', async () => {
 			expect(await deferred.load()).toBe(sheet.css);
 		}
 	);
+
+	test('every deferred twin loads its text from a neutrally named chunk', async () => {
+		// A bundler names the chunk `load()` imports after the module it
+		// imports, and content blockers drop files named like a consent
+		// banner. A twin whose sheet has such a name loads a re-export.
+		const twins = readdirSync(SHEETS_DIR)
+			.filter((file) => file.endsWith('-deferred.js'))
+			.map((file) => file.slice(0, -'-deferred.js'.length));
+		expect(twins).toEqual(expect.arrayContaining(['banner', 'consent-gate']));
+		for (const name of twins) {
+			const source = readDist(join(SHEETS_DIR, `${name}-deferred.js`));
+			const target = /import\("(?<target>[^"]+)"\)/u.exec(source)?.groups
+				?.target;
+			expect(target, name).toBeDefined();
+			const file = target?.split('/').at(-1) ?? '';
+			expect(file, name).not.toMatch(/banner|consent|cookie|privacy|gdpr/iu);
+		}
+		// Each loads the same text as the sheet it names.
+		await Promise.all(
+			twins.map(async (name) => {
+				const [sheet, deferred] = await Promise.all([
+					importSheet(name),
+					importSheet(`${name}-deferred`) as Promise<
+						Sheet & { load: () => Promise<string> }
+					>,
+				]);
+				expect(await deferred.load(), name).toBe(sheet.css);
+			})
+		);
+	});
 
 	test('IAB sheets preserve every aggregate rule without resetting variables', () => {
 		// The aggregate keeps its original panel-before-prompt order. Their

@@ -3,7 +3,9 @@
 /**
  * The consent prompt as a Banner. Only this module imports the
  * `banner` stylesheet, so a page that shows another container never
- * downloads or inlines it.
+ * downloads or inlines it. The file is named `strip`, not `banner`: it
+ * loads on demand, bundlers name its chunk after it, and content blockers
+ * drop files named like a consent banner.
  */
 
 import presentation from '@inth/sdk/ui/styles/components/consent-banner';

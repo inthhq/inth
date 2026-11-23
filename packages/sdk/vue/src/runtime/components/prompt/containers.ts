@@ -21,7 +21,7 @@ export interface PromptContainers {
  * @internal
  */
 export const promptContainers: PromptContainers = {
-	banner: () => import('./banner.vue'),
+	banner: () => import('./strip.vue'),
 	card: () => import('./card.vue'),
 	drawer: () => import('./drawer.vue'),
 };

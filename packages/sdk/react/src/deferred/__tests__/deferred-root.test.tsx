@@ -21,10 +21,10 @@ import {
 	streamPage,
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
-import { BannerSurface } from '../../components/prompt/banner';
 import { CardSurface } from '../../components/prompt/card';
 import { DrawerSurface } from '../../components/prompt/drawer';
 import { PromptContainersContext } from '../../components/prompt/prompt';
+import { BannerSurface } from '../../components/prompt/strip';
 import { useSaveConsents, useSnapshot } from '../../hooks';
 import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';

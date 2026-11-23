@@ -90,12 +90,12 @@
 			"default": "./dist/fesm2022/inth-angular-testing.mjs"
 		},
 		"./consent-dialog": {
-			"types": "./dist/types/inth-angular-consent-dialog.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-dialog.mjs"
+			"types": "./dist/types/inth-angular-dialog-host.d.ts",
+			"default": "./dist/fesm2022/inth-angular-dialog-host.mjs"
 		},
 		"./consent-dialog-trigger": {
-			"types": "./dist/types/inth-angular-consent-dialog-trigger.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-dialog-trigger.mjs"
+			"types": "./dist/types/inth-angular-dialog-trigger.d.ts",
+			"default": "./dist/fesm2022/inth-angular-dialog-trigger.mjs"
 		},
 		"./consent-gate": {
 			"types": "./dist/types/inth-angular-consent-gate.d.ts",

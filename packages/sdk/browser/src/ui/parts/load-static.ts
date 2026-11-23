@@ -12,10 +12,10 @@ import type { ConsentContainer } from '@inth/sdk-core';
 
 import * as dialog from '../dialog/dialog';
 import * as optInConfirmation from '../opt-in-confirmation';
-import * as banner from '../prompt/banner';
 import * as card from '../prompt/card';
 import * as drawer from '../prompt/drawer';
 import * as panel from '../prompt/panel';
+import * as banner from '../prompt/strip';
 import type { PresentationModule } from './load';
 
 export const importPresentation = (
