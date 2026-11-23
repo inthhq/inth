@@ -14,6 +14,7 @@ import type { PrivacyChoicesPromptVariant, SaveUISource } from '@inth/sdk-core';
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import { OPTIONS_SHEETS } from '../dialog/options-sheets';
+import { chevron } from '../parts/chevron';
 import {
 	advertisingRow,
 	createCategoryGroup,
@@ -21,7 +22,6 @@ import {
 import { createSaleRightsRow } from '../parts/create-sale-rights-row';
 import { cx, el } from '../parts/el';
 import type { PartChild } from '../parts/el';
-import { chevron } from '../parts/part-env.model';
 import type { PartEnv } from '../parts/part-env.model';
 
 /** What the panel renders each time. */

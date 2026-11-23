@@ -27,6 +27,8 @@ import {
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
+import { checkIcon } from './check-icon';
+import { consentButton } from './consent-button';
 import { cx, el } from './el';
 import type { PartRef } from './el';
 import {
@@ -35,7 +37,7 @@ import {
 	pressSaleRight,
 } from './engine';
 import { activeElementOf } from './focus-first-in';
-import { checkIcon, consentButton, rightsBundleOf } from './part-env.model';
+import { rightsBundleOf } from './part-env.model';
 import type { PartEnv } from './part-env.model';
 
 /** Surfaces that render the rights row, by their test-id prefix. */

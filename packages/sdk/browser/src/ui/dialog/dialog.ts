@@ -44,6 +44,9 @@ import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 import type { ConsentDialogOptions } from '../../consent-client.model';
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
+import { checkIcon } from '../parts/check-icon';
+import { chevron } from '../parts/chevron';
+import { consentButton } from '../parts/consent-button';
 import {
 	advertisingRow,
 	createCategoryGroup,
@@ -65,15 +68,10 @@ import {
 	focusFirstIn,
 } from '../parts/focus-first-in';
 import { patch } from '../parts/morph';
-import {
-	checkIcon,
-	chevron,
-	consentButton,
-	prefersReducedMotionNow,
-	surfaceBasics,
-	watchPhoneLayout,
-} from '../parts/part-env.model';
+import { surfaceBasics } from '../parts/part-env.model';
 import type { PartEnv } from '../parts/part-env.model';
+import { prefersReducedMotionNow } from '../parts/prefers-reduced-motion-now';
+import { watchPhoneLayout } from '../parts/watch-phone-layout';
 import type { Surface, SurfaceContext } from '../surface.model';
 import { OPTIONS_SHEETS } from './options-sheets';
 

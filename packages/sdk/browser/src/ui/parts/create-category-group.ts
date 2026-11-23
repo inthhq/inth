@@ -33,9 +33,11 @@ import {
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
+import { chevron } from './chevron';
+import { choiceSwitch } from './choice-switch';
 import { cx, el, icon } from './el';
 import { applyDialogCategories } from './engine';
-import { chevron, choiceSwitch, isToggleClick } from './part-env.model';
+import { isToggleClick } from './is-toggle-click';
 import type { PartEnv } from './part-env.model';
 
 /** Surfaces that render the category group, by their test-id prefix. */

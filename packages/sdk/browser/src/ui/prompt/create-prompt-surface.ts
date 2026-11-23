@@ -48,6 +48,7 @@ import type { ConsentBannerOptions } from '../../consent-client.model';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import { classes as surfaceStyles } from '../../generated/ui/surface';
 import type { PartSheet } from '../dialog/options-sheets';
+import { consentButton } from '../parts/consent-button';
 import { cx, el, owned } from '../parts/el';
 import type { PartChild, PartRef } from '../parts/el';
 import {
@@ -59,14 +60,10 @@ import {
 import { activeElementOf, focusFirstIn } from '../parts/focus-first-in';
 import { importPanel } from '../parts/load';
 import { patch } from '../parts/morph';
-import {
-	consentButton,
-	prefersReducedMotionNow,
-	rightsBundleOf,
-	surfaceBasics,
-	watchPhoneLayout,
-} from '../parts/part-env.model';
+import { rightsBundleOf, surfaceBasics } from '../parts/part-env.model';
 import type { PartEnv } from '../parts/part-env.model';
+import { prefersReducedMotionNow } from '../parts/prefers-reduced-motion-now';
+import { watchPhoneLayout } from '../parts/watch-phone-layout';
 import { renderLegalLinks } from '../render-legal-links';
 import type { SurfaceContext } from '../surface.model';
 import type { PromptPanel } from './panel';
