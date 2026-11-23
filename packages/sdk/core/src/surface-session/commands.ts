@@ -12,6 +12,7 @@
  * @packageDocumentation
  */
 
+import type { AllConsentNames } from '../consent/consent-types';
 import type { PreferenceDraft } from '../preference-draft';
 import { beginAction } from '../surface-actions/rules';
 import { saveConsentSurface, settleSurface } from '../surface-actions/save';
@@ -109,6 +110,60 @@ export const commitBannerChoice = function commitBannerChoice(
 	const result = saveConsentSurface(kernel, save);
 	getSurfaceSession(kernel).commit();
 	return { plan, result };
+};
+
+/**
+ * Commit the EU dialog's Reject all, Accept all or Save choices (EU-01) and
+ * close the dialog. The same protections as a banner commit apply: a
+ * commit never lifts a held opt-out or grants past a live GPC signal
+ * (PERM-02). Closing without one of these discards the draft (EU-02).
+ */
+export const commitDialogChoice = function commitDialogChoice(
+	kernel: ConsentKernel,
+	action: BannerCommitAction,
+	options: BannerCommitOptions = {}
+): BannerCommitOutcome {
+	return commitBannerChoice(kernel, action, {
+		...options,
+		uiSource: options.uiSource ?? 'dialog',
+	});
+};
+
+/**
+ * Apply the categories a US dialog's switches changed, at once (LAW-04):
+ * the draft's values for `categories` and the vendors the visitor moved.
+ * The dialog stays open, and a choice prompt still owed is answered, as a
+ * rights control answers it. The sale right's own record is untouched, so
+ * the receipt keeps its date (RCPT-02).
+ *
+ * @returns The save, or `undefined` when the draft is stale.
+ */
+export const applyDialogCategories = function applyDialogCategories(
+	kernel: ConsentKernel,
+	draft: PreferenceDraft,
+	categories: readonly AllConsentNames[],
+	options: RightCommandOptions = {}
+): Promise<SaveResult> | undefined {
+	const input = draft.toSaveInput(categories);
+	if (!input) {
+		return undefined;
+	}
+	const { vendors, ...values } = input;
+	const picked: Partial<Record<AllConsentNames, boolean>> = {};
+	for (const category of categories) {
+		const value = values[category];
+		if (value !== undefined) {
+			picked[category] = value;
+		}
+	}
+	const result = kernel.commands.save(picked, {
+		rightsControl: true,
+		uiSource: options.uiSource ?? 'dialog',
+		vendors,
+	});
+	// The record now holds what the draft staged; show it, not the edits.
+	draft.reset();
+	return result;
 };
 
 /** What {@link pressSaleRight} did. */

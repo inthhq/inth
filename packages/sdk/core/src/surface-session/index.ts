@@ -7,7 +7,9 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The module's public interface; each file stays separately placeable.
 export {
+	applyDialogCategories,
 	commitBannerChoice,
+	commitDialogChoice,
 	confirmSaleRight,
 	copySurfaceReference,
 	pressSaleRight,
@@ -36,6 +38,10 @@ export type {
 	RightsSnapshot,
 	SaleRightState,
 } from './rights';
+export { planCategorySwitch, planVendorSwitch } from './categories';
+export type { CategorySwitchPlan, CategorySwitchState } from './categories';
+export { resolveRightsReceipt } from './receipt';
+export type { ReceiptSnapshot, RightsReceipt } from './receipt';
 export { getSurfaceSession } from './session';
 export type {
 	SurfaceCopyFinish,

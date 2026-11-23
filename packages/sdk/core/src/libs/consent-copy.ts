@@ -958,6 +958,319 @@ export const resolveSaleRightCopy = function resolveSaleRightCopy(
 	};
 };
 
+/** The chrome of the "Your Privacy Choices" dialog and its phone sheets. */
+export interface PrivacyChoicesDialogCopy {
+	/** The main card's title. */
+	title: string;
+	/** The main card's first line: "Your choices apply right away." in the US. */
+	intro: string;
+	/** Accessible name of the main card's close button. */
+	close: string;
+	/** Done, which never changes its label (SR-07). */
+	done: string;
+	/** The cue beside Done after a change applies. */
+	savedCue: string;
+	rejectAll: string;
+	acceptAll: string;
+	save: string;
+	/** The preferences sheet's title, first line and close button (COPY-05). */
+	preferencesTitle: string;
+	preferencesIntro: string;
+	preferencesClose: string;
+	/** What Done means in a phone sheet (NEST-08). */
+	sheetNote: string;
+	/** A vendor sheet's first line in the EU (EU-05). */
+	vendorSheetIntro: string;
+	/** Announced when pressing Allow while a confirmation is open (RIGHT-04). */
+	nudge: string;
+}
+
+/**
+ * The dialog's chrome for the US or the EU. EU copy never implies a change
+ * applies before Save (COPY-03, EU-05).
+ */
+export const resolvePrivacyChoicesDialogCopy =
+	function resolvePrivacyChoicesDialogCopy(
+		translations: Partial<Translations> | undefined,
+		input: PrivacyChoicesSubject & { eu: boolean }
+	): PrivacyChoicesDialogCopy {
+		const copy = resolvePrivacyChoicesCopy(translations);
+		return {
+			acceptAll: copy.acceptAll,
+			close: copy.close,
+			done: copy.done,
+			intro: input.eu
+				? fill(copy.euDialogIntro, {
+						business: businessFor(copy, copy.euDialogIntro, input.business),
+					})
+				: copy.dialogIntro,
+			nudge: copy.nudge,
+			preferencesClose: copy.preferencesClose,
+			preferencesIntro: copy.preferencesSheetIntro,
+			preferencesTitle: copy.preferencesTitle,
+			rejectAll: copy.rejectAll,
+			save: copy.saveChoices,
+			savedCue: copy.savedCue,
+			sheetNote: input.eu ? copy.saveInSettings : copy.savedAutomatically,
+			title: input.eu ? copy.euDialogTitle : copy.dialogTitle,
+			vendorSheetIntro: copy.nestedSheetNote,
+		};
+	};
+
+/** What a sale control press recorded, for its announcement. */
+export type SaleAnnouncementOutcome = 'protect' | 'allow' | 'recorded';
+
+/**
+ * The announcement after the sale control records something, ending in
+ * "Saved." because a US change applies at once (LAW-04): "Opted out of
+ * selling, sharing and targeted ads. Saved.", or under opt-in "Selling,
+ * sharing and targeted ads not allowed. Saved."
+ */
+export const resolveSaleAnnouncement = function resolveSaleAnnouncement(
+	translations: Partial<Translations> | undefined,
+	input: {
+		bundle: RightsBundle;
+		model: string;
+		outcome: SaleAnnouncementOutcome;
+	}
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const { title } = resolveRightsPhrases(translations, input.bundle);
+	let message: string;
+	if (input.outcome === 'recorded') {
+		message = copy.choiceRecorded;
+	} else if (input.outcome === 'allow') {
+		message = fill(copy.rightsAllowed, { rights: title });
+	} else if (input.model === 'opt-in') {
+		message = fill(copy.rightsNotAllowed, { rights: title });
+	} else {
+		message = fill(copy.rightsOptedOut, {
+			rights: title.toLocaleLowerCase(),
+		});
+	}
+	return fill(copy.announceSaved, { message });
+};
+
+/**
+ * The announcement after a category or vendor switch: each change, the
+ * automatic ones too (CAT-04), such as "Mapbox off. Experience off.", then
+ * "Saved." when it applied at once.
+ */
+export const resolveSwitchAnnouncement = function resolveSwitchAnnouncement(
+	translations: Partial<Translations> | undefined,
+	input: {
+		changes: readonly { name: string; on: boolean }[];
+		applied: boolean;
+	}
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const message = input.changes
+		.map(({ name, on }) =>
+			fill(on ? copy.switchedOn : copy.switchedOff, { name })
+		)
+		.join(' ');
+	return input.applied ? fill(copy.announceSaved, { message }) : message;
+};
+
+/** The read-only US advertising row that follows the sale choice (LAW-05, CAT-08). */
+export const resolveAdvertisingRowCopy = function resolveAdvertisingRowCopy(
+	translations: Partial<Translations> | undefined,
+	on: boolean
+): { title: string; description: string; state: string } {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	return {
+		description: copy.advertisingFollowsSale,
+		state: on ? copy.stateOn : copy.stateOff,
+		title: copy.advertisingTitle,
+	};
+};
+
+/** A category's vendor trigger and table (CAT-05, CAT-07, CAT-09). */
+export interface VendorTableCopy {
+	/** The trigger's visible text: "View 3 vendors" or "Hide 3 vendors". */
+	trigger: string;
+	/** Read after it, so its name starts with the visible text (CAT-05). */
+	triggerSuffix: string;
+	/** "2 on". */
+	onCount: string;
+	/** The table's accessible name and the vendor sheet's title. */
+	table: string;
+	/** Accessible name of the vendor sheet's close button. */
+	close: string;
+	vendorColumn: string;
+	purposeColumn: string;
+	policyColumn: string;
+	switchColumn: string;
+	/** A vendor's privacy policy link, named for the vendor (CAT-07). */
+	policyLink: (vendor: string) => string;
+}
+
+/** The vendor trigger and table copy for one category. */
+export const resolveVendorTableCopy = function resolveVendorTableCopy(
+	translations: Partial<Translations> | undefined,
+	input: { category: string; count: number; onCount: number; open: boolean }
+): VendorTableCopy {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const count = String(input.count);
+	let trigger: string;
+	if (input.open) {
+		trigger =
+			input.count === 1
+				? copy.vendorsHideOne
+				: fill(copy.vendorsHide, { count });
+	} else {
+		trigger =
+			input.count === 1
+				? copy.vendorsViewOne
+				: fill(copy.vendorsView, { count });
+	}
+	return {
+		close: fill(copy.vendorsClose, { category: input.category }),
+		onCount: fill(copy.vendorsOnCount, { count: String(input.onCount) }),
+		policyColumn: copy.policyColumn,
+		policyLink: (vendor) => fill(copy.vendorPolicy, { vendor }),
+		purposeColumn: copy.purposeColumn,
+		switchColumn: copy.switchColumn,
+		table: fill(copy.vendorsTable, { category: input.category }),
+		trigger,
+		triggerSuffix: fill(copy.vendorsFor, { category: input.category }),
+		vendorColumn: copy.vendorColumn,
+	};
+};
+
+/** What the receipt shows; see `resolveRightsReceipt` in the surface session. */
+export interface RightsReceiptInput {
+	/** `'stored'`: a recorded choice. `'live'`: a GPC signal honored now (GPC-06). */
+	kind: 'stored' | 'live';
+	selected: 'protect' | 'allow';
+	/** A kept refusal came from an earlier GPC signal (GPC-05). */
+	viaSignal: boolean;
+	/** When it was recorded, in epoch milliseconds, or `null`. */
+	at: number | null;
+	scope: 'browser' | 'account';
+	reference: string | null;
+}
+
+/** Every line of the receipt. */
+export interface RightsReceiptCopy {
+	/** "Saved for this browser · Jan 15, 2026", or the live GPC line. */
+	lead: string;
+	details: string;
+	/** What was recorded, with where it came from when a signal made it. */
+	items: readonly { text: string; source: string | null }[];
+	/** Where it applies (RCPT-04). */
+	scope: string;
+	/** "Recorded Jan 15, 2026, 3:04 PM", or the live signal's detail. */
+	recorded: string;
+	referenceLabel: string;
+	copy: string;
+	copied: string;
+	copyFailed: string;
+	copyFailedLabel: string;
+}
+
+const RECENT_MS = 60_000;
+
+const formatWhen = function formatWhen(
+	at: number | null,
+	options: { locale?: string; now: number; justNow: string; time: boolean }
+): string {
+	if (at === null || !Number.isFinite(at)) {
+		return options.justNow;
+	}
+	if (options.now - at >= 0 && options.now - at < RECENT_MS) {
+		return options.justNow;
+	}
+	const format: Intl.DateTimeFormatOptions = {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+	};
+	if (options.time) {
+		format.hour = 'numeric';
+		format.minute = '2-digit';
+	}
+	try {
+		return new Intl.DateTimeFormat(options.locale, format).format(at);
+	} catch {
+		return new Date(at).toISOString().slice(0, 10);
+	}
+};
+
+/**
+ * The receipt's copy (RCPT-01, RCPT-04, GPC-05, GPC-06). A live GPC
+ * signal reads as live, never as a saved date. The scope line and the
+ * rights description use the same scope.
+ */
+export const resolveRightsReceiptCopy = function resolveRightsReceiptCopy(
+	translations: Partial<Translations> | undefined,
+	input: PrivacyChoicesSubject & {
+		receipt: RightsReceiptInput;
+		bundle: RightsBundle;
+		/** BCP 47 locale for dates; the runtime's by default. */
+		locale?: string;
+		/** Now, in epoch milliseconds, for "just now". Defaults to the clock. */
+		now?: number;
+	}
+): RightsReceiptCopy {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const { receipt } = input;
+	const rights = resolveRightsPhrases(
+		translations,
+		input.bundle
+	).title.toLocaleLowerCase();
+	const when = (time: boolean) =>
+		formatWhen(receipt.at, {
+			justNow: copy.justNow,
+			locale: input.locale,
+			now: input.now ?? Date.now(),
+			time,
+		});
+	const live = receipt.kind === 'live';
+	let source: string | null = null;
+	if (live) {
+		source = copy.receiptViaGpc;
+	} else if (receipt.viaSignal && receipt.selected === 'protect') {
+		source = copy.receiptFromGpc;
+	}
+	let lead = copy.receiptLive;
+	if (!live) {
+		lead = fill(
+			receipt.scope === 'account'
+				? copy.receiptSavedAccount
+				: copy.receiptSavedBrowser,
+			{ date: when(false) }
+		);
+	}
+	return {
+		copied: copy.referenceCopied,
+		copy: copy.copyReference,
+		copyFailed: copy.copyFailedAnnouncement,
+		copyFailedLabel: copy.copyFailed,
+		details: copy.receiptDetails,
+		items: [
+			{
+				source,
+				text: fill(
+					receipt.selected === 'allow'
+						? copy.receiptAllowed
+						: copy.receiptOptedOut,
+					{ rights }
+				),
+			},
+		],
+		lead,
+		recorded: live
+			? copy.receiptLiveDetail
+			: fill(copy.receiptRecorded, { date: when(true) }),
+		referenceLabel: copy.receiptReference,
+		scope: resolveReceiptScope(translations, {
+			business: input.business,
+			signedIn: receipt.scope === 'account',
+		}),
+	};
+};
+
 /**
  * Accessible names for the floating trigger and its toolbar.
  *

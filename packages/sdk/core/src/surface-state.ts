@@ -44,17 +44,23 @@ export {
 	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 	resolvePreferencesRowCopy,
+	resolveAdvertisingRowCopy,
 	resolvePrivacyChoicesBannerCopy,
 	resolvePrivacyChoicesCopy,
+	resolvePrivacyChoicesDialogCopy,
 	resolvePrivacyChoicesVariant,
 	resolvePromptCopy,
 	resolveReceiptScope,
 	resolveRightsBundle,
 	resolveRightsPhrases,
+	resolveRightsReceiptCopy,
+	resolveSaleAnnouncement,
 	resolveSaleRightCopy,
+	resolveSwitchAnnouncement,
 	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 	resolveVendorListCopy,
+	resolveVendorTableCopy,
 	scopePhrase,
 } from './libs/consent-copy';
 export type {
@@ -63,13 +69,18 @@ export type {
 	OptOutLinkVariant,
 	PreferencesRowCopy,
 	PrivacyChoicesBannerCopy,
+	PrivacyChoicesDialogCopy,
 	PrivacyChoicesPromptVariant,
 	PrivacyChoicesSubject,
 	ResolvedIABCopy,
 	ResolvedOptOutLink,
 	RightsBundle,
 	RightsPhrases,
+	RightsReceiptCopy,
+	RightsReceiptInput,
+	SaleAnnouncementOutcome,
 	SaleRightCopy,
+	VendorTableCopy,
 } from './libs/consent-copy';
 export {
 	isOptedOut,
@@ -96,6 +107,16 @@ export type {
 	SurfaceEscapeInput,
 	SurfaceEscapeOutcome,
 } from './surface-session/escape';
+export {
+	planCategorySwitch,
+	planVendorSwitch,
+} from './surface-session/categories';
+export type {
+	CategorySwitchPlan,
+	CategorySwitchState,
+} from './surface-session/categories';
+export { resolveRightsReceipt } from './surface-session/receipt';
+export type { RightsReceipt } from './surface-session/receipt';
 export { resolveSaleRight } from './surface-session/rights';
 export type {
 	RightOption,

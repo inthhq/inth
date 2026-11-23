@@ -255,6 +255,100 @@ export interface PrivacyChoicesTranslations {
 	advertisingFollowsSale: string;
 	/** In place of a switch for a category that is always on. */
 	alwaysOn: string;
+	/** Title of the US dialog. */
+	dialogTitle: string;
+	/** Title of the EU dialog. */
+	euDialogTitle: string;
+	/** First line of the EU dialog. Use `{business}`. */
+	euDialogIntro: string;
+	/** Accessible name of the dialog's close button. */
+	close: string;
+	/** Closes the US dialog or a phone sheet. Never changes to say it saved (SR-07). */
+	done: string;
+	/** The cue beside Done after a change applies. */
+	savedCue: string;
+	/** Announced after a change applies in the US. Use `{message}`. */
+	announceSaved: string;
+	/** Announced when a default becomes the visitor's recorded choice. */
+	choiceRecorded: string;
+	/** Announced after opting out. Use `{rights}` (a `title*` phrase, lower case). */
+	rightsOptedOut: string;
+	/** Announced after allowing. Use `{rights}` (a `title*` phrase). */
+	rightsAllowed: string;
+	/** Announced after refusing under opt-in. Use `{rights}` (a `title*` phrase). */
+	rightsNotAllowed: string;
+	/** Announced when a category or vendor turns on. Use `{name}`. */
+	switchedOn: string;
+	/** Announced when a category or vendor turns off. Use `{name}`. */
+	switchedOff: string;
+	/** Receipt line for a choice stored in this browser. Use `{date}`. */
+	receiptSavedBrowser: string;
+	/** Receipt line for a choice stored on the account. Use `{date}`. */
+	receiptSavedAccount: string;
+	/** Receipt line while a Global Privacy Control signal is honored live (GPC-06). */
+	receiptLive: string;
+	/** Receipt detail for a live Global Privacy Control signal. */
+	receiptLiveDetail: string;
+	/** The receipt's disclosure. */
+	receiptDetails: string;
+	/** Receipt item for a refusal. Use `{rights}` (a `title*` phrase, lower case). */
+	receiptOptedOut: string;
+	/** Receipt item for a grant. Use `{rights}` (a `title*` phrase, lower case). */
+	receiptAllowed: string;
+	/** Where a live refusal comes from. */
+	receiptViaGpc: string;
+	/** Where a kept refusal came from (GPC-05). */
+	receiptFromGpc: string;
+	/** When the choice was recorded. Use `{date}`. */
+	receiptRecorded: string;
+	/** Label before the receipt reference. */
+	receiptReference: string;
+	/** Accessible name of the copy button. */
+	copyReference: string;
+	/** Announced once the reference is on the clipboard. */
+	referenceCopied: string;
+	/** Announced when copying failed. */
+	copyFailedAnnouncement: string;
+	/** Stands in for a date recorded a moment ago. */
+	justNow: string;
+	/** Name of the read-only advertising row in the US (LAW-05). */
+	advertisingTitle: string;
+	/** The read-only advertising row while on. */
+	stateOn: string;
+	/** The read-only advertising row while off. */
+	stateOff: string;
+	/** First line of the US preferences sheet. */
+	preferencesSheetIntro: string;
+	/** Footer note of a US phone sheet (NEST-08). */
+	savedAutomatically: string;
+	/** Footer note of an EU phone sheet (NEST-08). */
+	saveInSettings: string;
+	/** Opens a category's vendors. Use `{count}`. */
+	vendorsView: string;
+	/** Opens a category's only vendor. */
+	vendorsViewOne: string;
+	/** Closes a category's vendors. Use `{count}`. */
+	vendorsHide: string;
+	/** Closes a category's only vendor. */
+	vendorsHideOne: string;
+	/** Read after the vendor trigger's text, for screen readers. Use `{category}`. */
+	vendorsFor: string;
+	/** How many of a category's vendors are on. Use `{count}`. */
+	vendorsOnCount: string;
+	/** Accessible name of a category's vendor table, and the title of its sheet. Use `{category}`. */
+	vendorsTable: string;
+	/** Accessible name of the button that closes a vendor sheet. Use `{category}`. */
+	vendorsClose: string;
+	/** Vendor table column. */
+	vendorColumn: string;
+	/** Vendor table column. */
+	purposeColumn: string;
+	/** Vendor table column, for screen readers. */
+	policyColumn: string;
+	/** Vendor table column, for screen readers. */
+	switchColumn: string;
+	/** Accessible name of a vendor's privacy policy link (CAT-07). Use `{vendor}`. */
+	vendorPolicy: string;
 }
 
 export interface LegalLinksTranslations {
