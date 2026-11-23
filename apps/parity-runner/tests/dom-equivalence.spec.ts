@@ -94,6 +94,13 @@ test('Angular counted ids match generated ids only on an Angular page', async ({
 		`${angularRoot}${group('inth-pc-3').replace('category-necessary"', 'category-other"')}`
 	);
 	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	// The DevTools number its instances the same way in every adapter.
+	const devtools =
+		'<div data-testid="dev-tools"><section id="inth-dev-tools-3-panel"></section></div>';
+	await page.setContent(devtools);
+	const plain = await captureDomSnapshot(page, 'body');
+	await page.setContent(`${angularRoot}${devtools}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
 });
 
 test('a captured root inert through an Angular host matches one inert itself', async ({

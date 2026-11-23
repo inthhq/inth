@@ -41,7 +41,11 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// appends the count to the part's `inth-` prefix, `inth-pc-3-category-
 		// necessary` where React writes `inth-pc-_r_1_-category-necessary`.
 		// Only the count is generated; the rest of the id still compares.
-		const ANGULAR_ID = /^(?<prefix>inth-[a-z]+(?:-[a-z]+)*)-[0-9]+(?=-|$)/u;
+		// DevTools ids are not Angular's: their number is the DevTools' own
+		// instance count, the same in every adapter, which the DevTools
+		// comparison normalizes itself.
+		const ANGULAR_ID =
+			/^(?<prefix>inth-(?!dev-tools-)[a-z]+(?:-[a-z]+)*)-[0-9]+(?=-|$)/u;
 		const angularPage = document.querySelector('[ng-version]') !== null;
 		const STRIP = new Set([
 			'data-reactroot',
