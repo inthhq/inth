@@ -38,7 +38,7 @@
 		display: grid;
 		grid-template-rows: 0fr;
 		transition: grid-template-rows var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.panel[data-open='true'] {

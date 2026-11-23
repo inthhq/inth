@@ -38,7 +38,10 @@
 
 @layer components {
 	.root {
-		--_consent-ease: var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+		--_consent-ease: var(
+			--inth-easing-out-strong,
+			cubic-bezier(0.23, 1, 0.32, 1)
+		);
 		position: fixed;
 		z-index: var(--consent-surface-z-index, 999998);
 		display: flex;

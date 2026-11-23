@@ -42,7 +42,7 @@
 		color: var(--inth-text);
 		-webkit-font-smoothing: antialiased;
 		animation: privacy-choices-fade-in var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.backdrop *,
@@ -73,9 +73,9 @@
 		transform: translateY(calc(var(--_depth) * -32px))
 			scale(calc(1 - var(--_depth) * 0.05));
 		animation: privacy-choices-card-in var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 		transition: transform calc(var(--inth-duration-slow) * 1.3)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.card[data-regime='eu'] {
@@ -92,7 +92,7 @@
 		background: color-mix(in srgb, var(--inth-overlay) 20%, transparent);
 		opacity: 0;
 		transition: opacity calc(var(--inth-duration-slow) * 1.3)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	:global(.inth-dark) .card::after {
@@ -108,7 +108,7 @@
 		max-height: min(600px, calc(100% - 40px));
 		translate: 0 12px;
 		animation: privacy-choices-child-in calc(var(--inth-duration-slow) * 1.3)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.card[data-state='closed'] {
@@ -224,7 +224,7 @@
 		font-size: calc(var(--inth-font-size-sm) * 0.8929);
 		color: var(--inth-text-muted);
 		animation: privacy-choices-cue calc(var(--inth-duration-slow) * 8)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)) forwards;
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1)) forwards;
 	}
 
 	.savedCue svg {
@@ -240,7 +240,7 @@
 		opacity: 0;
 		transition:
 			width var(--inth-duration-slow)
-				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1)),
 			opacity calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out);
 	}
 
@@ -303,7 +303,7 @@
 			0 1px 2px color-mix(in srgb, var(--inth-overlay) 20%, transparent),
 			0 2px 6px -2px color-mix(in srgb, var(--inth-overlay) 20%, transparent);
 		transition: transform var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.segmented[data-selected='1'] .segmentedThumb {
@@ -357,7 +357,7 @@
 		overflow: hidden;
 		color: var(--inth-primary);
 		transition: width var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.segmentedCheck svg {
@@ -375,7 +375,7 @@
 
 	.segmentedOption[aria-pressed='true'] .segmentedCheck path {
 		animation: privacy-choices-draw calc(var(--inth-duration-slow) * 1.3)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1))
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1))
 			calc(var(--inth-duration-slow) * 0.3) forwards;
 	}
 
@@ -424,9 +424,9 @@
 			var(--inth-border-strong, rgba(15, 23, 42, 0.16));
 		transition:
 			box-shadow var(--inth-duration-slow)
-				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1)),
 			background-color var(--inth-duration-slow)
-				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	/* Pressing Allow again while the question is open. */
@@ -438,7 +438,7 @@
 		);
 		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #dc2626);
 		animation: privacy-choices-shake calc(var(--inth-duration-slow) * 1.8)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	:global(.inth-dark) .confirm[data-nudged='true'] {
@@ -527,7 +527,7 @@
 	.chevron {
 		display: inline-flex;
 		transition: transform var(--inth-duration-slow)
-			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	[aria-expanded='true'] > .chevron {
