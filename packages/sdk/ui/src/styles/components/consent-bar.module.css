@@ -221,14 +221,33 @@
 			padding-block: calc(var(--inth-space-sm) * 1.5);
 		}
 
-		/* Every button takes an equal share, grouped or not. */
+		/* Every button takes an equal track, grouped or not. A group keeps
+		   its own box, so its slot's background, border and padding still
+		   show: it spans one track per button and lays them out on the
+		   row's tracks (subgrid), so with no padding its buttons match the
+		   ungrouped ones. A track still grows to fit its label. */
+		.actions {
+			display: grid;
+			grid-auto-columns: 1fr;
+			grid-auto-flow: column;
+		}
+
 		.root .actions > .actionGroup {
-			display: contents;
+			display: grid;
+			grid-column: span 2;
+			grid-template-columns: subgrid;
+		}
+
+		.root .actions > .actionGroup:has(> :nth-child(3)) {
+			grid-column: span 3;
+		}
+
+		.root .actions > .actionGroup:has(> :nth-child(4)) {
+			grid-column: span 4;
 		}
 
 		.root .actions > :not(.actionGroup),
 		.root .actions > .actionGroup > * {
-			flex: 1 1 0;
 			min-height: 40px;
 		}
 	}

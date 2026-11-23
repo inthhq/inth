@@ -899,7 +899,8 @@ describe('wave B round 1', () => {
 			box('consent-banner-reject-button').width,
 			0
 		);
-		// Stacked, every button takes an equal share of the row.
+		// Stacked, every button takes an equal share of the row, and the
+		// group keeps a box of its own.
 		await page.viewport(390, 800);
 		await vi.waitFor(() =>
 			expect(box('consent-banner-customize-button').width).toBeCloseTo(
@@ -907,10 +908,47 @@ describe('wave B round 1', () => {
 				0
 			)
 		);
+		expect(getComputedStyle(group).display).not.toBe('contents');
+		expect(group.getBoundingClientRect().width).toBeGreaterThan(0);
+		expect(group.getBoundingClientRect().height).toBeGreaterThan(0);
 		expect(box('consent-banner-reject-button').width).toBeCloseTo(
 			box('consent-banner-accept-button').width,
 			0
 		);
+	});
+
+	test('[BNR-15] stacked, a padded group slot keeps its padding and splits its share equally', async () => {
+		await page.viewport(390, 800);
+		await mount({
+			bannerProps: { layout: ['customize', ['accept', 'reject']] },
+			components: {
+				banner: {
+					actionGroup: {
+						style: { background: 'rgb(1, 2, 3)', padding: '6px' },
+					},
+				},
+			},
+			container: { type: 'banner' },
+		});
+		await waitForRoot();
+		const group = must('consent-banner-footer-sub-group');
+		await vi.waitFor(() =>
+			expect(getComputedStyle(group).display).not.toBe('contents')
+		);
+		const groupBox = group.getBoundingClientRect();
+		const accept = box('consent-banner-accept-button');
+		const reject = box('consent-banner-reject-button');
+		expect(groupBox.width).toBeGreaterThan(0);
+		// The slot's padding sits between the group's edge and its buttons.
+		expect(accept.left - groupBox.left).toBeCloseTo(6, 0);
+		expect(groupBox.right - reject.right).toBeCloseTo(6, 0);
+		expect(accept.top - groupBox.top).toBeCloseTo(6, 0);
+		expect(accept.width).toBeCloseTo(reject.width, 0);
+		// Stacked, the actions span the row; the group still takes two
+		// shares, so the padding comes out of its own buttons.
+		expect(box('consent-banner-footer').width).toBeGreaterThan(300);
+		const customize = box('consent-banner-customize-button');
+		expect(customize.width - accept.width).toBeCloseTo(6, 0);
 	});
 
 	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
