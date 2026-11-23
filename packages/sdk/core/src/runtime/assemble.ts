@@ -14,6 +14,8 @@ import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
  * props and stop and start the runtime around the same kernel. A host that
  * configures once never loads that code.
  */
+import type { UserConsent } from '@inth/sdk-schema/types';
+
 import { displayedCategories } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { clearKernelRecords } from '../kernel/clear-records.model';
@@ -69,10 +71,17 @@ export interface AssembledRuntime {
 	adoptJourney: (id: string | null | undefined) => void;
 	/**
 	 * Atomically update the user, drop any mismatched account layer, optionally
-	 * arm/release `userConsentPending` in one kernel commit, and notify the
-	 * `userConsent` sync controller whenever `externalId` changes or clears.
+	 * arm/release `userConsentPending` or apply a resolved `userConsent` in one
+	 * kernel commit, and notify the `userConsent` sync controller whenever
+	 * `externalId` changes or clears.
 	 */
-	setUser: (user: KernelUser | null, pendingUserConsent?: boolean) => void;
+	setUser: (
+		user: KernelUser | null,
+		options?: {
+			readonly pending?: boolean;
+			readonly userConsent?: UserConsent | null;
+		}
+	) => void;
 	runtime: ConsentRuntime;
 	/**
 	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
@@ -533,15 +542,30 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 	};
 	const setUser = function setUser(
 		user: KernelUser | null,
-		pendingUserConsent?: boolean
+		setOptions?: {
+			readonly pending?: boolean;
+			readonly userConsent?: UserConsent | null;
+		}
 	): void {
 		const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 		const nextExternalId = user?.externalId ?? null;
+		const allowUserConsent = enabled && !consentSource;
+		const nextUserConsent = allowUserConsent
+			? setOptions?.userConsent
+			: undefined;
 		const nextPending =
 			prevExternalId === nextExternalId
 				? undefined
-				: Boolean(nextExternalId && pendingUserConsent);
-		kernel.setUserWithPending(user, nextPending);
+				: Boolean(
+						allowUserConsent &&
+						nextExternalId &&
+						nextUserConsent === undefined &&
+						setOptions?.pending
+					);
+		kernel.setUserWithPending(user, {
+			pending: nextPending,
+			userConsent: nextUserConsent,
+		});
 		if (prevExternalId !== nextExternalId) {
 			userConsentSync.onUserChanged(nextExternalId, {
 				preservePending: nextPending === true,

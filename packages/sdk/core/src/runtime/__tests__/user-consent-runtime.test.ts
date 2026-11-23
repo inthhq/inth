@@ -1154,3 +1154,291 @@ describe('runtime regressions (set 2)', () => {
 		runtime.dispose();
 	});
 });
+
+describe('runtime regressions (set 3)', () => {
+	test('switching from user A (denied marketing) to user B with a resolved document under opt-out never grants marketing or inserts marketing script', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const docA = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+		});
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+			scripts: [
+				{
+					category: 'marketing' as const,
+					id: 'mkt-script',
+					src: 'https://cdn.example.test/mkt-s3.js',
+				},
+			],
+		};
+
+		const runtime = createConsentProviderRuntime(
+			{ ...base, user: { externalId: 'user_a' }, userConsent: docA },
+			defaultRuntimeModules
+		);
+		const append = vi.spyOn(document.head, 'appendChild');
+		const seenMarketing: boolean[] = [];
+		const unsub = runtime.kernel.subscribe((snap) => {
+			seenMarketing.push(snap.effectivePermissions.marketing);
+		});
+		runtime.start();
+		await vi.advanceTimersByTimeAsync(50);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		expect(
+			document.querySelector('script[src="https://cdn.example.test/mkt-s3.js"]')
+		).toBeNull();
+
+		const docB = makeUserConsent({ ...docA.sync, externalId: 'user_b' });
+		void runtime.update({
+			...base,
+			user: { externalId: 'user_b' },
+			userConsent: docB,
+		});
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		expect(
+			append.mock.calls.some(
+				([node]) =>
+					node instanceof HTMLScriptElement &&
+					node.src === 'https://cdn.example.test/mkt-s3.js'
+			)
+		).toBe(false);
+		expect(seenMarketing.includes(true)).toBe(false);
+		expect(
+			document.querySelector('script[src="https://cdn.example.test/mkt-s3.js"]')
+		).toBeNull();
+
+		unsub();
+		runtime.dispose();
+	});
+
+	test('logging out while SSR prefetch is pending fences the stream', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const prefetch = Promise.withResolvers<RuntimePrefetch>();
+		const mode = testing({ policy: [rule] });
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode,
+			prefetch: prefetch.promise,
+		};
+		const runtime = createConsentProviderRuntime(
+			{ ...base, user: { externalId: 'user_a' } },
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			runtime.start();
+			await runtime.update(base);
+			expect(runtime.kernel.getSnapshot().user).toBeNull();
+			const cfg: RuntimePrefetch = {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialUserConsent: makeUserConsent({
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: resolution.fingerprints.choice,
+								kind: 'choice-v1',
+							},
+							confirmedAt: NOW - 500,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				}),
+				now: NOW,
+			};
+			prefetch.resolve(cfg);
+			await vi.advanceTimersByTimeAsync(50);
+			expect(runtime.kernel.getSnapshot().user).toBeNull();
+			expect(readStoredAccountLayer(undefined)).toBeNull();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('clearing after streamed config adoption but before start fences raw SSR document', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const prefetch = Promise.withResolvers<RuntimePrefetch>();
+		const mode = testing({ policy: [rule] });
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode,
+				prefetch: prefetch.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			const cfg: RuntimePrefetch = {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialUserConsent: makeUserConsent({
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: resolution.fingerprints.choice,
+								kind: 'choice-v1',
+							},
+							confirmedAt: NOW - 500,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				}),
+				now: NOW,
+			};
+			runtime.streamed?.adopt(cfg);
+			prefetch.resolve(cfg);
+			await flushMicrotasks();
+			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('user_a');
+			runtime.clearRecords();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			runtime.start();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(readStoredAccountLayer(undefined)).toBeNull();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('replaying the exact stored SSR document keeps its established clock conversion', () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const basis = {
+			fingerprint: resolution.fingerprints.choice,
+			kind: 'choice-v1' as const,
+		};
+		const skew = 300_000;
+		const appliedAt = NOW - 10_000;
+		const checkedAt = appliedAt + skew;
+		const rawConfirmedAt = checkedAt - 100;
+		const user = { externalId: 'user_a' };
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					initialRecords: {
+						accountLayer: {
+							...user,
+							appliedAt,
+							checkedAt,
+							choices: {
+								marketing: { basis, rawConfirmedAt, value: false },
+							},
+							optOut: null,
+							skew,
+							vendors: {},
+						},
+						choice: {
+							categories: {
+								marketing: { basis, confirmedAt: NOW - 5000, value: true },
+							},
+							version: 3,
+						},
+						now: NOW,
+					},
+					initialUser: user,
+					initialUserConsent: makeUserConsent({
+						checkedAt,
+						choices: {
+							marketing: { basis, confirmedAt: rawConfirmedAt, value: false },
+						},
+						externalId: 'user_a',
+					}),
+					now: NOW,
+				},
+				user,
+			},
+			defaultRuntimeModules
+		);
+		try {
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('setUser does not arm userConsentPending when consentSource is configured', () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const pendingConsent = Promise.withResolvers<UserConsent | null>();
+		const consentSource = {
+			getPermissions: () => ({ marketing: true }),
+			subscribe: () => () => undefined,
+		};
+		const base = {
+			consentCategories: ['marketing'] as const,
+			consentSource,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+		};
+		const runtime = createConsentProviderRuntime(
+			{ ...base, user: undefined },
+			defaultRuntimeModules
+		);
+		try {
+			runtime.start();
+			void runtime.update({
+				...base,
+				user: { externalId: 'user_a' },
+				userConsent: pendingConsent.promise,
+			});
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		} finally {
+			runtime.dispose();
+		}
+	});
+});

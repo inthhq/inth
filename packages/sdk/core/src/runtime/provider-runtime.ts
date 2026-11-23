@@ -270,6 +270,25 @@ export const createConsentProviderRuntime =
 		// `start()` then treats the kernel as built from it, as it would a
 		// ready prefetch.
 		let adoptedPrefetch: RuntimePrefetch | undefined;
+		let streamedFenced = false;
+		const stripPrefetchUserConsent = (
+			config: RuntimePrefetch
+		): RuntimePrefetch => {
+			const {
+				initialUser: _user,
+				initialUserConsent: _consent,
+				...rest
+			} = config;
+			return rest;
+		};
+		let pendingStreamedUserConsent: RuntimePrefetch | undefined;
+		const fenceStreamedUserConsent = (): void => {
+			streamedFenced = true;
+			pendingStreamedUserConsent = undefined;
+			if (adoptedPrefetch) {
+				adoptedPrefetch = stripPrefetchUserConsent(adoptedPrefetch);
+			}
+		};
 		let overridesChanged = false;
 		const listeners = new Set<() => void>();
 		const notify = function notify() {
@@ -322,15 +341,21 @@ export const createConsentProviderRuntime =
 					}
 					if (key === 'prefetch') {
 						if (on && adoptedPrefetch) {
-							return adoptedPrefetch;
+							return streamedFenced
+								? stripPrefetchUserConsent(adoptedPrefetch)
+								: adoptedPrefetch;
 						}
 						// A pending prefetch is streamed into the first init. Once
 						// overrides or the language changed before start or while
 						// disabled, the prefetch answers for other inputs: start
 						// asks the backend instead.
-						return knownPrefetch && overridesChanged
-							? { ...knownPrefetch, initialPolicyPending: true }
-							: knownPrefetch;
+						const resolvedKnown =
+							knownPrefetch && overridesChanged
+								? { ...knownPrefetch, initialPolicyPending: true }
+								: knownPrefetch;
+						return resolvedKnown && streamedFenced
+							? stripPrefetchUserConsent(resolvedKnown)
+							: resolvedKnown;
 					}
 					const source = LIVE_OPTIONS.has(key) ? current : initial;
 					return source[key as keyof ConsentRuntimeUpdate];
@@ -380,18 +405,13 @@ export const createConsentProviderRuntime =
 			permissive = build(false);
 		}
 		let streamedUserConsentAdopted = false;
-		let streamedCleared = false;
-		let pendingStreamedUserConsent: RuntimePrefetch | undefined;
-		main.runtime.kernel.events.on('records:cleared', () => {
-			streamedCleared = true;
-			pendingStreamedUserConsent = undefined;
-		});
+		main.runtime.kernel.events.on('records:cleared', fenceStreamedUserConsent);
 		const adoptStreamedUserConsent = function adoptStreamedUserConsent(
 			config: RuntimePrefetch | undefined
 		): void {
 			if (
 				streamedUserConsentAdopted ||
-				streamedCleared ||
+				streamedFenced ||
 				disposed ||
 				permissive ||
 				!config
@@ -666,9 +686,18 @@ export const createConsentProviderRuntime =
 			const userChanged =
 				(prevUser?.externalId ?? null) !== (nextUser?.externalId ?? null);
 			if (userChanged) {
-				main.setUser(nextUser ?? null, isUserConsentPromise(next.userConsent));
+				fenceStreamedUserConsent();
+				if (isUserConsentPromise(next.userConsent)) {
+					main.setUser(nextUser ?? null, { pending: true });
+					runtime.syncUserConsent(next.userConsent);
+				} else if (next.userConsent === undefined) {
+					main.setUser(nextUser ?? null, { pending: false });
+				} else {
+					main.setUser(nextUser ?? null, { userConsent: next.userConsent });
+				}
+				return;
 			}
-			if (userChanged || next.userConsent !== previous.userConsent) {
+			if (next.userConsent !== previous.userConsent) {
 				runtime.syncUserConsent(next.userConsent);
 			}
 		};
