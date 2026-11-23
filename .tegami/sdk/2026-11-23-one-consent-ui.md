@@ -86,7 +86,7 @@ The banner's "Consent by" tag is now a neutral credit that reads `--consent-tag-
 - The provider's `scrollLock` and `trapFocus` now apply to the IAB banner and dialog and to the confirmations, not to the consent banner or dialog.
 - `ConsentDialogPanel` from `@inth/svelte/dialog-panel` is the new dialog, without the trigger and confirmations `ConsentDialog` adds.
 - `getHeadlessConsent()`'s `banner` and `dialog` carry the resolved `container` instead of `variant` and `position`.
-- The banner's root no longer carries `data-prompt`, `data-model` or `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`.
+- The banner's root no longer carries `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`. It still carries `data-model` and `data-prompt`.
 
 **Angular**
 
