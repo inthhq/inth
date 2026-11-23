@@ -256,6 +256,14 @@ export const renderPrompt = function renderPrompt(
 		return expandButton(inBar ? labels.expandBar : labels.expand, inBar);
 	};
 
+	// Every presentation, the collapsed Banner included, keeps the host's
+	// groups and their `consentBannerFooterSubGroup` slot.
+	const summaryRow = (inBar: boolean): VChild[] =>
+		model.summaryGroups.map((group) => {
+			const buttons = group.map((action) => summaryButton(action, inBar));
+			return group.length > 1 ? actionGroup(...buttons) : buttons[0];
+		});
+
 	let footer: VChild;
 	if (optionsOpen) {
 		footer = notice
@@ -270,10 +278,7 @@ export const renderPrompt = function renderPrompt(
 	} else if (notice) {
 		footer = [expandButton(labels.expand, false), okButton];
 	} else {
-		footer = model.summaryGroups.map((group) => {
-			const buttons = group.map((action) => summaryButton(action, false));
-			return group.length > 1 ? actionGroup(...buttons) : buttons[0];
-		});
+		footer = summaryRow(false);
 	}
 
 	const tag = consentTag(model);
@@ -325,9 +330,7 @@ export const renderPrompt = function renderPrompt(
 					}),
 					notice
 						? [expandButton(labels.expandBar, true), okButton]
-						: model.summaryGroups
-								.flat()
-								.map((action) => summaryButton(action, true))
+						: summaryRow(true)
 				)
 			),
 			status,

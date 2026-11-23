@@ -127,9 +127,10 @@ const PreferencesDialogSurface = ({
 	if (!Component) {
 		return null;
 	}
-	// React's Privacy Choices dialog stages its own draft.
+	// React's Privacy Choices dialog stages its own draft. Its footer shows
+	// the regime's one legal link, which `legalLinks` may hide.
 	return design === 'privacy-choices' ? (
-		<Component />
+		<Component legalLinks={legalLinks} />
 	) : (
 		<ConsentDraftProvider>
 			<Component legalLinks={legalLinks} />

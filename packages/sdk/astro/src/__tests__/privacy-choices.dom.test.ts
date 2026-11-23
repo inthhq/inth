@@ -11,6 +11,7 @@ import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
 	ConsentPresentation,
+	LegalLinks,
 } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
@@ -1017,4 +1018,42 @@ describe('the React island (wave B round 1)', () => {
 			registerDialogStyles([]);
 		}
 	});
+});
+
+describe('the React island (wave B round 2)', () => {
+	beforeEach(() => {
+		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
+		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
+	});
+
+	afterEach(() => {
+		document.getElementById('inth-dialog-host')?.remove();
+	});
+
+	it.each<[(keyof LegalLinks)[] | null | undefined, boolean]>([
+		[undefined, true],
+		[null, false],
+		[['cookiePolicy'], false],
+		[['privacyPolicy'], true],
+	])(
+		'legalLinks=%j on <ConsentDialog /> reaches the Privacy Choices dialog (shown: %s)',
+		async (legalLinks, shown) => {
+			const booted = await mount({ region: 'us-notice', ui: 'react' });
+			// The host `<ConsentDialog legalLinks>` renders: no list leaves the
+			// attribute out, and `null` is an empty list.
+			const host = document.createElement('div');
+			host.setAttribute('data-inth-dialog-host', 'preferences');
+			if (legalLinks !== undefined) {
+				host.setAttribute('data-legal-links', (legalLinks ?? []).join(' '));
+			}
+			document.body.append(host);
+			await waitForController();
+			await booted.openDialog();
+			await vi.waitFor(
+				() => expect($('consent-dialog-card')).not.toBeNull(),
+				ISLAND_RENDER_TIMEOUT
+			);
+			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
+		}
+	);
 });

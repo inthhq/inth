@@ -46,6 +46,7 @@ const pick = function pick(
 /** What the prompt and its options use, trimmed so the spot stays small. */
 export const privacyChoicesClassNames: PrivacyChoicesClassNames = {
 	bar: pick(barStyles, [
+		'actionGroup',
 		'actions',
 		'card',
 		'footer',

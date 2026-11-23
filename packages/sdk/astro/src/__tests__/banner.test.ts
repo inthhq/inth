@@ -913,5 +913,12 @@ describe('<ConsentDialog />', () => {
 
 		const without = await container.renderToString(ConsentDialog, {});
 		expect(without).not.toContain('data-legal-links');
+
+		// `null` is an empty list, so the Privacy Choices dialog can tell it
+		// from no list and hide its footer link.
+		const none = await container.renderToString(ConsentDialog, {
+			props: { legalLinks: null },
+		});
+		expect(none).toMatch(/data-legal-links(?:="")?[\s>]/u);
 	});
 });

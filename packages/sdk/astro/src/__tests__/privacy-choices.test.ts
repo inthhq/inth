@@ -439,6 +439,42 @@ describe('the policy and the host (wave B round 1)', () => {
 		);
 	});
 
+	it('[BNR-15] the collapsed Banner keeps the host groups and their slot', async () => {
+		const document = await render(
+			await buildLocals(
+				{
+					design: 'privacy-choices',
+					prompt: {
+						container: { type: 'banner' },
+						layout: ['customize', ['accept', 'reject']],
+					},
+				},
+				{},
+				{ theme: { slots: { consentBannerFooterSubGroup: 'group-marker' } } }
+			)
+		);
+		expect(
+			$(document, 'consent-banner-root')?.getAttribute('data-placement')
+		).toBe('banner-bottom');
+		const footer = $(document, 'consent-banner-footer');
+		expect(footer?.firstElementChild?.getAttribute('data-testid')).toBe(
+			'consent-banner-customize-button'
+		);
+		const group = $(document, 'consent-banner-footer-sub-group');
+		expect(group?.parentElement).toBe(footer);
+		const classes = group?.getAttribute('class') ?? '';
+		expect(classes).toContain('group-marker');
+		// The bar sizes grouped buttons through its own group class.
+		expect(classes).toContain(privacyChoicesClassNames.bar.actionGroup);
+		expect(classes).toContain(privacyChoicesClassNames.surface.actionGroup);
+		expect(group?.firstElementChild?.getAttribute('data-testid')).toBe(
+			'consent-banner-accept-button'
+		);
+		expect(group?.lastElementChild?.getAttribute('data-testid')).toBe(
+			'consent-banner-reject-button'
+		);
+	});
+
 	it('[BNR-01] a notice keeps its opt-out link and OK whatever the actions', async () => {
 		const document = await render(
 			await buildLocals(

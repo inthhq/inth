@@ -273,7 +273,7 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 	const { theme } = options;
 	const { surface } = classNames;
 	const stock: Record<PartName, string> = {
-		actionGroup: join(surface.actionGroup),
+		actionGroup: join(surface.actionGroup, presentationClasses.actionGroup),
 		barActions: join(presentationClasses.actions),
 		barText: join(presentationClasses.text),
 		barTitle: join(surface.visuallyHidden),
