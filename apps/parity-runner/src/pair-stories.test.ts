@@ -2,7 +2,9 @@ import { expect, test } from 'bun:test';
 
 import {
 	frameworkOf,
+	missingFrameworks,
 	pairStories,
+	portedFrameworks,
 	selectComparablePairs,
 	STORY_VISIT_BUDGET_MS,
 	storyKey,
@@ -194,4 +196,40 @@ test('storyVisitTimeout grows with every story the test opens', () => {
 	);
 	expect(storyVisitTimeout(pairs, 120_000)).toBe(120 * STORY_VISIT_BUDGET_MS);
 	expect(storyVisitTimeout([pair('react', 'svelte')], 120_000)).toBe(120_000);
+});
+
+test('a story not yet ported is compared only where it is ported, and never missing elsewhere', () => {
+	const entry = (framework: string, title: string): StoryEntry => ({
+		id: `components-${framework}-x--card`,
+		name: 'Card',
+		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
+	});
+	const byFramework = {
+		react: [
+			entry('react', 'Privacy Choices/Banner'),
+			entry('react', 'Core/Consent Banner'),
+		],
+		svelte: [
+			entry('svelte', 'Privacy Choices/Banner'),
+			entry('svelte', 'Core/Consent Banner'),
+		],
+		vue: [entry('vue', 'Core/Consent Banner')],
+	};
+	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual(['react']);
+	expect(portedFrameworks('Core/Consent Banner/Card')).toBeNull();
+	const pairs = selectComparablePairs(byFramework, {
+		frameworks: ['react', 'svelte', 'vue'],
+	});
+	// A React-only story has nothing to compare with, even when another
+	// framework happens to ship a story of the same name.
+	expect(pairs.map((pair) => pair.key)).toEqual(['Core/Consent Banner/Card']);
+	expect(
+		missingFrameworks(
+			{
+				entries: { react: entry('react', 'Privacy Choices/Banner') },
+				key: 'Privacy Choices/Banner/Card',
+			},
+			['react', 'svelte', 'vue']
+		)
+	).toEqual([]);
 });

@@ -72,7 +72,55 @@ export const missingFrameworks = function missingFrameworks(
 	pair: PairedStory,
 	frameworks: readonly string[]
 ): string[] {
-	return frameworks.filter((framework) => !pair.entries[framework]);
+	const ported = portedFrameworks(pair.key);
+	return frameworks.filter(
+		(framework) =>
+			!pair.entries[framework] && (!ported || ported.includes(framework))
+	);
+};
+
+/**
+ * Stories a port has reached only some frameworks with, keyed by story-key
+ * prefix, with the frameworks that ship them. The Privacy Choices design
+ * lands in React first and in the other adapters in later changes; until a
+ * framework renders it, its gap is expected. Parity compares such a story
+ * only between the frameworks listed, and never reports the others missing.
+ * Add a framework here when its port lands; drop the entry once every
+ * framework ships it.
+ */
+export const NOT_YET_PORTED: Readonly<Record<string, readonly string[]>> = {
+	'Privacy Choices/': ['react'],
+};
+
+/**
+ * The frameworks a story has been ported to, or `null` when every
+ * framework is expected to ship it.
+ */
+export const portedFrameworks = function portedFrameworks(
+	key: string
+): readonly string[] | null {
+	const prefix = Object.keys(NOT_YET_PORTED).find((candidate) =>
+		key.startsWith(candidate)
+	);
+	return prefix === undefined ? null : (NOT_YET_PORTED[prefix] ?? null);
+};
+
+/** `pair` without the entries of frameworks its story is not ported to. */
+const withPortedEntries = function withPortedEntries(
+	pair: PairedStory
+): PairedStory {
+	const ported = portedFrameworks(pair.key);
+	if (!ported) {
+		return pair;
+	}
+	return {
+		entries: Object.fromEntries(
+			Object.entries(pair.entries).filter(([framework]) =>
+				ported.includes(framework)
+			)
+		),
+		key: pair.key,
+	};
 };
 
 /**
@@ -124,6 +172,7 @@ export const selectComparablePairs = function selectComparablePairs(
 		...(options.excludeKeyPrefixes ?? []),
 	];
 	return pairStories(entriesByFramework)
+		.map(withPortedEntries)
 		.filter((pair) => Object.keys(pair.entries).length >= 2)
 		.filter((pair) => !options.baseline || pair.entries[options.baseline])
 		.filter((pair) => !excluded.some((prefix) => pair.key.startsWith(prefix)))
