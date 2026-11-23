@@ -64,6 +64,7 @@ export const createRightsReceipt =
 	function createRightsReceipt(): RightsReceiptPart {
 		const fieldRef: PcRef = { current: null };
 		let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+		let fieldFrame = 0;
 		let focusField = false;
 
 		const render = function render(
@@ -274,7 +275,9 @@ export const createRightsReceipt =
 			}
 			if (focusField) {
 				focusField = false;
-				requestAnimationFrame(() => {
+				cancelAnimationFrame(fieldFrame);
+				fieldFrame = requestAnimationFrame(() => {
+					fieldFrame = 0;
 					const field = fieldRef.current as HTMLInputElement | null;
 					field?.focus({ preventScroll: true });
 					field?.select();
@@ -287,7 +290,10 @@ export const createRightsReceipt =
 			dispose() {
 				if (copiedTimer !== undefined) {
 					clearTimeout(copiedTimer);
+					copiedTimer = undefined;
 				}
+				cancelAnimationFrame(fieldFrame);
+				fieldFrame = 0;
 			},
 			render,
 		};

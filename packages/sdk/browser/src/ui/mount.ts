@@ -251,11 +251,17 @@ export const mountConsentUI = function mountConsentUI(
 					continue;
 				}
 				addedSheets.add(sheet.id);
-				// After the stock sheet and the `stylesheetUrls` links, before
-				// the UI, so the stock `@layer` order still comes first.
+				// Before the stock `<style>`, which ends with the theme and the
+				// `css` option, and the `stylesheetUrls` links after it: the
+				// host's rules are documented to come last, and win ties. Each
+				// sheet opens with the same `@layer` order statement as the
+				// stock one, so the layer order is unchanged.
 				const style = createStyle(sheet.css, nonce);
 				style.setAttribute('data-inth-styles', sheet.id);
-				root.insertBefore(style, ui.wrapper);
+				root.insertBefore(
+					style,
+					styleEl?.parentNode === root ? styleEl : ui.wrapper
+				);
 			}
 		},
 		client,

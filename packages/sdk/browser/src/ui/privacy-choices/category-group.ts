@@ -213,7 +213,13 @@ const vendorTable = function vendorTable(
 				)
 			);
 			row.onclick = (event) => {
-				if (toggleable && isToggleClick(event, row)) {
+				// The handler moves to the mounted row on a morph: read the row
+				// from the event, since `row` may be a detached copy outside
+				// the shadow root (CAT-10).
+				if (
+					toggleable &&
+					isToggleClick(event, (event.currentTarget as Element | null) ?? row)
+				) {
 					params.onToggle(vendor, !checked);
 				}
 			};
@@ -526,7 +532,13 @@ export const createCategoryGroup =
 								})
 					);
 					row.onclick = (event) => {
-						if (!required && isToggleClick(event, row)) {
+						if (
+							!required &&
+							isToggleClick(
+								event,
+								(event.currentTarget as Element | null) ?? row
+							)
+						) {
 							toggleCategory(name, listed, !checked);
 						}
 					};

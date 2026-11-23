@@ -46,6 +46,12 @@ const HANDLERS = [
 	'onpointerenter',
 ] as const;
 
+/**
+ * Attributes a shared controller sets on a built element, never the
+ * builder: the scroll-edge fades (LAY-08). A morph leaves them alone.
+ */
+const CONTROLLER_ATTRIBUTES = new Set(['data-fade-top', 'data-fade-bottom']);
+
 /** Built elements that hold content a controller owns (a live region). */
 const OWNED = new WeakSet<Node>();
 /** The ref each built element asked for. */
@@ -180,7 +186,7 @@ const morphAttributes = function morphAttributes(
 	const keep = OWNED.has(from);
 	if (!keep) {
 		for (const { name } of [...from.attributes]) {
-			if (!to.hasAttribute(name)) {
+			if (!(to.hasAttribute(name) || CONTROLLER_ATTRIBUTES.has(name))) {
 				from.removeAttribute(name);
 			}
 		}
@@ -334,4 +340,31 @@ export const findInPage = function findInPage<
 	return root && root !== document && 'querySelector' in root
 		? (root as ShadowRoot).querySelector<ElementType>(selector)
 		: null;
+};
+
+/**
+ * Focus the first element matching `selector`, in the page then in the UI
+ * root, that takes focus. A match that cannot, such as one inside a
+ * hidden footer, is skipped.
+ *
+ * @returns The element that took focus, or `null`.
+ */
+export const focusFirstIn = function focusFirstIn(
+	selector: string,
+	uiRoot: Node | null | undefined
+): HTMLElement | null {
+	const root = uiRoot?.getRootNode();
+	const matches = [
+		...document.querySelectorAll<HTMLElement>(selector),
+		...(root && root !== document && 'querySelectorAll' in root
+			? (root as ShadowRoot).querySelectorAll<HTMLElement>(selector)
+			: []),
+	];
+	for (const target of matches) {
+		target.focus({ preventScroll: true });
+		if (activeElementOf(target) === target) {
+			return target;
+		}
+	}
+	return null;
 };

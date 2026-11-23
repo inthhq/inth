@@ -11,6 +11,7 @@ import {
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
 	openOptInConfirmation,
+	showConsentSurface,
 	watchPendingOptOutConfirmation,
 } from '@inth/sdk-core/surface-actions';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -858,4 +859,97 @@ describe('wave B round 2', () => {
 			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
 		}
 	);
+});
+
+describe('wave C round 1', () => {
+	test('[ARCH-03] the root carries the surface marker, the consentDialog slot and part', async () => {
+		await startPrivacyChoicesPage({
+			privacyChoicesLink: true,
+			region: 'us-opt-out',
+			slots: { consentDialog: 'host-dialog' },
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveAttribute('data-inth-surface', 'dialog');
+		expect(root.getAttribute('part')?.split(' ')).toContain('consentDialog');
+		expect(root).toHaveClass('host-dialog');
+	});
+
+	test('[FOC-03] focus return skips an opener and a link that cannot take focus', async () => {
+		await mount();
+		await openDialog();
+		// The page hides its footer link with CSS; it keeps its test id.
+		must('privacy-choices-link').style.display = 'none';
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(active()).toBe($('consent-dialog-trigger')));
+	});
+
+	test('[CAT-10] a row click with text selected in the shadow root does not toggle', async () => {
+		await mount({ region: 'eu' });
+		await openDialog();
+		const sw = await waitFor(() =>
+			must('consent-dialog-category-switch-functionality')
+		);
+		// A switch re-renders the dialog, so each row's handler now runs
+		// on the mounted row, not the one it was built with.
+		sw.click();
+		await waitFor(() => expect(sw).toHaveAttribute('aria-checked', 'true'));
+		const name = byId(sw.getAttribute('aria-labelledby')) as HTMLElement;
+		// Text selected inside a shadow root, as Chromium reports it: the
+		// root's selection holds it, and the document's is collapsed on the
+		// host.
+		const inShadow = vi
+			.spyOn(
+				ShadowRoot.prototype as ShadowRoot & { getSelection: () => unknown },
+				'getSelection'
+			)
+			.mockReturnValue({ isCollapsed: false });
+		vi.spyOn(document, 'getSelection').mockReturnValue({
+			isCollapsed: true,
+		} as Selection);
+		name.click();
+		expect(sw).toHaveAttribute('aria-checked', 'true');
+		inShadow.mockReturnValue({ isCollapsed: true });
+		name.click();
+		await waitFor(() => expect(sw).toHaveAttribute('aria-checked', 'false'));
+	});
+
+	test('a disposed dialog stops looking for the returning banner', async () => {
+		const client = await mount({ banner: false, region: 'eu' });
+		await waitFor(() => expect(link()).not.toBeNull());
+		link().click();
+		await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
+		// Closing back to a banner that never renders: the dialog looks for
+		// it for a while.
+		showConsentSurface(client.kernel, 'banner');
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		stopPrivacyChoicesPages();
+		const frame = vi.spyOn(window, 'requestAnimationFrame');
+		await new Promise((resolve) => {
+			setTimeout(resolve, 150);
+		});
+		expect(frame).not.toHaveBeenCalled();
+	});
+
+	test('[BNR-05] the opt-out icon has an intrinsic size unless noStyle', async () => {
+		const client = await mount({ privacyChoicesLink: false });
+		const choices = createPrivacyChoicesLink(client, {
+			variant: 'privacy-choices',
+		});
+		const icon = choices.element.querySelector('svg') as SVGSVGElement;
+		expect(icon).toHaveAttribute('height', '14');
+		expect(icon).toHaveAttribute('width', '30');
+		document.body.append(choices.element);
+		expect(icon.getBoundingClientRect().height).toBe(14);
+		const plain = createPrivacyChoicesLink(client, {
+			noStyle: true,
+			variant: 'privacy-choices',
+		});
+		const plainIcon = plain.element.querySelector('svg') as SVGSVGElement;
+		expect(plainIcon).not.toHaveAttribute('height');
+		expect(plainIcon).not.toHaveAttribute('width');
+		choices.destroy();
+		plain.destroy();
+	});
 });

@@ -41,7 +41,7 @@ import {
 	attachScrollFades,
 	attachTopLayerTrap,
 } from '@inth/sdk-ui/primitives/surface';
-import type { LiveRegion } from '@inth/sdk-ui/primitives/surface';
+import type { LiveRegion, ScrollFades } from '@inth/sdk-ui/primitives/surface';
 import {
 	getTextDirection,
 	resolveBrandingTag,
@@ -54,7 +54,7 @@ import { classes as surfaceStyles } from '../../generated/privacy-choices/surfac
 import type { ConsentBannerOptions } from '../../types';
 import { renderLegalLinks } from '../surface';
 import type { SurfaceContext } from '../surface';
-import { activeElementOf, cx, el, findInPage, owned, patch } from './dom';
+import { activeElementOf, cx, el, focusFirstIn, owned, patch } from './dom';
 import type { PcChild, PcRef } from './dom';
 import type { PrivacyChoicesPanel } from './panel';
 import { importPanel } from './pc-import';
@@ -251,7 +251,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 	let stopLeaving: (() => void) | undefined;
 	let releaseBlock: (() => void) | undefined;
-	let stopFades: (() => void) | undefined;
+	let stopFades: ScrollFades | undefined;
 	let fadedArea: HTMLElement | null = null;
 	let focusFrame = 0;
 	let keysAttached = false;
@@ -288,9 +288,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 	/** Move focus to "Your Privacy Choices", or leave it where it is. */
 	const focusReturnTarget = function focusReturnTarget(): void {
 		for (const selector of RETURN_TARGETS) {
-			const target = findInPage(selector, ctx.root);
-			if (target) {
-				target.focus({ preventScroll: true });
+			if (focusFirstIn(selector, ctx.root)) {
 				return;
 			}
 		}
@@ -389,7 +387,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				keys,
 				labels: t.legalLinks ?? {},
 				legalLinks: ctx.legalLinks,
-				noStyle: false,
+				noStyle,
 				testIdPrefix: 'consent-banner-legal-link',
 			});
 
@@ -887,7 +885,10 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 		// Scroll-edge fades (LAY-08) on whichever scroll area shows.
 		const area = optionsOpen && panelReady ? scrollRef.current : null;
-		if (area !== fadedArea) {
+		if (area === fadedArea) {
+			// The content may have changed height under the same area.
+			stopFades?.update();
+		} else {
 			stopFades?.();
 			stopFades = area ? attachScrollFades(area) : undefined;
 			fadedArea = area;
@@ -937,6 +938,10 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				if (session.getState().expanded) {
 					session.collapse();
 				}
+				// All-in-one shows the options at once, whether the prompt
+				// started there or a viewport change brought it there.
+				panelWanted = true;
+				loadPanel();
 			}
 			if (!pageStatus.isConnected) {
 				ctx.root.append(owned(pageStatus));
@@ -990,6 +995,9 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 			pageStatus.remove();
 		},
 		hide() {
+			// Until the next sync: a session, draft or viewport change must
+			// not bring the prompt back from the snapshot it last had.
+			snapshot = null;
 			if (rootEl || phase !== 'hidden') {
 				phase = 'hidden';
 				removeRoot();
@@ -999,10 +1007,6 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 			snapshot = next;
 			container = nextContainer;
 			actionGroups = nextActionGroups ?? DEFAULT_ACTION_GROUPS;
-			if (layoutOf(nextContainer).flow === 'all-in-one') {
-				panelWanted = true;
-				loadPanel();
-			}
 			render();
 		},
 	};

@@ -42,7 +42,7 @@ import {
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk-ui/primitives/surface';
-import type { LiveRegion } from '@inth/sdk-ui/primitives/surface';
+import type { LiveRegion, ScrollFades } from '@inth/sdk-ui/primitives/surface';
 import { getTextDirection } from '@inth/sdk-ui/utils';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
@@ -53,7 +53,16 @@ import type { ConsentDialogOptions } from '../../types';
 import { takeReceiptFocus } from '../receipt-focus';
 import type { Surface, SurfaceContext } from '../surface';
 import { advertisingRow, createCategoryGroup } from './category-group';
-import { cx, el, findInPage, icon, owned, patch } from './dom';
+import {
+	activeElementOf,
+	cx,
+	el,
+	findInPage,
+	focusFirstIn,
+	icon,
+	owned,
+	patch,
+} from './dom';
 import type { PcChild, PcRef } from './dom';
 import { createRightsReceipt } from './receipt';
 import { createSaleRightsRow } from './rights-row';
@@ -336,6 +345,8 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	let cueCount = 0;
 	let lastCue = 0;
 	let cueTimer: ReturnType<typeof setTimeout> | undefined;
+	/** The frame that looks for the returning banner to focus. */
+	let bannerFrame = 0;
 	let shownSheet: ShownSheet | null = null;
 	let sheetTimer: ReturnType<typeof setTimeout> | undefined;
 	let rendering = false;
@@ -349,9 +360,9 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	let trappedSheet: HTMLElement | null = null;
 	let releaseGuard: (() => void) | undefined;
 	let keysAttached = false;
-	let stopBodyFades: (() => void) | undefined;
+	let stopBodyFades: ScrollFades | undefined;
 	let fadedBody: HTMLElement | null = null;
-	let stopSheetFades: (() => void) | undefined;
+	let stopSheetFades: ScrollFades | undefined;
 	let fadedSheetBody: HTMLElement | null = null;
 	let cancelPreferencesReveal: (() => void) | undefined;
 	let revealedPreferences = false;
@@ -384,7 +395,9 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	/** Focus the banner card once it renders again. */
 	const focusReturningBanner = function focusReturningBanner(): void {
 		let frames = 0;
+		cancelAnimationFrame(bannerFrame);
 		const attempt = () => {
+			bannerFrame = 0;
 			const card = findInPage('[data-testid="consent-banner-card"]', ctx.root);
 			if (card) {
 				card.focus({ preventScroll: true });
@@ -392,10 +405,10 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			}
 			frames += 1;
 			if (frames < BANNER_RETURN_FRAMES) {
-				requestAnimationFrame(attempt);
+				bannerFrame = requestAnimationFrame(attempt);
 			}
 		};
-		requestAnimationFrame(attempt);
+		bannerFrame = requestAnimationFrame(attempt);
 	};
 
 	const onKeyDown = function onKeyDown(event: KeyboardEvent): void {
@@ -759,39 +772,44 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 
 		// The GPC note replaces the intro, never both (LAY-04).
 		const intro = !eu && gpcLocked ? null : copy.intro;
-		return el(
-			'div',
-			{
-				class: cx(noStyle, styles.backdrop),
-				'data-animation': disableAnimation ? 'off' : undefined,
-				'data-design': 'privacy-choices',
-				'data-edge-style': edgeStyle,
-				'data-layout': phone ? 'phone' : 'desktop',
-				'data-regime': eu ? 'eu' : 'us',
-				'data-testid': 'consent-dialog-root',
-				dir: getTextDirection(snap.translations?.language),
-				[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
-			},
-			layer({
-				bodyRef,
-				children: eu ? euBody() : usBody,
-				closeLabel: copy.close,
-				closing: false,
-				depth: sheetOpen ? 1 : 0,
-				env,
-				eu,
-				footer: [legalLink, eu ? euActions() : usActions()],
-				idPrefix: `${prefix}-main`,
-				intro,
-				layerRef: mainRef,
-				nested: false,
-				onClose: close,
-				statusRef: mainStatusRef,
-				title: copy.title,
-				titleRef: mainTitleRef,
-				top: !sheetOpen,
-			}),
-			sheet
+		// The root takes the `consentDialog` slot and part, as the classic
+		// dialog's does.
+		return env.ctx.slot(
+			el(
+				'div',
+				{
+					class: cx(noStyle, styles.backdrop),
+					'data-animation': disableAnimation ? 'off' : undefined,
+					'data-design': 'privacy-choices',
+					'data-edge-style': edgeStyle,
+					'data-layout': phone ? 'phone' : 'desktop',
+					'data-regime': eu ? 'eu' : 'us',
+					'data-testid': 'consent-dialog-root',
+					dir: getTextDirection(snap.translations?.language),
+					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
+				},
+				layer({
+					bodyRef,
+					children: eu ? euBody() : usBody,
+					closeLabel: copy.close,
+					closing: false,
+					depth: sheetOpen ? 1 : 0,
+					env,
+					eu,
+					footer: [legalLink, eu ? euActions() : usActions()],
+					idPrefix: `${prefix}-main`,
+					intro,
+					layerRef: mainRef,
+					nested: false,
+					onClose: close,
+					statusRef: mainStatusRef,
+					title: copy.title,
+					titleRef: mainTitleRef,
+					top: !sheetOpen,
+				}),
+				sheet
+			),
+			'consentDialog'
 		);
 	};
 
@@ -861,11 +879,16 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 					if (kernel.getSnapshot().activeUI === 'banner') {
 						focusReturningBanner();
 					}
+					// The page is released by now, so an opener or a fallback that
+					// cannot take focus (inside a hidden footer) is skipped.
 					if (target instanceof HTMLElement && target.isConnected) {
-						return target;
+						target.focus({ preventScroll: true });
+						if (activeElementOf(target) === target) {
+							return target;
+						}
 					}
 					for (const selector of RETURN_TARGETS) {
-						const fallback = findInPage(selector, ctx.root);
+						const fallback = focusFirstIn(selector, ctx.root);
 						if (fallback) {
 							return fallback;
 						}
@@ -921,7 +944,10 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 
 		// Scroll-edge fades on each body (LAY-08).
 		const body = bodyRef.current?.isConnected ? bodyRef.current : null;
-		if (body !== fadedBody) {
+		if (body === fadedBody) {
+			// The content may have changed height under the same body.
+			stopBodyFades?.update();
+		} else {
 			stopBodyFades?.();
 			stopBodyFades = body ? attachScrollFades(body) : undefined;
 			fadedBody = body;
@@ -930,7 +956,9 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			shownSheet && sheetBodyRef.current?.isConnected
 				? sheetBodyRef.current
 				: null;
-		if (sheetBody !== fadedSheetBody) {
+		if (sheetBody === fadedSheetBody) {
+			stopSheetFades?.update();
+		} else {
 			stopSheetFades?.();
 			stopSheetFades = sheetBody ? attachScrollFades(sheetBody) : undefined;
 			fadedSheetBody = sheetBody;
@@ -1068,7 +1096,10 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			}
 			if (cueTimer !== undefined) {
 				clearTimeout(cueTimer);
+				cueTimer = undefined;
 			}
+			cancelAnimationFrame(bannerFrame);
+			bannerFrame = 0;
 			rights.dispose();
 			receipt.dispose();
 			mainGroup.dispose();

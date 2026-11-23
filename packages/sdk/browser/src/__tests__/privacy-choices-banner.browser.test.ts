@@ -5,7 +5,10 @@
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). The UI renders in its
  * shadow root, so the suite looks there as well as in the page.
  */
-import { openOptInConfirmation } from '@inth/sdk-core/surface-actions';
+import {
+	openOptInConfirmation,
+	showConsentSurface,
+} from '@inth/sdk-core/surface-actions';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -928,5 +931,137 @@ describe('wave B round 1', () => {
 		await vi.waitFor(() =>
 			expect(getComputedStyle(body).paddingTop).toBe('8px')
 		);
+	});
+});
+
+describe('wave C round 1', () => {
+	test('[LAY-08] a re-render keeps the scroll-edge fades', async () => {
+		await page.viewport(1280, 520);
+		await mount({ container: { side: 'start', type: 'drawer' } });
+		await waitForRoot();
+		await waitForPanel();
+		const area = must('consent-banner-body');
+		area.style.maxHeight = '120px';
+		area.scrollTop = 0;
+		area.dispatchEvent(new Event('scroll'));
+		await vi.waitFor(() => expect(area).toHaveAttribute('data-fade-bottom'));
+		// Any change re-renders the prompt and morphs the area in place.
+		must('consent-banner-category-switch-measurement').click();
+		await vi.waitFor(() =>
+			expect(
+				must('consent-banner-category-switch-measurement')
+			).toHaveAttribute('aria-checked', 'true')
+		);
+		expect(must('consent-banner-body')).toBe(area);
+		expect(area).toHaveAttribute('data-fade-bottom');
+	});
+
+	test('[BNR-14][PERM-13] a side drawer widened from phone shows its options', async () => {
+		await page.viewport(390, 800);
+		await mount({
+			container: { side: 'start', type: 'drawer' },
+			dialog: false,
+		});
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-flow', 'expand-in-place');
+		await page.viewport(1280, 800);
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-flow', 'all-in-one')
+		);
+		await waitForPanel();
+		expect($('consent-banner-category-group')).not.toBeNull();
+	});
+
+	test('the css option comes after the Privacy Choices sheets, and wins', async () => {
+		stopPrivacyChoicesPages();
+		const client = await mount({ container: { type: 'card' } });
+		client.ui?.destroy();
+		const handle = mountConsentUI(client, {
+			css: ':host { --consent-dialog-card-padding-mobile: 7px; }',
+			disableAnimation: true,
+		});
+		await vi.waitFor(() =>
+			expect(
+				handle.root.querySelector('[data-testid="consent-banner-root"]')
+			).not.toBeNull()
+		);
+		const customize = handle.root.querySelector<HTMLElement>(
+			'[data-testid="consent-banner-customize-button"]'
+		);
+		customize?.click();
+		await vi.waitFor(() =>
+			expect(
+				handle.root.querySelector(
+					'style[data-inth-styles="inth-privacy-choices-dialog"]'
+				)
+			).not.toBeNull()
+		);
+		const styles = [...handle.root.querySelectorAll('style')];
+		const stock = styles.find((style) =>
+			style.textContent?.includes('--consent-dialog-card-padding-mobile: 7px')
+		);
+		expect(stock).toBeDefined();
+		const order = [...handle.root.childNodes];
+		for (const sheet of handle.root.querySelectorAll(
+			'style[data-inth-styles]'
+		)) {
+			expect(order.indexOf(sheet)).toBeGreaterThanOrEqual(0);
+			expect(order.indexOf(sheet)).toBeLessThan(order.indexOf(stock as Node));
+		}
+		const card = handle.root.querySelector(
+			'[data-testid="consent-banner-card"]'
+		) as HTMLElement;
+		expect(
+			getComputedStyle(card)
+				.getPropertyValue('--consent-dialog-card-padding-mobile')
+				.trim()
+		).toBe('7px');
+		handle.destroy();
+	});
+
+	test('[BNR-06] focus return skips a "Your Privacy Choices" link that cannot take focus', async () => {
+		await mount({ privacyChoicesLink: true });
+		await waitForRoot();
+		// The page hides its footer link with CSS; it keeps its test id.
+		must('privacy-choices-link').style.display = 'none';
+		must('consent-banner-reject-button').click();
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		await vi.waitFor(() => expect(active()).toBe($('consent-dialog-trigger')));
+	});
+
+	test('noStyle reaches the legal links', async () => {
+		stopPrivacyChoicesPages();
+		const client = await mount();
+		client.ui?.destroy();
+		const handle = mountConsentUI(client, {
+			disableAnimation: true,
+			noStyle: true,
+		});
+		await vi.waitFor(() =>
+			expect(
+				handle.root.querySelector('[data-testid^="consent-banner-legal-link"]')
+			).not.toBeNull()
+		);
+		for (const link of handle.root.querySelectorAll(
+			'[data-testid^="consent-banner-legal-link"]'
+		)) {
+			expect(link.getAttribute('class')).toBeNull();
+		}
+		handle.destroy();
+	});
+
+	test('a later switch back to the classic design shows the classic banner', async () => {
+		const client = await mount();
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-design', 'privacy-choices');
+		// An experiment arm, say, takes the design away.
+		(client.options as { presentation?: unknown }).presentation = undefined;
+		showConsentSurface(client.kernel, 'none');
+		showConsentSurface(client.kernel, 'banner');
+		await vi.waitFor(() => {
+			expect($('consent-banner-root')).not.toBeNull();
+			expect(root()).not.toHaveAttribute('data-design');
+		});
+		expect(all('[data-design="privacy-choices"]')).toHaveLength(0);
 	});
 });

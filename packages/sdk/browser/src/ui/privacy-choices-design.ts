@@ -100,12 +100,15 @@ export const createBannerSurface = function createBannerSurface(
 	let prompt: PrivacyChoicesBanner | null = null;
 	let promptType: string | null = null;
 	let loadingType: string | null = null;
+	/** Counts loads, so a load a newer one replaced is ignored. */
+	let loads = 0;
 	let latest: {
 		snapshot: ConsentSnapshot;
 		container: PrivacyChoicesContainer;
 		actionGroups: PrivacyChoicesActionGroups;
 	} | null = null;
 	let owed = false;
+	let classicShown = true;
 	let destroyed = false;
 
 	const load = function load(type: string): void {
@@ -113,9 +116,11 @@ export const createBannerSurface = function createBannerSurface(
 			return;
 		}
 		loadingType = type;
+		loads += 1;
+		const ticket = loads;
 		importPresentation(type as PrivacyChoicesContainer['desktop']['type']).then(
 			(module) => {
-				if (destroyed || loadingType !== type) {
+				if (destroyed || ticket !== loads) {
 					return;
 				}
 				loadingType = null;
@@ -126,7 +131,14 @@ export const createBannerSurface = function createBannerSurface(
 					prompt.sync(latest.snapshot, latest.container, latest.actionGroups);
 				}
 			},
-			reportLoadError
+			(error: unknown) => {
+				// The classic banner has left, so the visitor has no prompt
+				// until this loads: the next sync tries again.
+				if (ticket === loads) {
+					loadingType = null;
+				}
+				reportLoadError(error);
+			}
 		);
 	};
 
@@ -143,12 +155,18 @@ export const createBannerSurface = function createBannerSurface(
 			if (!resolved) {
 				latest = null;
 				prompt?.hide();
+				classicShown = true;
 				classic.sync(snapshot);
 				return;
 			}
 			const { actionGroups, container } = resolved;
-			// The classic banner leaves at once, the init script's included.
-			classic.destroy();
+			if (classicShown) {
+				// The classic banner, the init script's included, leaves at
+				// once. It stays ready for a later switch back to the classic
+				// design, as by an experiment.
+				classicShown = false;
+				classic.destroy();
+			}
 			latest = { actionGroups, container, snapshot };
 			owed ||= snapshot.activeUI === 'banner';
 			if (!owed) {

@@ -10,9 +10,13 @@ import {
 	resolvePrivacyChoicesLink,
 } from '@inth/sdk-core';
 import type { OptOutLinkVariant, Translations } from '@inth/sdk-core';
+import { CPPA_OPT_OUT_ICON } from '@inth/sdk-ui/utils/opt-out-icon';
 
 import type { ConsentClient } from '../types';
 import { createOptOutIcon } from './opt-out-icon';
+
+/** The opt-out icon's height in the link, in CSS pixels. */
+const OPT_OUT_ICON_HEIGHT = 14;
 
 /** Options for {@link createPrivacyChoicesLink}. */
 export interface PrivacyChoicesLinkOptions {
@@ -111,12 +115,21 @@ export const createPrivacyChoicesLink = function createPrivacyChoicesLink(
 		if (link.icon) {
 			const icon = createOptOutIcon();
 			if (!options.noStyle) {
-				// The stock stylesheet does not reach the page, so the icon
-				// carries its own size.
+				// No stock stylesheet reaches the page's link, the classic
+				// banner's `.optOutIcon` rule included, so the icon carries an
+				// intrinsic size from its glyph: 14px tall at the viewBox's
+				// ratio. Attributes, not a `style` attribute, which a strict
+				// CSP blocks.
+				const [, , width = 30, height = 14] = CPPA_OPT_OUT_ICON.viewBox
+					.split(/\s+/u)
+					.map(Number);
+				icon.setAttribute('height', String(OPT_OUT_ICON_HEIGHT));
 				icon.setAttribute(
-					'style',
-					'display: inline-block; height: 1em; width: auto; aspect-ratio: 30 / 14; vertical-align: middle; margin-inline-end: 0.25em;'
+					'width',
+					String(Math.round((OPT_OUT_ICON_HEIGHT * width) / height))
 				);
+				icon.style.verticalAlign = 'middle';
+				icon.style.marginInlineEnd = '0.25em';
 			}
 			element.replaceChildren(icon, label);
 		} else {
