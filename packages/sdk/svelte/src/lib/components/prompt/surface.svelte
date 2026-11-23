@@ -495,8 +495,12 @@
 		resolvePrivacyChoicesBannerCopy(translations, { bundle, gpc, variant })
 	);
 
-	const commit = function commit(action: BannerCommitAction) {
+	const commit = function commit(
+		action: BannerCommitAction,
+		actionAt?: number
+	) {
 		const { plan } = commitBannerChoice(consent.kernel, action, {
+			actionAt,
 			draft: action === 'save' ? (surfaceDraft.draft ?? undefined) : undefined,
 			uiSource: saveSource,
 		});
@@ -511,10 +515,13 @@
 		}
 		committed = message;
 	};
-	const acknowledge = function acknowledge() {
+	const acknowledge = function acknowledge(actionAt?: number) {
 		committed = '';
 		surface.session.commit();
-		void consent.state.dismissNotice();
+		// The kernel's command, which takes the time of a replayed tap.
+		void consent.kernel.commands.dismissNotice(
+			actionAt === undefined ? undefined : { actionAt }
+		);
 	};
 	const expand = function expand() {
 		void preloadPanel();
@@ -542,13 +549,14 @@
 	// inline script held. It replays through this prompt's own handlers once
 	// the engine has started and the policy resolved, so a choice commits
 	// through this prompt's plan and Customize opens the options in place.
+	// A choice records the time of the tap.
 	const replayTap = function replayTap(tap: EarlyConsentTap) {
 		if (tap.action === 'accept') {
-			commit('allow');
+			commit('allow', tap.at);
 		} else if (tap.action === 'reject') {
-			commit('refuse');
+			commit('refuse', tap.at);
 		} else if (tap.action === 'dismiss') {
-			acknowledge();
+			acknowledge(tap.at);
 		} else if (tap.action === 'customize' && !allInOne) {
 			expand();
 		}
@@ -697,6 +705,14 @@
 			noStyle
 		)
 	);
+	const rightLinkPart = $derived(
+		part(
+			'consentBannerRightLink',
+			theme.theme,
+			surfaceStyles.rightLink,
+			noStyle
+		)
+	);
 	const tagPart = $derived(
 		part(
 			'consentBannerTag',
@@ -711,13 +727,16 @@
 	{#if notice}
 		<!-- The notice's rights action reads as a link, in the
 		     text-on-surface blue in both palettes (VIS-02). The collapsed bar
-		     has no panel to point at (PERM-09). -->
+		     has no panel to point at (PERM-09). A tap before hydration replays
+		     as Customize: the options expand in place. -->
 		<button
 			bind:this={expandEl}
 			type="button"
-			class={cx(noStyle, surfaceStyles.rightLink)}
+			class={rightLinkPart.class}
+			style={rightLinkPart.style}
 			aria-expanded={expanded}
 			aria-controls={inBar ? undefined : ids.panel}
+			data-action="customize"
 			data-testid="consent-banner-right-link-opt-out"
 			onclick={expand}
 			onfocus={warm}
@@ -781,7 +800,7 @@
 		{noStyle}
 		data-action="dismiss"
 		data-testid="consent-banner-dismiss-button"
-		onclick={acknowledge}
+		onclick={() => acknowledge()}
 	>
 		{dismissButtonText ?? copy.ok}
 	</ConsentButton>
@@ -918,11 +937,16 @@
 			{noStyle}
 		/>
 	{/key}
-	<!-- A prompt on its way out takes no input (PERM-05). -->
+	<!-- A prompt on its way out takes no input (PERM-05). The early-tap
+	     script records `data-model` and `data-prompt` with a tap, so a replay
+	     against another model or prompt than the one the visitor saw is
+	     dropped (`stillApplies` in core's `early-taps`). -->
 	<div
 		bind:this={rootEl}
 		class={rootPart.class}
 		style={rootPart.style}
+		data-model={model}
+		data-prompt={snapshot.policyRule.prompt}
 		data-placement={layout.placement}
 		data-flow={layout.flow}
 		data-edge-style={layout.edgeStyle}

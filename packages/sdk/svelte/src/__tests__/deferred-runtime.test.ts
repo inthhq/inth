@@ -1,13 +1,14 @@
-import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-} from '@inth/sdk/surface-actions/early-commit';
 /**
  * The deferred runtime's commit path (`lib/deferred/runtime.ts`) when the
  * commit chunk cannot finish a choice the stand-in already shows: the
  * engine records it, once, and announces it once.
  */
+import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
+import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+} from '@inth/sdk/surface-actions/early-commit';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -257,5 +258,24 @@ test('a save waiting for an engine that fails to load rejects, and the next save
 	});
 	await expect(second).resolves.toMatchObject({ ok: true });
 	expect(harness.loadEngine).toHaveBeenCalledTimes(2);
+	logged.mockRestore();
+});
+
+test('[BNR-06] an engine that fails to load shows a banner the early-tap script hid again', async () => {
+	const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	// As the script leaves it after a tap it handed to the engine.
+	const hidden = document.createElement('style');
+	hidden.id = EARLY_TAP_STYLE_ID;
+	document.head.append(hidden);
+	const harness = createHarness({
+		completeCommit: () => Promise.resolve(null),
+		failFirstLoad: true,
+	});
+	harness.release();
+
+	await expect(
+		harness.runtime.kernel.commands.save('all', { uiSource: 'banner' })
+	).rejects.toThrow('The engine chunk failed.');
+	expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	logged.mockRestore();
 });

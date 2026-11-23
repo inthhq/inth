@@ -6,11 +6,19 @@
 
 	let {
 		options,
+		right,
 		styled = false,
-	}: { options: ConsentManagerOptions; styled?: boolean } = $props();
+	}: {
+		options: ConsentManagerOptions;
+		right?: 'opt-out' | 'preferences';
+		styled?: boolean;
+	} = $props();
 </script>
 
 <InthProvider {options}>
-	<ConsentDialogLink noStyle={!styled}>Manage Preferences</ConsentDialogLink>
+	<ConsentDialogLink
+		noStyle={!styled}
+		{right}>Manage Preferences</ConsentDialogLink
+	>
 	<ConsentDialog />
 </InthProvider>
