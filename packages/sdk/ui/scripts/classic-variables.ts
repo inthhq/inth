@@ -57,6 +57,25 @@ export interface ClassicUnmapped {
 const COLOR = 'rgb(1, 2, 3)';
 const SHADOW = 'rgb(1, 2, 3) 0px 0px 0px 5px';
 
+/**
+ * A colour probe, marked dark for the `-dark` twin of a variable and given
+ * the hook that must win over it when there is one.
+ */
+const colorProbe = function colorProbe(
+	probe: Pick<ClassicProbe, 'part' | 'property' | 'surface'>,
+	dark: boolean,
+	hook = ''
+): ClassicProbe {
+	const built: ClassicProbe = { ...probe, value: COLOR };
+	if (dark) {
+		built.dark = true;
+	}
+	if (hook) {
+		built.hook = hook;
+	}
+	return built;
+};
+
 export const CLASSIC_BANNER_VARIABLES: readonly ClassicMapping[] = [
 	{
 		classic: '--consent-banner-font-family',
@@ -378,34 +397,25 @@ export const CLASSIC_BANNER_VARIABLES: readonly ClassicMapping[] = [
 				hooks: hook ? [hook] : [],
 				parts: `Card, Banner, Drawer: ${target}${dark ? ' in dark mode' : ''}`,
 				probes: [
-					{
-						...(dark ? { dark: true as const } : {}),
-						...(hook ? { hook } : {}),
-						part,
-						property,
-						surface: 'card' as const,
-						value: COLOR,
-					},
+					colorProbe({ part, property, surface: 'card' }, dark, hook),
 					...(name === 'border-color'
 						? [
-								{
-									...(dark ? { dark: true as const } : {}),
-									part: 'footer',
-									property: 'border-top-color',
-									surface: 'card' as const,
-									value: COLOR,
-								},
+								colorProbe(
+									{
+										part: 'footer',
+										property: 'border-top-color',
+										surface: 'card',
+									},
+									dark
+								),
 							]
 						: []),
 					...(name === 'description-color'
 						? [
-								{
-									...(dark ? { dark: true as const } : {}),
-									part: 'text',
-									property: 'color',
-									surface: 'bar' as const,
-									value: COLOR,
-								},
+								colorProbe(
+									{ part: 'text', property: 'color', surface: 'bar' },
+									dark
+								),
 							]
 						: []),
 				],
@@ -607,15 +617,7 @@ export const CLASSIC_DIALOG_VARIABLES: readonly ClassicMapping[] = [
 			defaultValue,
 			hooks: [],
 			parts: `Dialog: ${target}${dark ? ' in dark mode' : ''}`,
-			probes: [
-				{
-					...(dark ? { dark: true as const } : {}),
-					part,
-					property,
-					surface: 'dialog' as const,
-					value: COLOR,
-				},
-			],
+			probes: [colorProbe({ part, property, surface: 'dialog' }, dark)],
 		}))
 	),
 	{

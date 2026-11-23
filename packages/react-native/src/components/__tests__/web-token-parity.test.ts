@@ -320,7 +320,44 @@ const tokenBySuffix = function tokenBySuffix(
 	return themeValue(path, dark);
 };
 
-const VAR_REFERENCE = /^var\((?<reference>--[\w-]+)\)$/u;
+// `var(--name)`, or `var(--name, fallback)` as the classic sheets read their
+// own variables; the fallback is found again by `readFallback` when `--name`
+// is never declared.
+const VAR_REFERENCE = /^var\(\s*(?<reference>--[\w-]+)\s*(?:,[\s\S]*)?\)$/u;
+
+/**
+ * The default a stylesheet gives a variable it reads but never declares: the
+ * fallback in its first `var(name, fallback)`. The classic sheets read their
+ * own variables this way, so that a value a site sets on any ancestor wins.
+ *
+ * @param source - The stylesheet the variable is read in.
+ * @param variable - The variable, with its `--` prefix.
+ */
+const readFallback = function readFallback(
+	source: string,
+	variable: string
+): string | undefined {
+	// A custom property name is letters, digits, `-` and `_`: nothing to escape.
+	const opening = new RegExp(`var\\(\\s*${variable}\\s*,`, 'u').exec(source);
+	if (opening === null) {
+		return undefined;
+	}
+
+	const start = opening.index + opening[0].length;
+	let depth = 1;
+	for (let index = start; index < source.length; index += 1) {
+		const character = source[index];
+		if (character === '(') {
+			depth += 1;
+		} else if (character === ')') {
+			depth -= 1;
+			if (depth === 0) {
+				return source.slice(start, index).trim();
+			}
+		}
+	}
+	return undefined;
+};
 
 /**
  * What a CSS variable is worth, following `var()` hops the way a browser does.
@@ -343,7 +380,8 @@ const webToken = function webToken(
 		return tokenBySuffix(variable.slice('--inth-'.length), dark);
 	}
 
-	const declared = declarationsIn(source).get(variable);
+	const declared =
+		declarationsIn(source).get(variable) ?? readFallback(source, variable);
 	if (declared === undefined) {
 		throw new Error(`${variable} is never declared`);
 	}
