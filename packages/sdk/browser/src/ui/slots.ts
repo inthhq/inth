@@ -77,10 +77,14 @@ export type BrowserSlotKey = Extract<
 /**
  * Marks an element as a slot and applies the theme's overrides for it.
  * Passes `null` through, for parts that may not render.
+ *
+ * An element that answers to several slots takes them all, later keys
+ * winning where they set the same style. A `noStyle` on any of them drops
+ * only the stock classes, never another slot's.
  */
 export type SlotApplier = <ElementType extends HTMLElement | null>(
 	element: ElementType,
-	key: BrowserSlotKey
+	key: BrowserSlotKey | readonly BrowserSlotKey[]
 ) => ElementType;
 
 /**
@@ -99,27 +103,36 @@ export const createSlotApplier = function createSlotApplier(
 		if (!element) {
 			return element;
 		}
+		const keys: readonly BrowserSlotKey[] =
+			typeof key === 'string' ? [key] : key;
 		// `part` is a token list, like `class`; applying twice is a no-op.
 		const parts = element.getAttribute('part')?.split(/\s+/u) ?? [];
-		if (!parts.includes(key)) {
-			element.setAttribute('part', [...parts, key].filter(Boolean).join(' '));
+		const added = keys.filter((name) => !parts.includes(name));
+		if (added.length > 0) {
+			element.setAttribute(
+				'part',
+				[...parts, ...added].filter(Boolean).join(' ')
+			);
 		}
-		const value = slots?.[key];
-		if (!value) {
-			return element;
-		}
-		const { className, noStyle, style } =
-			typeof value === 'string' ? { className: value } : value;
-		if (noStyle) {
+		const values = keys.flatMap((name) => {
+			const value = slots?.[name];
+			if (!value) {
+				return [];
+			}
+			return [typeof value === 'string' ? { className: value } : value];
+		});
+		if (values.some((value) => value.noStyle)) {
 			element.removeAttribute('class');
 		}
-		const names = className?.split(/\s+/u).filter(Boolean) ?? [];
-		if (names.length > 0) {
-			element.classList.add(...names);
-		}
-		// Numbers get `px` where the property takes a unit, as React does.
-		for (const [property, declared] of toCSSDeclarations(style)) {
-			element.style.setProperty(property, declared);
+		for (const { className, style } of values) {
+			const names = className?.split(/\s+/u).filter(Boolean) ?? [];
+			if (names.length > 0) {
+				element.classList.add(...names);
+			}
+			// Numbers get `px` where the property takes a unit, as React does.
+			for (const [property, declared] of toCSSDeclarations(style)) {
+				element.style.setProperty(property, declared);
+			}
 		}
 		return element;
 	};

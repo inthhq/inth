@@ -64,7 +64,7 @@ import { uniqueId } from '../core/unique-id';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
 import type { OpenVendorsRequest } from '../parts/category-group';
 import { ChoiceButton } from '../parts/choice-button';
-import { bool, cx, slotPart } from '../parts/class-names';
+import { bool, cx, foldSlots, slotPart } from '../parts/class-names';
 import { CheckIcon, ChevronIcon } from '../parts/icons';
 import { RightsReceipt } from '../parts/receipt';
 import { takeReceiptFocus } from '../parts/receipt-focus';
@@ -588,10 +588,13 @@ export class ConsentDialogBody {
 		return legal ?? null;
 	});
 	/** @internal */
+	// The root is the backdrop and the dialog's surface: it takes the
+	// `consentDialog` slot and `consentDialogOverlay`, which styled the
+	// backdrop element of earlier releases, as React does.
 	protected readonly rootPart = computed(() =>
 		slotPart(
 			'consentDialog',
-			this.#theme.theme(),
+			foldSlots(this.#theme.theme(), ['consentDialogOverlay', 'consentDialog']),
 			this.#noStyle(),
 			styles.backdrop
 		)

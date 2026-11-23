@@ -177,13 +177,18 @@ const layer = function layer(params: LayerParams): HTMLElement {
 							'consentDialogTitle'
 						),
 						params.intro
-							? el(
-									'p',
-									{
-										class: cx(noStyle, styles.intro),
-										'data-testid': nested ? undefined : 'consent-dialog-intro',
-									},
-									params.intro
+							? slot(
+									el(
+										'p',
+										{
+											class: cx(noStyle, styles.intro),
+											'data-testid': nested
+												? undefined
+												: 'consent-dialog-intro',
+										},
+										params.intro
+									),
+									'consentDialogDescription'
 								)
 							: null
 					),
@@ -772,7 +777,9 @@ export const createConsentDialog = function createConsentDialog(
 
 		// The GPC note replaces the intro, never both (LAY-04).
 		const intro = !eu && gpcLocked ? null : copy.intro;
-		// The root takes the `consentDialog` slot and part.
+		// The root is the backdrop and the dialog's surface. It takes the
+		// `consentDialog` slot and part, and `consentDialogOverlay`, which
+		// styled the backdrop element of earlier releases, as React does.
 		return env.ctx.slot(
 			el(
 				'div',
@@ -807,7 +814,7 @@ export const createConsentDialog = function createConsentDialog(
 				}),
 				sheet
 			),
-			'consentDialog'
+			['consentDialogOverlay', 'consentDialog']
 		);
 	};
 

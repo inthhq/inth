@@ -11,6 +11,7 @@ import type {
 	PresentationAction,
 } from '@inth/sdk-core';
 import type { PolicyRule } from '@inth/sdk-schema/types';
+import type { ComponentSlots } from '@inth/sdk-ui/theme';
 
 import { createTestingConsentClient } from '../../testing-global';
 import type {
@@ -93,7 +94,7 @@ export interface ConsentPageOptions {
 	/** The prompt's host layout: action order and groups. */
 	layout?: readonly (PresentationAction | readonly PresentationAction[])[];
 	/** `theme.slots`, keyed like `consentBannerTitle`. */
-	slots?: Record<string, string>;
+	slots?: ComponentSlots;
 	/** The visitor's language; the page carries copy for it. */
 	language?: string;
 	/** Play the enter and exit motion, which the suites otherwise skip. */
