@@ -9,102 +9,89 @@ group: reference
 <section id="behavior">
   ## What ConsentManager renders
 
-  `ConsentManager` is the preference dialog (equivalent to `ConsentDialog` in
-  React). It opens while `activeUI` is `'manager'`, triggered by the banner's
-  Customize button, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own
-  code. It renders nothing until the visitor's policy resolves or when the
-  policy requires no consent UI.
+  `ConsentManager` is the consent dialog, "Your Privacy Choices"
+  (equivalent to `ConsentDialog` in React). It opens while `activeUI` is
+  `'manager'`, set by `PrivacyChoicesLink`, `ConsentDialogLink`,
+  `ConsentDialogTrigger`, a `ConsentGate` button, or your own code. The
+  banner's Customize button does not open it: Customize opens the choices
+  inside the banner. It renders nothing until the visitor's policy resolves
+  or when the policy requires no consent UI.
 
-  The dialog renders the same controls as `ConsentWidget`: each category the
-  policy offers with a switch, description, and declared vendors, plus a
-  footer with Reject All, Accept All, and Save Settings (primary). Necessary
-  stays on.
+  The dialog is centred on desktop and a bottom sheet on phones. Its content
+  follows the policy regime:
 
-  - Save records the current switches. Accept All and Reject All record a
-    choice for every unlocked category in the policy.
-  - Under an `opt-out` policy, a sale-and-sharing block renders first, above
-    the category list and outside any accordion item. Before the visitor opts
-    out, the block shows the configured opt-out link title, a neutral status
-    sentence, and an `Opt out` button that records the opt-out in one click
-    with no Save step. Once a durable opt-out is held, the button disappears
-    and the block shows the status line (`role="status"`), receipt sentence,
-    recorded time, and local reference. When the backend confirms the refused
-    rights, the heading names them. When Global Privacy Control is not locking
-    the opt-out, the block also shows an `Opt back in…` link. Under an
-    `opt-in` policy, no block renders.
-  - Under an `opt-out` policy while an opt-out is held, opting back in uses a
-    two-step confirmation dialog. Clicking `Opt back in…`, clicking Accept All,
-    or turning `marketing` back on and clicking Save Settings opens a separate
-    modal dialog instead of saving right away (`measurement` decides when
-    `marketing` is not in scope). Focus starts on Cancel, both buttons have
-    equal prominence, and pressing Escape cancels with nothing saved.
-    Confirming runs the pending action and lifts a device opt-out, or asks the
-    backend to lift an account opt-out. Under an `opt-in` policy, Accept All
-    still lifts a held opt-out in one step.
-  - While Global Privacy Control is active under a policy that maps it,
-    signal-restricted switches and `marketing` (or `measurement` when
-    `marketing` is not in scope) stay off and disabled with the GPC notice
-    below each locked row, no `Opt back in…` link appears, and Save Settings
-    and Accept All skip locked categories. When an account holds the opt-out
-    and GPC is off, the account notice appears below `marketing` (or
-    `measurement` when `marketing` is not in scope) and the switches stay
-    usable. Turning `measurement` on while `marketing` stays off allows
-    `measurement` without lifting the opt-out and skips confirmation. Turning
-    `marketing` back on and saving, or clicking `Opt back in…`, opens
-    confirmation before asking the backend to lift the account's opt-out, which
-    stays in force until the backend confirms it. Read the same state and
-    receipt with `useOptOutState()`.
-  - After a save, the dialog closes. The banner reappears only if the policy
-    still requires a choice.
-  - Pressing Escape closes the dialog without saving. The banner reappears if
-    the policy still requires a choice.
-  - If the policy changes while the dialog is open, the dialog shows "Privacy
-    choices have changed." with a button to reload the switches, and blocks
-    Save until reviewed.
+  - **Choice regime** (opt-in, and opt-out rules that ask for a choice): one
+    switch per category in scope, with its vendors, and Reject All, Accept
+    All, and Save. Save stays disabled until a switch differs from the
+    recorded choice. Necessary stays on.
+  - **Opt-out regime** (opt-out rules with a notice): the sale-and-sharing
+    row with Protect and Allow, the receipt of the recorded choice, a
+    Preferences row for the category switches, and Done. Allowing again
+    after an opt-out asks to confirm first (11 CCR §7028(a)).
 
-  The title comes from `consentManagerDialog.title` in your Inth translations.
-  `dialogLegalLinks` selects which `legalLinks` appear under the description.
-  The dialog takes no props, slots, or text props.
+  An opt-out recorded in one click, such as from a "Do Not Sell" link or
+  after a `reloadOnConsentRevoked` reload, opens the dialog with focus on its
+  receipt. A standalone `<OptOutConfirmation />` you mounted shows the
+  confirmation instead. The dialog hosts the opt-in confirmation while it is
+  mounted.
+
+  The dialog's code and stylesheets load in a chunk of their own when it
+  first opens, or earlier when the visitor reaches for a banner button that
+  can open it.
+
+  Escape and Close close the dialog without saving. If the policy still owes
+  a choice, the banner returns. Reject All, Accept All, and Save close the
+  dialog as soon as the browser records the choice. Clicking the backdrop
+  does not close it. Closing discards unsaved switches, so the next open
+  starts from the recorded choice.
+
+  While Global Privacy Control is active under a policy that maps it, the
+  signal-restricted categories stay off and their switches are disabled with
+  the GPC note. Read the same state and receipt with `useOptOutState()`.
+
+  Copy comes from the `privacyChoices` translation section and
+  `consentTypes.<category>.title` and `.description` for each category.
+  `dialogLegalLinks` selects which `legalLinks` appear in the footer. The
+  dialog takes one prop, `disableAnimation`, and no slots or text props.
 </section>
 
 <section id="accessibility">
   ## Accessibility and focus
 
-  The dialog renders in `document.body` with `role="dialog"`, labeled by its
-  title and described by its description. By default it is modal: it shows a
-  backdrop, sets `aria-modal="true"`, locks scrolling, moves focus to the
-  first control inside, and traps Tab. When closed, focus returns to the
-  triggering element. Set `presentation.preferences.blocking` to `false` for a
-  non-modal dialog without a backdrop.
+  The dialog renders in `document.body` with `role="dialog"`,
+  `aria-modal="true"`, and `aria-labelledby` pointing at its title. It always
+  blocks the page: backdrop, scroll lock, and focus trap. Opening moves focus
+  to the title, Tab and Shift+Tab wrap inside it, and closing returns focus
+  to the element that opened it, or to "Your Privacy Choices" when that
+  element is gone. Its `dir` attribute matches the active language. Status
+  messages, such as the saved cue, use a `role="status"` region.
 
-  Each category switch is a `button` with `role="switch"`, `aria-checked`, and
-  the category title as its label. Each row expands with a button setting
-  `aria-expanded` and `aria-controls`. Under an `opt-out` policy, the
-  sale-and-sharing block renders as a `section` labelled by its heading above
-  the category list, with `role="status"` on the honored status line inside it.
+  Each category switch uses the category title as its accessible name. On
+  phones, the Preferences row and each category's vendor list open as a
+  nested sheet with its own title and close button.
 </section>
 
 <section id="styling">
   ## Style the dialog
 
-  `components.dialog` binds attributes to `root`, `overlay`, `container`,
-  `card`, `header`, `title`, and `content`. The preference widget inside uses
-  `components.manager` (including `optOut` and `optOutStatus`),
-  `components.accordion`, `components['accordion-item']`, `components.switch`,
-  and `components['vendor-list']`. See
-  [component parts](/docs/customization/slots). `presentation.preferences`
-  configures footer `layout`, `primaryActions`, `direction`, `uiProfile`, and
-  `blocking`.
+  Style the dialog with [theme tokens](/docs/customization/tokens) and these
+  `components` parts: `dialog.root`, `dialog.container`, `dialog.card`,
+  `dialog.header`, `dialog.title`, `dialog.content`, `dialog.footer`,
+  `dialog.sheet`, `dialog.categoryGroup`, `dialog.vendorTable`,
+  `dialog.rightsRow`, `dialog.receipt`, `dialog.preferencesRow`,
+  `dialog.saveButton`, `dialog.doneButton`, and `description.dialog`.
+  `dialog.overlay` styles the backdrop, which is the dialog's root element.
+  A part with `noStyle: true` drops its stock classes. See
+  [component parts](/docs/customization/slots).
 
-  `dialogHideBranding`, or `hideBranding` for every surface, hides the
-  "Consent by" tag. `disableAnimation` turns off transitions.
+  `disableAnimation` turns off transitions.
 </section>
 
 <section id="verify">
   ## Verify
 
-  Open preferences, toggle one optional category on, and click Save Settings.
-  Reload and reopen preferences to confirm the switch stays on. Press Escape
-  while open and confirm the dialog closes and returns focus to the button
-  that opened it.
+  Open the dialog from your "Your Privacy Choices" link, toggle one optional
+  category on, and click Save. Reload and reopen the dialog to confirm the
+  switch stays on. Press Escape while open and confirm the dialog closes and
+  returns focus to the link that opened it.
 </section>

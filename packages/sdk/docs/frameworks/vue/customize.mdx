@@ -25,8 +25,8 @@ designs with Vue code.
 
 ## A customized setup
 
-This `src/main.ts` sets brand tokens, displays a bottom bar banner, and adds a
-custom class to the banner card:
+This `src/main.ts` sets brand tokens, places the banner along the bottom edge,
+and adds a custom class to the banner card:
 
 <include src="../../shared/examples/vue/customize.mdx" />
 
@@ -44,18 +44,20 @@ only types a theme object; it does not apply styles on its own.
 
 ## Change the banner layout
 
-`presentation.prompt` configures the banner's `variant`, `position`, `layout`,
-`primaryActions`, `direction`, `uiProfile`, and `blocking`.
-`presentation.preferences` sets the same layout options for the dialog.
+`presentation.prompt` configures the banner's `container`, `edgeStyle`,
+`blockUntilChoice`, `layout`, `primaryActions`, `direction`, and `uiProfile`.
+`presentation.preferences` sets the layout options for the dialog.
 
-Valid positions depend on `variant`: `bar` accepts `top` or `bottom`; `wall`
-accepts `center`; `widget` accepts the four corners; `floating` accepts the
-four corners plus `top-center` and `bottom-center`. The policy always has
-final authority: a choice wall always blocks, a notice never blocks, and the
+`container` is a Card (`position`: `start`, `end`, or `center`), a Banner
+(`edge`: `bottom` or `top`), or a Drawer (`side`: `bottom`, `top`, `start`,
+or `end`). `start` and `end` follow the writing direction. A policy rule's
+`surface.container` applies when you set none. The policy always has final
+authority: a centred Card always blocks, a notice never blocks, and the
 policy restores required buttons omitted from `layout`.
 
 [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner#props) also
-accepts `variant`, `position`, and `blocking` props when composed directly.
+accepts `container`, `edgeStyle`, and `blockUntilChoice` props when composed
+directly.
 
 ## Style one part of a component
 

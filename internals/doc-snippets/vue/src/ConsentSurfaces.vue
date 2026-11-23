@@ -9,10 +9,7 @@ import {
 
 <template>
 	<!-- Render these in place of InthProvider, not next to it. -->
-	<ConsentBanner
-		variant="bar"
-		position="bottom"
-	/>
+	<ConsentBanner :container="{ type: 'banner', edge: 'bottom' }" />
 	<ConsentManager />
 	<ConsentDialogTrigger />
 </template>

@@ -56,11 +56,13 @@ fetching times out or fails, the page renders without consent UI, optional
 categories stay denied, and the browser resolves the policy after hydration.
 
 Because a server-rendered banner appears before hydration finishes, the stock
-banner includes a small inline script before its buttons that captures any
+banner includes a small inline script before its buttons that holds any
 Accept All, Reject All, dismiss, or Customize tap made during hydration.
-Accept, reject, and dismiss hide the banner immediately; once hydrated, Inth
-records the choice with the original tap timestamp and loads allowed scripts
-(or opens the dialog for Customize).
+Accept, reject, and dismiss hide the banner immediately. Once the consent
+engine loads and the banner hydrates, the banner replays the tap through its
+own buttons: it records the choice with the original tap timestamp and loads
+allowed scripts, or opens the choices in place for Customize. Nothing is
+recorded before the engine is ready.
 
 ### When the consent engine loads
 
@@ -76,11 +78,11 @@ at the earliest of:
   `clearRecords()`.
 - 10 seconds after hydration.
 
-Tapping Accept All or Reject All before the engine loads updates composable
-state and starts allowed scripts in the same task, then stores the record,
-fires `onChoiceRecorded` and `onPermissionsChanged`, and lets the engine send
-the save once loaded. Clicking Customize loads the dialog without waiting for
-the engine.
+Tapping a banner button before the engine loads starts loading the engine,
+and the banner replays the tap once it hydrates. A save from the dialog
+before the engine loads updates composable state and starts allowed scripts
+in the same task, then stores the record, fires `onChoiceRecorded` and
+`onPermissionsChanged`, and lets the engine send the save once loaded.
 
 The browser loads the engine immediately (and SSR preloads it) for returning
 visitors, notice prompts, privacy signals, IAB, experiments, `consentSource`,

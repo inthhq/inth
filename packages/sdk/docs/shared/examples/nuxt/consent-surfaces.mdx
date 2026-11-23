@@ -10,7 +10,7 @@ import ConsentManager from '@inth/nuxt/components/consent-manager';
 
 <template>
 	<!-- Render these in app.vue in place of InthProvider, not next to it. -->
-	<ConsentBanner variant="bar" position="bottom" />
+	<ConsentBanner :container="{ type: 'banner', edge: 'bottom' }" />
 	<ConsentManager />
 	<ConsentDialogTrigger />
 </template>
