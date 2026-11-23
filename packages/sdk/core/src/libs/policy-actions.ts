@@ -33,23 +33,24 @@ export interface SurfacePresentation {
 	 * @default 'compact'
 	 */
 	uiProfile?: 'balanced' | 'compact' | 'strict';
-	/**
-	 * Controls backdrop, scroll lock and focus trapping together.
-	 * Preferences default to blocking. On the prompt, `blockUntilChoice`
-	 * wins over it, a notice never blocks, and a centred Card always does.
-	 */
-	blocking?: boolean;
 }
 
 /**
  * Presentation of the first interaction required by a policy: its Card,
  * Banner or Drawer (`container`), `edgeStyle` and `blockUntilChoice`.
+ * `blockUntilChoice` is the prompt's one blocking option.
  */
 export interface PromptPresentation
 	extends SurfacePresentation, ConsentLayoutOptions {}
 
 /** Presentation of persistent category preferences. */
 export interface PreferencesPresentation extends SurfacePresentation {
+	/**
+	 * Controls backdrop, scroll lock and focus trapping together. The stock
+	 * dialog always blocks; this reaches the IAB dialog.
+	 * @default true
+	 */
+	blocking?: boolean;
 	/** Initial displayed selections for categories without an explicit receipt. */
 	defaults?: Partial<Record<PolicyConsentCategory, boolean>>;
 }
@@ -206,18 +207,19 @@ const resolvePreferenceControls = function resolvePreferenceControls(
 
 /**
  * The blocking the host asks for, in tier order: the override first, then
- * the provider's presentation. Within a tier `blockUntilChoice` wins over
- * `blocking`.
+ * the provider's presentation. The prompt reads `blockUntilChoice`,
+ * preferences read `blocking`.
  */
 const requestedTierBlocking = function requestedTierBlocking(
-	override: PromptPresentation,
+	override: PromptPresentation & PreferencesPresentation,
 	presentation: ConsentPresentation | undefined,
 	surface: 'prompt' | 'preferences'
 ): boolean | undefined {
 	for (const tier of [override, presentation?.[surface]]) {
 		const explicit =
-			(tier as PromptPresentation | undefined)?.blockUntilChoice ??
-			tier?.blocking;
+			surface === 'prompt'
+				? (tier as PromptPresentation | undefined)?.blockUntilChoice
+				: (tier as PreferencesPresentation | undefined)?.blocking;
 		if (explicit !== undefined) {
 			return explicit;
 		}
@@ -303,11 +305,12 @@ export const resolveConsentPresentation =
 		>;
 	}): ResolvedConsentPresentation {
 		const preferences = input.surface === 'preferences';
-		const override: PromptPresentation = Object.fromEntries(
-			Object.entries(input.override ?? {}).filter(
-				([, value]) => value !== undefined
-			)
-		);
+		const override: PromptPresentation & PreferencesPresentation =
+			Object.fromEntries(
+				Object.entries(input.override ?? {}).filter(
+					([, value]) => value !== undefined
+				)
+			);
 		const options: PromptPresentation = {
 			...input.presentation?.[input.surface],
 			...override,

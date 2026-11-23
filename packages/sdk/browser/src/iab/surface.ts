@@ -37,13 +37,13 @@ export const createIABSurface = (
 	const animate = !(bannerOptions.disableAnimation ?? ctx.disableAnimation);
 	/**
 	 * The blocking the banner's `scrollLock` and `trapFocus` ask for, as
-	 * React's IAB banner reads them: explicit `blockUntilChoice` or
-	 * `blocking` in `presentation.prompt` wins over both, and `false` in
+	 * React's IAB banner reads them: an explicit
+	 * `presentation.prompt.blockUntilChoice` wins over both, and `false` in
 	 * either turns blocking off.
 	 */
 	const bannerBlocking = (): boolean | undefined => {
 		const prompt = client.presentation?.prompt;
-		if ((prompt?.blockUntilChoice ?? prompt?.blocking) !== undefined) {
+		if (prompt?.blockUntilChoice !== undefined) {
 			return undefined;
 		}
 		const { scrollLock, trapFocus } = bannerOptions;
@@ -134,7 +134,7 @@ export const createIABSurface = (
 			snapshot,
 			dialog ? 'preferences' : 'prompt',
 			client.presentation,
-			dialog ? undefined : { blocking: bannerBlocking() }
+			dialog ? undefined : { blockUntilChoice: bannerBlocking() }
 		);
 		const prefix = dialog ? 'iab-consent-dialog' : 'iab-consent-banner';
 		const surfaceOptions = dialog ? dialogOptions : bannerOptions;

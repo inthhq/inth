@@ -120,7 +120,9 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		performBannerAction,
 	} = useHeadlessIABConsentUI();
 	const blocking = useFocusBlocking('prompt', localScrollLock, localTrapFocus);
-	const { policyBanner } = useIABConsentManager({ prompt: { blocking } });
+	const { policyBanner } = useIABConsentManager({
+		prompt: { blockUntilChoice: blocking },
+	});
 	const { components } = useUIConfig();
 	const resolvedScrollLock = policyBanner.blocking;
 

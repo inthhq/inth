@@ -28,7 +28,10 @@ const options = (blocking: boolean): ComponentFixtureOptions => ({
 	mode: transportMode({}),
 	persistence: false,
 	prefetch: policyFixture({}, { model: 'iab' }),
-	presentation: { preferences: { blocking }, prompt: { blocking } },
+	presentation: {
+		preferences: { blocking },
+		prompt: { blockUntilChoice: blocking },
+	},
 });
 
 const card = (surface: string) =>

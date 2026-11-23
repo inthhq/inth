@@ -2,6 +2,10 @@ import { normalizePolicyRule } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
 import { resolveConsentPresentation } from '../policy-actions';
+import type {
+	PreferencesPresentation,
+	PromptPresentation,
+} from '../policy-actions';
 
 const choice = normalizePolicyRule({
 	id: 'choice',
@@ -264,13 +268,26 @@ describe('surface shape', () => {
 		expect(result.blocking).toBe(true);
 		expect(result.container?.desktop.blocking).toBe(true);
 	});
-	it('lets blockUntilChoice win over blocking in the same tier', () => {
+	it('has no `blocking` on the prompt: blockUntilChoice is its one blocking option', () => {
+		const prompt: PromptPresentation = {
+			blockUntilChoice: true,
+			// @ts-expect-error -- removed; use `blockUntilChoice`.
+			blocking: false,
+		};
+		const preferences: PreferencesPresentation = { blocking: false };
 		const result = resolveConsentPresentation({
 			policy: choice,
-			presentation: { prompt: { blockUntilChoice: false, blocking: true } },
+			presentation: { preferences, prompt },
 			surface: 'prompt',
 		});
-		expect(result.blocking).toBe(false);
+		expect(result.blocking).toBe(true);
+		expect(
+			resolveConsentPresentation({
+				policy: choice,
+				presentation: { preferences, prompt },
+				surface: 'preferences',
+			}).blocking
+		).toBe(false);
 	});
 	it('defaults the preferences surface to blocking', () => {
 		const result = resolveConsentPresentation({

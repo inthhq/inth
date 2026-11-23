@@ -115,7 +115,7 @@ describe('<IABConsentBanner />', () => {
 		const html = await render(
 			await buildLocals({
 				...iabOptions,
-				presentation: { prompt: { blocking: true } },
+				presentation: { prompt: { blockUntilChoice: true } },
 			})
 		);
 		expect(html).toContain('aria-modal="true"');
@@ -128,7 +128,7 @@ describe('<IABConsentBanner />', () => {
 			const html = await render(
 				await buildLocals({
 					...iabOptions,
-					presentation: { prompt: { blocking } },
+					presentation: { prompt: { blockUntilChoice: blocking } },
 				}),
 				{ scrollLock: !blocking }
 			);
@@ -143,7 +143,7 @@ describe('<IABConsentBanner />', () => {
 		const html = await render(
 			await buildLocals({
 				...iabOptions,
-				presentation: { prompt: { blocking: true } },
+				presentation: { prompt: { blockUntilChoice: true } },
 				theme: {
 					slots: {
 						buttonPrimary: 'brand-primary',
@@ -185,7 +185,7 @@ describe('<IABConsentBanner />', () => {
 	it('skips the entry animation with `disableAnimation`', async () => {
 		const blocking = {
 			...iabOptions,
-			presentation: { prompt: { blocking: true } },
+			presentation: { prompt: { blockUntilChoice: true } },
 		};
 		const entering = [
 			iabBannerStyles.bannerEntering,

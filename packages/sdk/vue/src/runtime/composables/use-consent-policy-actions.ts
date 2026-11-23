@@ -55,9 +55,10 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 
 /**
  * The blocking the IAB banner and dialog take from the config's
- * `trapFocus`, as the presentation's `blocking`. Explicit `blocking` (or
- * `blockUntilChoice`) in the host presentation wins over it, so this is
- * `undefined` then, as it is when `trapFocus` is unset.
+ * `trapFocus`. The banner passes it on as `blockUntilChoice`, the dialog as
+ * `blocking`. An explicit `presentation.prompt.blockUntilChoice` or
+ * `presentation.preferences.blocking` wins over it, so this is `undefined`
+ * then, as it is when `trapFocus` is unset.
  *
  * @internal
  */
@@ -67,10 +68,11 @@ export const useFocusBlocking = function useFocusBlocking(
 	const config = useConsentConfig();
 	const hostPresentation = useResolvedPresentation();
 	return computed(() => {
-		const tier = hostPresentation.value?.[surface] as
-			| (PreferencesPresentation & { blockUntilChoice?: boolean })
-			| undefined;
-		if ((tier?.blockUntilChoice ?? tier?.blocking) !== undefined) {
+		const explicit =
+			surface === 'prompt'
+				? hostPresentation.value?.prompt?.blockUntilChoice
+				: hostPresentation.value?.preferences?.blocking;
+		if (explicit !== undefined) {
 			return undefined;
 		}
 		return config.value.trapFocus;

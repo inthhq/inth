@@ -58,7 +58,7 @@
 	const presentation = $derived(
 		resolveConsentPresentation({
 			override: {
-				blocking: focusBlocking(
+				blockUntilChoice: focusBlocking(
 					'prompt',
 					consent.state.presentation,
 					{ scrollLock: localScrollLock, trapFocus: localTrapFocus },
