@@ -120,8 +120,47 @@ export interface BrowserConsentRecords {
 	 * site.
 	 */
 	readonly vendorDeclared?: readonly string[] | null;
+	/**
+	 * Per-vendor confirmation timestamps (`vendorId -> confirmedAt`) recorded in
+	 * localStorage. Each save advances only the vendors it decided, so a scoped
+	 * or single-vendor save never renews an older browser grant for another vendor.
+	 */
+	readonly vendorTimes?: Readonly<Record<string, number>> | null;
 	readonly optOut: Readonly<OptOutRecord> | null;
 }
+
+/**
+ * Effective per-vendor browser confirmation times, or `null` when coverage is
+ * unknown (SSR cookie-only read or legacy vendor record with no coverage data).
+ */
+export const resolveBrowserVendorTimes = function resolveBrowserVendorTimes(
+	browser: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>
+): Readonly<Record<string, number>> | null {
+	if (browser.vendorTimes !== null && browser.vendorTimes !== undefined) {
+		return browser.vendorTimes;
+	}
+	if (
+		browser.vendorDeclared !== null &&
+		browser.vendorDeclared !== undefined &&
+		browser.vendorChoice !== null
+	) {
+		const times: Record<string, number> = {};
+		const at = browser.vendorChoice.confirmedAt;
+		for (const id of browser.vendorDeclared) {
+			Object.defineProperty(times, id, {
+				configurable: true,
+				enumerable: true,
+				value: at,
+				writable: true,
+			});
+		}
+		return times;
+	}
+	return null;
+};
 
 /** Whether `value` is a valid non-negative epoch ms (future timestamps allowed). */
 export const isValidAccountTimestamp = function isValidAccountTimestamp(
@@ -756,19 +795,19 @@ const pickNewerVendor = function pickNewerVendor(
 };
 
 const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
-	browserVendors: Readonly<VendorChoice> | null,
-	browserDeclared: readonly string[] | null | undefined,
+	browser: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>,
 	account: AccountConsentLayer
 ): Readonly<VendorChoice> | null {
+	const browserVendors = browser.vendorChoice;
 	const accountIds = Object.keys(account.vendors);
 	if (accountIds.length === 0) {
 		return browserVendors;
 	}
 	const browserDenied = new Set(browserVendors?.denied);
-	const declaredSet =
-		browserDeclared !== null && browserDeclared !== undefined
-			? new Set(browserDeclared)
-			: null;
+	const vendorTimes = resolveBrowserVendorTimes(browser);
 	const allIds = new Set<string>([...browserDenied, ...accountIds]);
 	const denied: string[] = [];
 	const hasBrowser = browserVendors !== null;
@@ -779,17 +818,19 @@ const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 		const accountEntry = Object.hasOwn(account.vendors, id)
 			? account.vendors[id]
 			: undefined;
-		// When the browser recorded which declared vendors it showed, its
-		// decision counts only for vendors it denied or explicitly showed.
-		// When coverage is unknown (SSR cookie-only read or legacy vendor
-		// record), browser counts only for vendors it denied; account wins elsewhere.
+		const isBrowserDenied = browserDenied.has(id);
+		const perVendorTime =
+			vendorTimes !== null && Object.hasOwn(vendorTimes, id)
+				? vendorTimes[id]
+				: undefined;
+		// Compare each vendor using its own browser confirmation time. A vendor
+		// with no browser time has unknown coverage, so only browser denials count.
 		const browserCoversId =
-			hasBrowser &&
-			(browserDenied.has(id) || (declaredSet !== null && declaredSet.has(id)));
+			hasBrowser && (isBrowserDenied || perVendorTime !== undefined);
 		const winner = pickNewerVendor(
 			browserCoversId,
-			!browserDenied.has(id),
-			browserAt,
+			!isBrowserDenied,
+			perVendorTime ?? browserAt,
 			accountEntry,
 			account
 		);
@@ -956,11 +997,7 @@ export const deriveEffectiveRecords = function deriveEffectiveRecords(
 		? deriveEffectiveOptOut(browser.optOut, activeAccount)
 		: browser.optOut;
 	const rawVendorChoice = activeAccount
-		? deriveEffectiveVendorChoice(
-				browser.vendorChoice,
-				browser.vendorDeclared,
-				activeAccount
-			)
+		? deriveEffectiveVendorChoice(browser, activeAccount)
 		: browser.vendorChoice;
 	return {
 		activeAccount,

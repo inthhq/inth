@@ -387,6 +387,11 @@ export interface HydrationRecords {
 	 */
 	vendorDeclared?: readonly string[] | null;
 	/**
+	 * Per-vendor confirmation timestamps (`vendorId -> confirmedAt`) recorded in
+	 * localStorage. `null` clears the per-vendor times map.
+	 */
+	vendorTimes?: Readonly<Record<string, number>> | null;
+	/**
 	 * Stored account consent layer, hydrated separately from browser records.
 	 * Gated by `user.externalId`. `null` clears it.
 	 */

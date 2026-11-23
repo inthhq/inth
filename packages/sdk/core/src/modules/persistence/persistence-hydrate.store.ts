@@ -96,7 +96,12 @@ const kernelVendorChoice = function kernelVendorChoice(
 	if (!record) {
 		return null;
 	}
-	const { granted: _granted, subject: _subject, ...vendorChoice } = record;
+	const {
+		granted: _granted,
+		subject: _subject,
+		vendorTimes: _vendorTimes,
+		...vendorChoice
+	} = record;
 	return vendorChoice;
 };
 
@@ -104,7 +109,15 @@ const kernelVendorChoice = function kernelVendorChoice(
 const kernelVendorDeclared = function kernelVendorDeclared(
 	record: StoredVendorChoice | null
 ): HydrationRecords['vendorDeclared'] {
-	if (!record || record.granted === undefined) {
+	if (!record) {
+		return undefined;
+	}
+	if (record.vendorTimes !== undefined) {
+		return [
+			...new Set([...record.denied, ...Object.keys(record.vendorTimes)]),
+		].sort();
+	}
+	if (record.granted === undefined) {
 		return undefined;
 	}
 	return [...new Set([...record.denied, ...record.granted])].sort();
@@ -215,6 +228,19 @@ const attachOptOutMeta = function attachOptOutMeta(
  * cleared and reads as absent, so a record written back by a runtime that
  * missed the clear cannot bring it back.
  */
+const attachVendorMeta = function attachVendorMeta(
+	records: HydrationRecords,
+	vendorRecord: StoredVendorChoice | null
+): void {
+	const vendorDeclared = kernelVendorDeclared(vendorRecord);
+	if (vendorDeclared !== undefined) {
+		records.vendorDeclared = vendorDeclared;
+	}
+	if (vendorRecord?.vendorTimes !== undefined) {
+		records.vendorTimes = vendorRecord.vendorTimes;
+	}
+};
+
 const composeRecords = function composeRecords(
 	selection: StoredConsentSelection,
 	notice: ReturnType<typeof readStoredNoticeDismissal>,
@@ -242,10 +268,7 @@ const composeRecords = function composeRecords(
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
-	const vendorDeclared = kernelVendorDeclared(vendorRecord);
-	if (vendorDeclared !== undefined) {
-		records.vendorDeclared = vendorDeclared;
-	}
+	attachVendorMeta(records, vendorRecord);
 	attachOptOutMeta(records, optOutRecord);
 	return {
 		candidates: selection.candidates,
@@ -387,6 +410,7 @@ const readRecords = function readRecords(
 	if (!vendors?.ok && vendorsUnavailable) {
 		delete stored.records.vendorChoice;
 		delete stored.records.vendorDeclared;
+		delete stored.records.vendorTimes;
 	}
 	if (!optOut?.ok && optOutUnavailable) {
 		delete stored.records.optOut;

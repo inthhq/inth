@@ -102,7 +102,8 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	snapshot: ConsentSnapshot,
 	storageConfig: StorageConfig | undefined,
 	now: number,
-	vendorDeclared?: readonly string[] | null
+	vendorDeclared?: readonly string[] | null,
+	vendorTimes?: Readonly<Record<string, number>> | null
 ): void {
 	if (typeof document === 'undefined') {
 		return;
@@ -118,6 +119,9 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	if (vendorDeclared !== null && vendorDeclared !== undefined) {
 		const deniedSet = new Set(snapshot.vendorChoice.denied);
 		record.granted = vendorDeclared.filter((id) => !deniedSet.has(id)).sort();
+	}
+	if (vendorTimes !== null && vendorTimes !== undefined) {
+		record.vendorTimes = { ...vendorTimes };
 	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };

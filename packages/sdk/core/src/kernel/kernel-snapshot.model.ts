@@ -368,17 +368,22 @@ export const buildInitialKernelState = function buildInitialKernelState(
 	const browserOptOut = records?.optOut ?? null;
 	const browserVendorChoice = records?.vendorChoice ?? null;
 	const browserVendorDeclared = records?.vendorDeclared ?? null;
+	const browserVendorTimes = records?.vendorTimes ?? null;
 	freezeChoice(browserChoice);
 	freezeOptOut(browserOptOut);
 	freezeVendorChoice(browserVendorChoice);
 	if (browserVendorDeclared) {
 		Object.freeze(browserVendorDeclared);
 	}
+	if (browserVendorTimes) {
+		Object.freeze(browserVendorTimes);
+	}
 	const browserRecords: BrowserConsentRecords = {
 		choice: browserChoice,
 		optOut: browserOptOut,
 		vendorChoice: browserVendorChoice,
 		vendorDeclared: browserVendorDeclared,
+		vendorTimes: browserVendorTimes,
 	};
 
 	const userExternalId = user?.externalId ?? null;

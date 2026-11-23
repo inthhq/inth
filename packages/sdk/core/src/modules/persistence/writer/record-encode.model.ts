@@ -313,6 +313,21 @@ export const encodeVendorChoice = function encodeVendorChoice(
 	if (record.granted !== undefined) {
 		encoded.granted = [...record.granted].sort();
 	}
+	if (record.vendorTimes !== undefined) {
+		const sortedTimes: Record<string, number> = {};
+		for (const id of Object.keys(record.vendorTimes).sort()) {
+			const time = record.vendorTimes[id];
+			if (time !== undefined) {
+				Object.defineProperty(sortedTimes, id, {
+					configurable: true,
+					enumerable: true,
+					value: time,
+					writable: true,
+				});
+			}
+		}
+		encoded.vendorTimes = sortedTimes;
+	}
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}

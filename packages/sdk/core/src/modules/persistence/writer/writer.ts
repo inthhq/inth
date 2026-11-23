@@ -380,12 +380,14 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			subjectOnly,
 			read
 		);
+		const browserAfterWrite = kernel.getBrowserRecords();
 		writeVendorChoiceToStorage(
 			store,
 			{ ...snapshot, subject },
 			storageConfig,
 			at,
-			kernel.getBrowserRecords().vendorDeclared
+			browserAfterWrite.vendorDeclared,
+			browserAfterWrite.vendorTimes
 		);
 		markWritten('vendors', sameRecord(subject, snapshot.subject));
 	});

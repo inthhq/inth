@@ -48,6 +48,7 @@ export interface ValidatedRecords {
 	optOutRightsConfirmed?: boolean;
 	vendorChoice?: VendorChoice | null;
 	vendorDeclared?: readonly string[] | null;
+	vendorTimes?: Readonly<Record<string, number>> | null;
 	accountLayer?: AccountConsentLayer | null;
 }
 
@@ -219,6 +220,53 @@ const validateVendorDeclaredField = function validateVendorDeclaredField(
 	}
 };
 
+const validateVendorTimesField = function validateVendorTimesField(
+	input: HydrationRecords,
+	records: ValidatedRecords,
+	issues: RecordIssue[],
+	now: number
+): void {
+	if (input.vendorTimes === undefined) {
+		return;
+	}
+	if (input.vendorTimes === null) {
+		records.vendorTimes = null;
+		return;
+	}
+	if (!isPlainRecord(input.vendorTimes)) {
+		issues.push({ code: 'not-an-object', path: 'vendorTimes' });
+		return;
+	}
+	const times: Record<string, number> = {};
+	let valid = true;
+	for (const id of ownKeys(input.vendorTimes)) {
+		if (!isNonEmptyString(id) || !isValidVendorId(id)) {
+			issues.push({
+				code: 'invalid-identifier',
+				path: `vendorTimes.${id}`,
+			});
+			valid = false;
+			continue;
+		}
+		const timestamp = ownValue(input.vendorTimes, id);
+		const timestampIssue = checkTimestamp(timestamp, now);
+		if (timestampIssue) {
+			issues.push({ code: timestampIssue, path: `vendorTimes.${id}` });
+			valid = false;
+			continue;
+		}
+		Object.defineProperty(times, id, {
+			configurable: true,
+			enumerable: true,
+			value: timestamp as number,
+			writable: true,
+		});
+	}
+	if (valid) {
+		records.vendorTimes = times;
+	}
+};
+
 /**
  * Validate hydration input. Keys that are omitted stay omitted so the
  * caller can preserve current values; `null` passes through as an explicit
@@ -305,6 +353,7 @@ export const validateHydrationRecords = function validateHydrationRecords(
 		}
 	}
 	validateVendorDeclaredField(input, records, issues);
+	validateVendorTimesField(input, records, issues, now);
 	if (input.accountLayer !== undefined) {
 		if (input.accountLayer === null) {
 			records.accountLayer = null;

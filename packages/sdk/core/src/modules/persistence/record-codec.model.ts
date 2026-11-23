@@ -99,6 +99,11 @@ export type StoredVendorChoice = VendorChoice & {
 	 */
 	granted?: readonly string[];
 	/**
+	 * Per-vendor confirmation timestamps (`vendorId -> confirmedAt`) stored in
+	 * localStorage JSON only. Each save advances only the vendors it decided.
+	 */
+	vendorTimes?: Readonly<Record<string, number>>;
+	/**
 	 * Subject identity, carried so a visitor whose first act only decided
 	 * vendors keeps the same subject after a reload. The consent envelope needs
 	 * a category choice to exist and cannot hold it for that visitor.
@@ -787,8 +792,43 @@ const VENDOR_CHOICE_KEYS = [
 	'confirmedAt',
 	'denied',
 	'granted',
+	'vendorTimes',
 	'subject',
 ] as const;
+
+const validateStoredVendorTimes = function validateStoredVendorTimes(
+	raw: unknown,
+	now: number,
+	issues: StorageIssue[]
+): Record<string, number> | undefined {
+	if (raw === undefined) {
+		return undefined;
+	}
+	if (!isPlainRecord(raw)) {
+		issues.push({ code: 'not-an-object', path: 'vendorTimes' });
+		return undefined;
+	}
+	const times: Record<string, number> = {};
+	for (const id of ownKeys(raw)) {
+		if (!isNonEmptyString(id) || !isValidVendorId(id)) {
+			issues.push({ code: 'invalid-identifier', path: `vendorTimes.${id}` });
+			continue;
+		}
+		const timestamp = ownValue(raw, id);
+		const issue = checkTimestamp(timestamp, now);
+		if (issue) {
+			issues.push({ code: issue, path: `vendorTimes.${id}` });
+			continue;
+		}
+		Object.defineProperty(times, id, {
+			configurable: true,
+			enumerable: true,
+			value: timestamp as number,
+			writable: true,
+		});
+	}
+	return times;
+};
 
 const validateVendorIdList = function validateVendorIdList(
 	raw: unknown,
@@ -857,6 +897,11 @@ export const decodeVendorChoice = function decodeVendorChoice(
 		rawGranted === undefined
 			? undefined
 			: validateVendorIdList(rawGranted, 'granted', issues);
+	const vendorTimes = validateStoredVendorTimes(
+		ownValue(input, 'vendorTimes'),
+		now,
+		issues
+	);
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
@@ -867,6 +912,9 @@ export const decodeVendorChoice = function decodeVendorChoice(
 	};
 	if (granted !== undefined) {
 		record.granted = granted.sort();
+	}
+	if (vendorTimes !== undefined) {
+		record.vendorTimes = vendorTimes;
 	}
 	if (subject) {
 		record.subject = subject;

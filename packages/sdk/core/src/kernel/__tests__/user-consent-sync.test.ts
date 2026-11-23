@@ -2455,8 +2455,9 @@ describe('kernel regressions (set 3)', () => {
 			})
 		);
 		const partialRes = await kB.commands.optIn();
-		expect(partialRes).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(partialRes).toEqual({ ok: true, optOut: null });
 		expect(kB.getAccountLayer()?.optOut?.rights).toEqual(['share']);
+		expect(kB.getAccountLayer()?.liftedRecordedAt).toBe(NOW - 5000);
 		expect(kB.getSnapshot().optOut?.rights).toEqual(['share']);
 		kB.dispose();
 	});
@@ -2732,6 +2733,7 @@ describe('kernel regressions (set 4)', () => {
 		}
 	});
 
+	// Updated to match the lift outcome table (both + no requested rights -> success, clear account, never copy rights)
 	test('a partial lift with a both answer never imports device rights into the account layer', async () => {
 		const user = { externalId: 'a', identityToken: 'token-a' };
 		const resolution = matchedResolution(optOutRule());
@@ -2772,10 +2774,12 @@ describe('kernel regressions (set 4)', () => {
 				})
 			);
 			expect(await kernel.commands.optIn()).toEqual({
-				ok: false,
-				reason: 'held-by-account',
+				ok: true,
+				optOut: null,
 			});
-			expect(kernel.getAccountLayer()?.optOut?.rights).toEqual(['sale']);
+			expect(kernel.getAccountLayer()?.optOut).toBeNull();
+			expect(kernel.getAccountLayer()?.liftedRecordedAt).toBe(NOW - 5000);
+			expect(kernel.getBrowserRecords().optOut).toBeNull();
 		} finally {
 			kernel.dispose();
 		}
@@ -2816,4 +2820,522 @@ describe('kernel regressions (set 4)', () => {
 			kernel.dispose();
 		}
 	});
+});
+
+describe('kernel regressions (set 5): per-vendor times and the lift outcome table', () => {
+	test('a scoped marketing save does not renew an older browser measurement grant', async () => {
+		const resolution = matchedResolution(optInRule());
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					vendorChoice: { confirmedAt: NOW - 5000, denied: [], version: 1 },
+					vendorDeclared: ['measurement-vendor'],
+				},
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'marketing-vendor',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'measurement-vendor',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernel.syncUserConsent(
+			makeUserConsent({
+				choices: {
+					measurement: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1',
+						},
+						confirmedAt: NOW - 3000,
+						value: true,
+					},
+				},
+				externalId: 'a',
+				vendors: {
+					'measurement-vendor': { confirmedAt: NOW - 3000, value: false },
+				},
+			})
+		);
+		try {
+			expect(isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor')).toBe(
+				false
+			);
+			expect(
+				(await kernel.commands.save('all', { categories: ['marketing'] })).ok
+			).toBe(true);
+			expect({
+				allowed: isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor'),
+				postedGrant:
+					save.mock.calls[0]?.[0].vendorChoice?.grants?.[
+						'measurement-vendor'
+					] === true,
+			}).toEqual({ allowed: false, postedGrant: false });
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// full save at T1, account denial at T2, marketing-only save at T3 keeps measurement vendor denied and posts no grant
+	test('full save at T1, account denial at T2, marketing-only save at T3 keeps measurement vendor denied and posts no grant', async () => {
+		const resolution = matchedResolution(optInRule());
+		const fp = resolution.fingerprints.choice;
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'marketing-vendor',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'measurement-vendor',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW - 5000,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			// T1: full save grants both vendors.
+			vi.spyOn(Date, 'now').mockReturnValue(NOW - 5000);
+			await kernel.commands.save('all');
+			expect(isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor')).toBe(
+				true
+			);
+
+			// T2: account denies measurement-vendor.
+			vi.spyOn(Date, 'now').mockReturnValue(NOW - 2000);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 2000,
+					choices: {
+						measurement: {
+							basis: { fingerprint: fp, kind: 'choice-v1' },
+							confirmedAt: NOW - 2000,
+							value: true,
+						},
+					},
+					externalId: 'a',
+					vendors: {
+						'measurement-vendor': { confirmedAt: NOW - 2000, value: false },
+					},
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor')).toBe(
+				false
+			);
+
+			// T3: marketing-only bulk save must NOT renew measurement-vendor's T1 time or post measurement-vendor: true!
+			vi.spyOn(Date, 'now').mockReturnValue(NOW);
+			await kernel.commands.save('all', { categories: ['marketing'] });
+			expect(isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor')).toBe(
+				false
+			);
+			expect(
+				save.mock.calls[1]?.[0].vendorChoice?.grants?.['measurement-vendor']
+			).not.toBe(true);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// two saves at the same actionAt keep the expanded coverage
+	test('two saves at the same actionAt expand vendorDeclared and per-vendor times', async () => {
+		const resolution = matchedResolution(optInRule());
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'marketing-vendor',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'measurement-vendor',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const p = createPersistence({ kernel });
+		try {
+			// Save 1 at NOW: scoped marketing-only bulk save covers only marketing-vendor.
+			await kernel.commands.save('all', {
+				actionAt: NOW,
+				categories: ['marketing'],
+			});
+			expect(kernel.getBrowserRecords().vendorDeclared).toEqual([
+				'marketing-vendor',
+			]);
+
+			// Save 2 at the EXACT SAME actionAt = NOW: full bulk save expands coverage to both vendors!
+			await kernel.commands.save('all', { actionAt: NOW });
+			expect(kernel.getBrowserRecords().vendorDeclared).toEqual([
+				'marketing-vendor',
+				'measurement-vendor',
+			]);
+			expect(kernel.getBrowserRecords().vendorTimes).toEqual({
+				'marketing-vendor': NOW,
+				'measurement-vendor': NOW,
+			});
+			await flushMacrotasks();
+			const storedLocal = JSON.parse(
+				window.localStorage.getItem('inth-vendors') ?? '{}'
+			) as { vendorTimes?: Record<string, number> };
+			expect(storedLocal.vendorTimes).toEqual({
+				'marketing-vendor': NOW,
+				'measurement-vendor': NOW,
+			});
+		} finally {
+			p.dispose();
+			kernel.dispose();
+		}
+	});
+
+	test('a both lift answer with none of the requested rights clears the account', async () => {
+		const user = { externalId: 'a', identityToken: 'token-a' };
+		const resolution = matchedResolution(optOutRule());
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_user, id) =>
+						Promise.resolve({ subjectId: id ?? 'sub_a' }),
+					liftOptOut: () =>
+						Promise.resolve({
+							ok: true,
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW - 3000,
+								rights: ['share', 'targeted_ads'],
+							},
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 5000,
+						rights: ['sale'],
+					},
+				})
+			);
+			expect(await kernel.commands.optIn()).toEqual({ ok: true, optOut: null });
+			expect(kernel.getAccountLayer()?.optOut).toBeNull();
+			expect(kernel.getBrowserRecords().optOut).toBeNull();
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('a failed person-held lift leaves the account layer unchanged', async () => {
+		const user = { externalId: 'a', identityToken: 'token-a' };
+		const resolution = matchedResolution(optOutRule());
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_user, id) =>
+						Promise.resolve({ subjectId: id ?? 'sub_a' }),
+					liftOptOut: () =>
+						Promise.resolve({
+							ok: true,
+							optOut: {
+								heldBy: 'person',
+								method: 'button',
+								recordedAt: NOW - 3000,
+								rights: ['sale'],
+							},
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 5000,
+						rights: ['sale', 'share'],
+					},
+				})
+			);
+			const original = structuredClone(kernel.getAccountLayer());
+			expect(await kernel.commands.optIn()).toEqual({
+				ok: false,
+				reason: 'held-by-account',
+			});
+			expect(kernel.getAccountLayer()).toEqual(original);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	// Complete lift outcome table: all 7 rows tested for both optIn() and save()-triggered lift
+	const LIFT_TABLE_ROWS: readonly {
+		name: string;
+		accountRights: ('sale' | 'share' | 'targeted_ads')[];
+		answer: OptOutRecord | null;
+		expectSuccess: boolean;
+		expectAccountRights: ('sale' | 'share' | 'targeted_ads')[] | null;
+		expectLiftedRecordedAt: number | undefined;
+		expectBrowserRights: ('sale' | 'share' | 'targeted_ads')[] | null;
+	}[] = [
+		{
+			accountRights: ['sale'],
+			answer: null,
+			expectAccountRights: null,
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: NOW - 5000,
+			expectSuccess: true,
+			name: 'row 1: null answer -> success, clear account, set liftedRecordedAt, browser unchanged',
+		},
+		{
+			accountRights: ['sale'],
+			answer: {
+				heldBy: 'person',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['share'],
+			},
+			expectAccountRights: ['share'],
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: NOW - 5000,
+			expectSuccess: true,
+			name: 'row 2: person / no requested rights left -> success, keep remaining person rights, set liftedRecordedAt, browser unchanged',
+		},
+		{
+			accountRights: ['sale', 'share'],
+			answer: {
+				heldBy: 'person',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['sale'],
+			},
+			expectAccountRights: ['sale', 'share'],
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: undefined,
+			expectSuccess: false,
+			name: 'row 3: person / requested rights left -> held-by-account, account unchanged, browser unchanged',
+		},
+		{
+			accountRights: ['sale'],
+			answer: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['share', 'targeted_ads'],
+			},
+			expectAccountRights: null,
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: NOW - 5000,
+			expectSuccess: true,
+			name: 'row 4: both / no requested rights left -> success, clear account, set liftedRecordedAt, browser unchanged',
+		},
+		{
+			accountRights: ['sale'],
+			answer: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['sale', 'targeted_ads'],
+			},
+			expectAccountRights: ['sale'],
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: undefined,
+			expectSuccess: false,
+			name: 'row 5: both / requested rights left -> held-by-account, account unchanged, browser unchanged',
+		},
+		{
+			accountRights: ['sale'],
+			answer: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['targeted_ads'],
+			},
+			expectAccountRights: null,
+			expectBrowserRights: ['targeted_ads'],
+			expectLiftedRecordedAt: NOW - 5000,
+			expectSuccess: true,
+			name: 'row 6: device / no requested rights left -> success, clear account, set liftedRecordedAt, adopt device opt-out in browser',
+		},
+		{
+			accountRights: ['sale'],
+			answer: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 3000,
+				rights: ['sale'],
+			},
+			expectAccountRights: ['sale'],
+			expectBrowserRights: null,
+			expectLiftedRecordedAt: undefined,
+			expectSuccess: false,
+			name: 'row 7: device / requested rights left -> held-by-account, account unchanged, browser unchanged',
+		},
+	];
+
+	for (const row of LIFT_TABLE_ROWS) {
+		test(`lift outcome table (optIn & save) - ${row.name}`, async () => {
+			const user = { externalId: 'a', identityToken: 'token-a' };
+			const resolution = matchedResolution(optOutRule({ prompt: 'choice' }));
+
+			// 1. Test via optIn()
+			const kOptIn = createKernel(
+				{
+					consentCategories: ['marketing'],
+					initialPolicyResolution: resolution,
+					initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+					initialUser: user,
+					now: NOW,
+					transport: {
+						identify: (_user, id) =>
+							Promise.resolve({ subjectId: id ?? 'sub_a' }),
+						liftOptOut: () => Promise.resolve({ ok: true, optOut: row.answer }),
+					},
+				},
+				{ outboxStore: createMemoryOutboxStore() }
+			);
+			try {
+				await kOptIn.commands.identify(user);
+				kOptIn.syncUserConsent(
+					makeUserConsent({
+						externalId: 'a',
+						optOut: {
+							method: 'button',
+							recordedAt: NOW - 5000,
+							rights: row.accountRights,
+						},
+					})
+				);
+				const res = await kOptIn.commands.optIn();
+				expect(res).toEqual(
+					row.expectSuccess
+						? { ok: true, optOut: null }
+						: { ok: false, reason: 'held-by-account' }
+				);
+				expect(kOptIn.getAccountLayer()?.optOut?.rights ?? null).toEqual(
+					row.expectAccountRights
+				);
+				expect(kOptIn.getAccountLayer()?.liftedRecordedAt).toBe(
+					row.expectLiftedRecordedAt
+				);
+				expect(kOptIn.getBrowserRecords().optOut?.rights ?? null).toEqual(
+					row.expectBrowserRights
+				);
+			} finally {
+				kOptIn.dispose();
+			}
+
+			// 2. Test via save()-triggered lift
+			const kSave = createKernel(
+				{
+					consentCategories: ['marketing'],
+					initialPolicyResolution: resolution,
+					initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+					initialUser: user,
+					now: NOW,
+					transport: {
+						identify: (_user, id) =>
+							Promise.resolve({ subjectId: id ?? 'sub_a' }),
+						liftOptOut: () => Promise.resolve({ ok: true, optOut: row.answer }),
+						save: () => Promise.resolve({ ok: true, subjectId: 'sub_a' }),
+					},
+				},
+				{ outboxStore: createMemoryOutboxStore() }
+			);
+			try {
+				await kSave.commands.identify(user);
+				kSave.syncUserConsent(
+					makeUserConsent({
+						externalId: 'a',
+						optOut: {
+							method: 'button',
+							recordedAt: NOW - 5000,
+							rights: row.accountRights,
+						},
+					})
+				);
+				await kSave.commands.save({ marketing: true });
+				await flushMacrotasks();
+				expect(kSave.getAccountLayer()?.optOut?.rights ?? null).toEqual(
+					row.expectAccountRights
+				);
+				expect(kSave.getAccountLayer()?.liftedRecordedAt).toBe(
+					row.expectLiftedRecordedAt
+				);
+				expect(kSave.getBrowserRecords().optOut?.rights ?? null).toEqual(
+					row.expectBrowserRights
+				);
+			} finally {
+				kSave.dispose();
+			}
+		});
+	}
 });

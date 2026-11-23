@@ -60,6 +60,27 @@ import type { ValidatedRecords } from './record-validation.model';
  * an account layer is active, splits the server opt-out into person and
  * device parts.
  */
+const foldServerAccountLayer = function foldServerAccountLayer(
+	current: ConsentSnapshot,
+	records: ValidatedRecords,
+	activeAccount: AccountConsentLayer | null
+): AccountConsentLayer | undefined {
+	if (
+		records.accountLayer === undefined ||
+		records.accountLayer === null ||
+		!shouldAdoptAccountLayer({
+			current: activeAccount,
+			currentSource: 'stored',
+			incoming: records.accountLayer,
+			incomingSource: 'stored',
+			userExternalId: current.user?.externalId ?? null,
+		})
+	) {
+		return undefined;
+	}
+	return applyLiftFloorToIncoming(activeAccount, records.accountLayer);
+};
+
 export const foldServerRecords = function foldServerRecords(
 	current: ConsentSnapshot,
 	records: ValidatedRecords,
@@ -106,7 +127,8 @@ export const foldServerRecords = function foldServerRecords(
 			records.vendorChoice
 		);
 	}
-	return { patch };
+	const nextAccount = foldServerAccountLayer(current, records, activeAccount);
+	return nextAccount === undefined ? { patch } : { nextAccount, patch };
 };
 
 /**
@@ -332,6 +354,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
 			vendorDeclared,
+			vendorTimes,
 			...rest
 		} = validated;
 		const patch: SnapshotPatch = { ...rest, now: at };
@@ -362,6 +385,9 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		}
 		if (vendorDeclared !== undefined) {
 			commitOptions = { ...commitOptions, vendorDeclared };
+		}
+		if (vendorTimes !== undefined) {
+			commitOptions = { ...commitOptions, vendorTimes };
 		}
 		const reset = choice === null || rest.subject === null;
 		if (reset) {

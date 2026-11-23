@@ -547,6 +547,7 @@ export const mountPersistence = function mountPersistence(
 					optOutRightsConfirmed: receipt.rightsConfirmed,
 					vendorChoice: queuedBrowser.vendorChoice,
 					vendorDeclared: queuedBrowser.vendorDeclared,
+					vendorTimes: queuedBrowser.vendorTimes,
 				}
 			: records;
 	};
@@ -862,6 +863,57 @@ export const mountPersistence = function mountPersistence(
 		);
 	};
 
+	const patchSeededVendors = function patchSeededVendors(
+		snapshot: ConsentSnapshot,
+		browserRecords: ReturnType<InternalKernel['getBrowserRecords']>,
+		records: HydrationRecords,
+		epoch: number,
+		outranks: boolean,
+		patch: HydrationRecords
+	): void {
+		const keptVendors = vendorChoiceSinceEpoch(snapshot.vendorChoice, epoch);
+		const vendors = seededRecordPatch(
+			snapshot.vendorChoice,
+			keptVendors,
+			records.vendorChoice,
+			outranks ||
+				(records.vendorChoice?.confirmedAt ?? -1) >
+					(keptVendors?.confirmedAt ?? -1)
+		);
+		if (vendors) {
+			patch.vendorChoice = vendors.value;
+			if (records.vendorDeclared !== undefined) {
+				patch.vendorDeclared = records.vendorDeclared;
+			}
+			if (records.vendorTimes !== undefined) {
+				patch.vendorTimes = records.vendorTimes;
+			}
+			return;
+		}
+		if (
+			keptVendors === null ||
+			records.vendorChoice?.confirmedAt !== keptVendors.confirmedAt
+		) {
+			return;
+		}
+		if (
+			(browserRecords.vendorDeclared === null ||
+				browserRecords.vendorDeclared === undefined) &&
+			records.vendorDeclared !== undefined &&
+			records.vendorDeclared !== null
+		) {
+			patch.vendorDeclared = records.vendorDeclared;
+		}
+		if (
+			(browserRecords.vendorTimes === null ||
+				browserRecords.vendorTimes === undefined) &&
+			records.vendorTimes !== undefined &&
+			records.vendorTimes !== null
+		) {
+			patch.vendorTimes = records.vendorTimes;
+		}
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -899,35 +951,14 @@ export const mountPersistence = function mountPersistence(
 			if (notice) {
 				patch.noticeDismissal = notice.value;
 			}
-			const keptVendors = vendorChoiceSinceEpoch(
-				snapshot.vendorChoice,
-				epochs.vendors
+			patchSeededVendors(
+				snapshot,
+				browserRecords,
+				records,
+				epochs.vendors,
+				outranks.vendors,
+				patch
 			);
-			const vendors = seededRecordPatch(
-				snapshot.vendorChoice,
-				keptVendors,
-				records.vendorChoice,
-				outranks.vendors ||
-					(records.vendorChoice?.confirmedAt ?? -1) >
-						(keptVendors?.confirmedAt ?? -1)
-			);
-			if (vendors) {
-				patch.vendorChoice = vendors.value;
-				if (records.vendorDeclared !== undefined) {
-					patch.vendorDeclared = records.vendorDeclared;
-				}
-			} else if (
-				(browserRecords.vendorDeclared === null ||
-					browserRecords.vendorDeclared === undefined) &&
-				records.vendorDeclared !== undefined &&
-				records.vendorDeclared !== null &&
-				keptVendors !== null &&
-				records.vendorChoice?.confirmedAt === keptVendors.confirmedAt
-			) {
-				// SSR seeded only the `<key>-vendors` cookie (no declared list);
-				// recover `vendorDeclared` from localStorage at the same timestamp.
-				patch.vendorDeclared = records.vendorDeclared;
-			}
 			patchSeededOptOut(
 				snapshot,
 				records,

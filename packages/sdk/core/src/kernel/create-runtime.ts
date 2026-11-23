@@ -89,6 +89,8 @@ export interface RuntimeCommitOptions {
 	suppressAccountDropOptOutSynced?: boolean;
 	/** Declared vendor IDs covered by the browser vendor decision. */
 	vendorDeclared?: readonly string[] | null;
+	/** Per-vendor confirmation timestamps recorded for the browser vendor decision. */
+	vendorTimes?: Readonly<Record<string, number>> | null;
 }
 
 export interface KernelRuntime {
@@ -554,6 +556,9 @@ export const createRuntime = function createRuntime(
 		if (records.vendorDeclared && !Object.isFrozen(records.vendorDeclared)) {
 			Object.freeze(records.vendorDeclared);
 		}
+		if (records.vendorTimes && !Object.isFrozen(records.vendorTimes)) {
+			Object.freeze(records.vendorTimes);
+		}
 		if (records.choice && !Object.isFrozen(records.choice)) {
 			for (const decision of Object.values(records.choice.categories)) {
 				if (decision) {
@@ -607,6 +612,14 @@ export const createRuntime = function createRuntime(
 		} else {
 			nextVendorDeclared = browserRecords.vendorDeclared;
 		}
+		let nextVendorTimes: Readonly<Record<string, number>> | null | undefined;
+		if (commitOptions?.vendorTimes !== undefined) {
+			nextVendorTimes = commitOptions.vendorTimes;
+		} else if (patch.vendorChoice === null) {
+			nextVendorTimes = null;
+		} else {
+			nextVendorTimes = browserRecords.vendorTimes;
+		}
 		const nextBrowser: BrowserConsentRecords = {
 			choice:
 				patch.explicitChoice === undefined
@@ -618,12 +631,14 @@ export const createRuntime = function createRuntime(
 					? browserRecords.vendorChoice
 					: patch.vendorChoice,
 			vendorDeclared: nextVendorDeclared,
+			vendorTimes: nextVendorTimes,
 		};
 		const browserChanged =
 			nextBrowser.choice !== browserRecords.choice ||
 			nextBrowser.optOut !== browserRecords.optOut ||
 			nextBrowser.vendorChoice !== browserRecords.vendorChoice ||
-			nextBrowser.vendorDeclared !== browserRecords.vendorDeclared;
+			nextBrowser.vendorDeclared !== browserRecords.vendorDeclared ||
+			nextBrowser.vendorTimes !== browserRecords.vendorTimes;
 		return { browserChanged, nextBrowser };
 	};
 

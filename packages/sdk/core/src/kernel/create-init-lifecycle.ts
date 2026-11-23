@@ -611,7 +611,10 @@ export const createInitLifecycle = function createInitLifecycle({
 			return;
 		}
 		runtime.batch(() => {
-			const changed = commit(patch, { accountLayer: nextAccount });
+			const changed = commit(patch, {
+				accountLayer: nextAccount,
+				accountLayerSource: 'stored',
+			});
 			if (changed || always) {
 				emit({ snapshot: getSnapshot(), type: 'init:applied' });
 			}
@@ -625,11 +628,17 @@ export const createInitLifecycle = function createInitLifecycle({
 		response: InitResponse
 	): void => {
 		const current = getSnapshot();
-		const recordsAreCurrent = ownsRecords(
-			snapshot,
-			recordsGeneration,
-			identity
-		);
+		const streamedUserRecordsMatch =
+			snapshot.user === null &&
+			current.user !== null &&
+			response.records?.accountLayer?.externalId === current.user.externalId;
+		// A streamed answer can carry the signed-in user's account records
+		// for a request sent before identify(); those still belong here.
+		const recordsAreCurrent =
+			ownsRecords(snapshot, recordsGeneration, identity) ||
+			(streamedUserRecordsMatch &&
+				recordsGeneration === runtime.getGeneration() &&
+				snapshot.subject?.subjectId === current.subject?.subjectId);
 		// Policy can still resolve after clear or identification changes,
 		// but the old request no longer owns this subject's stored records.
 		const accepted = recordsAreCurrent

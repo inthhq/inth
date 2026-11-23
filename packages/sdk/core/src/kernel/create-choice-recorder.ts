@@ -59,7 +59,15 @@ import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice.model';
 import { saveRecordsOptOut } from '../surface-actions/instant-commit';
-import { filterSupportedOptOutRights } from './account-layer';
+import {
+	accountOrderingTime,
+	filterSupportedOptOutRights,
+	resolveBrowserVendorTimes,
+} from './account-layer';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
 import type { KernelRuntime } from './create-runtime';
 import {
 	applySyncedOptOut,
@@ -197,17 +205,72 @@ const settledBySelection = function settledBySelection(
  * would change its outcome. Every other denial stays. Stamped like a full
  * bulk action once a governed vendor exists.
  */
+const advanceVendorTimes = function advanceVendorTimes(
+	existing: Readonly<Record<string, number>> | null,
+	decidedIds: Iterable<string>,
+	actionAt: number
+): Record<string, number> {
+	const next: Record<string, number> = existing ? { ...existing } : {};
+	for (const id of decidedIds) {
+		Object.defineProperty(next, id, {
+			configurable: true,
+			enumerable: true,
+			value: actionAt,
+			writable: true,
+		});
+	}
+	return next;
+};
+
+const sameStringArray = (
+	left: readonly string[] | null | undefined,
+	right: readonly string[] | null | undefined
+): boolean => {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right || left.length !== right.length) {
+		return false;
+	}
+	return left.every((value, index) => value === right[index]);
+};
+
+const sameVendorTimesMap = (
+	left: Readonly<Record<string, number>> | null | undefined,
+	right: Readonly<Record<string, number>> | null | undefined
+): boolean => {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	const leftKeys = Object.keys(left);
+	if (leftKeys.length !== Object.keys(right).length) {
+		return false;
+	}
+	return leftKeys.every(
+		(key) => Object.hasOwn(right, key) && left[key] === right[key]
+	);
+};
+
+interface ResolvedVendorSelection {
+	vendorChoice: VendorChoice | null;
+	vendorDeclared?: readonly string[] | null;
+	vendorTimes?: Readonly<Record<string, number>> | null;
+}
+
 const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 	snapshot: ConsentSnapshot,
 	categories: readonly AllConsentNames[],
 	granted: boolean,
 	actionAt: number,
-	browserVendorChoice: ConsentSnapshot['vendorChoice'] = snapshot.vendorChoice,
-	browserVendorDeclared: readonly string[] | null | undefined = null
-): {
-	vendorChoice: VendorChoice | null;
-	vendorDeclared?: readonly string[] | null;
-} {
+	browser: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>
+): ResolvedVendorSelection {
+	const browserVendorChoice = browser.vendorChoice;
 	const selected = new Set(categories);
 	const afterAction: ConsentState = { ...snapshot.effectivePermissions };
 	for (const category of selected) {
@@ -226,14 +289,15 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 	if (governed.size === 0) {
 		return {
 			vendorChoice: browserVendorChoice,
-			vendorDeclared: browserVendorDeclared,
+			vendorDeclared: browser.vendorDeclared,
+			vendorTimes: browser.vendorTimes,
 		};
 	}
-	// A scoped bulk save covers only the vendors it governs plus any already
-	// covered by browser records; never mark ungoverned declared vendors as shown.
-	const vendorDeclared = [
-		...new Set([...(browserVendorDeclared ?? []), ...governed]),
-	].sort();
+	// A scoped bulk save advances ONLY the vendors it governs; older timestamps
+	// for other vendors in browser records stay untouched.
+	const existingTimes = resolveBrowserVendorTimes(browser);
+	const vendorTimes = advanceVendorTimes(existingTimes, governed, actionAt);
+	const vendorDeclared = Object.keys(vendorTimes).sort();
 	// Read browser records, never the account-merged effective view, so an
 	// unseen account-only vendor denial is never copied into browser records.
 	const denied = (browserVendorChoice?.denied ?? []).filter(
@@ -243,8 +307,6 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 		browserVendorChoice &&
 		denied.length === browserVendorChoice.denied.length
 	) {
-		// Nothing governed was denied. Stamp the clear the way a full bulk
-		// action does, unless the current browser record is already at least as new.
 		return {
 			vendorChoice:
 				browserVendorChoice.confirmedAt >= actionAt
@@ -255,11 +317,13 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 							version: 1,
 						},
 			vendorDeclared,
+			vendorTimes,
 		};
 	}
 	return {
 		vendorChoice: { confirmedAt: actionAt, denied, version: 1 },
 		vendorDeclared,
+		vendorTimes,
 	};
 };
 
@@ -340,18 +404,19 @@ const resolveVendorSelection = function resolveVendorSelection(
 	input: SaveInput | undefined,
 	explicit: Record<string, boolean> | undefined,
 	actionAt: number,
-	categories?: readonly AllConsentNames[],
-	browserVendorChoice: ConsentSnapshot['vendorChoice'] = snapshot.vendorChoice,
-	browserVendorDeclared: readonly string[] | null | undefined = null
-): {
-	vendorChoice: VendorChoice | null;
-	vendorDeclared?: readonly string[] | null;
-} {
+	categories: readonly AllConsentNames[] | undefined,
+	browser: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>
+): ResolvedVendorSelection {
+	const browserVendorChoice = browser.vendorChoice;
 	const current = snapshot.vendorChoice;
 	if (!vendorAxisActive(snapshot)) {
 		return {
 			vendorChoice: browserVendorChoice,
-			vendorDeclared: browserVendorDeclared,
+			vendorDeclared: browser.vendorDeclared,
+			vendorTimes: browser.vendorTimes,
 		};
 	}
 	const allDeclared = (snapshot.vendors?.declared ?? [])
@@ -359,21 +424,29 @@ const resolveVendorSelection = function resolveVendorSelection(
 		.sort();
 	const bulk = input === 'all' || input === 'none';
 	if (bulk) {
-		// Vendors follow the category on a bulk action; explicit grants are
-		// discarded so nothing survives as a denial.
-		// A bulk action that covers every category the policy lets the
-		// visitor decide is the stock accept or reject all, whichever surface
-		// sent it: nothing outside it can hold a denial in place, so it
-		// clears the list outright. Only a narrower action lifts denials
-		// selectively.
 		if (categories === undefined || coversChoiceScope(snapshot, categories)) {
+			const vendorChoice = bulkClearedVendorChoice(
+				snapshot,
+				actionAt,
+				browserVendorChoice
+			);
+			if (vendorChoice === null) {
+				return {
+					vendorChoice: null,
+					vendorDeclared: browser.vendorDeclared,
+					vendorTimes: browser.vendorTimes,
+				};
+			}
+			const existingTimes = resolveBrowserVendorTimes(browser);
+			const vendorTimes = advanceVendorTimes(
+				existingTimes,
+				allDeclared,
+				actionAt
+			);
 			return {
-				vendorChoice: bulkClearedVendorChoice(
-					snapshot,
-					actionAt,
-					browserVendorChoice
-				),
-				vendorDeclared: allDeclared,
+				vendorChoice,
+				vendorDeclared: Object.keys(vendorTimes).sort(),
+				vendorTimes,
 			};
 		}
 		return scopedBulkVendorChoice(
@@ -381,22 +454,23 @@ const resolveVendorSelection = function resolveVendorSelection(
 			categories,
 			input === 'all',
 			actionAt,
-			browserVendorChoice,
-			browserVendorDeclared
+			browser
 		);
 	}
 	if (explicit === undefined) {
 		return {
 			vendorChoice: browserVendorChoice,
-			vendorDeclared: browserVendorDeclared,
+			vendorDeclared: browser.vendorDeclared,
+			vendorTimes: browser.vendorTimes,
 		};
 	}
 	const toggleable = toggleableVendorIds(snapshot);
-	const usable = Object.keys(explicit).some((id) => toggleable.has(id));
-	if (!usable) {
+	const toggledIds = Object.keys(explicit).filter((id) => toggleable.has(id));
+	if (toggledIds.length === 0) {
 		return {
 			vendorChoice: browserVendorChoice,
-			vendorDeclared: browserVendorDeclared,
+			vendorDeclared: browser.vendorDeclared,
+			vendorTimes: browser.vendorTimes,
 		};
 	}
 	// Declared vendors start from what the visitor sees in the effective view
@@ -416,29 +490,20 @@ const resolveVendorSelection = function resolveVendorSelection(
 			baseDenied.add(id);
 		}
 	}
-	// A grant is a decision and a fresh confirmation even when it denies
-	// nothing or keeps the same list, like a category reconfirmation: an
-	// older server denial, or a server read taken between the old time and
-	// now, must not undo what the visitor just chose.
 	const denied = applyVendorGrants(snapshot, [...baseDenied], explicit);
+	const existingTimes = resolveBrowserVendorTimes(browser);
+	// Advance only the vendors toggled by this save (keeping older timestamps
+	// for other vendors so a single toggle never renews an older browser grant).
+	const vendorTimes = advanceVendorTimes(existingTimes, toggledIds, actionAt);
 	return {
 		vendorChoice: { confirmedAt: actionAt, denied, version: 1 },
-		vendorDeclared: allDeclared,
+		vendorDeclared: [
+			...new Set([...denied, ...Object.keys(vendorTimes)]),
+		].sort(),
+		vendorTimes,
 	};
 };
 
-/**
- * Granted flag for every declared vendor, for the transport payload. Only
- * present once a vendor decision exists locally: a save that never decided
- * vendors must not tell the backend every vendor was granted now, or an
- * older server denial still in flight would win the local merge while the
- * backend holds the newer all-granted map. The backend keeps an earlier
- * decision for any vendor a later map omits, since a client on a stale
- * vendor list never saw it, so a decision about a vendor nothing declares
- * right now must be spelled out: a denial the record retains travels as
- * `false`, and a denial a bulk action just cleared travels as `true`, or
- * another device would restore it when the vendor is declared again.
- */
 const setVendorGrant = (
 	grants: Record<string, boolean>,
 	id: string,
@@ -452,19 +517,46 @@ const setVendorGrant = (
 	});
 };
 
-const shouldEmitDeclaredVendor = (
+const shouldEmitDeclaredVendorWithAccount = (
 	id: string,
 	denied: ReadonlySet<string>,
-	covered: ReadonlySet<string> | null,
-	unknownCoverageWithAccount: boolean
+	vendorTimes: Readonly<Record<string, number>> | null,
+	browserConfirmedAt: number,
+	activeAccount: AccountConsentLayer
 ): boolean => {
+	const accountEntry = Object.hasOwn(activeAccount.vendors, id)
+		? activeAccount.vendors[id]
+		: undefined;
+	const perVendorTime =
+		vendorTimes !== null && Object.hasOwn(vendorTimes, id)
+			? vendorTimes[id]
+			: undefined;
 	if (denied.has(id)) {
+		if (accountEntry?.value === true) {
+			const accountAt = accountOrderingTime(
+				accountEntry.rawConfirmedAt,
+				activeAccount
+			);
+			return (perVendorTime ?? browserConfirmedAt) >= accountAt;
+		}
 		return true;
 	}
-	if (unknownCoverageWithAccount) {
+	// Never emit a grant when browser coverage is unknown, when this vendor's
+	// browser decision is older than this save's confirmation time, or when a
+	// newer/tied account denial overrides it.
+	if (perVendorTime === undefined || perVendorTime < browserConfirmedAt) {
 		return false;
 	}
-	return covered === null || covered.has(id);
+	if (accountEntry?.value === false) {
+		const accountAt = accountOrderingTime(
+			accountEntry.rawConfirmedAt,
+			activeAccount
+		);
+		if (accountAt >= perVendorTime) {
+			return false;
+		}
+	}
+	return true;
 };
 
 const addLiftedBrowserDenials = (
@@ -484,31 +576,33 @@ const addLiftedBrowserDenials = (
 
 const vendorChoicePayload = function vendorChoicePayload(
 	snapshot: ConsentSnapshot,
-	browserVendorChoice: ConsentSnapshot['vendorChoice'],
+	browserAfter: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>,
 	previous: ConsentSnapshot['vendorChoice'],
-	browserDeclared: readonly string[] | null | undefined = null
+	activeAccount: AccountConsentLayer | null = null
 ): SavePayload['vendorChoice'] {
+	const browserVendorChoice = browserAfter.vendorChoice;
 	const declared = snapshot.vendors?.declared ?? [];
 	if (!vendorAxisActive(snapshot) || browserVendorChoice === null) {
 		return undefined;
 	}
 	const denied = new Set(browserVendorChoice.denied);
-	const covered =
-		browserDeclared !== null && browserDeclared !== undefined
-			? new Set(browserDeclared)
-			: null;
-	const hasAccountLayer = snapshot.hasAccountLayer === true;
-	const unknownCoverageWithAccount = hasAccountLayer && covered === null;
+	const vendorTimes = resolveBrowserVendorTimes(browserAfter);
+	const hasAccountLayer = activeAccount !== null;
 	const grants: Record<string, boolean> = {};
 	for (const vendor of declared) {
-		if (
-			shouldEmitDeclaredVendor(
-				vendor.id,
-				denied,
-				covered,
-				unknownCoverageWithAccount
-			)
-		) {
+		const emit = hasAccountLayer
+			? shouldEmitDeclaredVendorWithAccount(
+					vendor.id,
+					denied,
+					vendorTimes,
+					browserVendorChoice.confirmedAt,
+					activeAccount
+				)
+			: true;
+		if (emit) {
 			setVendorGrant(grants, vendor.id, !denied.has(vendor.id));
 		}
 	}
@@ -521,7 +615,7 @@ const vendorChoicePayload = function vendorChoicePayload(
 	// lifted for a vendor nothing declares travels as `true`. With an account
 	// layer, never emit a grant for a vendor that is no longer declared.
 	addLiftedBrowserDenials(grants, previous, hasAccountLayer);
-	if (unknownCoverageWithAccount && Object.keys(grants).length === 0) {
+	if (hasAccountLayer && Object.keys(grants).length === 0) {
 		return undefined;
 	}
 	return {
@@ -786,9 +880,22 @@ export interface ChoiceRecorderOptions {
 	markSubjectLinked?: (subjectId: string, externalId: string) => void;
 }
 
+/**
+ * Lift outcome table ("Requested" = the supported rights this lift asked to lift):
+ *
+ * | Answer            | Requested rights left? | Result            | Account layer                                      | Browser records                        |
+ * | ----------------- | ---------------------- | ----------------- | -------------------------------------------------- | -------------------------------------- |
+ * | `null`            | —                      | success           | clear opt-out, set `liftedRecordedAt`              | unchanged                              |
+ * | `heldBy: 'person'`| no                     | success           | keep answer's remaining person rights, set floor   | unchanged                              |
+ * | `heldBy: 'person'`| yes                    | `held-by-account` | unchanged                                          | unchanged                              |
+ * | `heldBy: 'both'`  | no                     | success           | clear opt-out, set `liftedRecordedAt`              | unchanged (never copy rights)          |
+ * | `heldBy: 'both'`  | yes                    | `held-by-account` | unchanged                                          | unchanged                              |
+ * | `heldBy: 'device'`| no                     | success           | clear opt-out, set `liftedRecordedAt`              | adopt answer as this device's opt-out  |
+ * | `heldBy: 'device'`| yes                    | `held-by-account` | unchanged                                          | unchanged                              |
+ */
 const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	answerOptOut: OptOutRecord | null | undefined,
-	liftedRights: readonly OptOutRight[] = []
+	requestedRights: readonly OptOutRight[] = []
 ): boolean {
 	if (answerOptOut === null) {
 		return true;
@@ -800,14 +907,11 @@ const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	if (remaining.length === 0) {
 		return true;
 	}
-	if (answerOptOut.heldBy === 'device') {
-		const liftedSet = new Set<string>(liftedRights);
-		return (
-			liftedRights.length > 0 &&
-			!remaining.some((right) => liftedSet.has(right))
-		);
+	if (requestedRights.length === 0) {
+		return false;
 	}
-	return false;
+	const requestedSet = new Set<string>(requestedRights);
+	return !remaining.some((right) => requestedSet.has(right));
 };
 
 /**
@@ -969,47 +1073,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			return { hadSubject: true, ok: true, subjectId: linkedId };
 		};
 
-	const applyPartialAccountLiftOutcome =
-		function applyPartialAccountLiftOutcome(
-			answerOptOut: OptOutRecord,
-			externalId: string | null
-		): void {
-			const remaining = filterSupportedOptOutRights(answerOptOut.rights);
-			const activeAccount = runtime.getAccountLayer();
-			if (
-				remaining.length === 0 ||
-				activeAccount === null ||
-				externalId === null ||
-				activeAccount.externalId !== externalId ||
-				answerOptOut.heldBy !== 'person'
-			) {
-				return;
-			}
-			const at = runtime.now();
-			const nextAccount = {
-				...activeAccount,
-				appliedAt: Math.max(at, activeAccount.appliedAt + 1),
-				optOut: {
-					method: answerOptOut.method,
-					rawRecordedAt: answerOptOut.recordedAt,
-					rights: remaining,
-				},
-			};
-			batch(() => {
-				commit(
-					{ now: at },
-					{ accountLayer: nextAccount, accountLayerSource: 'stored' }
-				);
-				const after = getSnapshot();
-				emit({
-					optOut: after.optOut,
-					snapshot: after,
-					type: 'opt-out:synced',
-				});
-			});
-		};
-
-	const clearAccountOptOutOnLift = function clearAccountOptOutOnLift(
+	const applyAccountLiftSuccess = function applyAccountLiftSuccess(
+		answerOptOut: OptOutRecord | null | undefined,
 		actionAt: number,
 		uiSource: SaveUISource | undefined,
 		emitLifted: boolean
@@ -1017,18 +1082,24 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		const current = getSnapshot();
 		const activeAccount = runtime.getAccountLayer();
 		const at = runtime.now();
+		const remaining = answerOptOut
+			? filterSupportedOptOutRights(answerOptOut.rights)
+			: [];
+		const hasActiveAccount =
+			activeAccount !== null &&
+			current.user !== null &&
+			activeAccount.externalId === current.user.externalId;
+
 		let nextAccount:
 			| (NonNullable<typeof activeAccount> & {
 					appliedAt: number;
 					liftedRecordedAt?: number;
-					optOut: null;
 			  })
 			| undefined;
-		if (
-			activeAccount !== null &&
-			current.user !== null &&
-			activeAccount.externalId === current.user.externalId
-		) {
+		let browserOptOutPatch: OptOutRecord | null | undefined;
+		let adoptDeviceReceipt = false;
+
+		if (hasActiveAccount) {
 			const liftedRecordedAt =
 				activeAccount.optOut === null
 					? activeAccount.liftedRecordedAt
@@ -1036,23 +1107,60 @@ export const createChoiceRecorder = function createChoiceRecorder({
 							activeAccount.liftedRecordedAt ?? -1,
 							activeAccount.optOut.rawRecordedAt
 						);
-			// Advance appliedAt past the pre-lift value and record server-time
-			// liftedRecordedAt so pre-lift opt-outs are ignored without blocking
-			// newer choices or newer opt-outs.
+			const nextAccountOptOut =
+				answerOptOut !== null &&
+				answerOptOut !== undefined &&
+				answerOptOut.heldBy === 'person' &&
+				remaining.length > 0
+					? {
+							method: answerOptOut.method,
+							rawRecordedAt: answerOptOut.recordedAt,
+							rights: remaining,
+						}
+					: null;
 			nextAccount = {
 				...activeAccount,
 				appliedAt: Math.max(at, activeAccount.appliedAt + 1),
-				optOut: null,
+				optOut: nextAccountOptOut,
 			};
 			if (liftedRecordedAt !== undefined) {
 				nextAccount.liftedRecordedAt = liftedRecordedAt;
 			}
+			if (
+				answerOptOut !== null &&
+				answerOptOut !== undefined &&
+				answerOptOut.heldBy === 'device' &&
+				remaining.length > 0
+			) {
+				browserOptOutPatch = {
+					heldBy: 'device',
+					method: answerOptOut.method,
+					recordedAt: answerOptOut.recordedAt,
+					rights: remaining,
+				};
+				adoptDeviceReceipt = true;
+			}
+		} else {
+			browserOptOutPatch = null;
 		}
+
 		batch(() => {
 			runtime.noteOptOutAct();
 			runtime.bumpAccountSyncGeneration();
+			if (adoptDeviceReceipt) {
+				const currentReceipt = runtime.getOptOutReceiptData();
+				runtime.setOptOutReceiptData({
+					localAct: currentReceipt.localAct,
+					reference: currentReceipt.reference,
+					rightsConfirmed: true,
+				});
+			}
+			const patch: SnapshotPatch = { now: at };
+			if (browserOptOutPatch !== undefined) {
+				patch.optOut = browserOptOutPatch;
+			}
 			commit(
-				{ now: at, optOut: null },
+				patch,
 				nextAccount === undefined
 					? undefined
 					: { accountLayer: nextAccount, accountLayerSource: 'stored' }
@@ -1129,11 +1237,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			if (optOutLiftBlocker(getSnapshot()) === 'gpc-active') {
 				return { ok: false, reason: 'gpc-active' };
 			}
-			clearAccountOptOutOnLift(actionAt, uiSource, true);
+			applyAccountLiftSuccess(outcome.optOut, actionAt, uiSource, true);
 			return { ok: true, optOut: null };
 		}
-		if (outcome.optOut !== undefined && outcome.optOut !== null) {
-			applyPartialAccountLiftOutcome(outcome.optOut, externalId);
+		// Failed account-layer lifts leave both account and browser layers unchanged.
+		if (runtime.getAccountLayer() === null && outcome.optOut !== undefined) {
 			applySyncedOptOut(runtime, outcome.optOut, {
 				actVersion,
 				allowClear: false,
@@ -1249,20 +1357,20 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		}
 		if (isAccountLiftSucceeded(outcome.optOut, liftedRights)) {
 			if (optOutLiftBlocker(getSnapshot()) !== 'gpc-active') {
-				clearAccountOptOutOnLift(actionAt, uiSource, false);
+				applyAccountLiftSuccess(outcome.optOut, actionAt, uiSource, false);
 			}
 			return;
 		}
-		if (outcome.optOut !== null) {
-			applyPartialAccountLiftOutcome(outcome.optOut, externalId);
+		// Failed account-layer lifts leave both account and browser layers unchanged.
+		if (runtime.getAccountLayer() === null) {
+			applySyncedOptOut(runtime, outcome.optOut, {
+				actVersion: optOutActVersion,
+				allowClear: true,
+				externalId,
+				generation,
+				subjectId: expectedSubjectId,
+			});
 		}
-		applySyncedOptOut(runtime, outcome.optOut, {
-			actVersion: optOutActVersion,
-			allowClear: true,
-			externalId,
-			generation,
-			subjectId: expectedSubjectId,
-		});
 	};
 
 	return {
@@ -1535,16 +1643,19 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const {
 				vendorChoice: nextVendorChoice,
 				vendorDeclared: nextVendorDeclared,
+				vendorTimes: nextVendorTimes,
 			} = resolveVendorSelection(
 				before,
 				input,
 				explicitVendors,
 				actionAt,
 				context?.categories,
-				browserBefore.vendorChoice,
-				browserBefore.vendorDeclared
+				browserBefore
 			);
-			const vendorsChanged = nextVendorChoice !== browserBefore.vendorChoice;
+			const vendorsChanged =
+				nextVendorChoice !== browserBefore.vendorChoice ||
+				!sameStringArray(nextVendorDeclared, browserBefore.vendorDeclared) ||
+				!sameVendorTimesMap(nextVendorTimes, browserBefore.vendorTimes);
 			const owedNothing = saveUnderNoneRegime(before);
 			if (owedNothing && !vendorsChanged) {
 				emit({ result: owedNothing, type: 'command:save:completed' });
@@ -1667,6 +1778,9 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				patch.vendorChoice = nextVendorChoice;
 			}
 			const declaredVendorIds = vendorsChanged ? nextVendorDeclared : undefined;
+			const nextBrowserVendorTimes = vendorsChanged
+				? nextVendorTimes
+				: undefined;
 			const acknowledged =
 				acknowledgement !== null && acknowledgement !== before.noticeDismissal;
 			if (acknowledged) {
@@ -1697,9 +1811,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					}
 					commit(
 						patch,
-						declaredVendorIds === undefined
+						declaredVendorIds === undefined &&
+							nextBrowserVendorTimes === undefined
 							? undefined
-							: { vendorDeclared: declaredVendorIds }
+							: {
+									vendorDeclared: declaredVendorIds,
+									vendorTimes: nextBrowserVendorTimes,
+								}
 					);
 					const committed = getSnapshot();
 					const committedBrowser = runtime.getBrowserRecords();
@@ -1769,12 +1887,18 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				timing: decisionTiming,
 				uiSource,
 			});
-			const browserVendorAfter = browserAfter.vendorChoice;
+			const activeAccountLayer = runtime.getAccountLayer();
+			const activeAccountForPayload =
+				activeAccountLayer !== null &&
+				after.user !== null &&
+				activeAccountLayer.externalId === after.user.externalId
+					? activeAccountLayer
+					: null;
 			const vendorChoice = vendorChoicePayload(
 				after,
-				browserVendorAfter,
+				browserAfter,
 				browserBefore.vendorChoice,
-				browserAfter.vendorDeclared
+				activeAccountForPayload
 			);
 			if (vendorChoice) {
 				payload.vendorChoice = vendorChoice;
