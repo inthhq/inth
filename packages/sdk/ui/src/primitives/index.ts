@@ -3,6 +3,6 @@ export * from './button';
 export * from './collapsible';
 export * from './dialog';
 export * from './preference-item';
-export * from './shared/data-state';
+export * from './shared/data-state.model';
 export * from './switch';
 export * from './tabs';

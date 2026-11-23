@@ -1,4 +1,4 @@
-import { getOpenState } from './data-state';
+import { getOpenState } from './data-state.model';
 
 export const PREFERENCE_ITEM_SLOTS = {
 	auxiliary: 'preference-item-auxiliary',

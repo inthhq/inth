@@ -14,7 +14,7 @@ import type {
 	User,
 } from '@inth/sdk-core';
 
-import type { UIOptions } from '../theme/types';
+import type { UIOptions } from './types';
 
 /**
  * Transport and policy options shared by every framework provider.

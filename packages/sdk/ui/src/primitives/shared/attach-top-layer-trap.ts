@@ -10,7 +10,7 @@
  */
 
 import { tabbableElements } from '../../utils/dom';
-import { containsComposed, deepActiveElement } from './composed';
+import { containsComposed, deepActiveElement } from './composed-tree.model';
 
 /** Options for {@link attachTopLayerTrap}. */
 export interface TopLayerTrapOptions {

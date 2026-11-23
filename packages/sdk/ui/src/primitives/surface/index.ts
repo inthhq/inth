@@ -12,11 +12,11 @@
  */
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface; each module stays tree-shakeable.
-export * from '../shared/backdrop-guard';
-export * from '../shared/live-region';
-export * from '../shared/motion';
-export * from '../shared/page-block';
-export * from '../shared/scroll-fades';
-export * from '../shared/scroll-reveal';
-export * from '../shared/theme-switch-guard';
-export * from '../shared/top-layer-trap';
+export * from '../shared/attach-backdrop-guard';
+export * from '../shared/attach-live-region';
+export * from '../shared/after-motion';
+export * from '../shared/attach-page-block';
+export * from '../shared/attach-scroll-fades';
+export * from '../shared/reveal-disclosure';
+export * from '../shared/attach-theme-switch-guard';
+export * from '../shared/attach-top-layer-trap';

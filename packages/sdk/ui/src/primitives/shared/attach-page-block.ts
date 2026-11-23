@@ -10,7 +10,7 @@
  */
 
 import { setupScrollLock } from '../../utils/dom';
-import { composedParent } from './composed';
+import { composedParent } from './composed-tree.model';
 
 /** Options for {@link attachPageBlock}. */
 export interface PageBlockOptions {

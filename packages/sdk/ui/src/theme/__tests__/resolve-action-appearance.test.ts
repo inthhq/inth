@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { buildColorSchemeScript } from '../../utils/color-scheme';
-import { resolveActionAppearance } from '../action-appearance';
+import { resolveActionAppearance } from '../resolve-action-appearance';
 import {
 	THEME_STYLE_ELEMENT_ID,
 	warnOnUnappliedThemeTokens,
-} from '../token-warning';
+} from '../warn-on-unapplied-theme-tokens';
 
 describe('resolveActionAppearance', () => {
 	test('falls back to stroke, primary or neutral', () => {
