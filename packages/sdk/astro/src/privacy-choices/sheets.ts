@@ -13,6 +13,8 @@
  * @internal
  */
 
+import type { PrivacyChoicesPresentation } from './design';
+
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface PrivacyChoicesSheet {
 	readonly id: string;
@@ -21,6 +23,31 @@ export interface PrivacyChoicesSheet {
 
 /** Marks every Inth `<style>`; the value is the sheet's id. */
 export const SHEET_ATTRIBUTE = 'data-inth-styles';
+
+/**
+ * The ids of the sheets each presentation renders with: the tokens, the
+ * buttons, the shell and its own. They match the `id` each sheet module
+ * exports, which a test checks, so the browser can tell whether a page
+ * already carries them without downloading them.
+ */
+export const PRESENTATION_SHEET_IDS = {
+	bar: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-bar'],
+	card: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-card'],
+	drawer: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-drawer'],
+} as const satisfies Record<PrivacyChoicesPresentation, readonly string[]>;
+
+/**
+ * Whether the document already holds every sheet a presentation renders
+ * with, as a server-rendered page does.
+ */
+export const presentationSheetsPresent = function presentationSheetsPresent(
+	presentation: PrivacyChoicesPresentation,
+	target: Document = document
+): boolean {
+	return PRESENTATION_SHEET_IDS[presentation].every(
+		(id) => target.querySelector(`style[${SHEET_ATTRIBUTE}="${id}"]`) !== null
+	);
+};
 
 /**
  * Add the sheets the document does not hold yet, in order, after the last

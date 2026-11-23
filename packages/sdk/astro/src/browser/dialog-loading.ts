@@ -10,6 +10,9 @@
  * @internal
  */
 
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+
+import type { DesignOptions } from '../privacy-choices/design';
 import type { InthUIAdapterName } from '../types';
 import { loadDialogAdapter, requireDialogSurface } from '../ui/adapter';
 import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/adapter';
@@ -24,19 +27,22 @@ import { loadDialogStyles } from './dialog-styles';
 const startSurface = async function startSurface(
 	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
-	design: 'classic' | 'privacy-choices'
+	design: DialogDesign | Promise<DialogDesign>
 ): Promise<void> {
 	try {
 		const surface = (await requireDialogSurface(ui)()) as {
-			preloadDialog?: (design: 'classic' | 'privacy-choices') => unknown;
+			preloadDialog?: (design: DialogDesign) => unknown;
 		};
 		if (kind !== 'iab') {
-			await surface.preloadDialog?.(design);
+			await surface.preloadDialog?.(await design);
 		}
 	} catch {
 		// `mount()` imports it again and reports the failure.
 	}
 };
+
+/** The preference dialog an island renders. */
+type DialogDesign = 'classic' | 'privacy-choices';
 
 /**
  * The islands that render the Privacy Choices dialog when the design opts
@@ -66,6 +72,29 @@ export const dialogDesignFor = function dialogDesignFor(
 		: 'classic';
 };
 
+/**
+ * Which dialog an open would mount, read before the engine has loaded,
+ * from the snapshot the server rendered. Only an island with a Privacy
+ * Choices dialog asks: the design's resolver is a chunk of its own, so a
+ * page that cannot render that dialog never downloads it.
+ *
+ * @internal
+ */
+export const resolveDialogDesign = function resolveDialogDesign(
+	ui: InthUIAdapterName,
+	kind: ConsentDialogKind,
+	snapshot: ConsentSnapshot,
+	options: DesignOptions
+): DialogDesign | Promise<DialogDesign> {
+	if (kind !== 'preferences' || !PRIVACY_CHOICES_DIALOG_ADAPTERS.has(ui)) {
+		return 'classic';
+	}
+	return (async () => {
+		const { usesPrivacyChoices } = await import('../privacy-choices/design');
+		return dialogDesignFor(ui, kind, usesPrivacyChoices(snapshot, options));
+	})();
+};
+
 /** Put the Privacy Choices dialog's sheets in, from their own chunk. */
 const loadPrivacyChoicesDialogStyles =
 	async function loadPrivacyChoicesDialogStyles(
@@ -86,21 +115,26 @@ const loadPrivacyChoicesDialogStyles =
  *
  * @param nonce - The page's CSP nonce, for the stylesheet links.
  * @param design - The dialog the island renders, which decides its
- * stylesheets. The Privacy Choices dialog links no classic sheet.
+ * stylesheets, or a promise of it while the page's design resolves. The
+ * Privacy Choices dialog links no classic sheet.
  * @throws {Error} When the adapter is not registered or fails to load.
  */
 export const loadDialog = async function loadDialog(
 	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
 	nonce: string | undefined,
-	design: 'classic' | 'privacy-choices' = 'classic'
+	design: DialogDesign | Promise<DialogDesign> = 'classic'
 ): Promise<ConsentDialogAdapter> {
 	const surface = startSurface(ui, kind, design);
+	const stylesFor = (resolved: DialogDesign): Promise<void> =>
+		resolved === 'privacy-choices'
+			? loadPrivacyChoicesDialogStyles(nonce)
+			: loadDialogStyles(nonce, kind);
+	// The adapter and the island do not depend on the design, so they
+	// start at once; only the stylesheets and the one dialog wait for it.
 	const [adapter] = await Promise.all([
 		loadDialogAdapter(ui),
-		design === 'privacy-choices'
-			? loadPrivacyChoicesDialogStyles(nonce)
-			: loadDialogStyles(nonce, kind),
+		typeof design === 'string' ? stylesFor(design) : design.then(stylesFor),
 		surface,
 	]);
 	return adapter;

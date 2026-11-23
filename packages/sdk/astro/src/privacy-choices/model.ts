@@ -125,6 +125,7 @@ export type PartName =
 	| 'barActions'
 	| 'barText'
 	| 'barTitle'
+	| 'body'
 	| 'card'
 	| 'description'
 	| 'expand'
@@ -143,6 +144,9 @@ const PART_SLOTS: Partial<Record<PartName, AllThemeKeys>> = {
 	barActions: 'consentBannerFooter',
 	barText: 'consentBannerDescription',
 	barTitle: 'consentBannerTitle',
+	// The side Drawer's body and the in-place panel are the same element
+	// for a theme, as React's `banner.expand` slot reads them.
+	body: 'consentBannerExpand',
 	card: 'consentBannerCard',
 	description: 'consentBannerDescription',
 	expand: 'consentBannerExpand',
@@ -277,13 +281,13 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 		barActions: join(presentationClasses.actions),
 		barText: join(presentationClasses.text),
 		barTitle: join(surface.visuallyHidden),
+		// The side Drawer's body holds the options from the start; the view
+		// picks it or the in-place panel by the layout in force, since the
+		// phone Drawer expands in place.
+		body: join(presentationClasses.body),
 		card: join(surface.card, presentationClasses.card),
 		description: join(surface.description),
-		expand:
-			// The side Drawer's body holds the options from the start.
-			container.desktop.flow === 'all-in-one'
-				? join(presentationClasses.body)
-				: join(classNames.expand.panel),
+		expand: join(classNames.expand.panel),
 		footer: join(surface.footer, presentationClasses.footer),
 		header: join(surface.head, presentationClasses.head),
 		overlay: join(surface.scrim),

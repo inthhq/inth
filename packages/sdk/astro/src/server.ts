@@ -602,6 +602,7 @@ export {
 	privacyChoicesPresentation,
 	usesPrivacyChoices,
 } from './privacy-choices/design';
+export { privacyChoicesLinkIconSvg } from './privacy-choices/link-icon';
 export { resolvePrivacyChoicesModel } from './privacy-choices/model';
 export type { PrivacyChoicesModel } from './privacy-choices/model';
 export {

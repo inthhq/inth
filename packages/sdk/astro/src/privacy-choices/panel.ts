@@ -159,8 +159,11 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 	if (styles) {
 		insertSheets(PANEL_SHEETS, styles.nonce);
 	}
-	const { kernel, session, draft, idPrefix, noStyle, theme } = context;
+	const { kernel, session, draft, idPrefix } = context;
 	const { choices, expand } = context.classNames;
+	// The prompt updates `noStyle` and the theme (an experiment arm can
+	// change it) on the context before each render, so they are read live.
+	let { noStyle, theme } = context;
 	const cls = (...names: (string | undefined)[]): string | undefined =>
 		noStyle ? undefined : names.filter(Boolean).join(' ') || undefined;
 
@@ -170,6 +173,7 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 	let wasConfirmationOpen = false;
 	let lastNudges = 0;
 	let cancelReveal: (() => void) | undefined;
+	let cancelVendorReveal: (() => void) | undefined;
 
 	const bundle = (): TranslationBundle | undefined =>
 		kernel.getSnapshot().translations?.translations as
@@ -882,6 +886,7 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 	};
 
 	const render = (): VChild => {
+		({ noStyle, theme } = context);
 		const { variant } = context;
 		if (variant === 'choice') {
 			return renderCategories([], null);
@@ -893,6 +898,33 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 			return renderRights();
 		}
 		return null;
+	};
+
+	// Bring an opened vendor table into view without scrolling its
+	// trigger out (LAY-05), unless the surface moved on (PERM-16).
+	const revealVendors = (root: HTMLElement): void => {
+		if (!revealing) {
+			return;
+		}
+		const category = revealing;
+		revealing = null;
+		const { token } = session.getState();
+		// Kept so a dispose cancels it, as React's surface does on unmount.
+		cancelVendorReveal?.();
+		cancelVendorReveal = scheduleReveal(
+			() => {
+				const trigger = root.querySelector(
+					`[data-testid="consent-banner-vendor-trigger-${category}"]`
+				);
+				const panel = root.ownerDocument.getElementById(
+					`${idPrefix}-vendors-${category}`
+				);
+				if (trigger && panel) {
+					revealDisclosure(trigger, panel);
+				}
+			},
+			{ isCurrent: () => session.isCurrent(token) }
+		);
 	};
 
 	const afterRender = (root: HTMLElement): void => {
@@ -941,27 +973,7 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 			cancel?.focus({ preventScroll: true });
 		}
 		lastNudges = nudges;
-		// Bring an opened vendor table into view without scrolling its
-		// trigger out (LAY-05), unless the surface moved on (PERM-16).
-		if (revealing) {
-			const category = revealing;
-			revealing = null;
-			const { token } = session.getState();
-			scheduleReveal(
-				() => {
-					const trigger = root.querySelector(
-						`[data-testid="consent-banner-vendor-trigger-${category}"]`
-					);
-					const panel = root.ownerDocument.getElementById(
-						`${idPrefix}-vendors-${category}`
-					);
-					if (trigger && panel) {
-						revealDisclosure(trigger, panel);
-					}
-				},
-				{ isCurrent: () => session.isCurrent(token) }
-			);
-		}
+		revealVendors(root);
 	};
 
 	return {
@@ -969,6 +981,7 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 		click,
 		dispose() {
 			cancelReveal?.();
+			cancelVendorReveal?.();
 		},
 		render,
 	};

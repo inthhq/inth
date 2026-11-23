@@ -25,6 +25,7 @@ import {
 	privacyChoicesFirstPaintSheets,
 	renderPrivacyChoicesHTML,
 } from '../privacy-choices/server';
+import { PRESENTATION_SHEET_IDS } from '../privacy-choices/sheets';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
@@ -666,4 +667,39 @@ describe('<PrivacyChoicesLink />', () => {
 		// The CCPA icon marks the opt-out right, as React draws it.
 		expect(optOut?.querySelector('svg')).not.toBeNull();
 	});
+
+	it('[C2] sizes the opt-out icon on its own, since the classic sheet that sized it never loads', async () => {
+		const locals = await buildLocals(PC, US_OPT_OUT);
+		const styled = await renderLink(locals, { variant: 'privacy-choices' });
+		const icon = styled?.querySelector('svg');
+		expect(icon?.getAttribute('height')).toBe('14');
+		expect(icon?.getAttribute('width')).toBe('30');
+		const bare = await renderLink(locals, {
+			noStyle: true,
+			variant: 'privacy-choices',
+		});
+		expect(bare?.querySelector('svg')?.hasAttribute('height')).toBe(false);
+		expect(bare?.querySelector('svg')?.hasAttribute('width')).toBe(false);
+	});
+});
+
+describe('wave C round 1', () => {
+	it('the banner legal links drop their class with noStyle', async () => {
+		const document = await render(await buildLocals(PC), { noStyle: true });
+		const link = $(document, 'consent-banner-legal-link-privacyPolicy');
+		expect(link).not.toBeNull();
+		expect(link?.hasAttribute('class')).toBe(false);
+	});
+
+	it.each(['bar', 'card', 'drawer'] as const)(
+		'the %s sheet ids the browser looks for match the sheets it loads',
+		async (presentation) => {
+			const { loadPresentationSheets } =
+				await import('../browser/privacy-choices');
+			const sheets = await loadPresentationSheets(presentation);
+			expect(sheets.map((sheet) => sheet.id)).toEqual(
+				PRESENTATION_SHEET_IDS[presentation]
+			);
+		}
+	);
 });

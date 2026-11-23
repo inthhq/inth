@@ -13,11 +13,13 @@ import type {
 	ConsentPresentation,
 	LegalLinks,
 } from '@inth/sdk/engine';
+import { getSurfaceSession } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
+import * as privacyChoicesPrompt from '../browser/privacy-choices';
 import { loadPresentationSheets } from '../browser/privacy-choices';
 import {
 	boot,
@@ -26,6 +28,7 @@ import {
 	registerDialogStyles,
 } from '../client';
 import type { AstroConsentClient } from '../client';
+import { setPrivacyChoicesLoaderForTest } from '../client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
 import { privacyChoicesClassNames } from '../privacy-choices/class-names';
@@ -79,6 +82,10 @@ interface MountOptions {
 	 * before it knows the policy: hidden, with no label.
 	 */
 	link?: boolean;
+	/** The link's icon class, as a styled `<PrivacyChoicesLink />` carries it. */
+	linkIconClass?: string;
+	/** The link's `variant` prop. */
+	linkVariant?: string;
 	/** Merged over the integration options. */
 	extra?: Partial<InthAstroOptions>;
 }
@@ -160,7 +167,7 @@ const mount = async function mount(input: MountOptions = {}) {
 	document.body.innerHTML = [
 		'<button type="button">Page action</button>',
 		input.link
-			? '<button type="button" data-inth-action="customize" data-inth-dialog="preferences" data-inth-default-label="" data-inth-privacy-choices-link="" hidden></button>'
+			? `<button type="button" data-inth-action="customize" data-inth-dialog="preferences" data-inth-default-label=""${input.linkIconClass ? ` data-inth-icon-class="${input.linkIconClass}"` : ''} data-inth-privacy-choices-link="${input.linkVariant ?? ''}" hidden></button>`
 			: '',
 		'<button type="button" data-testid="consent-dialog-trigger">Your Privacy Choices</button>',
 		'<div data-inth-test-spot></div>',
@@ -228,6 +235,7 @@ beforeEach(() => {
 afterEach(() => {
 	client?.dispose();
 	client = null;
+	setPrivacyChoicesLoaderForTest();
 	document.head
 		.querySelectorAll('style[data-inth-styles]')
 		.forEach((style) => style.remove());
@@ -1056,4 +1064,246 @@ describe('the React island (wave B round 2)', () => {
 			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
 		}
 	);
+});
+
+/** A prompt-chunk import the test releases or fails by hand. */
+const heldPrompt = function heldPrompt() {
+	let settle: (fail: boolean) => void = () => undefined;
+	const held = new Promise<boolean>((resolve) => {
+		settle = resolve;
+	});
+	const load = vi.fn(async () => {
+		if (await held) {
+			throw new Error('chunk failed');
+		}
+		return privacyChoicesPrompt;
+	});
+	return {
+		fail: () => settle(true),
+		load,
+		release: () => settle(false),
+	};
+};
+
+describe('wave C round 1', () => {
+	it('[C1] a prompt chunk that failed to load is fetched again on the next sync', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		let calls = 0;
+		setPrivacyChoicesLoaderForTest(() => {
+			calls += 1;
+			return calls === 1
+				? Promise.reject(new Error('chunk failed'))
+				: Promise.resolve(privacyChoicesPrompt);
+		});
+		try {
+			await mount();
+			await vi.waitFor(() => expect(calls).toBe(1));
+			await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+			// The next sync, here a ClientRouter page load, tries again.
+			document.dispatchEvent(new Event('astro:page-load'));
+			await waitForController();
+			expect(calls).toBe(2);
+			must('consent-banner-customize-button').click();
+			await waitForPanel();
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('[C1] a load still in flight for a disposed client neither holds up the next client nor mounts', async () => {
+		let release: () => void = () => undefined;
+		const held = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const staleMount = vi.fn(privacyChoicesPrompt.mountPrivacyChoicesBanner);
+		const staleLoad = vi.fn(async () => {
+			await held;
+			return { ...privacyChoicesPrompt, mountPrivacyChoicesBanner: staleMount };
+		});
+		setPrivacyChoicesLoaderForTest(staleLoad);
+		const stale = await mount();
+		await vi.waitFor(() => expect(staleLoad).toHaveBeenCalled());
+		stale.dispose();
+		// The next client boots on the same page while the old load hangs.
+		setPrivacyChoicesLoaderForTest();
+		client = boot(resolveOptions(optionsFor({})));
+		await waitForController();
+		release();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(staleMount).not.toHaveBeenCalled();
+	});
+
+	it('mounts on the swapped-in page when a ClientRouter swap lands while the chunk loads', async () => {
+		const held = heldPrompt();
+		setPrivacyChoicesLoaderForTest(held.load);
+		await mount();
+		await vi.waitFor(() => expect(held.load).toHaveBeenCalled());
+		// The swap replaces the spot and the prompt with the next page's.
+		const next = document.body.innerHTML;
+		document.body.innerHTML = next;
+		document.dispatchEvent(new Event('astro:after-swap'));
+		held.release();
+		await waitForController();
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+	});
+
+	it('a visitor the prompt is not shown to never downloads it', async () => {
+		const load = vi.fn(() => Promise.resolve(privacyChoicesPrompt));
+		setPrivacyChoicesLoaderForTest(load);
+		await mount({ region: 'us-opt-out' });
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(load).not.toHaveBeenCalled();
+		expect($('consent-banner-root')).toBeNull();
+	});
+
+	it('a server-rendered prompt whose page lacks its sheets loads them', async () => {
+		await mount({ container: { side: 'start', type: 'drawer' } });
+		await waitForController();
+		await vi.waitFor(() =>
+			expect(
+				document.querySelector('style[data-inth-styles="inth-drawer"]')
+			).not.toBeNull()
+		);
+		expect(
+			document.querySelector('style[data-inth-styles="inth-card"]')
+		).toBeNull();
+	});
+
+	it("applies the experiment arm's theme in the browser, as the server does", async () => {
+		await mount({
+			extra: {
+				experiment: {
+					arm: 'branded',
+					arms: {
+						branded: {
+							theme: { slots: { consentBannerCard: 'arm-card' } },
+						},
+					},
+					id: 'card-class',
+				},
+			},
+		});
+		await waitForController();
+		// Expanding renders the prompt again in the browser.
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		expect(must('consent-banner-card').className).toContain('arm-card');
+	});
+
+	it('[PERM-13] the phone Drawer of a side Drawer site takes the in-place panel class', async () => {
+		const listeners = new Set<() => void>();
+		let phone = false;
+		const original = window.matchMedia;
+		window.matchMedia = ((query: string) => ({
+			addEventListener: (_: string, listener: () => void) => {
+				if (query.includes('max-width')) {
+					listeners.add(listener);
+				}
+			},
+			matches: query.includes('max-width') ? phone : false,
+			media: query,
+			removeEventListener: (_: string, listener: () => void) =>
+				listeners.delete(listener),
+		})) as unknown as typeof window.matchMedia;
+		const expandClass = privacyChoicesClassNames.expand.panel as string;
+		const bodyClass = privacyChoicesClassNames.drawer.body as string;
+		try {
+			await mount({ container: { side: 'start', type: 'drawer' } });
+			await waitForController();
+			expect(must('consent-banner-expand-panel').className).toContain(
+				bodyClass
+			);
+			phone = true;
+			for (const listener of listeners) {
+				listener();
+			}
+			await vi.waitFor(() =>
+				expect(root().getAttribute('data-flow')).toBe('expand-in-place')
+			);
+			const panel = must('consent-banner-expand-panel');
+			expect(panel.className).toContain(expandClass);
+			expect(panel.className).not.toContain(bodyClass);
+		} finally {
+			window.matchMedia = original;
+		}
+	});
+
+	it('[C2] the opt-out icon carries its own size, unless the link is unstyled', async () => {
+		await mount({
+			link: true,
+			linkIconClass: 'inth-opt-out-icon',
+			linkVariant: 'privacy-choices',
+			region: 'us-opt-out',
+		});
+		const icon = await vi.waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGElement;
+		});
+		expect(icon.getAttribute('height')).toBe('14');
+		expect(icon.getAttribute('width')).toBe('30');
+		client?.dispose();
+		client = null;
+
+		await mount({
+			link: true,
+			linkVariant: 'privacy-choices',
+			region: 'us-opt-out',
+		});
+		const bare = await vi.waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGElement;
+		});
+		expect(bare.hasAttribute('height')).toBe(false);
+		expect(bare.hasAttribute('width')).toBe(false);
+	});
+});
+
+describe('wave C round 1, the island and the options', () => {
+	it('the classic dialog ships with the island, so its open waits on no second download', async () => {
+		const pending = Symbol('pending');
+		const first = await Promise.race([
+			reactPanelSurface.preloadDialog('classic'),
+			Promise.resolve(pending),
+		]);
+		expect(first).not.toBe(pending);
+	});
+
+	it('[C5] closing the prompt cancels a vendor table reveal still pending', async () => {
+		const booted = await mount();
+		await waitForController();
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		const session = getSurfaceSession(
+			(booted.runtime as NonNullable<typeof booted.runtime>).kernel
+		);
+		const isCurrent = vi.spyOn(session, 'isCurrent');
+		// A vendor table trigger, as a category with vendors renders it.
+		const body = must('consent-banner-body');
+		const group = document.createElement('div');
+		group.setAttribute('data-category', 'marketing');
+		const trigger = document.createElement('button');
+		trigger.setAttribute(
+			'data-testid',
+			'consent-banner-vendor-trigger-marketing'
+		);
+		group.append(trigger);
+		body.append(group);
+		trigger.click();
+		// The prompt renders and schedules the reveal, then goes away.
+		await Promise.resolve();
+		await Promise.resolve();
+		booted.dispose();
+		client = null;
+		await new Promise((resolve) => {
+			setTimeout(resolve, 400);
+		});
+		expect(isCurrent).not.toHaveBeenCalled();
+	});
 });

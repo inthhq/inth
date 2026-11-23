@@ -146,7 +146,7 @@ const legalLinks = function legalLinks(
 				h(
 					'a',
 					{
-						class: model.classNames.legalLinks.legalLink,
+						class: cx(model, model.classNames.legalLinks.legalLink),
 						'data-testid': `consent-banner-legal-link-${link.key}`,
 						href: link.href,
 						rel: link.rel,
@@ -360,7 +360,7 @@ export const renderPrompt = function renderPrompt(
 			allInOne
 				? h(
 						'div',
-						bound(parts.expand, {
+						bound(parts.body, {
 							'data-testid': 'consent-banner-expand-panel',
 						}),
 						scroll,

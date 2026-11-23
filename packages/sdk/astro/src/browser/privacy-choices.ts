@@ -14,6 +14,7 @@
  */
 
 import {
+	applyExperimentTheme,
 	commitBannerChoice,
 	getSurfaceSession,
 	PHONE_LAYOUT_QUERY,
@@ -21,6 +22,7 @@ import {
 import type {
 	BannerCommitAction,
 	ConsentKernel,
+	ConsentSnapshot,
 	SurfaceSession,
 } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
@@ -56,7 +58,10 @@ import type {
 } from '../privacy-choices/model';
 import type * as PanelModule from '../privacy-choices/panel';
 import type { PrivacyChoicesPanel } from '../privacy-choices/panel';
-import { insertSheets } from '../privacy-choices/sheets';
+import {
+	insertSheets,
+	presentationSheetsPresent,
+} from '../privacy-choices/sheets';
 import type { PrivacyChoicesSheet } from '../privacy-choices/sheets';
 import {
 	PRIVACY_CHOICES_ID_PREFIX,
@@ -241,10 +246,11 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		return pageStatus;
 	};
 
-	// A server-rendered prompt arrived with its sheets; one this renders
-	// waits for them, as React's surface waits for its deferred sheets.
-	let sheetsReady = root !== null || !injectStyles;
-	let sheetsFor: PrivacyChoicesPresentation | null = null;
+	// A prompt waits for its presentation's sheets, as React's surface
+	// waits for its deferred sheets. A server-rendered prompt usually
+	// arrived with them, but a deferred or swapped-in one may not have.
+	const sheetsReady = new Set<PrivacyChoicesPresentation>();
+	let sheetsLoading: PrivacyChoicesPresentation | null = null;
 	let phase: Phase = root && !root.hidden ? 'shown' : 'hidden';
 	let disposed = false;
 	let phone = matches(PHONE_LAYOUT_QUERY);
@@ -265,6 +271,15 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	let scheduled = false;
 	let listenersOn: HTMLElement | null = null;
 	let lastModel: PrivacyChoicesModel | null = null;
+	let idle: number | null = null;
+
+	/** The host theme with the visitor's experiment arm over it, as the server renders it. */
+	const themeFor = (snapshot: ConsentSnapshot) =>
+		applyExperimentTheme(
+			options.theme,
+			options.experiment,
+			snapshot.experiment
+		);
 
 	const bundle = (): Partial<Translations> | undefined =>
 		kernel.getSnapshot().translations?.translations as
@@ -309,6 +324,18 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		})();
 	};
 
+	// The options load with Customize; warm them at idle once the prompt
+	// shows, never for a visitor it is not shown to.
+	const warmAtIdle = (): void => {
+		if (idle !== null) {
+			return;
+		}
+		idle =
+			typeof window.requestIdleCallback === 'function'
+				? window.requestIdleCallback(() => warmPanel(), { timeout: 4000 })
+				: window.setTimeout(warmPanel, 2000);
+	};
+
 	const ensurePanel = (model: PrivacyChoicesModel): void => {
 		if (panel || !panelModule || !panelWanted) {
 			return;
@@ -321,7 +348,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			kernel,
 			noStyle: model.noStyle,
 			session,
-			theme: options.theme,
+			theme: themeFor(kernel.getSnapshot()),
 			uiSource: 'banner',
 			variant: model.variant,
 		};
@@ -331,23 +358,32 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		);
 	};
 
-	const ensureSheets = (model: PrivacyChoicesModel): void => {
-		if (sheetsReady || sheetsFor === model.presentation) {
-			return;
+	/** Whether the presentation's sheets are in; starts loading them if not. */
+	const ensureSheets = (presentation: PrivacyChoicesPresentation): boolean => {
+		if (!injectStyles || sheetsReady.has(presentation)) {
+			return true;
 		}
-		sheetsFor = model.presentation;
+		if (presentationSheetsPresent(presentation)) {
+			sheetsReady.add(presentation);
+			return true;
+		}
+		if (sheetsLoading === presentation) {
+			return false;
+		}
+		sheetsLoading = presentation;
 		void (async () => {
 			try {
-				insertSheets(
-					await loadPresentationSheets(model.presentation),
-					host.nonce
-				);
+				insertSheets(await loadPresentationSheets(presentation), host.nonce);
 			} catch {
 				// An unstyled consent prompt beats a hidden one.
 			}
-			sheetsReady = true;
+			if (sheetsLoading === presentation) {
+				sheetsLoading = null;
+			}
+			sheetsReady.add(presentation);
 			invalidate();
 		})();
+		return false;
 	};
 
 	const commit = (action: BannerCommitAction): void => {
@@ -555,10 +591,12 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	// oxlint-disable-next-line complexity -- The render follows React's surface, which owns the same steps.
 	const render = (): void => {
 		const snapshot = kernel.getSnapshot();
+		// The arm's theme overrides ride on the host theme, as on the server.
+		const theme = themeFor(snapshot);
 		const model = resolvePrivacyChoicesModel({
 			classNames,
 			hostname: window.location.hostname,
-			options,
+			options: { ...options, theme },
 			props,
 			receiptData: getOptOutReceiptData(kernel),
 			snapshot,
@@ -570,11 +608,22 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			phase = 'hidden';
 			return;
 		}
-		ensureSheets(model);
+		const activeUI = snapshot.activeUI ?? 'none';
+		const owed =
+			hasConsentUI(snapshot) &&
+			activeUI === 'banner' &&
+			MODELS.includes(snapshot.model ?? 'opt-in') &&
+			model.variant !== 'none';
+		// Only a prompt that shows loads its sheets and options.
+		const styled = owed && ensureSheets(model.presentation);
 		const layout = phone ? model.container.phone : model.container.desktop;
 		const allInOne = layout.flow === 'all-in-one';
-		if (allInOne && !panelWanted) {
+		if (owed && allInOne) {
 			panelWanted = true;
+		}
+		// A failed options download is forgotten; the next render tries
+		// again, so a side Drawer is never left empty.
+		if (owed && panelWanted && !panelModule) {
 			warmPanel();
 		}
 		// All-in-one has nothing to fold. An expansion left from the phone
@@ -586,13 +635,8 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 				session.collapse();
 			}
 		}
-		const activeUI = snapshot.activeUI ?? 'none';
-		const wantsShow =
-			sheetsReady &&
-			hasConsentUI(snapshot) &&
-			activeUI === 'banner' &&
-			MODELS.includes(snapshot.model ?? 'opt-in') &&
-			model.variant !== 'none';
+		// A prompt already on screen stays while a sheet it lacked loads.
+		const wantsShow = owed && (styled || phase === 'shown');
 		const reducedMotion = matches('(prefers-reduced-motion: reduce)');
 
 		// Follow the kernel. Opening the dialog removes the prompt at once,
@@ -628,6 +672,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		if (panelContext) {
 			panelContext.variant = model.variant;
 			panelContext.noStyle = model.noStyle;
+			panelContext.theme = theme;
 		}
 		const tree = renderPrompt(model, {
 			expanded: state.expanded,
@@ -645,6 +690,9 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		}
 		listen(root);
 		panel?.afterRender(root);
+		if (phase === 'shown') {
+			warmAtIdle();
+		}
 
 		if (phase === 'leaving') {
 			release();
@@ -722,13 +770,6 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	// The rights bundle reads the local receipt data (COPY-01, SR-04).
 	const unsubscribeReceipt = subscribeOptOutReceiptData(kernel, invalidate);
 
-	// The options load with Customize; warm them at idle while the prompt
-	// shows.
-	const idle =
-		typeof window.requestIdleCallback === 'function'
-			? window.requestIdleCallback(() => warmPanel(), { timeout: 4000 })
-			: window.setTimeout(warmPanel, 2000);
-
 	render();
 
 	return {
@@ -737,10 +778,12 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 				return;
 			}
 			disposed = true;
-			if (typeof window.cancelIdleCallback === 'function') {
-				window.cancelIdleCallback(idle);
-			} else {
-				window.clearTimeout(idle);
+			if (idle !== null) {
+				if (typeof window.cancelIdleCallback === 'function') {
+					window.cancelIdleCallback(idle);
+				} else {
+					window.clearTimeout(idle);
+				}
 			}
 			cancelAnimationFrame(cancelPanelFocus);
 			unsubscribeKernel();

@@ -15,7 +15,7 @@ These fixes apply when your `presentation` uses `design: 'privacy-choices'`.
 - **Prompt root:** the root takes `dir` from the banner's language, carries `data-inth-surface="banner"`, and sets `data-animation="off"` when you turn off animation. Collapsed panels and a leaving prompt carry a real `inert` attribute.
 - **Customization:** the collapsed bar reads the `consentBannerTitle`, `consentBannerDescription` and `consentBannerFooter` slots. The spacing of the US Preferences list is in the stylesheet, so `noStyle` removes it.
 - **Dialog legal link:** with `ui: 'react'`, `<ConsentDialog legalLinks>` now reaches the Privacy Choices dialog's footer link (the Cookie Policy in the EU, the Privacy Policy in the US). Leave it out to show the link; `legalLinks={null}` hides it, and a list shows it only when its key is in the list.
-- **Downloads:** a Privacy Choices page warms and opens only the Privacy Choices dialog. It never downloads the classic dialog's code or stylesheets. On a classic page, the React island now loads the classic dialog as its own chunk.
+- **Downloads:** a Privacy Choices page warms and opens only the Privacy Choices dialog. It never downloads the classic dialog's stylesheets.
 
 **New component:** `<PrivacyChoicesLink />` renders "Your Privacy Choices" in your footer, like React's `PrivacyChoicesLink`. It opens the preference dialog. With the Privacy Choices design, it shows under opt-in policies too, in the US and the EU, without the opt-out icon. Under an opt-out policy, it shows the opt-out link set by `presentation.optOutLink`, with the CCPA icon beside the Privacy Choices titles. After a choice, the banner moves focus to this link.
 

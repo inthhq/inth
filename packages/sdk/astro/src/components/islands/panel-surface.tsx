@@ -17,6 +17,7 @@
  */
 
 import { ConsentDraftProvider, InthProvider } from '@inth/react';
+import { ConsentDialog } from '@inth/react/components/consent-dialog';
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useEffect, useState } from 'react';
@@ -47,20 +48,23 @@ type PreferencesDialog = ComponentType<{
 	legalLinks?: (keyof LegalLinks)[] | null;
 }>;
 
-// Each design's dialog arrives on its own chunk, so a Privacy Choices page
-// never downloads the classic dialog and a classic page never downloads
-// the Privacy Choices one. React's stock `ConsentDialog` renders its
-// Privacy Choices dialog when the design opts in, and hosts the opt-in
-// confirmation and the opt-out receipt there.
-const DIALOG_MODULES: Record<DialogDesign, () => Promise<PreferencesDialog>> = {
-	classic: async () =>
-		(await import('@inth/react/components/consent-dialog'))
-			.ConsentDialog as PreferencesDialog,
+// The classic dialog ships with the island, as before the Privacy Choices
+// design, so its open costs one download wave, not two. The Privacy
+// Choices dialog arrives on its own chunk, so a classic page never
+// downloads it. React's stock `ConsentDialog` renders its Privacy Choices
+// dialog when the design opts in, and hosts the opt-in confirmation and
+// the opt-out receipt there.
+const DIALOG_MODULES: Record<
+	Exclude<DialogDesign, 'classic'>,
+	() => Promise<PreferencesDialog>
+> = {
 	'privacy-choices': async () =>
 		(await import('@inth/react/consent-dialog'))
 			.ConsentDialog as PreferencesDialog,
 };
-const loadedDialogs: Partial<Record<DialogDesign, PreferencesDialog>> = {};
+const loadedDialogs: Partial<Record<DialogDesign, PreferencesDialog>> = {
+	classic: ConsentDialog as PreferencesDialog,
+};
 const dialogPromises: Partial<
 	Record<DialogDesign, Promise<PreferencesDialog>>
 > = {};
@@ -75,11 +79,14 @@ const dialogPromises: Partial<
 export const preloadDialog = function preloadDialog(
 	design: DialogDesign
 ): Promise<PreferencesDialog> {
+	if (design === 'classic') {
+		return Promise.resolve(ConsentDialog as PreferencesDialog);
+	}
 	dialogPromises[design] ??= (async () => {
 		try {
-			const loaded = await DIALOG_MODULES[design]();
-			loadedDialogs[design] = loaded;
-			return loaded;
+			const component = await DIALOG_MODULES[design]();
+			loadedDialogs[design] = component;
+			return component;
 		} catch (error) {
 			dialogPromises[design] = undefined;
 			throw error;

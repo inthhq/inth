@@ -27,8 +27,10 @@ import {
 } from '@inth/sdk/surface-state';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import type { Translations } from '@inth/sdk/translations';
-import { cppaOptOutIconSvg } from '@inth/sdk/ui/utils/opt-out-icon';
-import { promptClassNames } from '@inth/astro/server';
+import {
+	privacyChoicesLinkIconSvg,
+	promptClassNames,
+} from '@inth/astro/server';
 import ComponentStyles from './component-styles.astro';
 
 interface Props {
@@ -86,7 +88,7 @@ const hasSlot = Astro.slots.has('default');
 	hidden={state ? undefined : true}
 	href={as === 'a' ? '#inth-preferences' : undefined}
 	type={as === 'button' ? 'button' : undefined}
->{state?.icon && <Fragment set:html={cppaOptOutIconSvg(iconClass)} />}<slot>{state ? state.label : ''}</slot></Tag>
+>{state?.icon && <Fragment set:html={privacyChoicesLinkIconSvg(iconClass, !noStyle)} />}<slot>{state ? state.label : ''}</slot></Tag>
 
 <script>
 	import { attachBannerActions } from '@inth/astro/client';

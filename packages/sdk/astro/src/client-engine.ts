@@ -100,6 +100,7 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/page-state';
+import type * as PrivacyChoicesPrompt from './browser/privacy-choices';
 import type { PrivacyChoicesController } from './browser/privacy-choices';
 import { syncPrivacyChoicesLinks } from './browser/privacy-choices-link';
 import type * as PromptRenderer from './browser/render-prompt';
@@ -183,8 +184,9 @@ const NONCE_BEARING_SELECTOR = [
 	'script[data-inth-boot]',
 	'script[data-inth-inline]',
 	`style#${THEME_STYLE_ELEMENT_ID}`,
-	'style[data-inth-styles="inth-first-paint"]',
-	'style[data-inth-styles="inth-iab-first-paint"]',
+	// Every Inth sheet: the classic first-paint ones and the Privacy
+	// Choices tokens, shell and presentation the server inlines.
+	'style[data-inth-styles]',
 	'script[data-inth-category]',
 ].join(', ');
 
@@ -654,12 +656,15 @@ const loadConfirmationSheets = async function loadConfirmationSheets(
 
 /** The page's Privacy Choices prompt, once its chunk has mounted it. */
 let privacyChoices: PrivacyChoicesController | null = null;
-let privacyChoicesLoading: Promise<void> | null = null;
+/** The prompt chunk's download in flight, and the client it is for. */
+let privacyChoicesLoading: { client: AstroConsentClient } | null = null;
 
 /** Remove the Privacy Choices prompt with the client that mounted it. */
 const disposePrivacyChoices = function disposePrivacyChoices(): void {
 	privacyChoices?.dispose();
 	privacyChoices = null;
+	// A download still in flight mounts nothing now.
+	privacyChoicesLoading = null;
 };
 
 const createClient = function createClient(
@@ -1146,16 +1151,6 @@ const promptLoadFailures = new WeakMap<AstroConsentClient, number>();
 
 const SPOT_SELECTOR = `[${PROMPT_SLOT_ATTRIBUTE}], [${IAB_PROMPT_SLOT_ATTRIBUTE}]`;
 
-/** Whether the banner is still owed and nothing has rendered one yet. */
-const owesBanner = function owesBanner(client: AstroConsentClient): boolean {
-	return (
-		currentClient() === client &&
-		client.getConsent().activeUI === 'banner' &&
-		!usesPrivacyChoices(client.getConsent(), client.options) &&
-		document.querySelector(BANNER_ROOT_SELECTOR) === null
-	);
-};
-
 /**
  * Whether the IAB banner's spot answers the snapshot.
  *
@@ -1171,6 +1166,32 @@ const iabSpotAnswers = function iabSpotAnswers(
 		iabSpot !== null &&
 		snapshot.iab?.enabled !== false &&
 		readIABSpotModels(iabSpot).includes(snapshot.policyRule.model)
+	);
+};
+
+/**
+ * Whether the Privacy Choices prompt answers the snapshot. A site can
+ * serve the IAB banner in one region and the Privacy Choices design in
+ * another, and the design resolves for every policy, so an answering IAB
+ * spot comes first.
+ */
+const privacyChoicesAnswers = function privacyChoicesAnswers(
+	snapshot: ConsentSnapshot,
+	options: InthResolvedOptions
+): boolean {
+	return !iabSpotAnswers(snapshot) && usesPrivacyChoices(snapshot, options);
+};
+
+/**
+ * Whether the banner is still owed and nothing has rendered one yet. A
+ * Privacy Choices root does not count: that prompt answers other policies.
+ */
+const owesBanner = function owesBanner(client: AstroConsentClient): boolean {
+	return (
+		currentClient() === client &&
+		client.getConsent().activeUI === 'banner' &&
+		!privacyChoicesAnswers(client.getConsent(), client.options) &&
+		classicBannerRoot() === null
 	);
 };
 
@@ -1277,8 +1298,8 @@ const ensurePromptRendered = function ensurePromptRendered(
 		promptRender?.client === client ||
 		snapshot.activeUI !== 'banner' ||
 		// The Privacy Choices prompt renders into the same spot itself.
-		usesPrivacyChoices(snapshot, client.options) ||
-		document.querySelector(BANNER_ROOT_SELECTOR) ||
+		privacyChoicesAnswers(snapshot, client.options) ||
+		classicBannerRoot() ||
 		!document.querySelector(SPOT_SELECTOR)
 	) {
 		return;
@@ -1311,12 +1332,60 @@ const ensurePromptRendered = function ensurePromptRendered(
 	})();
 };
 
+type PrivacyChoicesModule = typeof PrivacyChoicesPrompt;
+
+const loadDefaultPrivacyChoices = (): Promise<PrivacyChoicesModule> =>
+	import('./browser/privacy-choices');
+
+let loadPrivacyChoices = loadDefaultPrivacyChoices;
+
+/**
+ * Replaces how the Privacy Choices prompt chunk is loaded, so a test can
+ * hold it or make it fail. Call with no argument to restore the real one.
+ *
+ * Tests only.
+ *
+ * @internal
+ */
+export const setPrivacyChoicesLoaderForTest =
+	function setPrivacyChoicesLoaderForTest(
+		loader?: () => Promise<PrivacyChoicesModule>
+	): void {
+		loadPrivacyChoices = loader ?? loadDefaultPrivacyChoices;
+	};
+
+/** The models the stock Privacy Choices prompt answers. */
+const PRIVACY_CHOICES_MODELS: readonly string[] = ['opt-in', 'opt-out'];
+
+/**
+ * Whether the Privacy Choices prompt shows for this snapshot. A visitor
+ * who is not shown it, such as one with a stored choice, never downloads
+ * it.
+ */
+const privacyChoicesShows = function privacyChoicesShows(
+	snapshot: ConsentSnapshot,
+	options: InthResolvedOptions
+): boolean {
+	return (
+		snapshot.activeUI === 'banner' &&
+		hasConsentUI(snapshot) &&
+		PRIVACY_CHOICES_MODELS.includes(snapshot.model ?? 'opt-in') &&
+		privacyChoicesAnswers(snapshot, options)
+	);
+};
+
 /**
  * Mount the Privacy Choices prompt when the banner's spot carries its
- * class names and the snapshot resolves to that design. The prompt is a
- * chunk of its own, so a page on the classic design never downloads it,
- * and it subscribes to the kernel from then on. A `ClientRouter` swap
- * replaces the spot, and the prompt moves to the new one.
+ * class names and the snapshot shows that design. The prompt is a chunk
+ * of its own, so a page on the classic design, or a visitor the prompt is
+ * not shown to, never downloads it, and it subscribes to the kernel from
+ * then on. A `ClientRouter` swap replaces the spot, and the prompt moves
+ * to the new one.
+ *
+ * Without the prompt the visitor has no way to choose (the classic banner
+ * stands down for this design), so a failed download is forgotten and the
+ * next snapshot tries again. A load a newer one replaced, for a client
+ * that was disposed, is ignored.
  */
 const ensurePrivacyChoices = function ensurePrivacyChoices(
 	client: AstroConsentClient,
@@ -1327,7 +1396,7 @@ const ensurePrivacyChoices = function ensurePrivacyChoices(
 		privacyChoices = null;
 	}
 	const { runtime } = client;
-	if (privacyChoices || privacyChoicesLoading || !runtime) {
+	if (privacyChoices || privacyChoicesLoading?.client === client || !runtime) {
 		return;
 	}
 	const spot = document.querySelector<HTMLElement>(
@@ -1335,29 +1404,45 @@ const ensurePrivacyChoices = function ensurePrivacyChoices(
 	);
 	if (
 		!spot?.getAttribute(PROMPT_SLOT_ATTRIBUTE)?.includes('"privacyChoices"') ||
-		!usesPrivacyChoices(snapshot, client.options)
+		!privacyChoicesShows(snapshot, client.options)
 	) {
 		return;
 	}
-	privacyChoicesLoading = (async () => {
+	const load = { client };
+	privacyChoicesLoading = load;
+	void (async () => {
+		let mounted = false;
 		try {
-			const { mountPrivacyChoicesBanner } =
-				await import('./browser/privacy-choices');
-			if (currentClient() !== client || !spot.isConnected) {
+			const { mountPrivacyChoicesBanner } = await loadPrivacyChoices();
+			if (privacyChoicesLoading !== load) {
 				return;
 			}
-			privacyChoices = mountPrivacyChoicesBanner(spot, {
-				kernel: runtime.kernel,
-				nonce: pageNonce,
-				options: client.options,
-				warmDialog: () => {
-					void warmDialog(client);
-				},
-			});
+			privacyChoicesLoading = null;
+			mounted = true;
+			if (currentClient() !== client) {
+				return;
+			}
+			if (spot.isConnected) {
+				privacyChoices = mountPrivacyChoicesBanner(spot, {
+					kernel: runtime.kernel,
+					nonce: pageNonce,
+					options: client.options,
+					warmDialog: () => {
+						void warmDialog(client);
+					},
+				});
+				return;
+			}
+			// A ClientRouter swap replaced the spot while the chunk loaded,
+			// and the new page's own attach found this load in flight and
+			// stood down. Mount on the page as it is now.
+			ensurePrivacyChoices(client, client.getConsent());
 		} catch (error) {
 			console.warn('@inth/astro: the consent banner failed to load.', error);
 		} finally {
-			privacyChoicesLoading = null;
+			if (!mounted && privacyChoicesLoading === load) {
+				privacyChoicesLoading = null;
+			}
 		}
 	})();
 };

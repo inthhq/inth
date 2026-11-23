@@ -16,8 +16,8 @@ import {
 } from '@inth/sdk/surface-state';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import type { Translations } from '@inth/sdk/translations';
-import { cppaOptOutIconSvg } from '@inth/sdk/ui/utils/opt-out-icon';
 
+import { privacyChoicesLinkIconSvg } from '../privacy-choices/link-icon';
 import type { InthResolvedOptions } from '../types';
 
 /** Marks a stock link; the value is its `variant` prop, or empty. */
@@ -80,8 +80,11 @@ export const syncPrivacyChoicesLinks = function syncPrivacyChoicesLinks(
 		} else {
 			link.setAttribute('data-opt-out-variant', state.variant);
 		}
+		// Only a styled link carries the icon's class, and only it sizes
+		// the icon on its own.
+		const iconClass = link.getAttribute(ICON_CLASS_ATTRIBUTE) ?? undefined;
 		const icon = state.icon
-			? cppaOptOutIconSvg(link.getAttribute(ICON_CLASS_ATTRIBUTE) ?? undefined)
+			? privacyChoicesLinkIconSvg(iconClass, iconClass !== undefined)
 			: '';
 		if (link.hasAttribute(DEFAULT_LABEL_ATTRIBUTE)) {
 			if (link.textContent !== state.label || Boolean(icon) !== hasIcon(link)) {

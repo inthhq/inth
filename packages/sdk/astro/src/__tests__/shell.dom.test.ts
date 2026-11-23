@@ -15,6 +15,7 @@ import type { EngineModule } from '../browser/shell';
 import {
 	getConsentClient,
 	getEventDispatcher,
+	registerDialogStyles,
 	registerRuntimeModules,
 } from '../client';
 import type { AstroConsentClient } from '../client';
@@ -567,6 +568,45 @@ describe('the first-load shell', () => {
 			await opened;
 			expect(island.runtimes[0]).toBe(getConsentClient()?.runtime);
 		});
+	});
+
+	it('an early Your Privacy Choices click downloads the Privacy Choices dialog, never the classic one', async () => {
+		renderPage();
+		const { loadEngine } = heldEngine();
+		registerDialogStyles(['/classic-dialog.css']);
+		registerDialogAdapter('react', () =>
+			Promise.resolve({
+				mount: vi.fn(),
+				name: 'react' as const,
+			})
+		);
+		try {
+			const { client: shell } = startShell(
+				loadEngine,
+				{},
+				{
+					...OPTIONS,
+					presentation: {
+						design: 'privacy-choices',
+						prompt: { container: { type: 'card' } },
+					},
+					ui: 'react',
+				}
+			);
+			void shell.openDialog();
+			await vi.waitFor(() =>
+				expect(
+					document.head.querySelector(
+						'style[data-inth-styles="inth-privacy-choices-dialog"]'
+					)
+				).not.toBeNull()
+			);
+			expect(
+				document.head.querySelector('link[href="/classic-dialog.css"]')
+			).toBeNull();
+		} finally {
+			registerDialogStyles([]);
+		}
 	});
 
 	it('sends events made before the engine once it has loaded', async () => {
