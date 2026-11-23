@@ -61,7 +61,7 @@ import {
 	ConsentIabPurposeRow,
 	ConsentIabStackRow,
 	ConsentIabVendorRow,
-} from './internal/iab-rows';
+} from './internal/consent-iab-vendor-row';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
