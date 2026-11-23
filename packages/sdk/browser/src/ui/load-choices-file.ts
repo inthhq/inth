@@ -9,7 +9,7 @@
  * it hosts are this one file, which the engine loads the first time the
  * page needs one of them, so a returning visitor who never sees them
  * never downloads them. The init script starts fetching it alongside the
- * engine when a banner is owed (`../init/run.ts`). They share one copy of
+ * engine when a banner is owed (`../init/run-init-script.ts`). They share one copy of
  * the morph registry and of the page block, so they stay one file.
  *
  * The file calls the engine's copy of everything that keeps per-kernel
