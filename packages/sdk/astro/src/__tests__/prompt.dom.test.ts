@@ -320,6 +320,38 @@ describe('a tap before the prompt chunk mounted', () => {
 		expect(page.getConsent().noticeDismissal?.dismissedAt).toBe(at);
 	});
 
+	// Opus F3: the style the early-tap script added hid the prompt for good
+	// when its chunk then failed, so the visitor saw no prompt and the tap
+	// went nowhere.
+	it('[C1] shows the prompt again when its chunk fails after a held tap, and replays the tap on the retry', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		let calls = 0;
+		setPromptLoaderForTest(() => {
+			calls += 1;
+			return calls === 1
+				? Promise.reject(new Error('chunk failed'))
+				: Promise.resolve(promptChunk);
+		});
+		try {
+			holdTap('accept');
+			const page = await mount();
+			await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+			expect(root().hidden).toBe(false);
+			expect(page.getConsent().explicitChoice).toBeNull();
+			// The next sync, here a ClientRouter page load, fetches the chunk
+			// again, and the prompt it mounts replays the held tap.
+			document.dispatchEvent(new Event('astro:page-load'));
+			await vi.waitFor(() =>
+				expect(page.getConsent().explicitChoice).not.toBeNull()
+			);
+			expect(calls).toBe(2);
+			expect(page.getConsent().effectivePermissions.marketing).toBe(true);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
 	it('drops a tap made under another policy, and shows the prompt again', async () => {
 		holdTap('reject', { model: 'opt-out', prompt: 'notice' });
 		const page = await mount();
