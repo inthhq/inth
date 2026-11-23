@@ -17,7 +17,7 @@
 
 import type { ConsentKernel } from '@inth/sdk-core';
 
-import type { CornerPosition } from './trigger-utils';
+import type { CornerPosition } from './trigger-drag.model';
 
 /**
  * Placement handed to DevTools; mirrors `DevToolsDock` from
