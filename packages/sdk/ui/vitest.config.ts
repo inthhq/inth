@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
+import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
 export default mergeConfig(
@@ -48,10 +49,34 @@ export default mergeConfig(
 					statements: 45,
 				},
 			},
-			environment: 'jsdom',
-			include: [
-				'src/**/__tests__/**/*.test.ts',
-				'src/**/__tests__/**/*.test.tsx',
+			projects: [
+				{
+					extends: true,
+					test: {
+						environment: 'jsdom',
+						exclude: ['src/**/*.browser.test.ts'],
+						include: [
+							'src/**/__tests__/**/*.test.ts',
+							'src/**/__tests__/**/*.test.tsx',
+						],
+						name: 'unit',
+					},
+				},
+				{
+					// Computed styles need a real engine: jsdom resolves neither
+					// `var()` nor `@layer`.
+					extends: true,
+					test: {
+						browser: {
+							enabled: true,
+							headless: true,
+							instances: [{ browser: 'chromium' }],
+							provider: playwright(),
+						},
+						include: ['src/**/__tests__/**/*.browser.test.ts'],
+						name: 'browser',
+					},
+				},
 			],
 		},
 	})

@@ -110,6 +110,110 @@ Lower these variables when a navbar, drawer, or chat widget should sit above the
 
 Keep each surface z-index above its overlay, and keep the dialog above the banner. Non-blocking banners only capture clicks on the card and branding tag, so clicks around them pass through to your page.
 
+## Keep classic variables on Privacy Choices
+
+The Privacy Choices UI reads the classic banner and dialog variables, so styling you set through them carries over. Each Privacy Choices part reads its own hook first, then the classic variable, then the theme token. Set either name on any ancestor, such as `:root` or `.inth-theme-root`:
+
+```css
+:root {
+  /* Rounds the classic floating card and the Privacy Choices Card */
+  --consent-banner-border-radius: 4px;
+  /* Wins over the classic variable on the Card only */
+  --consent-card-radius: 0;
+}
+```
+
+A `-dark` variable applies in dark mode only, as on the classic UI. Inth declares none of the mapped variables, so each default follows a scoped palette.
+
+| Classic variable | v6 hook that wins | v6 part |
+| --- | --- | --- |
+| `--consent-banner-font-family` | — | Card, Banner, Drawer: the layer font |
+| `--consent-banner-line-height` | — | Card, Banner, Drawer: the layer line height |
+| `--consent-banner-text-size-adjust` | — | Card, Banner, Drawer: the layer text size adjust |
+| `--consent-banner-border-radius` | `--consent-card-radius` | Card: the card corners |
+| `--consent-banner-max-width` | `--consent-card-width` | Card: the corner card width |
+| `--consent-banner-wall-max-width` | `--consent-card-width` | Card: the centred card width |
+| `--consent-banner-padding` | — | Card: the head and footer inset |
+| `--consent-banner-padding-mobile` | — | Card: the head and footer inset on phone |
+| `--consent-banner-entry-duration` | — | Card, Banner, Drawer: the entrance and the scrim fade-in |
+| `--consent-banner-entry-timing` | — | Card, Banner, Drawer: the entrance easing |
+| `--consent-banner-animation-timing` | — | Card, Banner, Drawer: the exit easing |
+| `--consent-banner-border-width` | — | Card, Banner, Drawer: the card border, the footer divider and the flush edge |
+| `--consent-banner-shadow` | `--consent-card-shadow`, `--consent-bar-shadow` | Card, Banner: the card shadow |
+| `--consent-banner-shadow-dark` | `--consent-card-shadow`, `--consent-bar-shadow` | Card, Banner: the card shadow in dark mode |
+| `--consent-banner-background-color` | `--consent-surface-background` | Card, Banner, Drawer: the card background |
+| `--consent-banner-background-color-dark` | `--consent-surface-background` | Card, Banner, Drawer: the card background in dark mode |
+| `--consent-banner-footer-background-color` | `--consent-surface-footer-background` | Card, Banner, Drawer: the footer background |
+| `--consent-banner-footer-background-color-dark` | `--consent-surface-footer-background` | Card, Banner, Drawer: the footer background in dark mode |
+| `--consent-banner-text-color` | — | Card, Banner, Drawer: the card text |
+| `--consent-banner-text-color-dark` | — | Card, Banner, Drawer: the card text in dark mode |
+| `--consent-banner-border-color` | `--consent-surface-border-color` | Card, Banner, Drawer: the card border and the footer divider |
+| `--consent-banner-border-color-dark` | `--consent-surface-border-color` | Card, Banner, Drawer: the card border and the footer divider in dark mode |
+| `--consent-banner-title-color` | — | Card, Banner, Drawer: the title |
+| `--consent-banner-title-color-dark` | — | Card, Banner, Drawer: the title in dark mode |
+| `--consent-banner-description-color` | — | Card, Banner, Drawer: the description, and the Banner sentence |
+| `--consent-banner-description-color-dark` | — | Card, Banner, Drawer: the description, and the Banner sentence in dark mode |
+| `--consent-banner-overlay-background-color` | — | Card, Banner, Drawer: the blocking scrim |
+| `--consent-banner-overlay-background-color-dark` | — | Card, Banner, Drawer: the blocking scrim in dark mode |
+| `--consent-banner-z-index` | `--consent-surface-z-index` | Card, Banner, Drawer: the layer stacking |
+| `--consent-dialog-font-family` | — | Dialog: the dialog font |
+| `--consent-dialog-line-height` | — | Dialog: the dialog line height |
+| `--consent-dialog-title-font-size` | — | Dialog: the title size |
+| `--consent-dialog-title-font-weight` | — | Dialog: the title weight |
+| `--consent-dialog-title-letter-spacing` | — | Dialog: the title tracking |
+| `--consent-dialog-description-font-size` | — | Dialog: the intro size |
+| `--consent-dialog-description-font-weight` | — | Dialog: the intro weight |
+| `--consent-dialog-description-line-height` | — | Dialog: the intro line height |
+| `--consent-dialog-footer-gap` | — | Dialog: the footer gap |
+| `--consent-dialog-footer-font-size` | — | Dialog: the footer note size |
+| `--consent-dialog-stroke-color` | — | Dialog: the footer divider |
+| `--consent-dialog-stroke-color-dark` | — | Dialog: the footer divider in dark mode |
+| `--consent-dialog-border-color` | — | Dialog: the card edge |
+| `--consent-dialog-border-color-dark` | — | Dialog: the card edge in dark mode |
+| `--consent-dialog-background-color` | — | Dialog: the card background |
+| `--consent-dialog-background-color-dark` | — | Dialog: the card background in dark mode |
+| `--consent-dialog-foreground-color` | — | Dialog: the card text |
+| `--consent-dialog-foreground-color-dark` | — | Dialog: the card text in dark mode |
+| `--consent-dialog-muted-color` | — | Dialog: the intro |
+| `--consent-dialog-muted-color-dark` | — | Dialog: the intro in dark mode |
+| `--consent-dialog-card-padding` | — | Dialog: the outer gap and the inset of the header, body and footer |
+| `--consent-dialog-card-padding-mobile` | — | Dialog: the inset of the header, body and footer on phone |
+| `--consent-dialog-card-gap` | — | Dialog: the space above the intro |
+| `--consent-dialog-footer-padding-y` | — | Dialog: the footer padding above and below |
+| `--consent-dialog-card-radius` | `--consent-dialog-radius` | Dialog: the card corners |
+| `--consent-dialog-max-width` | `--consent-dialog-width` | Dialog: the card width |
+| `--consent-dialog-max-height` | — | Dialog: the card height cap (v6 reads it under the same name) |
+| `--consent-dialog-z-index` | — | Dialog: the layer stacking (v6 reads it under the same name) |
+| `--consent-dialog-card-shadow` | — | Dialog: the card shadow, under its edge |
+| `--consent-dialog-border-width` | — | Dialog: the card edge and the footer divider |
+| `--consent-dialog-border-style` | — | Dialog: the footer divider style |
+| `--consent-dialog-animation-timing` | — | Dialog: the backdrop and card entrance easing |
+
+Privacy Choices does not read these classic variables:
+
+| Classic variable | Why v6 doesn't read it |
+| --- | --- |
+| `--consent-banner-animation-duration` | Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 exit keeps its own duration. |
+| `--consent-banner-border-radius-sm` | Rounds the focus ring of the classic footer rights links. The v6 prompt has no rights links; they live in the dialog. |
+| `--consent-banner-branding-tag-offset` | Declared but read by no rule, classic or v6. |
+| `--consent-banner-border-width-hairline` | Declared but read by no rule, classic or v6. |
+| `--consent-banner-overlay-z-index` | The v6 scrim sits inside the layer, under the card, so it has no stacking order of its own. `--consent-banner-z-index` moves both. |
+| `--consent-banner-space-y-reverse` | An internal helper the classic header sets on itself for its spacing, not a customisation hook. |
+| `--consent-banner-tab-size` | v6 sets no tab size; the prompt holds no preformatted text. |
+| `--consent-banner-widget-max-width` | Sizes the classic `widget` chip, which has no v6 presentation. |
+| `--consent-dialog-animation-duration` | Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 dialog keeps its own duration. |
+| `--consent-dialog-border-width-hairline` | Declared but read by no rule, classic or v6. |
+| `--consent-dialog-content-gap` | Spaces the classic dialog body sections. The v6 rights rows are divided by borders and padding instead. |
+| `--consent-dialog-header-gap` | Spaces the classic header stack. The v6 header sets the title beside the close button; `--consent-dialog-card-gap` spaces the title and intro. |
+| `--consent-dialog-height` | Sizes the classic sidebar dialog, which has no v6 counterpart. |
+| `--consent-dialog-link-text-color` | Colours the classic overlay, which holds no text. v6 has no counterpart. |
+| `--consent-dialog-link-text-color-dark` | Colours the classic overlay, which holds no text. v6 has no counterpart. |
+| `--consent-dialog-overlay-background-color` | The Vue adapter reads its computed value on `:root` to tell whether `styles.css` is on the page, so it keeps its default there, where v6 would take that default too. The v6 backdrop keeps `--inth-overlay`. |
+| `--consent-dialog-overlay-background-color-dark` | Kept on `:root` beside `--consent-dialog-overlay-background-color`, so the pair stays together. |
+| `--consent-dialog-overlay-z-index` | The v6 backdrop is the overlay, so `--consent-dialog-z-index` orders both. |
+| `--consent-manager-text-muted-color` | The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart. |
+| `--consent-manager-text-muted-color-dark` | The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart. |
+
 ## Style the "Consent by" tag
 
 Declare branding tag variables on `:root` so both the banner and the portaled dialog inherit them:

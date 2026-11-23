@@ -199,7 +199,8 @@ describe('surface font variables', () => {
 	 * `typography.fontFamily` reaches the page as `--inth-font-family`. A
 	 * surface whose own font variable hardcodes a stack instead ignores the
 	 * theme: the preference list did, so its category rows kept the system
-	 * font under a themed dialog title.
+	 * font under a themed dialog title. A variable the v6 sheets also read
+	 * is not declared at all; its default is the fallback where it is read.
 	 */
 	const fontVariables = [
 		readEntrypoint('styles.css'),
@@ -208,6 +209,9 @@ describe('surface font variables', () => {
 		[
 			...css.matchAll(
 				/(?<name>--(?:iab-)?(?:consent|cd)-[a-z-]*font-family)\s*:\s*(?<value>[^;}]+)/gu
+			),
+			...css.matchAll(
+				/var\(\s*(?<name>--(?:iab-)?(?:consent|cd)-[a-z-]*font-family)\s*,\s*(?<value>[^()]*(?:\([^()]*\))?)\s*\)/gu
 			),
 		].map((match) => [match.groups?.name, match.groups?.value?.trim()])
 	);

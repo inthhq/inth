@@ -13,13 +13,27 @@
  *   --consent-card-radius         (--inth-radius-lg)
  *   --consent-card-shadow         (--inth-shadow-lg)
  *   --consent-card-panel-height   (360px; 320px on phone)
+ *
+ * Each falls back to the classic banner variable that did the same job on
+ * the floating card, then to the default: `--consent-banner-max-width`
+ * (the corner card's width), `--consent-banner-wall-max-width` (the centre
+ * card's), `--consent-banner-border-radius` and `--consent-banner-shadow`.
+ * `--consent-banner-padding` and `-padding-mobile` set the head and footer
+ * inset.
  */
 
 @layer components {
 	.root {
-		--_consent-radius: var(--consent-card-radius, var(--inth-radius-lg));
-		--_consent-shadow: var(--consent-card-shadow, var(--inth-shadow-lg));
+		--_consent-radius: var(
+			--consent-card-radius,
+			var(--consent-banner-border-radius, var(--inth-radius-lg))
+		);
+		--_consent-shadow: var(
+			--consent-card-shadow,
+			var(--_consent-classic-shadow, var(--inth-shadow-lg))
+		);
 		--_consent-scroll-height: var(--consent-card-panel-height, 360px);
+		--_consent-pad: var(--consent-banner-padding);
 		bottom: 0;
 		inset-inline-start: 0;
 		max-width: 100%;
@@ -31,7 +45,10 @@
 	}
 
 	.shell {
-		width: var(--consent-card-width, min(440px, 100%));
+		width: var(
+			--consent-card-width,
+			min(var(--consent-banner-max-width, 440px), 100%)
+		);
 	}
 
 	/* The card grows upward from its anchor when Customize opens. */
@@ -57,7 +74,10 @@
 	}
 
 	.root[data-placement='card-center'] .shell {
-		width: var(--consent-card-width, min(480px, 100%));
+		width: var(
+			--consent-card-width,
+			min(var(--consent-banner-wall-max-width, 480px), 100%)
+		);
 		animation-name: consent-card-zoom-in;
 	}
 
@@ -76,6 +96,7 @@
 	@media (max-width: 640px) {
 		.root {
 			--_consent-scroll-height: var(--consent-card-panel-height, 320px);
+			--_consent-pad: var(--consent-banner-padding-mobile);
 			inset-inline: 0;
 			padding: var(--consent-card-offset, var(--inth-space-md));
 			padding-bottom: calc(

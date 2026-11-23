@@ -22,6 +22,9 @@
  *   --consent-drawer-radius        (--inth-radius-lg when inset)
  *   --consent-drawer-shadow        (layered when inset, one-sided when flush)
  *   --consent-drawer-panel-height  (400px; 300px on phone)
+ *
+ * The flush edge's hairline follows the classic
+ * `--consent-banner-border-width`, as the card's border does.
  */
 
 @layer components {
@@ -207,20 +210,20 @@
 	}
 
 	.root[data-edge-style='flush'][data-placement='drawer-bottom'] .card {
-		border-top-width: 1px;
+		border-top-width: var(--consent-banner-border-width, 1px);
 		padding-bottom: env(safe-area-inset-bottom, 0px);
 	}
 
 	.root[data-edge-style='flush'][data-placement='drawer-top'] .card {
-		border-bottom-width: 1px;
+		border-bottom-width: var(--consent-banner-border-width, 1px);
 	}
 
 	.root[data-edge-style='flush'][data-placement='drawer-start'] .card {
-		border-inline-end-width: 1px;
+		border-inline-end-width: var(--consent-banner-border-width, 1px);
 	}
 
 	.root[data-edge-style='flush'][data-placement='drawer-end'] .card {
-		border-inline-start-width: 1px;
+		border-inline-start-width: var(--consent-banner-border-width, 1px);
 	}
 
 	/* Each edge slides in from its own side and back out; inset travels the

@@ -26,23 +26,81 @@
  *   --consent-dialog-width       (520px; 560px for the EU)
  *   --consent-dialog-max-height  (min(640px, 100%))
  *   --consent-dialog-radius      (--inth-radius-lg)
+ *
+ * A site styled through the classic dialog's variables keeps that styling:
+ * each part reads the classic variable after its v6 hook and before the
+ * token. `--consent-dialog-max-width` and `-card-radius` stand behind the
+ * width and radius hooks. The font, the title and intro type, the card
+ * padding and gap, the footer gap, padding and font size, the border width
+ * and style, the card shadow and the entrance easing are read directly.
+ * The colours (`-background-color`, `-foreground-color`, `-muted-color`,
+ * `-border-color`, `-stroke-color`) go through private properties so their
+ * `-dark` twins take over in dark mode, as on the classic dialog.
  */
 
 @layer components {
 	.backdrop {
+		--_dialog-bg: var(--consent-dialog-background-color);
+		--_dialog-fg: var(--consent-dialog-foreground-color);
+		--_dialog-muted: var(--consent-dialog-muted-color);
+		--_dialog-edge: var(--consent-dialog-border-color);
+		--_dialog-stroke: var(--consent-dialog-stroke-color);
+		--_dialog-motion: var(--inth-duration-slow)
+			var(
+				--consent-dialog-animation-timing,
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1))
+			);
 		position: fixed;
 		inset: 0;
 		z-index: var(--consent-dialog-z-index, 999999);
 		display: grid;
 		place-items: center;
-		padding: var(--inth-space-lg);
+		padding: var(--consent-dialog-card-padding, var(--inth-space-lg));
 		background: var(--inth-overlay);
-		font-family: var(--inth-font-family);
-		line-height: var(--inth-line-height-normal);
+		font-family: var(--consent-dialog-font-family, var(--inth-font-family));
+		line-height: var(
+			--consent-dialog-line-height,
+			var(--inth-line-height-normal)
+		);
 		color: var(--inth-text);
 		-webkit-font-smoothing: antialiased;
-		animation: privacy-choices-fade-in var(--inth-duration-slow)
-			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
+		animation: privacy-choices-fade-in var(--_dialog-motion);
+	}
+
+	/* The classic `-dark` twins, under every selector the dark tokens
+	   answer to. One rule per selector: written as one list, the minifier
+	   folds it into an `:is()`, which some engines don't match against a
+	   shadow host. It merges the separate rules back into a plain list. */
+	:global(.dark) .backdrop {
+		--_dialog-bg: var(--consent-dialog-background-color-dark);
+		--_dialog-fg: var(--consent-dialog-foreground-color-dark);
+		--_dialog-muted: var(--consent-dialog-muted-color-dark);
+		--_dialog-edge: var(--consent-dialog-border-color-dark);
+		--_dialog-stroke: var(--consent-dialog-stroke-color-dark);
+	}
+
+	:global(.inth-dark) .backdrop {
+		--_dialog-bg: var(--consent-dialog-background-color-dark);
+		--_dialog-fg: var(--consent-dialog-foreground-color-dark);
+		--_dialog-muted: var(--consent-dialog-muted-color-dark);
+		--_dialog-edge: var(--consent-dialog-border-color-dark);
+		--_dialog-stroke: var(--consent-dialog-stroke-color-dark);
+	}
+
+	:global(:host(.dark)) .backdrop {
+		--_dialog-bg: var(--consent-dialog-background-color-dark);
+		--_dialog-fg: var(--consent-dialog-foreground-color-dark);
+		--_dialog-muted: var(--consent-dialog-muted-color-dark);
+		--_dialog-edge: var(--consent-dialog-border-color-dark);
+		--_dialog-stroke: var(--consent-dialog-stroke-color-dark);
+	}
+
+	:global(:host(.inth-dark)) .backdrop {
+		--_dialog-bg: var(--consent-dialog-background-color-dark);
+		--_dialog-fg: var(--consent-dialog-foreground-color-dark);
+		--_dialog-muted: var(--consent-dialog-muted-color-dark);
+		--_dialog-edge: var(--consent-dialog-border-color-dark);
+		--_dialog-stroke: var(--consent-dialog-stroke-color-dark);
 	}
 
 	.backdrop *,
@@ -54,32 +112,45 @@
 	.card {
 		--_depth: var(--consent-dialog-depth, 0);
 		--_consent-scroll-height: none;
-		--_consent-scroll-padding: var(--inth-space-md) var(--inth-space-lg)
+		--_dialog-pad: var(--consent-dialog-card-padding, var(--inth-space-lg));
+		--_consent-scroll-padding: var(--inth-space-md) var(--_dialog-pad)
 			calc(var(--inth-space-xs) * 5);
 		position: relative;
 		grid-area: 1 / 1;
 		display: flex;
 		flex-direction: column;
-		width: min(100%, var(--consent-dialog-width, 520px));
+		width: min(
+			100%,
+			var(--consent-dialog-width, var(--consent-dialog-max-width, 520px))
+		);
 		max-height: var(--consent-dialog-max-height, min(640px, 100%));
 		overflow: hidden;
-		background: var(--inth-surface);
-		color: var(--inth-text);
-		border-radius: var(--consent-dialog-radius, var(--inth-radius-lg));
+		background: var(--_dialog-bg, var(--inth-surface));
+		color: var(--_dialog-fg, var(--inth-text));
+		border-radius: var(
+			--consent-dialog-radius,
+			var(--consent-dialog-card-radius, var(--inth-radius-lg))
+		);
 		box-shadow:
-			0 0 0 1px color-mix(in srgb, var(--inth-text) 6%, transparent),
-			var(--inth-shadow-lg);
+			0 0 0 var(--consent-dialog-border-width, 1px)
+				var(
+					--_dialog-edge,
+					color-mix(in srgb, var(--inth-text) 6%, transparent)
+				),
+			var(--consent-dialog-card-shadow, var(--inth-shadow-lg));
 		transform-origin: 50% 0;
 		transform: translateY(calc(var(--_depth) * -32px))
 			scale(calc(1 - var(--_depth) * 0.05));
-		animation: privacy-choices-card-in var(--inth-duration-slow)
-			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
+		animation: privacy-choices-card-in var(--_dialog-motion);
 		transition: transform calc(var(--inth-duration-slow) * 1.3)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.card[data-regime='eu'] {
-		width: min(100%, var(--consent-dialog-width, 560px));
+		width: min(
+			100%,
+			var(--consent-dialog-width, var(--consent-dialog-max-width, 560px))
+		);
 	}
 
 	/* A parent layer dims while a child sheet is open (VIS-05). */
@@ -142,15 +213,21 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: calc(var(--inth-space-sm) * 1.5);
-		padding: calc(var(--inth-space-xs) * 5) var(--inth-space-lg) 0;
+		padding: calc(var(--inth-space-xs) * 5) var(--_dialog-pad) 0;
 	}
 
 	.title {
 		margin: 0;
-		font-size: calc(var(--inth-font-size-base) * 1.0625);
-		font-weight: var(--inth-font-weight-semibold);
+		font-size: var(
+			--consent-dialog-title-font-size,
+			calc(var(--inth-font-size-base) * 1.0625)
+		);
+		font-weight: var(
+			--consent-dialog-title-font-weight,
+			var(--inth-font-weight-semibold)
+		);
 		line-height: var(--inth-line-height-tight);
-		letter-spacing: -0.015em;
+		letter-spacing: var(--consent-dialog-title-letter-spacing, -0.015em);
 		text-wrap: balance;
 	}
 
@@ -159,10 +236,20 @@
 	}
 
 	.intro {
-		margin: var(--inth-space-xs) 0 0;
-		font-size: calc(var(--inth-font-size-sm) * 0.9286);
-		line-height: var(--inth-line-height-normal);
-		color: var(--inth-text-muted);
+		margin: var(--consent-dialog-card-gap, var(--inth-space-xs)) 0 0;
+		font-size: var(
+			--consent-dialog-description-font-size,
+			calc(var(--inth-font-size-sm) * 0.9286)
+		);
+		font-weight: var(
+			--consent-dialog-description-font-weight,
+			var(--inth-font-weight-normal)
+		);
+		line-height: var(
+			--consent-dialog-description-line-height,
+			var(--inth-line-height-normal)
+		);
+		color: var(--_dialog-muted, var(--inth-text-muted));
 	}
 
 	.close {
@@ -198,14 +285,23 @@
 		flex-shrink: 0;
 		align-items: center;
 		justify-content: space-between;
-		gap: calc(var(--inth-space-sm) * 1.5);
-		padding: calc(var(--inth-space-sm) * 1.5) var(--inth-space-lg)
-			var(--inth-space-md);
-		border-top: 1px solid var(--inth-border);
+		gap: var(--consent-dialog-footer-gap, calc(var(--inth-space-sm) * 1.5));
+		padding: var(
+				--consent-dialog-footer-padding-y,
+				calc(var(--inth-space-sm) * 1.5)
+			)
+			var(--_dialog-pad)
+			var(--consent-dialog-footer-padding-y, var(--inth-space-md));
+		border-top: var(--consent-dialog-border-width, 1px)
+			var(--consent-dialog-border-style, solid)
+			var(--_dialog-stroke, var(--inth-border));
 	}
 
 	.footerNote {
-		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		font-size: var(
+			--consent-dialog-footer-font-size,
+			calc(var(--inth-font-size-sm) * 0.8929)
+		);
 		color: var(--inth-text-muted);
 	}
 
@@ -823,8 +919,12 @@
 		}
 
 		.card {
+			--_dialog-pad: var(
+				--consent-dialog-card-padding-mobile,
+				var(--inth-space-md)
+			);
 			--_consent-scroll-padding: calc(var(--inth-space-xs) * 3.5)
-				var(--inth-space-md) calc(var(--inth-space-xs) * 4.5);
+				var(--_dialog-pad) calc(var(--inth-space-xs) * 4.5);
 			width: 100%;
 			max-height: calc(100% - 24px);
 			border-radius: 0;
@@ -840,7 +940,10 @@
 
 		.backdrop[data-edge-style='inset'] .card {
 			max-height: calc(100% - 36px);
-			border-radius: var(--consent-dialog-radius, var(--inth-radius-lg));
+			border-radius: var(
+				--consent-dialog-radius,
+				var(--consent-dialog-card-radius, var(--inth-radius-lg))
+			);
 		}
 
 		.card[data-nested='true'] {
@@ -859,15 +962,25 @@
 		}
 
 		.header {
-			padding: calc(var(--inth-space-xs) * 4.5) var(--inth-space-md) 0;
+			padding: calc(var(--inth-space-xs) * 4.5) var(--_dialog-pad) 0;
 		}
 
 		/* The privacy link centres on its own row; an empty slot takes no
 		   space; Done is full width and 44px tall (LAY-06). */
 		.footer {
 			flex-wrap: wrap;
-			padding: calc(var(--inth-space-sm) * 1.5) var(--inth-space-md)
-				calc(var(--inth-space-xs) * 3.5 + env(safe-area-inset-bottom, 0px));
+			padding: var(
+					--consent-dialog-footer-padding-y,
+					calc(var(--inth-space-sm) * 1.5)
+				)
+				var(--_dialog-pad)
+				calc(
+					var(
+							--consent-dialog-footer-padding-y,
+							calc(var(--inth-space-xs) * 3.5)
+						) +
+						env(safe-area-inset-bottom, 0px)
+				);
 		}
 
 		.footer > :empty {

@@ -15,6 +15,10 @@
  *   --consent-bar-radius        (--inth-radius-lg when inset)
  *   --consent-bar-shadow        (layered when inset)
  *   --consent-bar-panel-height  (400px; 300px on phone)
+ *
+ * The shadow falls back to the classic `--consent-banner-shadow`, which
+ * the classic bar wore too, and the sentence to the classic description
+ * colour.
  */
 
 @layer components {
@@ -57,7 +61,7 @@
 		margin: 0;
 		font-size: calc(var(--inth-font-size-sm) * 0.9643);
 		line-height: var(--inth-line-height-normal);
-		color: var(--inth-text-muted);
+		color: var(--_consent-muted, var(--inth-text-muted));
 	}
 
 	.text a {
@@ -108,9 +112,13 @@
 		--_consent-radius: var(--consent-bar-radius, var(--inth-radius-lg));
 		--_consent-shadow: var(
 			--consent-bar-shadow,
-			0 1px 2px color-mix(in srgb, var(--inth-overlay) 12%, transparent),
-			0 8px 24px -6px color-mix(in srgb, var(--inth-overlay) 28%, transparent),
-			0 24px 48px -16px color-mix(in srgb, var(--inth-overlay) 36%, transparent)
+			var(
+				--_consent-classic-shadow,
+				0 1px 2px color-mix(in srgb, var(--inth-overlay) 12%, transparent),
+				0 8px 24px -6px color-mix(in srgb, var(--inth-overlay) 28%, transparent),
+				0 24px 48px -16px
+					color-mix(in srgb, var(--inth-overlay) 36%, transparent)
+			)
 		);
 		padding: 0 calc(var(--inth-space-sm) * 1.5)
 			calc(var(--inth-space-sm) * 1.5 + env(safe-area-inset-bottom, 0px));
@@ -125,14 +133,20 @@
 		--_consent-radius: 0;
 		--_consent-shadow: var(
 			--consent-bar-shadow,
-			0 -8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			var(
+				--_consent-classic-shadow,
+				0 -8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			)
 		);
 	}
 
 	.root[data-edge-style='flush'][data-placement='banner-top'] {
 		--_consent-shadow: var(
 			--consent-bar-shadow,
-			0 8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			var(
+				--_consent-classic-shadow,
+				0 8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			)
 		);
 	}
 
@@ -146,7 +160,7 @@
 
 	.root[data-edge-style='flush'][data-placement='banner-top'] .card {
 		border-top-width: 0;
-		border-bottom-width: 1px;
+		border-bottom-width: var(--consent-banner-border-width, 1px);
 		padding-bottom: 0;
 	}
 

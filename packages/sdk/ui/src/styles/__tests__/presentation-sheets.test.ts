@@ -49,10 +49,14 @@ const CARD_GZIP_CEILING = 6450;
  * Measured size plus about 10%, when set: `surface` + `bar` 2,442 / 2,764,
  * `surface` + `drawer` 2,666 / 3,009, `expand` 777 / 917. Raise only for
  * rules the presentation needs to paint.
+ *
+ * Reading the classic banner variables as fallbacks costs `surface` +
+ * `bar` 252 / 264 bytes and `surface` + `drawer` 254 / 263 (2,698 / 3,028
+ * and 2,967 / 3,317 after); both budgets rose by about that much.
  */
 const BUDGETS = {
-	bar: { brotli: 2700, gzip: 3050, sheets: ['surface', 'bar'] },
-	drawer: { brotli: 2950, gzip: 3300, sheets: ['surface', 'drawer'] },
+	bar: { brotli: 2950, gzip: 3320, sheets: ['surface', 'bar'] },
+	drawer: { brotli: 3210, gzip: 3570, sheets: ['surface', 'drawer'] },
 	expand: { brotli: 860, gzip: 1010, sheets: ['expand'] },
 } as const;
 
@@ -380,7 +384,7 @@ describe('v6 presentation sheets', async () => {
 		expect(surface).toContainEqual(
 			expect.stringMatching(
 				new RegExp(
-					`^@layer components\\|\\.${card}\\|border\\|1px solid var\\(--_consent-blocking-border,`,
+					`^@layer components\\|\\.${card}\\|border\\|var\\(--consent-banner-border-width,1px\\) solid var\\(--_consent-blocking-border,`,
 					'u'
 				)
 			)
@@ -434,7 +438,9 @@ describe('v6 presentation sheets', async () => {
 			expect.stringMatching(/\|backdrop-filter\|none$/u)
 		);
 		expect(reduced).toContainEqual(
-			expect.stringMatching(/\|background\|var\(--inth-overlay-block-solid,/u)
+			expect.stringMatching(
+				/\|background\|var\(--_consent-veil,var\(--inth-overlay-block-solid,/u
+			)
 		);
 	});
 

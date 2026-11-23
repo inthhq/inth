@@ -29,6 +29,15 @@
  *   --consent-tag-background, --consent-tag-text-color,
  *   --consent-tag-border-color, --consent-tag-radius (--inth-radius-nested)
  *
+ * A site styled through the classic banner's variables keeps that styling:
+ * each part reads the classic variable after its v6 hook and before the
+ * token: `--consent-banner-z-index`, `-background-color`, `-text-color`,
+ * `-border-color`, `-border-width`, `-footer-background-color`,
+ * `-title-color`, `-description-color`, `-overlay-background-color` and
+ * their `-dark` twins, the font, the entry motion and the exit easing.
+ * The colours go through private properties so the `-dark` twin can take
+ * over in dark mode, as it does on the classic banner.
+ *
  * Parts talk to each other through private `--_consent-*` properties that
  * the presentation sheets set on `.root` (keyframe names stay out of them:
  * CSS Modules renames keyframes, and a name inside a custom property would
@@ -40,20 +49,84 @@
 @layer components {
 	.root {
 		--_consent-ease: var(
-			--inth-easing-out-strong,
-			cubic-bezier(0.23, 1, 0.32, 1)
+			--consent-banner-entry-timing,
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1))
 		);
+		--_consent-exit: calc(var(--inth-duration-slow) * 0.8)
+			var(--consent-banner-animation-timing, var(--inth-easing-in)) forwards;
+		--_consent-bg: var(--consent-banner-background-color);
+		--_consent-fg: var(--consent-banner-text-color);
+		--_consent-line: var(--consent-banner-border-color);
+		--_consent-foot: var(--consent-banner-footer-background-color);
+		--_consent-heading: var(--consent-banner-title-color);
+		--_consent-muted: var(--consent-banner-description-color);
+		--_consent-veil: var(--consent-banner-overlay-background-color);
+		--_consent-classic-shadow: var(--consent-banner-shadow);
 		position: fixed;
-		z-index: var(--consent-surface-z-index, 999998);
+		z-index: var(
+			--consent-surface-z-index,
+			var(--consent-banner-z-index, 999998)
+		);
 		display: flex;
 		flex-direction: column;
 		box-sizing: border-box;
 		pointer-events: none;
-		font-family: var(--inth-font-family);
-		line-height: var(--inth-line-height-normal);
+		font-family: var(--consent-banner-font-family, var(--inth-font-family));
+		line-height: var(
+			--consent-banner-line-height,
+			var(--inth-line-height-normal)
+		);
 		color: var(--inth-text);
 		-webkit-font-smoothing: antialiased;
-		-webkit-text-size-adjust: 100%;
+		-webkit-text-size-adjust: var(--consent-banner-text-size-adjust, 100%);
+	}
+
+	/* The classic `-dark` twins, under every selector the dark tokens
+	   answer to. One rule per selector: written as one list, the minifier
+	   folds it into an `:is()`, which some engines don't match against a
+	   shadow host. It merges the separate rules back into a plain list. */
+	:global(.dark) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(.inth-dark) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(:host(.dark)) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(:host(.inth-dark)) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
 	}
 
 	.root *,
@@ -74,23 +147,29 @@
 		position: fixed;
 		inset: 0;
 		pointer-events: auto;
-		background: var(--inth-overlay-block, rgba(15, 23, 42, 0.62));
+		background: var(
+			--_consent-veil,
+			var(--inth-overlay-block, rgba(15, 23, 42, 0.62))
+		);
 		-webkit-backdrop-filter: blur(3px);
 		backdrop-filter: blur(3px);
-		animation: consent-surface-fade-in var(--inth-duration-slow)
+		animation: consent-surface-fade-in
+			var(--consent-banner-entry-duration, var(--inth-duration-slow))
 			var(--_consent-ease);
 	}
 
 	.root[data-state='closed'] .scrim {
-		animation: consent-surface-fade-out calc(var(--inth-duration-slow) * 0.8)
-			var(--inth-easing-in) forwards;
+		animation: consent-surface-fade-out var(--_consent-exit);
 	}
 
 	@media (prefers-reduced-transparency: reduce) {
 		.scrim {
 			-webkit-backdrop-filter: none;
 			backdrop-filter: none;
-			background: var(--inth-overlay-block-solid, rgba(15, 23, 42, 0.78));
+			background: var(
+				--_consent-veil,
+				var(--inth-overlay-block-solid, rgba(15, 23, 42, 0.78))
+			);
 		}
 	}
 
@@ -103,7 +182,10 @@
 		width: 100%;
 		pointer-events: auto;
 		animation: consent-surface-rise
-			var(--_consent-enter-duration, calc(var(--inth-duration-slow) * 0.9))
+			var(
+				--consent-banner-entry-duration,
+				var(--_consent-enter-duration, calc(var(--inth-duration-slow) * 0.9))
+			)
 			var(--_consent-ease);
 	}
 
@@ -111,8 +193,7 @@
 	   sets only `animation-name`, on a selector one attribute heavier than
 	   its entrance. */
 	.root[data-state='closed'] .shell {
-		animation: consent-surface-sink calc(var(--inth-duration-slow) * 0.8)
-			var(--inth-easing-in) forwards;
+		animation: consent-surface-sink var(--_consent-exit);
 	}
 
 	.card {
@@ -120,14 +201,20 @@
 		flex-direction: column;
 		min-height: 0;
 		overflow: hidden;
-		background: var(--consent-surface-background, var(--inth-surface));
-		color: var(--inth-text);
-		border: 1px solid
+		background: var(
+			--consent-surface-background,
+			var(--_consent-bg, var(--inth-surface))
+		);
+		color: var(--_consent-fg, var(--inth-text));
+		border: var(--consent-banner-border-width, 1px) solid
 			var(
 				--_consent-blocking-border,
 				var(
 					--consent-surface-border-color,
-					var(--inth-border-strong, rgba(15, 23, 42, 0.16))
+					var(
+						--_consent-line,
+						var(--inth-border-strong, rgba(15, 23, 42, 0.16))
+					)
 				)
 			);
 		border-radius: var(--_consent-radius, var(--inth-radius-lg));
@@ -145,7 +232,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--inth-space-sm);
-		padding: var(--inth-space-lg);
+		padding: var(--_consent-pad, var(--inth-space-lg));
 	}
 
 	.title {
@@ -154,7 +241,7 @@
 		font-weight: var(--inth-font-weight-medium);
 		line-height: var(--inth-line-height-normal);
 		letter-spacing: -0.011em;
-		color: var(--inth-text);
+		color: var(--_consent-heading, var(--inth-text));
 	}
 
 	.description {
@@ -162,7 +249,7 @@
 		font-size: var(--inth-font-size-sm);
 		line-height: var(--inth-line-height-normal);
 		letter-spacing: -0.006em;
-		color: var(--inth-text-muted);
+		color: var(--_consent-muted, var(--inth-text-muted));
 	}
 
 	/* Blue text on a surface uses the text-on-surface blue (VIS-02). */
@@ -176,12 +263,13 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--inth-space-sm);
-		padding: var(--inth-space-md) var(--inth-space-lg);
+		padding: var(--inth-space-md) var(--_consent-pad, var(--inth-space-lg));
 		background: var(
 			--consent-surface-footer-background,
-			var(--inth-surface-hover)
+			var(--_consent-foot, var(--inth-surface-hover))
 		);
-		border-top: 1px solid var(--inth-border);
+		border-top: var(--consent-banner-border-width, 1px) solid
+			var(--_consent-line, var(--inth-border));
 	}
 
 	/* A lone action (the expanded notice's OK) sits where OK and Customize
@@ -330,13 +418,13 @@
 	   Customize full width below. Keep in step with PHONE_LAYOUT_QUERY. */
 	@media (max-width: 640px) {
 		.head {
-			padding: var(--inth-space-md);
+			padding: var(--_consent-pad, var(--inth-space-md));
 		}
 
 		.footer {
 			flex-direction: column;
 			align-items: stretch;
-			padding: var(--inth-space-md);
+			padding: var(--inth-space-md) var(--_consent-pad, var(--inth-space-md));
 		}
 
 		.footer > :only-child {
