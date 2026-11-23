@@ -1188,6 +1188,65 @@ describe('[BNR-06] a tap before hydration', () => {
 		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
 	});
 
+	test("the root names the policy's model and prompt, and the notice's right-link replays as Customize", async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		// The script records these with a tap, so a replay against another
+		// policy is dropped.
+		expect(root()).toHaveAttribute('data-model', 'opt-out');
+		expect(root()).toHaveAttribute('data-prompt', 'notice');
+		expect(must('consent-banner-right-link-opt-out')).toHaveAttribute(
+			'data-action',
+			'customize'
+		);
+	});
+
+	test('a tap on the notice\'s right-link before hydration expands the rights in place', async () => {
+		tapBeforeHydration('customize');
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-expanded', 'true')
+		);
+		expect(probe.snapshot?.activeUI).toBe('banner');
+		expect(probe.snapshot?.optOut).toBeFalsy();
+	});
+
+	test('a choice records the time of the tap, not of the replay', async () => {
+		tapBeforeHydration('reject');
+		const host = window as unknown as Record<
+			string,
+			{ taps?: { at: number }[] } | undefined
+		>;
+		const tappedAt = host[EARLY_TAPS_WINDOW_KEY]?.taps?.[0]?.at;
+		expect(tappedAt).toBeTypeOf('number');
+		await new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+		await mount({ region: 'us-opt-in' });
+		await vi.waitFor(() => expect(probe.snapshot?.explicitChoice).toBeTruthy());
+		expect(
+			probe.snapshot?.explicitChoice?.categories?.marketing?.confirmedAt
+		).toBe(tappedAt);
+	});
+
+	test('an OK on the notice before hydration records the time of the tap', async () => {
+		tapBeforeHydration('dismiss');
+		const host = window as unknown as Record<
+			string,
+			{ taps?: { at: number }[] } | undefined
+		>;
+		const tappedAt = host[EARLY_TAPS_WINDOW_KEY]?.taps?.[0]?.at;
+		await new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+		await mount({ region: 'us-notice' });
+		await vi.waitFor(() =>
+			expect(probe.snapshot?.noticeDismissal).toBeTruthy()
+		);
+		expect(probe.snapshot?.noticeDismissal?.dismissedAt).toBe(tappedAt);
+	});
+
 	test('a Customize expands the options in place, with no dialog', async () => {
 		tapBeforeHydration('customize');
 		await mount();

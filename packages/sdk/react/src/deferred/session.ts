@@ -114,11 +114,12 @@ export interface DeferredSession {
 	/**
 	 * A value from the engine's module, such as a stock surface, read once
 	 * the engine attached, so the surface hydrates against the engine's
-	 * kernel. One read per `key`.
+	 * kernel. `pick` may wait for more, such as the banner's container.
+	 * One read per `key`.
 	 */
 	surface: <Value>(
 		key: string,
-		pick: (engine: unknown) => Value
+		pick: (engine: unknown) => Value | PromiseLike<Value>
 	) => Recorded<Value>;
 }
 

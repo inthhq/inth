@@ -519,6 +519,17 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		});
 	});
 
+	test('[BNR-06] Allow and Don\'t allow record the time the visitor chose', () => {
+		for (const action of ['allow', 'refuse'] as const) {
+			const kernel = openBanner(kernelFor('opt-in'));
+			const tappedAt = Date.now() - 500;
+			commitBannerChoice(kernel, action, { actionAt: tappedAt });
+			expect(
+				kernel.getSnapshot().explicitChoice?.categories.marketing?.confirmedAt
+			).toBe(tappedAt);
+		}
+	});
+
 	test('Allow never lifts a recorded opt-out; the other categories are still granted', () => {
 		const kernel = openBanner(
 			kernelFor('opt-out', { initialRecords: { optOut: HELD } })

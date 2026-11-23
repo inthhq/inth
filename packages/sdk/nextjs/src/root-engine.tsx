@@ -48,6 +48,7 @@ export {
 	ConsentBanner,
 	ConsentDialog,
 	OptOutConfirmation,
+	preloadServerContainer,
 } from '@inth/react/deferred/engine';
 
 /**
