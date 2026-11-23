@@ -264,12 +264,18 @@ describe('readPageOptions', () => {
 	it('keeps data-opt-out-link when queued config sets prompt presentation', () => {
 		const { options } = readPageOptions(
 			scriptWith({ 'data-opt-out-link': 'privacy-choices' }),
-			[{ presentation: { prompt: { variant: 'bar' } } }]
+			[
+				{
+					presentation: {
+						prompt: { container: { edge: 'bottom', type: 'banner' } },
+					},
+				},
+			]
 		);
 
 		expect(options.presentation).toEqual({
 			optOutLink: 'privacy-choices',
-			prompt: { variant: 'bar' },
+			prompt: { container: { edge: 'bottom', type: 'banner' } },
 		});
 	});
 });

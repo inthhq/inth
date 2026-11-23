@@ -49,7 +49,13 @@ const driver = (shadow: boolean): TestDriver => ({
 			policy: [iab ? 'europeIab' : 'europeOptIn'],
 			presentation: provided?.presentation,
 			ui: {
-				banner: { trapFocus: provided?.trapFocus },
+				// The suite's blocking banner asks for `trapFocus`: the IAB
+				// banner reads it, the consent prompt reads `blockUntilChoice`.
+				// As in React's driver, the prompt hides its branding tag, which
+				// sits beside the card inside the trap.
+				banner: iab
+					? { trapFocus: provided?.trapFocus }
+					: { blockUntilChoice: provided?.trapFocus, hideBranding: true },
 				disableAnimation: true,
 				shadow,
 				styles: false,

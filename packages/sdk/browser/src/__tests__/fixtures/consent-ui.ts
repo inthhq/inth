@@ -1,5 +1,5 @@
 /**
- * A page for the Privacy Choices (v6) suites: the stock UI in its shadow
+ * A page for the prompt and dialog suites: the stock UI in its shadow
  * root, with the page controls the React suites render beside it, and
  * the regions those suites test.
  */
@@ -65,14 +65,12 @@ export const VENDORS = [
 	},
 ];
 
-export interface PrivacyChoicesPageOptions {
+export interface ConsentPageOptions {
 	/** `null` sets no container. */
 	container?: ConsentContainer | null;
 	edgeStyle?: ConsentEdgeStyle;
 	blockUntilChoice?: boolean;
 	region?: Region;
-	/** `null` leaves the design to the resolver. */
-	design?: ConsentPresentation['design'] | null;
 	/** The page's "Your Privacy Choices" link, as a US page shows it. */
 	privacyChoicesLink?: boolean;
 	gpc?: boolean;
@@ -101,13 +99,12 @@ export interface PrivacyChoicesPageOptions {
 let fixture = 0;
 const clients: ConsentClient[] = [];
 
-/** Start the stock UI with the Privacy Choices design on a fresh page. */
-export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
+/** Start the stock UI on a fresh page. */
+export const startConsentPage = async function startConsentPage({
 	container = { type: 'card' },
 	edgeStyle,
 	blockUntilChoice,
 	region = 'eu',
-	design = 'privacy-choices',
 	privacyChoicesLink = false,
 	gpc = false,
 	vendors = false,
@@ -119,7 +116,7 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 	slots,
 	language,
 	animate = false,
-}: PrivacyChoicesPageOptions = {}): Promise<ConsentClient> {
+}: ConsentPageOptions = {}): Promise<ConsentClient> {
 	fixture += 1;
 	const pageAction = document.createElement('button');
 	pageAction.type = 'button';
@@ -138,18 +135,14 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 	trigger.textContent = 'Privacy settings';
 	document.body.append(trigger);
 
-	const presentation: ConsentPresentation | undefined =
-		design === null && container === null
-			? undefined
-			: {
-					design: design ?? undefined,
-					prompt: {
-						blockUntilChoice,
-						container: container ?? undefined,
-						edgeStyle,
-						layout,
-					},
-				};
+	const presentation: ConsentPresentation = {
+		prompt: {
+			blockUntilChoice,
+			container: container ?? undefined,
+			edgeStyle,
+			layout,
+		},
+	};
 	const client = createTestingConsentClient(
 		{
 			consentCategories: [
@@ -206,16 +199,15 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 };
 
 /** Tear down every page the suite started. */
-export const stopPrivacyChoicesPages =
-	function stopPrivacyChoicesPages(): void {
-		for (const client of clients.splice(0)) {
-			client.dispose();
-		}
-		clearBrowserConsentStorage();
-		sessionStorage.clear();
-		document.body.replaceChildren();
-		document.documentElement.removeAttribute('dir');
-	};
+export const stopConsentPages = function stopConsentPages(): void {
+	for (const client of clients.splice(0)) {
+		client.dispose();
+	}
+	clearBrowserConsentStorage();
+	sessionStorage.clear();
+	document.body.replaceChildren();
+	document.documentElement.removeAttribute('dir');
+};
 
 /** The latest client the suite started. */
 const current = (): ConsentClient | undefined => clients[clients.length - 1];

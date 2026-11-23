@@ -200,9 +200,10 @@ describe('trigger with DevTools', () => {
 
 		expect(client.getSnapshot().optOut?.method).toBe('button');
 		expect(root.querySelector('[role="toolbar"]')).toBeNull();
+		// The dialog confirms the opt-out on its receipt.
 		await vi.waitFor(() => {
 			expect(
-				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+				root.querySelector('[data-testid="consent-dialog-receipt"]')
 			).not.toBeNull();
 		});
 	});

@@ -43,10 +43,10 @@ const hostedScript = async function hostedScript(): Promise<string> {
 	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n${bundle}`;
 };
 
-// `inth.hosted.js`, `inth.commit.js`, `inth.records.js`, `inth.dialog.js`
-// and `inth.choices.js`, with or without the hash query the backend adds.
+// `inth.hosted.js`, `inth.records.js` and `inth.choices.js`, with or
+// without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|commit|records|dialog|choices)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|records|choices)\\.js(?:\\?.*)?$`,
 	'u'
 );
 

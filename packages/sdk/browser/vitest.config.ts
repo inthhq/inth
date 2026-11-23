@@ -168,24 +168,19 @@ export default mergeConfig(
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
 						// `?story=` names one of `privacy-choices-stories.ts`.
-						if (
-							request.url?.split('?')[0] !== '/__inth-test__/privacy-choices'
-						) {
+						if (request.url?.split('?')[0] !== '/__inth-test__/stories') {
 							next();
 							return;
 						}
 						response.setHeader('Content-Type', 'text/html');
 						response.end(
 							readFileSync(
-								resolve(
-									__dirname,
-									'src/__tests__/fixtures/privacy-choices-stories.html'
-								)
+								resolve(__dirname, 'src/__tests__/fixtures/stories.html')
 							)
 						);
 					});
 				},
-				name: 'privacy-choices-stories-fixture',
+				name: 'stories-fixture',
 			},
 			{
 				configureServer(server) {
@@ -368,6 +363,7 @@ export default mergeConfig(
 						exclude: ['src/**/*.browser.test.ts'],
 						include: ['src/**/__tests__/**/*.test.ts'],
 						name: 'unit',
+						setupFiles: ['src/__tests__/fixtures/warm-ui.ts'],
 					},
 				},
 				{

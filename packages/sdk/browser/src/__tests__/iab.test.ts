@@ -332,7 +332,10 @@ describe('IAB browser entry', () => {
 	it('uses ordinary UI when a region resolves a non-IAB policy', async () => {
 		const client = await start({ policy: ['europeOptIn'] });
 		expect(client.getSnapshot().model).toBe('opt-in');
-		expect(query(client, 'consent-banner-card')).toBeTruthy();
+		// The prompt loads on demand.
+		await vi.waitFor(() =>
+			expect(query(client, 'consent-banner-card')).toBeTruthy()
+		);
 		expect(
 			client.ui?.root.querySelector('[data-testid="iab-consent-banner-root"]')
 		).toBeNull();

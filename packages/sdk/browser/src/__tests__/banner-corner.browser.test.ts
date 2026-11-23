@@ -1,9 +1,12 @@
 /**
- * A banner in a left corner stays on the left in right-to-left copy.
+ * The IAB banner in its left corner stays on the left in right-to-left
+ * copy.
  *
  * The root carries `dir="rtl"`, so any rule that places the card with
  * logical flex alignment would flip it to the right. This measures where
- * the card lands instead of reading `data-position`.
+ * the card lands instead of reading `data-position`. The consent prompt's
+ * positions are logical on purpose: `start` follows the writing direction
+ * ([BNR-16] in `prompt.browser.test.ts`).
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -11,7 +14,7 @@ import { page } from 'vitest/browser';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentClient } from '../types';
-import { init, initIAB } from './fixtures/factory-init';
+import { initIAB } from './fixtures/factory-init';
 
 let client: ConsentClient | undefined;
 
@@ -22,7 +25,6 @@ afterEach(() => {
 });
 
 describe.each([
-	{ create: init, iab: undefined, name: 'stock', testId: 'consent-banner' },
 	{
 		create: initIAB,
 		iab: { cmpId: 28, gvl: completeGVL },

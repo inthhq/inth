@@ -1,19 +1,15 @@
 /**
- * The Privacy Choices (v6) design of the script tag's stock banner, ported
- * from `@inth/react`'s `privacy-choices-banner.test.tsx`, which ports the
- * explorer's self-test groups. Each test names the invariant it guards
+ * The script tag's stock banner, ported from `@inth/react`'s prompt
+ * tests, which port the explorer's self-test groups. Each test names the invariant it guards
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). The UI renders in its
  * shadow root, so the suite looks there as well as in the page.
  */
-import {
-	openOptInConfirmation,
-	showConsentSurface,
-} from '@inth/sdk-core/surface-actions';
+import { openOptInConfirmation } from '@inth/sdk-core/surface-actions';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { mountConsentUI } from '../ui/mount';
-import { rightsBundleOf } from '../ui/privacy-choices/shared';
+import { rightsBundleOf } from '../ui/parts/shared';
 import {
 	$,
 	active,
@@ -23,9 +19,9 @@ import {
 	must,
 	pageAction,
 	snapshotOf,
-	startPrivacyChoicesPage as mount,
-	stopPrivacyChoicesPages,
-} from './fixtures/privacy-choices';
+	startConsentPage as mount,
+	stopConsentPages,
+} from './fixtures/consent-ui';
 
 const root = () => must('consent-banner-root');
 const waitForRoot = () =>
@@ -47,15 +43,15 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-	stopPrivacyChoicesPages();
+	stopConsentPages();
 });
 
 describe('opt-in', () => {
-	test('the classic design stays the default', async () => {
-		await mount({ container: null, design: null });
+	test('[BNR-16] with no container set, a Card at the start', async () => {
+		await mount({ container: null });
 		await waitForRoot();
-		expect(root()).not.toHaveAttribute('data-design');
-		expect(root()).toHaveAttribute('data-variant');
+		expect(root()).toHaveAttribute('data-placement', 'card-start');
+		expect($('consent-banner-card')).not.toBeNull();
 	});
 
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
@@ -704,7 +700,7 @@ describe('notice', () => {
 
 describe('customization', () => {
 	test('noStyle renders the same parts and test ids without class names', async () => {
-		stopPrivacyChoicesPages();
+		stopConsentPages();
 		const client = await mount();
 		client.ui?.destroy();
 		const handle = mountConsentUI(client, {
@@ -728,7 +724,7 @@ describe('customization', () => {
 });
 
 describe('wave B round 1', () => {
-	test('[BNR-13] an opt-in confirmation opens under the Privacy Choices design', async () => {
+	test('[BNR-13] an opt-in confirmation opens over the prompt', async () => {
 		const client = await mount({ region: 'us-opt-in' });
 		await waitForRoot();
 		const confirmed = vi.fn();
@@ -760,7 +756,7 @@ describe('wave B round 1', () => {
 		expect($('consent-banner-customize-button')).toBeNull();
 		expect($('consent-banner-reject-button')).not.toBeNull();
 		expect($('consent-banner-accept-button')).not.toBeNull();
-		stopPrivacyChoicesPages();
+		stopConsentPages();
 		await mount({
 			container: { type: 'banner' },
 			rule: { ...rule, actions: [...rule.actions] },
@@ -906,7 +902,7 @@ describe('wave B round 1', () => {
 		expect(must('consent-banner-footer')).toHaveClass('footer-marker');
 	});
 
-	test('the root matches the classic root: direction, surface marker, animation switch', async () => {
+	test('the root carries the direction, the surface marker and the animation switch', async () => {
 		await mount({ language: 'he' });
 		await waitForRoot();
 		expect(root()).toHaveAttribute('dir', 'rtl');
@@ -972,8 +968,8 @@ describe('wave C round 1', () => {
 		expect($('consent-banner-category-group')).not.toBeNull();
 	});
 
-	test('the css option comes after the Privacy Choices sheets, and wins', async () => {
-		stopPrivacyChoicesPages();
+	test('the css option comes after the surface sheets, and wins', async () => {
+		stopConsentPages();
 		const client = await mount({ container: { type: 'card' } });
 		client.ui?.destroy();
 		const handle = mountConsentUI(client, {
@@ -991,9 +987,7 @@ describe('wave C round 1', () => {
 		customize?.click();
 		await vi.waitFor(() =>
 			expect(
-				handle.root.querySelector(
-					'style[data-inth-styles="inth-privacy-choices-dialog"]'
-				)
+				handle.root.querySelector('style[data-inth-styles="inth-dialog"]')
 			).not.toBeNull()
 		);
 		const styles = [...handle.root.querySelectorAll('style')];
@@ -1030,7 +1024,7 @@ describe('wave C round 1', () => {
 	});
 
 	test('noStyle reaches the legal links', async () => {
-		stopPrivacyChoicesPages();
+		stopConsentPages();
 		const client = await mount();
 		client.ui?.destroy();
 		const handle = mountConsentUI(client, {
@@ -1048,20 +1042,5 @@ describe('wave C round 1', () => {
 			expect(link.getAttribute('class')).toBeNull();
 		}
 		handle.destroy();
-	});
-
-	test('a later switch back to the classic design shows the classic banner', async () => {
-		const client = await mount();
-		await waitForRoot();
-		expect(root()).toHaveAttribute('data-design', 'privacy-choices');
-		// An experiment arm, say, takes the design away.
-		(client.options as { presentation?: unknown }).presentation = undefined;
-		showConsentSurface(client.kernel, 'none');
-		showConsentSurface(client.kernel, 'banner');
-		await vi.waitFor(() => {
-			expect($('consent-banner-root')).not.toBeNull();
-			expect(root()).not.toHaveAttribute('data-design');
-		});
-		expect(all('[data-design="privacy-choices"]')).toHaveLength(0);
 	});
 });

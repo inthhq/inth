@@ -1,7 +1,8 @@
 /**
- * Real-browser checks for the opt-out confirmation view and preference-centre
- * opt-out status and GPC locks: layout, light and dark themes, motion, focus
- * restoration, and real pointer/keyboard interaction.
+ * Real-browser checks for the opt-out confirmation, which opens "Your
+ * Privacy Choices" on its receipt, and for the dialog's GPC lock: layout,
+ * light and dark themes, motion, focus restoration, and real
+ * pointer/keyboard interaction.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import {
@@ -51,28 +52,33 @@ const startClient = async function startClient(options: {
 	return client;
 };
 
+const byTestId = <ElementType extends HTMLElement = HTMLElement>(
+	client: ConsentClient,
+	testId: string
+): ElementType | null =>
+	client.ui?.root.querySelector<ElementType>(`[data-testid="${testId}"]`) ??
+	null;
+
+/** The receipt the opt-out confirmation opens the dialog on. */
+const openReceipt = (client: ConsentClient): HTMLElement | null => {
+	const receipt = byTestId(client, 'consent-dialog-receipt');
+	return receipt?.getAttribute('data-open') === 'true' ? receipt : null;
+};
+
 describe('opt-out UI in Chromium', () => {
-	it('renders the confirmation view in light and dark themes with zero animations when disabled', async () => {
+	it('renders the confirmation dialog in light and dark themes with zero animations when disabled', async () => {
 		const light = await startClient({
 			ui: { colorScheme: 'light', disableAnimation: true },
 		});
 		void light.optOut();
-		const lightRoot = light.ui?.root;
-		await expect
-			.poll(() =>
-				lightRoot?.querySelector<HTMLElement>(
-					'[data-testid="opt-out-confirmation-card"]'
-				)
-			)
-			.toBeTruthy();
-		const lightCard = lightRoot?.querySelector<HTMLElement>(
-			'[data-testid="opt-out-confirmation-card"]'
-		) as HTMLElement;
+		await expect.poll(() => openReceipt(light)).toBeTruthy();
+		const lightCard = byTestId(light, 'consent-dialog-card') as HTMLElement;
 		const lightRect = lightCard.getBoundingClientRect();
 		expect(lightRect.width).toBeGreaterThan(200);
 		expect(lightRect.height).toBeGreaterThan(100);
 		const lightBg = getComputedStyle(lightCard).backgroundColor;
 		expect(lightCard.getAnimations()).toEqual([]);
+		expect(byTestId(light, 'opt-out-confirmation-root')).toBeNull();
 		light.dispose();
 		clearBrowserConsentStorage();
 
@@ -80,22 +86,13 @@ describe('opt-out UI in Chromium', () => {
 			ui: { colorScheme: 'dark', disableAnimation: true },
 		});
 		void dark.optOut();
-		const darkRoot = dark.ui?.root;
-		await expect
-			.poll(() =>
-				darkRoot?.querySelector<HTMLElement>(
-					'[data-testid="opt-out-confirmation-card"]'
-				)
-			)
-			.toBeTruthy();
-		const darkCard = darkRoot?.querySelector<HTMLElement>(
-			'[data-testid="opt-out-confirmation-card"]'
-		) as HTMLElement;
+		await expect.poll(() => openReceipt(dark)).toBeTruthy();
+		const darkCard = byTestId(dark, 'consent-dialog-card') as HTMLElement;
 		const darkBg = getComputedStyle(darkCard).backgroundColor;
 		expect(darkBg).not.toBe(lightBg);
 	});
 
-	it('moves focus into the confirmation view on open and returns it to the triggering link on Done', async () => {
+	it('moves focus to the receipt on open and returns it to the triggering link on Done', async () => {
 		const link = document.createElement('button');
 		link.type = 'button';
 		link.setAttribute('data-inth-action', 'opt-out');
@@ -111,70 +108,69 @@ describe('opt-out UI in Chromium', () => {
 		expect(document.activeElement).toBe(link);
 		link.click();
 
-		await expect
-			.poll(() =>
-				root.querySelector<HTMLButtonElement>(
-					'[data-testid="opt-out-confirmation-done-button"]'
-				)
-			)
-			.toBeTruthy();
-		const doneButton = root.querySelector<HTMLButtonElement>(
-			'[data-testid="opt-out-confirmation-done-button"]'
-		) as HTMLButtonElement;
-		await expect.poll(() => root.activeElement).toBe(doneButton);
+		await expect.poll(() => openReceipt(client)).toBeTruthy();
+		const receipt = openReceipt(client) as HTMLElement;
+		await expect.poll(() => root.activeElement).toBe(receipt);
+		expect(receipt.textContent).toMatch(/opted out/iu);
 
+		const doneButton = byTestId<HTMLButtonElement>(
+			client,
+			'consent-dialog-done'
+		) as HTMLButtonElement;
 		doneButton.click();
-		await expect
-			.poll(() =>
-				root.querySelector('[data-testid="opt-out-confirmation-root"]')
-			)
-			.toBeNull();
+		await expect.poll(() => byTestId(client, 'consent-dialog-card')).toBeNull();
 		await expect.poll(() => document.activeElement).toBe(link);
 	});
 
-	it('renders the GPC status line and disabled switches in the preference dialog', async () => {
+	it('[GPC-03] renders the GPC note and a disabled Allow in the preference dialog', async () => {
 		const client = await startClient({
 			gpc: true,
 			ui: { colorScheme: 'dark', disableAnimation: true },
 		});
 		client.openDialog();
-		const root = client.ui?.root as ShadowRoot;
 
 		await expect
-			.poll(() =>
-				root.querySelector<HTMLElement>(
-					'[data-testid="consent-widget-opt-out-status"]'
-				)
-			)
+			.poll(() => byTestId(client, 'consent-dialog-rights-row-sale'))
 			.toBeTruthy();
-		const status = root.querySelector<HTMLElement>(
-			'[data-testid="consent-widget-opt-out-status"]'
+		const row = byTestId(
+			client,
+			'consent-dialog-rights-row-sale'
 		) as HTMLElement;
-		expect(status.textContent).toBe('Opt-out preference signal honored');
-		expect(status.getBoundingClientRect().height).toBeGreaterThan(20);
+		expect(row.textContent).toMatch(/Global Privacy Control signal/u);
+		expect(row.getBoundingClientRect().height).toBeGreaterThan(20);
+		expect(byTestId(client, 'consent-dialog-receipt')?.textContent).toContain(
+			'Honoring Global Privacy Control from this browser'
+		);
 
-		const marketing = root.querySelector<HTMLButtonElement>(
-			'[data-testid="consent-widget-switch-marketing"]'
+		const allow = byTestId<HTMLButtonElement>(
+			client,
+			'consent-dialog-right-option-sale-allow'
 		) as HTMLButtonElement;
-		expect(marketing.disabled).toBe(true);
-		expect(marketing.getAttribute('aria-checked')).toBe('false');
-		marketing.click();
-		expect(marketing.getAttribute('aria-checked')).toBe('false');
+		const protect = byTestId<HTMLButtonElement>(
+			client,
+			'consent-dialog-right-option-sale-protect'
+		) as HTMLButtonElement;
+		expect(allow.getAttribute('aria-disabled')).toBe('true');
+		expect(allow.getAttribute('aria-pressed')).toBe('false');
+		expect(protect.getAttribute('aria-pressed')).toBe('true');
+		allow.click();
+		expect(allow.getAttribute('aria-pressed')).toBe('false');
+		expect(protect.getAttribute('aria-pressed')).toBe('true');
+		expect(
+			byTestId(client, 'consent-dialog-confirm')
+				?.closest('[data-open]')
+				?.getAttribute('data-open')
+		).toBe('false');
+		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 	});
 
-	it('shows the confirmation view once on the next load after a reload and not on the load after that', async () => {
+	it('shows the confirmation once on the next load after a reload and not on the load after that', async () => {
 		const first = await startClient({
 			reloadOnConsentRevoked: false,
 			ui: { colorScheme: 'light', disableAnimation: true },
 		});
 		await first.optOut();
-		await expect
-			.poll(() =>
-				first.ui?.root.querySelector(
-					'[data-testid="opt-out-confirmation-root"]'
-				)
-			)
-			.toBeTruthy();
+		await expect.poll(() => openReceipt(first)).toBeTruthy();
 		// Wait for persistence to store the opt-out record before tearing down.
 		await expect.poll(() => localStorage.getItem('inth-opt-out')).toBeTruthy();
 		first.dispose();
@@ -186,17 +182,10 @@ describe('opt-out UI in Chromium', () => {
 			ui: { colorScheme: 'light', disableAnimation: true },
 		});
 		const secondRoot = second.ui?.root as ShadowRoot;
-		await expect
-			.poll(() =>
-				secondRoot.querySelector<HTMLElement>(
-					'[data-testid="opt-out-confirmation-status"]'
-				)
-			)
-			.toBeTruthy();
-		expect(
-			secondRoot.querySelector('[data-testid="opt-out-confirmation-status"]')
-				?.textContent
-		).toBe('Opt-out request honored');
+		await expect.poll(() => openReceipt(second)).toBeTruthy();
+		const receipt = openReceipt(second) as HTMLElement;
+		expect(receipt.textContent).toMatch(/opted out/iu);
+		await expect.poll(() => secondRoot.activeElement).toBe(receipt);
 		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
 		second.dispose();
 
@@ -208,8 +197,7 @@ describe('opt-out UI in Chromium', () => {
 		await new Promise((resolve) => {
 			setTimeout(resolve, 30);
 		});
-		expect(
-			third.ui?.root.querySelector('[data-testid="opt-out-confirmation-root"]')
-		).toBeNull();
+		expect(byTestId(third, 'consent-dialog-root')).toBeNull();
+		expect(third.getSnapshot().activeUI).not.toBe('dialog');
 	});
 });

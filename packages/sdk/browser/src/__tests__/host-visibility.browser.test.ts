@@ -6,7 +6,7 @@
  * banner while the client reported it as shown.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ConsentClient } from '../types';
 import { init } from './fixtures/factory-init';
@@ -43,9 +43,14 @@ describe('UI host under page CSS that hides empty elements', () => {
 		await client.ready();
 
 		const host = client.ui?.host;
-		const card = client.ui?.root.querySelector<HTMLElement>(
-			'[data-testid="consent-banner-card"]'
-		);
+		// The prompt loads on demand.
+		const card = await vi.waitFor(() => {
+			const found = client?.ui?.root.querySelector<HTMLElement>(
+				'[data-testid="consent-banner-card"]'
+			);
+			expect(found).toBeTruthy();
+			return found;
+		});
 		if (!(host && card)) {
 			throw new Error('The banner did not render');
 		}
