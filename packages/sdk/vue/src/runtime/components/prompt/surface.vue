@@ -63,7 +63,7 @@ import {
 } from '../../composables/use-consent-kernel';
 import { useMounted } from '../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
-import type { RuntimeConsentConfig } from '../../kernel';
+import type { RuntimeConsentConfig } from '../../create-vue-consent-kernel-context';
 import { slotAttrs } from '../../utils/slot-attrs';
 import { loadConsentDialog } from '../dialog/load-consent-dialog';
 import ChoiceButton from '../parts/choice-button.vue';

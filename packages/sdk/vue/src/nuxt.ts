@@ -14,7 +14,7 @@ export {
 	NUXT_PROJECT_URL_ENV,
 	NUXT_SERVER_PROJECT_URL_ENV,
 } from './runtime/env-names.model';
-export type { RuntimeConsentConfig } from './runtime/kernel';
+export type { RuntimeConsentConfig } from './runtime/create-vue-consent-kernel-context';
 export { readNuxtMode, readNuxtRoutePrefix } from './runtime/nuxt-mode';
 export type {
 	NuxtConsentModeConfig,

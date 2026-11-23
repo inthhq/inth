@@ -18,8 +18,8 @@ import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
 import type { ConsentConfig } from '../config';
 import { NUXT_PROJECT_URL_ENV } from '../env-names.model';
-import { createVueConsentKernelContext } from '../kernel';
-import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
+import { createVueConsentKernelContext } from '../create-vue-consent-kernel-context';
+import type { RuntimeConsentConfig, VueConsentKernelContext } from '../create-vue-consent-kernel-context';
 import type { NuxtMode } from '../nuxt-mode';
 import { withClientData } from '../with-client-data';
 

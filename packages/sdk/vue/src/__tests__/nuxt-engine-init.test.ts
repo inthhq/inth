@@ -2,7 +2,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createNuxtEngineContext } from '../runtime/deferred/engine';
-import type { RuntimeConsentConfig } from '../runtime/kernel';
+import type { RuntimeConsentConfig } from '../runtime/create-vue-consent-kernel-context';
 
 const disposers: (() => void)[] = [];
 

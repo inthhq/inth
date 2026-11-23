@@ -28,7 +28,7 @@ import { createDeferredContext } from '../runtime/deferred/create-deferred-conte
 import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
-} from '../runtime/kernel';
+} from '../runtime/create-vue-consent-kernel-context';
 import {
 	consentConfigKey,
 	symbolActiveUI,

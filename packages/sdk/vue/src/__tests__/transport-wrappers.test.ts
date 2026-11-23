@@ -9,7 +9,7 @@ import { translations } from '@inth/sdk/translations/en';
 import { hosted } from '@inth/sdk/transports';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { createVueConsentKernelContext } from '../runtime/kernel';
+import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import { manifest } from '../runtime/modes.model';
 import type { ProviderTransportFactory } from '../runtime/modes.model';
 

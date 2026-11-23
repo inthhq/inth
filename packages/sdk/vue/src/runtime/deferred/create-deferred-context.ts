@@ -72,7 +72,7 @@ import type {
 	ConsentBannerView,
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
-} from '../kernel';
+} from '../create-vue-consent-kernel-context';
 import { withRegisteredScripts } from '../with-registered-scripts';
 import type { RegisteredScripts } from '../with-registered-scripts';
 import { removePlainScripts } from './remove-plain-scripts';

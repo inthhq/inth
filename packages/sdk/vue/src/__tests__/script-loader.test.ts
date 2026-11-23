@@ -7,7 +7,7 @@ import { defineComponent, h, ref } from 'vue';
 import { inth } from '../index';
 import { useScriptLoader } from '../runtime/composables';
 import type { Script } from '../runtime/composables';
-import type { VueConsentKernelContext } from '../runtime/kernel';
+import type { VueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import {
 	symbolKernel,
 	symbolKernelContext,

@@ -1,6 +1,6 @@
 import type { App } from 'vue';
 
-import type { VueConsentKernelContext } from './kernel';
+import type { VueConsentKernelContext } from './create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
 	symbolConsent,

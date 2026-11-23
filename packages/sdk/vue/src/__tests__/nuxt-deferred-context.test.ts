@@ -31,7 +31,7 @@ import type { DeferredEngineFactory } from '../runtime/deferred/create-deferred-
 import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
-} from '../runtime/kernel';
+} from '../runtime/create-vue-consent-kernel-context';
 import {
 	symbolKernel,
 	symbolKernelContext,

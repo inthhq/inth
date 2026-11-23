@@ -2,7 +2,7 @@ import { defineAsyncComponent, defineComponent, h, provide } from 'vue';
 import type { Component } from 'vue';
 
 import { useConsentKernelContext } from '../composables/use-consent-kernel';
-import type { ConsentBannerView } from '../kernel';
+import type { ConsentBannerView } from '../create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
 	symbolConsent,

@@ -22,8 +22,8 @@ import { consentConfigKey } from '../runtime/composables/config';
 import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
-} from '../runtime/kernel';
-import { createVueConsentKernelContext } from '../runtime/kernel';
+} from '../runtime/create-vue-consent-kernel-context';
+import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
 	symbolConsent,

@@ -8,7 +8,7 @@ import { defineComponent, h, inject } from 'vue';
 import { createIAB } from '../../../iab/src';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { inth } from '../index';
-import { createVueConsentKernelContext } from '../runtime/kernel';
+import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import { selectedMode } from '../runtime/modes.model';
 import { symbolKernel } from '../runtime/utils/consent-symbols.model';
 

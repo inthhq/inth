@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
 import { inth, manifest } from '../index';
-import type { RuntimeConsentConfig } from '../runtime/kernel';
+import type { RuntimeConsentConfig } from '../runtime/create-vue-consent-kernel-context';
 import { symbolKernel } from '../runtime/utils/consent-symbols.model';
 
 const cleanups: (() => void)[] = [];

@@ -17,7 +17,7 @@ import type { ManifestFetch, RequestConsentState } from '@inth/sdk/server';
 
 import snapshot from '#@inth/sdk/server-manifest-snapshot';
 
-import type { RuntimeConsentConfig } from './kernel';
+import type { RuntimeConsentConfig } from './create-vue-consent-kernel-context';
 import { readNuxtMode, readNuxtRoutePrefix } from './nuxt-mode';
 import type { NuxtResolvedModeConfig } from './nuxt-mode';
 

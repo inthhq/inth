@@ -12,8 +12,8 @@ import { mountTokensStyle } from './runtime/mount-tokens-style';
 import {
 	createVueConsentKernelContext,
 	provideVueConsentContext,
-} from './runtime/kernel';
-import type { RuntimeConsentConfig } from './runtime/kernel';
+} from './runtime/create-vue-consent-kernel-context';
+import type { RuntimeConsentConfig } from './runtime/create-vue-consent-kernel-context';
 import { selectedMode } from './runtime/modes.model';
 
 export type {
@@ -72,7 +72,7 @@ export type {
 export type {
 	RuntimeConsentConfig,
 	UseNetworkBlockerOptions,
-} from './runtime/kernel';
+} from './runtime/create-vue-consent-kernel-context';
 export {
 	manifest,
 	type BrowserManifestModeFactory,

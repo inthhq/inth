@@ -8,7 +8,7 @@ import {
 } from '@inth/sdk/transports/manifest-cache';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { createVueConsentKernelContext } from '../runtime/kernel';
+import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import { manifest, selectedMode } from '../runtime/modes.model';
 import {
 	readNuxtMode,

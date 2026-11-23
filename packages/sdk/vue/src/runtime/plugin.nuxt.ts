@@ -31,7 +31,7 @@ import {
 	pickAllowedInitHeaders,
 } from './init-headers.model';
 import { isSharedNuxtRender } from './is-shared-nuxt-render';
-import type { RuntimeConsentConfig, VueConsentKernelContext } from './kernel';
+import type { RuntimeConsentConfig, VueConsentKernelContext } from './create-vue-consent-kernel-context';
 import {
 	readNuxtMode,
 	readNuxtRoutePrefix,
