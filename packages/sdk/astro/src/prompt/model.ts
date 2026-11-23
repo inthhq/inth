@@ -159,6 +159,7 @@ export type PartName =
 	| 'footer'
 	| 'header'
 	| 'overlay'
+	| 'rightLink'
 	| 'root'
 	| 'shell'
 	| 'title';
@@ -180,6 +181,8 @@ const PART_SLOTS: Partial<Record<PartName, AllThemeKeys>> = {
 	footer: 'consentBannerFooter',
 	header: 'consentBannerHeader',
 	overlay: 'consentBannerOverlay',
+	// The notice's opt-out link, in the card and in the bar.
+	rightLink: 'consentBannerRightLink',
 	root: 'consentBanner',
 	title: 'consentBannerTitle',
 };
@@ -319,6 +322,7 @@ export const resolvePromptModel = function resolvePromptModel(
 		footer: join(surface.footer, presentationClasses.footer),
 		header: join(surface.head, presentationClasses.head),
 		overlay: join(surface.scrim),
+		rightLink: join(surface.rightLink),
 		root: join(surface.root, presentationClasses.root),
 		shell: join(surface.shell, presentationClasses.shell),
 		title: join(surface.title),
