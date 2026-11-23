@@ -79,8 +79,8 @@ export default defineConsentConfig({ options: { theme: actionTheme } });
 
 ## Change the banner's shape
 
-Read the active policy in a Client Component to switch variants per region (see
-[ConsentBanner variants](/docs/frameworks/next/components/consent-banner#variants)):
+Read the active policy in a Client Component to switch containers per region (see
+[ConsentBanner containers](/docs/frameworks/next/components/consent-banner#containers)):
 
 {/* example: fragment */}
 
@@ -92,7 +92,13 @@ import { ConsentBanner, usePolicyRule } from '@inth/nextjs';
 export function RegionalBanner() {
 	const policy = usePolicyRule();
 	return (
-		<ConsentBanner variant={policy?.prompt === 'notice' ? 'bar' : 'floating'} />
+		<ConsentBanner
+			container={
+				policy?.prompt === 'notice'
+					? { edge: 'bottom', type: 'banner' }
+					: { position: 'start', type: 'card' }
+			}
+		/>
 	);
 }
 ```
@@ -103,7 +109,7 @@ under `options.components.banner`:
 ```ts
 const bannerSlots = {
 	root: { className: 'group' },
-	card: { className: 'group-data-[prompt=notice]:rounded-none' },
+	card: { className: 'group-data-[variant=notice]:rounded-none' },
 	rightLink: {
 		className: 'underline-offset-4 data-[right=opt-out]:text-red-700',
 	},

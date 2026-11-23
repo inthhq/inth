@@ -110,7 +110,7 @@ export const CONSENT_BLOCKING_CONSTRAINTS = [
 export interface PolicySurface {
 	/**
 	 * Container the prompt uses when the host picks none. A host
-	 * `container`, or a legacy `variant` or `position`, wins.
+	 * `container` wins.
 	 */
 	container?: ConsentContainer;
 	/** Edge style when the host picks none. */

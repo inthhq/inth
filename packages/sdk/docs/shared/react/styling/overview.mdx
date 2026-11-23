@@ -42,30 +42,32 @@ group: reference
 <section id="token-roles">
   `consentActions` sets how each action role looks: `default` applies to every button, `primary` to whichever actions the policy or your props mark primary, and `accept`, `reject`, `customize`, and `dismiss` to one role each. Per-action keys win over `primary`, which wins over `default`.
 
-  Banner sizing uses its own variables. Override them in CSS when a variant needs a different footprint:
+  Each container has its own sizing variables. Override them in CSS when a container needs a different footprint:
 
   | Variable | Default | Applies to |
   | --- | --- | --- |
-  | `--consent-banner-max-width` | `440px` | `floating` cards |
-  | `--consent-banner-widget-max-width` | `20rem` | `widget` chips |
-  | `--consent-banner-wall-max-width` | `30rem` | `wall` cards |
+  | `--consent-card-width` | `min(440px, 100%)`, `480px` centred | Cards |
+  | `--consent-card-offset` | `var(--inth-space-lg)` | Card distance from the viewport edges |
+  | `--consent-card-panel-height` | `360px`, `320px` on phones | Card choices panel |
+
+  The classic `--consent-banner-max-width` and `--consent-banner-wall-max-width` still set the corner and centred Card widths. See [classic variable compatibility](/docs/customization/tokens#classic-variable-compatibility).
 
   The footer lays out its actions by the card's width, not the viewport's. With the default `compact` profile, a card narrower than 22rem places Reject and Accept on one row and Customize on a full-width row below them.
 
   ## Colors by consent model
 
-  The primary action can change while the brand color stays the same. Set `consentActions.primary` once, then pick `primaryButton` per policy as shown in [ConsentBanner](../components/consent-banner#per-policy-buttons).
+  The primary action can change while the brand color stays the same. Set `consentActions.primary` once, then pick the `layout` per policy as shown in [ConsentBanner](../components/consent-banner#per-policy-layouts).
 
-  To give opt-in and opt-out banners different colors, scope the tokens to the root attributes. Include hover and foreground colors when overriding CSS tokens directly:
+  To give choice and notice banners different colors, scope the tokens to the root's `data-variant`. Include hover and foreground colors when overriding CSS tokens directly:
 
   ```css
-  [data-prompt][data-model='opt-in'] {
+  [data-testid='consent-banner-root'][data-variant='choice'] {
   	--inth-primary: #2f6f4e;
   	--inth-primary-hover: #24563c;
   	--inth-text-on-primary: #fff;
   }
 
-  [data-prompt][data-model='opt-out'] {
+  [data-testid='consent-banner-root'][data-variant='notice'] {
   	--inth-primary: #6b3fa0;
   	--inth-primary-hover: #55327f;
   	--inth-text-on-primary: #fff;
@@ -80,30 +82,30 @@ group: reference
 </section>
 
 <section id="slot-recipes">
-  The root also carries `data-variant`, so you can restyle one shape without touching the others. This Tailwind example gives a `bar` a brand-colored top edge and tighter text:
+  The root also carries `data-placement`, so you can restyle one container without touching the others. This Tailwind example gives a bottom Banner a brand-colored top edge and tighter text:
 
   ```tsx
   <InthProvider
   	options={{
   		mode,
-  		presentation: { prompt: { variant: 'bar' } },
+  		presentation: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
   		components: {
   			banner: {
   				root: { className: 'group' },
   				card: {
   					className:
-  						'group-data-[variant=bar]:border-t-4 group-data-[variant=bar]:border-t-emerald-600',
+  						'group-data-[placement=banner-bottom]:border-t-4 group-data-[placement=banner-bottom]:border-t-emerald-600',
   				},
   			},
   			description: {
-  				banner: { className: 'group-data-[variant=bar]:text-xs' },
+  				banner: { className: 'group-data-[placement=banner-bottom]:text-xs' },
   			},
   		},
   	}}
   />
   ```
 
-  `data-variant` sits on the root, so child slots use Tailwind's `group` prefix to read it.
+  `data-placement` sits on the root, so child slots use Tailwind's `group` prefix to read it.
 
   [Class names and CSS-in-JS](/docs/customization/class-names) shows CSS Modules, vanilla-extract, StyleX, and Emotion classes on a part.
 

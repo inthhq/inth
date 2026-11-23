@@ -1,6 +1,5 @@
 import type {
 	ConsentKernel,
-	OptOutLinkVariant,
 	OptOutPayload,
 	OptOutTransportResult,
 	ProviderTransportFactory,
@@ -15,10 +14,7 @@ import {
 } from '@inth/sdk/runtime/page-globals';
 import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
 import type { PolicyRule } from '@inth/sdk/schema/types';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	closeOptOutConfirmation,
-} from '@inth/sdk/surface-actions';
+import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { useEffect } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

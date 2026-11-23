@@ -1,14 +1,14 @@
 ---
 title: ConsentDialog
-description: Mount the modal ConsentDialog preference center in TanStack Start and control triggers, blocking, and focus.
+description: Mount ConsentDialog, the Your Privacy Choices dialog, in TanStack Start and open it from links, triggers, or your own code.
 group: frameworks
 ---
 
-Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`, to provide a modal preference center.
+Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`. It is the full consent manager: "Your Privacy Choices".
 
 ## Render the preference dialog
 
-`ConsentDialog` opens whenever `dialog` becomes the active surface: from the banner's Customize button, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own component via `useSetActiveUI`:
+`ConsentDialog` opens whenever `dialog` becomes the active surface: from `PrivacyChoicesLink`, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own component via `useSetActiveUI`:
 
 {/* example: fragment */}
 
@@ -33,6 +33,6 @@ Under an `iab` policy, `ConsentDialog` stays closed; mount `IABConsentDialog` fr
 
 <import src="../../../shared/react/components/consent-dialog.mdx#accessibility" />
 
-<import src="../../../shared/react/components/consent-dialog.mdx#composition" />
+<import src="../../../shared/react/components/consent-dialog.mdx#customize" />
 
 <import src="../../../shared/react/components/consent-dialog.mdx#verify" />

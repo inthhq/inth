@@ -1,9 +1,9 @@
 import type { InthProviderCallbacks } from '@inth/nextjs';
 import { defineExperiment } from '@inth/nextjs/engine';
 
-/** `control` is the default banner; the `wall` arm blocks the page. */
+/** `control` is the default banner; the `wall` arm, a centred Card, blocks the page. */
 export const bannerExperiment = defineExperiment({
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 	id: 'banner-shape',
 });
 

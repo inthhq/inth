@@ -103,7 +103,7 @@ Omit `arm` and optionally set `split` weights to let Inth pick the arm before `/
 ```ts
 experiment: {
 	id: 'banner-shape',
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 	split: { control: 60, wall: 40 },
 }
 ```

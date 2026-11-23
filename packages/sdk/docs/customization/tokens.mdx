@@ -67,26 +67,26 @@ Theme objects use nested keys like `radius.lg`, Vue and Nuxt `tokens` omit `--` 
 Target specific prompts with rendered `data-*` attributes instead of internal class names:
 
 ```css
-[data-prompt][data-model='opt-in'] {
+[data-testid='consent-banner-root'][data-variant='choice'] {
   --inth-primary: #2f6f4e;
   --inth-primary-hover: #24563c;
   --inth-text-on-primary: #ffffff;
 }
 ```
 
-The script tag omits `data-prompt` and `data-model`. Because the preference dialog renders in a portal, tokens scoped to `[data-prompt]` do not reach it. Test both surfaces.
+`data-variant` is `choice`, `us-consent`, or `notice`. Because the dialog renders in a portal, tokens scoped to the banner root do not reach it. Test both surfaces.
 
 | Size variable | Default | Target |
 | --- | --- | --- |
-| `--consent-banner-max-width` | `440px` | Floating card |
-| `--consent-banner-widget-max-width` | `20rem` | Widget |
-| `--consent-banner-wall-max-width` | `30rem` | Choice wall |
-| `--consent-banner-padding-mobile` | `var(--inth-space-md)` | Floating card and choice wall inset below 640px |
-| `--consent-banner-padding` | `var(--inth-space-lg)` | Floating card and choice wall inset at 640px and up |
+| `--consent-card-width` | `min(440px, 100%)`, `480px` centred | Card |
+| `--consent-card-offset` | `var(--inth-space-lg)`, `var(--inth-space-md)` on phones | Card distance from the viewport edges |
+| `--consent-card-panel-height` | `360px`, `320px` on phones | Card choices panel |
+| `--consent-banner-padding-mobile` | `var(--inth-space-md)` | Card head and footer inset below 640px |
+| `--consent-banner-padding` | `var(--inth-space-lg)` | Card head and footer inset at 640px and up |
 | `--consent-dialog-card-padding-mobile` | `var(--inth-space-md)` | Dialog inset and outer gap below 640px |
 | `--consent-dialog-card-padding` | `var(--inth-space-lg)` | Dialog inset and outer gap at 640px and up |
 
-Bar and widget variants ignore both `--consent-banner-padding*` variables. Banner footers wrap actions by card width, not viewport width. Under the default `compact` profile, cards narrower than `22rem` place Reject and Accept on one row with Customize full-width below.
+Banner and Drawer containers ignore both `--consent-banner-padding*` variables. Footers wrap actions by container width, not viewport width.
 
 ## Control stacking order with z-index
 
@@ -94,38 +94,35 @@ Lower these variables when a navbar, drawer, or chat widget should sit above the
 
 | Variable | Default | Target |
 | --- | --- | --- |
-| `--consent-banner-z-index` | `999998` | Banner |
-| `--consent-banner-overlay-z-index` | `999997` | Blocking banner backdrop |
+| `--consent-banner-z-index` | `999998` | Banner and its backdrop |
 | `--iab-consent-banner-z-index` | `999998` | IAB TCF banner |
 | `--iab-consent-banner-overlay-z-index` | `999997` | IAB TCF backdrop |
-| `--consent-dialog-z-index` | `999999` | Preference dialog |
-| `--consent-dialog-overlay-z-index` | `999998` | Preference dialog backdrop |
+| `--consent-dialog-z-index` | `999999` | Dialog and its backdrop |
 
 ```css
 :root {
   --consent-banner-z-index: 40;
-  --consent-banner-overlay-z-index: 39;
 }
 ```
 
-Keep each surface z-index above its overlay, and keep the dialog above the banner. Non-blocking banners only capture clicks on the card and branding tag, so clicks around them pass through to your page.
+Keep the dialog above the banner. Non-blocking banners only capture clicks on the container, so clicks around them pass through to your page.
 
-## Keep classic variables on Privacy Choices
+## Classic variable compatibility
 
-The Privacy Choices UI reads the classic banner and dialog variables, so styling you set through them carries over. Each Privacy Choices part reads its own hook first, then the classic variable, then the theme token. Set either name on any ancestor, such as `:root` or `.inth-theme-root`:
+Inth reads the banner and dialog variables of earlier releases, so styling you set through them carries over. Each part reads its own hook first, then the classic variable, then the theme token. Set either name on any ancestor, such as `:root` or `.inth-theme-root`:
 
 ```css
 :root {
-  /* Rounds the classic floating card and the Privacy Choices Card */
+  /* Rounds the Card */
   --consent-banner-border-radius: 4px;
-  /* Wins over the classic variable on the Card only */
+  /* Wins over the classic variable on the Card */
   --consent-card-radius: 0;
 }
 ```
 
-A `-dark` variable applies in dark mode only, as on the classic UI. Inth declares none of the mapped variables, so each default follows a scoped palette.
+A `-dark` variable applies in dark mode only. Inth declares none of the mapped variables, so each default follows a scoped palette.
 
-| Classic variable | v6 hook that wins | v6 part |
+| Classic variable | Hook that wins | Part |
 | --- | --- | --- |
 | `--consent-banner-font-family` | — | Card, Banner, Drawer: the layer font |
 | `--consent-banner-line-height` | — | Card, Banner, Drawer: the layer line height |
@@ -182,37 +179,37 @@ A `-dark` variable applies in dark mode only, as on the classic UI. Inth declare
 | `--consent-dialog-footer-padding-y` | — | Dialog: the footer padding above and below |
 | `--consent-dialog-card-radius` | `--consent-dialog-radius` | Dialog: the card corners |
 | `--consent-dialog-max-width` | `--consent-dialog-width` | Dialog: the card width |
-| `--consent-dialog-max-height` | — | Dialog: the card height cap (v6 reads it under the same name) |
-| `--consent-dialog-z-index` | — | Dialog: the layer stacking (v6 reads it under the same name) |
+| `--consent-dialog-max-height` | — | Dialog: the card height cap (read under the same name) |
+| `--consent-dialog-z-index` | — | Dialog: the layer stacking (read under the same name) |
 | `--consent-dialog-card-shadow` | — | Dialog: the card shadow, under its edge |
 | `--consent-dialog-border-width` | — | Dialog: the card edge and the footer divider |
 | `--consent-dialog-border-style` | — | Dialog: the footer divider style |
 | `--consent-dialog-animation-timing` | — | Dialog: the backdrop and card entrance easing |
 
-Privacy Choices does not read these classic variables:
+Inth does not read these classic variables:
 
-| Classic variable | Why v6 doesn't read it |
+| Classic variable | Why Inth doesn't read it |
 | --- | --- |
-| `--consent-banner-animation-duration` | Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 exit keeps its own duration. |
-| `--consent-banner-border-radius-sm` | Rounds the focus ring of the classic footer rights links. The v6 prompt has no rights links; they live in the dialog. |
-| `--consent-banner-branding-tag-offset` | Declared but read by no rule, classic or v6. |
-| `--consent-banner-border-width-hairline` | Declared but read by no rule, classic or v6. |
-| `--consent-banner-overlay-z-index` | The v6 scrim sits inside the layer, under the card, so it has no stacking order of its own. `--consent-banner-z-index` moves both. |
+| `--consent-banner-animation-duration` | The prompt exit keeps its own duration. Adapters that still time an exit read it and fall back to `--inth-duration-fast`. |
+| `--consent-banner-border-radius-sm` | Rounded the focus ring of the old footer rights links. The prompt has no rights links; they live in the dialog. |
+| `--consent-banner-branding-tag-offset` | Read by no rule. |
+| `--consent-banner-border-width-hairline` | Read by no rule. |
+| `--consent-banner-overlay-z-index` | The scrim sits inside the layer, under the card, so it has no stacking order of its own. `--consent-banner-z-index` moves both. |
 | `--consent-banner-space-y-reverse` | An internal helper the classic header sets on itself for its spacing, not a customisation hook. |
-| `--consent-banner-tab-size` | v6 sets no tab size; the prompt holds no preformatted text. |
-| `--consent-banner-widget-max-width` | Sizes the classic `widget` chip, which has no v6 presentation. |
-| `--consent-dialog-animation-duration` | Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 dialog keeps its own duration. |
-| `--consent-dialog-border-width-hairline` | Declared but read by no rule, classic or v6. |
-| `--consent-dialog-content-gap` | Spaces the classic dialog body sections. The v6 rights rows are divided by borders and padding instead. |
-| `--consent-dialog-header-gap` | Spaces the classic header stack. The v6 header sets the title beside the close button; `--consent-dialog-card-gap` spaces the title and intro. |
-| `--consent-dialog-height` | Sizes the classic sidebar dialog, which has no v6 counterpart. |
-| `--consent-dialog-link-text-color` | Colours the classic overlay, which holds no text. v6 has no counterpart. |
-| `--consent-dialog-link-text-color-dark` | Colours the classic overlay, which holds no text. v6 has no counterpart. |
-| `--consent-dialog-overlay-background-color` | The Vue adapter reads its computed value on `:root` to tell whether `styles.css` is on the page, so it keeps its default there, where v6 would take that default too. The v6 backdrop keeps `--inth-overlay`. |
-| `--consent-dialog-overlay-background-color-dark` | Kept on `:root` beside `--consent-dialog-overlay-background-color`, so the pair stays together. |
-| `--consent-dialog-overlay-z-index` | The v6 backdrop is the overlay, so `--consent-dialog-z-index` orders both. |
-| `--consent-manager-text-muted-color` | The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart. |
-| `--consent-manager-text-muted-color-dark` | The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart. |
+| `--consent-banner-tab-size` | The prompt sets no tab size; it holds no preformatted text. |
+| `--consent-banner-widget-max-width` | Sized the old `widget` chip, which has no container. |
+| `--consent-dialog-animation-duration` | The dialog keeps its own duration. Adapters that still time an exit read it and fall back to `--inth-duration-normal`. |
+| `--consent-dialog-border-width-hairline` | Read by no rule. |
+| `--consent-dialog-content-gap` | Spaced the old dialog body sections. The rights rows are divided by borders and padding instead. |
+| `--consent-dialog-header-gap` | Spaced the old header stack. The header sets the title beside the close button; `--consent-dialog-card-gap` spaces the title and intro. |
+| `--consent-dialog-height` | Sized the old sidebar dialog, which has no counterpart. |
+| `--consent-dialog-link-text-color` | Coloured the old overlay, which held no text. Nothing replaces it. |
+| `--consent-dialog-link-text-color-dark` | Coloured the old overlay, which held no text. Nothing replaces it. |
+| `--consent-dialog-overlay-background-color` | The backdrop reads `--inth-overlay`. |
+| `--consent-dialog-overlay-background-color-dark` | The backdrop reads `--inth-overlay`. |
+| `--consent-dialog-overlay-z-index` | The backdrop is the overlay, so `--consent-dialog-z-index` orders both. |
+| `--consent-manager-text-muted-color` | The preference widget declares and reads it for its own descriptions; the prompt and the dialog do not. |
+| `--consent-manager-text-muted-color-dark` | The preference widget declares and reads it for its own descriptions; the prompt and the dialog do not. |
 
 ## Style the "Consent by" tag
 

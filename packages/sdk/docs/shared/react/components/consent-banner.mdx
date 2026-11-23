@@ -1,6 +1,6 @@
 ---
 title: "ConsentBanner"
-description: "Shared ConsentBanner reference table for React, TanStack Start, and Next.js."
+description: "Shared ConsentBanner reference sections for React, TanStack Start, and Next.js."
 group: reference
 ---
 
@@ -15,16 +15,58 @@ group: reference
   | `rejectButtonText` | `ReactNode` | `common.rejectAll` | Reject button label. |
   | `customizeButtonText` | `ReactNode` | `common.customize` | Customize button label. |
   | `dismissButtonText` | `ReactNode` | `common.acknowledge` | Label for the notice acknowledgement button. |
-  | `variant` | `PromptVariant` | `floating` | Shape of the prompt. See [Variants](#variants). |
-  | `position` | `PromptPosition` | per variant | Where the prompt sits. Must be valid for the chosen variant. |
-  | `blocking` | `boolean` | `true` on `wall` | Enables backdrop, scroll lock, focus trap, and disables outside dismissal together. |
+  | `container` | `ConsentContainer` | `{ type: 'card', position: 'start' }` | The Card, Banner, or Drawer, and where it sits. See [Containers](#containers). |
+  | `edgeStyle` | `'inset' \| 'flush'` | `'inset'` | `inset` floats a Banner or Drawer 12px off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
+  | `blockUntilChoice` | `boolean` | `false` | Blocks the page until the visitor chooses: backdrop, scroll lock, focus trap, and no outside dismissal. A centred Card always blocks. |
   | `layout` | `ConsentBannerLayout` | policy default | Orders and groups actions. Restores any required action the layout omits. |
-  | `primaryButton` | `ConsentBannerButton \| ConsentBannerButton[]` | `'customize'` | Marks which actions get primary styling. On a notice, dismiss is primary when it is the only action. |
-  | `direction` | `'row' \| 'column'` | `'row'` | Sets how action groups flow. |
   | `legalLinks` | `(keyof LegalLinks)[] \| null` | none | Lists which configured legal links render inline. |
+  | `models` | `Model[]` | `['opt-in', 'opt-out']` | Consent models this banner responds to. |
   | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
-  | `scrollLock` | `boolean` | unset | Deprecated. Use `blocking` to control scroll lock, focus trap, and backdrop together. |
-  | `trapFocus` | `boolean` | unset | Deprecated. Use `blocking`. |
   | `disableAnimation` | `boolean` | `false` | Skips enter and exit animations. |
   | `noStyle` | `boolean` | `false` | Removes built-in styling from every part. |
+  | `uiSource` | `string` | `'banner'` | UI source sent with consent API calls. |
+</section>
+
+<section id="containers">
+  The policy decides which actions appear. The container decides where the prompt sits. All three containers show the same copy and the same choices.
+
+  | Container | Positions | Default | Shape |
+  | --- | --- | --- | --- |
+  | `{ type: 'card', position }` | `start`, `end`, `center` | `start` | A floating card in a bottom corner, or centred over a backdrop. |
+  | `{ type: 'banner', edge }` | `bottom`, `top` | `bottom` | A full-width banner along one edge. |
+  | `{ type: 'drawer', side }` | `bottom`, `top`, `start`, `end` | `bottom` | A panel that slides in from one side and shows every choice at once on desktop. |
+
+  `start` and `end` are logical, like CSS `inset-inline-start`. On a right-to-left page, `start` is the bottom-right corner.
+
+  ```tsx
+  <ConsentBanner container={{ type: 'banner', edge: 'bottom' }} edgeStyle="flush" />
+  ```
+
+  Customize opens the choices inside the same container. The visitor does not leave the banner to make a choice. On phones, a `start` or `end` Drawer becomes a bottom Drawer.
+
+  Set a container in three places. The first one that is set wins:
+
+  1. The `container` prop on `ConsentBanner`.
+  2. `presentation.prompt.container` in the provider options.
+  3. The policy rule's `surface.container`, set in the dashboard. Script-tag installs, which have no props, use this one.
+
+  `edgeStyle` follows the same order, with `surface.edgeStyle` last.
+
+  **Blocking.** `blockUntilChoice` dims the page, locks scroll, and keeps focus inside the prompt until the visitor chooses. A centred Card always blocks. A notice never blocks, and neither does a prompt under an opt-out model. Where blocking is not possible, a centred Card moves to the `start` corner. The policy's `surface.blocking` is a hard rule: `forbidden` never blocks, and `required` always blocks a choice prompt. A blocking prompt has `role="dialog"` and `aria-modal="true"`. A non-blocking prompt is a labelled region and leaves the page interactive.
+</section>
+
+<section id="data-attributes">
+  The root element exposes these attributes for CSS or Tailwind targeting:
+
+  | Attribute | Values |
+  | --- | --- |
+  | `data-placement` | `card-start`, `card-end`, `card-center`, `banner-bottom`, `banner-top`, `drawer-bottom`, `drawer-top`, `drawer-start`, `drawer-end` |
+  | `data-flow` | `expand-in-place`, `all-in-one` |
+  | `data-variant` | `choice`, `us-consent`, `notice` |
+  | `data-edge-style` | `inset`, `flush` |
+  | `data-blocking` | `true`, present only while blocking |
+  | `data-expanded` | `true`, present while Customize shows the choices |
+  | `data-state` | `open`, `closed` |
+
+  Each action button sets `data-action`.
 </section>

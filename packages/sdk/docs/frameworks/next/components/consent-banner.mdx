@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render ConsentBanner inside a Next.js InthProvider and configure variants, per-policy button layouts, compound parts and data attributes.
+description: Render ConsentBanner inside a Next.js InthProvider and choose its container, edge style, blocking, and per-policy button layouts.
 group: frameworks
 ---
 
@@ -13,32 +13,38 @@ Mount one `ConsentBanner` inside `InthProvider` in your
 <include src="../../../shared/examples/nextjs/quickstart-layout.mdx" />
 
 Server Components can render `ConsentBanner` directly when passing serializable
-props; move function props like `renderAction` into a `'use client'` component.
+props.
 
 With the default streamed layout, the banner arrives in a later chunk before
 hydration (disable with `options={{ streamBanner: false }}`). With the
 [awaited layout](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html)
-or Pages Router `getServerSideProps`, it ships in the initial server HTML:
+or Pages Router `getServerSideProps`, it ships in the initial server HTML.
 
-- **`choice` prompt:** shows equal-prominence Reject and Accept actions plus
-  Customize when offered by the rule (or a "Manage preferences" button if
-  Customize is omitted).
-- **`notice` prompt:** shows an "OK" button and an underlined
-  "Do Not Sell or Share My Personal Information" button that opens preferences. Notices never
-  lock scroll or trap focus, and acknowledging records a dismissal without
-  changing permissions.
-- **`prompt: 'none'` or unresolved policy:** renders nothing. Opt-out rules
-  with `prompt: 'none'` keep preferences reachable; `model: 'none'` hides all
-  surfaces unless the rule adds `rights: ['preferences']`.
+The banner adapts to the active policy rule:
+
+- A `choice` prompt renders the rule's actions: Reject and Accept at equal prominence, plus Customize when offered. Customize opens the category choices inside the banner, with a Save button.
+- A `notice` prompt renders an "OK" button and the policy's opt-out link. Notices never trap focus or lock scroll.
+- A rule with `prompt: 'none'` renders nothing.
+
+An opt-out rule with `prompt: 'none'` still grants rights, so the dialog and its trigger stay available. A rule with `model: 'none'` owes no rights and renders nothing unless you add `rights: ['preferences']`. When no rule has resolved yet, no consent surface renders; all surfaces appear without remounting once a rule resolves. `testing()` without a custom `policy` resolves the recommended pack and displays the opt-in banner until you pass a country.
+
+Acknowledging a notice records dismissal only, without recording consent or changing permissions, denials, or privacy-signal restrictions. Customize the label via `common.acknowledge` in translations, or pass `dismissButtonText` for a single banner.
+
+Under an `opt-out` policy, the banner's opt-out link follows the resolved `presentation.optOutLink` title. With `'do-not-sell'` (the default), activating it records the opt-out in one click and opens `OptOutConfirmation` (reloading first when that turns off a running category and `reloadOnConsentRevoked` is enabled). With `'privacy-choices'` or `'california-privacy-choices'`, the link renders with the California Privacy Protection Agency opt-out icon and opens `ConsentDialog` without recording an opt-out. Programmatic calls to `useOptOut()` still opt out in one step whatever `presentation.optOutLink` is set to. Keep a [`PrivacyChoicesLink`](./privacy-choices-link) reachable after the banner closes.
+
+<include src="../../../shared/privacy-choices-link.mdx" />
 
 ## Props
 
 <import src="../../../shared/react/components/consent-banner.mdx#props" />
 
-## Per-policy buttons
+## Containers
 
-Read `usePolicyRule()` in a Client Component to override `layout`,
-`primaryButton` or `variant` per policy ID:
+<import src="../../../shared/react/components/consent-banner.mdx#containers" />
+
+## Per-policy layouts
+
+To change the container or the button order per policy rule, read the active rule inside `InthProvider` in a Client Component:
 
 {/* example: fragment */}
 
@@ -48,18 +54,14 @@ Read `usePolicyRule()` in a Client Component to override `layout`,
 import { ConsentBanner, usePolicyRule } from '@inth/nextjs';
 import type { ConsentBannerProps } from '@inth/nextjs';
 
-const banners: Record<
-	string,
-	Pick<ConsentBannerProps, 'layout' | 'primaryButton' | 'variant'>
-> = {
+const banners: Record<string, Pick<ConsentBannerProps, 'container' | 'layout'>> = {
 	europe_opt_in: {
+		container: { position: 'center', type: 'card' },
 		layout: [['reject', 'accept'], 'customize'],
-		primaryButton: 'customize',
 	},
 	us_privacy_states: {
+		container: { edge: 'bottom', type: 'banner' },
 		layout: ['dismiss'],
-		primaryButton: 'dismiss',
-		variant: 'bar',
 	},
 };
 
@@ -69,9 +71,7 @@ export function RegionalBanner() {
 }
 ```
 
-Required actions omitted from `layout` are restored automatically, and Accept
-and Reject keep equivalent default prominence. Style the primary action via
-`options.theme` in `inth.config.ts`:
+`layout` controls action grouping. Any required action omitted from `layout` is restored automatically, and Accept and Reject keep equal prominence. Apply one brand color and fill the primary action via the provider theme:
 
 ```ts
 const theme = {
@@ -80,95 +80,10 @@ const theme = {
 } as const;
 ```
 
-See [Customize](/docs/frameworks/next/customize) for tokens and slots, and
-[Policies](/docs/concepts/policies) for rule IDs.
+Pass `theme` in `options.theme` in `inth.config.ts`. See [Customize](/docs/frameworks/next/customize) for tokens and slots, and [Policies](/docs/concepts/policies) for rule IDs.
 
-## Variants
-
-Set `variant` and `position` on `ConsentBanner` or globally via
-`options.presentation.prompt` (component props win):
-
-| Variant | Shape | Positions | Default |
-| --- | --- | --- | --- |
-| `floating` (default) | Corner or centered floating card | `bottom-left`, `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` | `bottom-left` |
-| `bar` | Full-width top or bottom bar (single row at 1024px+) | `top`, `bottom` | `bottom` |
-| `widget` | Compact card with smaller type | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
-| `wall` | Centered modal card over a blocking backdrop | `center` | `center` |
-
-Invalid positions fall back to the variant default (`invalid-position`
-diagnostic in dev). `blocking` controls backdrop, scroll lock and focus trap
-together (replacing deprecated `scrollLock`/`trapFocus`): choice `wall` always
-blocks (`role="dialog"`, `aria-modal="true"`), while notices never block
-(asking for a notice `wall` falls back to `floating`). Exported types:
-`PromptVariant`, `PromptPosition` and `useConsentBannerSurface()`.
-
-## Composition
-
-Compose custom layouts inside a `'use client'` file with `ConsentBanner.<Part>`:
-
-{/* example: fragment */}
-
-```tsx title="components/compact-banner.tsx"
-'use client';
-
-import { ConsentBanner } from '@inth/nextjs';
-
-export function CompactBanner() {
-	return (
-		<ConsentBanner.Root>
-			<ConsentBanner.Card>
-				<ConsentBanner.Header>
-					<ConsentBanner.Title />
-					<ConsentBanner.Description />
-				</ConsentBanner.Header>
-				<ConsentBanner.PolicyActions />
-			</ConsentBanner.Card>
-		</ConsentBanner.Root>
-	);
-}
-```
-
-- `ConsentBanner.PolicyActions` renders preference links followed by policy
-  action groups (pass children to replace the preference links).
-- `ConsentBanner.AcceptButton`, `RejectButton`, `CustomizeButton` and
-  `DismissButton` render individual actions.
-- `ConsentBanner.Rights` and `ConsentBanner.RightLink` (`right="opt-out"` or
-  `"preferences"`, supports `asChild`) render preference links. Under an
-  `opt-out` policy, activating `right="opt-out"` follows the resolved
-  `presentation.optOutLink` title: `'do-not-sell'` (the default) records the
-  opt-out in one click and opens `OptOutConfirmation` (reloading first when
-  that turns off a running category and `reloadOnConsentRevoked` is enabled),
-  while `'privacy-choices'` and `'california-privacy-choices'` render with the
-  California Privacy Protection Agency opt-out icon and open the preference
-  center without recording an opt-out. Under other models it opens the
-  preference center. Programmatic calls to `useOptOut()` still opt out in one
-  step whatever `presentation.optOutLink` is set to.
-- `useBannerCopy()` returns `title`, `description` and prompt kind for custom
-  headers.
-
-<include src="../../../shared/privacy-choices-link.mdx" />
-
-```tsx
-<ConsentBanner.Rights>
-	<ConsentBanner.RightLink right="opt-out" asChild>
-		<a href="/privacy/do-not-sell">
-			Do Not Sell or Share My Personal Information
-		</a>
-	</ConsentBanner.RightLink>
-</ConsentBanner.Rights>;
-```
+`useBannerCopy()` returns the resolved title, description, and prompt kind for custom headers. For your own markup, see [Headless](/docs/frameworks/next/headless).
 
 ## Data attributes
 
-Target the root element (`data-state` sits on the card) from CSS or Tailwind:
-
-| Attribute | Values |
-| --- | --- |
-| `data-prompt` | `choice`, `notice` |
-| `data-model` | `opt-in`, `opt-out`, `iab` |
-| `data-variant` | `floating`, `bar`, `widget`, `wall` |
-| `data-position` | Resolved position for the variant |
-| `data-blocking` | `true` (present only while blocking) |
-
-Action buttons carry `data-action`; right links carry `data-action="right"` and
-`data-right`.
+<import src="../../../shared/react/components/consent-banner.mdx#data-attributes" />
