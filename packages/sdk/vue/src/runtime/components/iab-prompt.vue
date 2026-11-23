@@ -169,7 +169,7 @@ const footerAttrs = computed(() => ({
 
 const focusBlocking = useFocusBlocking('prompt');
 const { presentation } = useConsentPolicyActions('prompt', () => ({
-	blocking: focusBlocking.value,
+	blockUntilChoice: focusBlocking.value,
 	layout: IAB_BANNER_LAYOUT,
 	primaryActions: [props.primaryButton],
 }));

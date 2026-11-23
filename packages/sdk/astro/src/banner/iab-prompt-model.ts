@@ -54,8 +54,8 @@ export interface IABPromptProps {
 	hideBranding?: boolean;
 	/**
 	 * Block the page while the banner shows: a backdrop, scroll lock and
-	 * focus trap. An explicit `presentation.prompt.blocking` (or
-	 * `blockUntilChoice`) wins over it, as on React's IAB banner.
+	 * focus trap. An explicit `presentation.prompt.blockUntilChoice` wins
+	 * over it, as on React's IAB banner.
 	 */
 	scrollLock?: boolean;
 }
@@ -295,11 +295,10 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 	const { snapshot, props } = input;
 	const models = props.models ?? ['iab'];
 	const prompt = input.presentation?.prompt;
-	const explicit = prompt?.blockUntilChoice ?? prompt?.blocking;
 	const presentation = resolveConsentPresentation({
 		override:
-			explicit === undefined && props.scrollLock !== undefined
-				? { blocking: props.scrollLock }
+			prompt?.blockUntilChoice === undefined && props.scrollLock !== undefined
+				? { blockUntilChoice: props.scrollLock }
 				: undefined,
 		policy: snapshot.policyRule,
 		presentation: input.presentation,

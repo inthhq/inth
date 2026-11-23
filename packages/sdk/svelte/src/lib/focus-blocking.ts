@@ -14,10 +14,11 @@ const fromFocusOptions = (options: FocusOptions): boolean | undefined =>
 
 /**
  * The blocking the IAB banner and dialog ask for through their
- * `scrollLock` and `trapFocus` props, or the provider's, as the
- * presentation's `blocking`. Explicit `blocking` (or `blockUntilChoice`) in
- * the presentation wins over both; then the component's own props, then
- * the provider's. `undefined` leaves the presentation to decide.
+ * `scrollLock` and `trapFocus` props, or the provider's. The banner passes
+ * it on as `blockUntilChoice`, the dialog as `blocking`. An explicit
+ * `presentation.prompt.blockUntilChoice` or `presentation.preferences.blocking`
+ * wins over both; then the component's own props, then the provider's.
+ * `undefined` leaves the presentation to decide.
  *
  * @param surface - The presentation tier the surface reads.
  * @param presentation - The provider's `presentation`.
@@ -31,10 +32,10 @@ export const focusBlocking = function focusBlocking(
 	local: FocusOptions,
 	provider: FocusOptions
 ): boolean | undefined {
-	const tier = presentation?.[surface];
 	const explicit =
-		(tier as { blockUntilChoice?: boolean } | undefined)?.blockUntilChoice ??
-		tier?.blocking;
+		surface === 'prompt'
+			? presentation?.prompt?.blockUntilChoice
+			: presentation?.preferences?.blocking;
 	if (explicit !== undefined) {
 		return undefined;
 	}

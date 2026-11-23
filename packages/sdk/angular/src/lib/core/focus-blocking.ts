@@ -5,7 +5,7 @@
  * @internal
  */
 
-import type { ConsentPresentation, PromptPresentation } from '@inth/sdk/engine';
+import type { ConsentPresentation } from '@inth/sdk/engine';
 
 /** One blocking mode from the scroll and focus options, as one value. */
 const fromFocusOptions = function fromFocusOptions(
@@ -19,10 +19,11 @@ const fromFocusOptions = function fromFocusOptions(
 
 /**
  * The blocking the IAB banner and dialog ask for through their
- * `scrollLock` and `trapFocus` inputs, or the provider's, as the
- * presentation's `blocking`. Explicit `blocking` (or `blockUntilChoice`)
- * in the presentation wins over both; then the component's own inputs,
- * then the provider's. `undefined` leaves the presentation to decide.
+ * `scrollLock` and `trapFocus` inputs, or the provider's. The banner
+ * passes it on as `blockUntilChoice`, the dialog as `blocking`. An explicit
+ * `presentation.prompt.blockUntilChoice` or `presentation.preferences.blocking`
+ * wins over both; then the component's own inputs, then the provider's.
+ * `undefined` leaves the presentation to decide.
  *
  * @internal
  */
@@ -32,10 +33,10 @@ export const focusBlocking = function focusBlocking(
 	own: { scrollLock?: boolean; trapFocus?: boolean },
 	provider: { scrollLock?: boolean; trapFocus?: boolean }
 ): boolean | undefined {
-	const tier = presentation?.[surface];
 	const explicit =
-		(tier as PromptPresentation | undefined)?.blockUntilChoice ??
-		tier?.blocking;
+		surface === 'prompt'
+			? presentation?.prompt?.blockUntilChoice
+			: presentation?.preferences?.blocking;
 	if (explicit !== undefined) {
 		return undefined;
 	}

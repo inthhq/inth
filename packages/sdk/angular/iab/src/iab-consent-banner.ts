@@ -263,7 +263,7 @@ export class IABConsentBanner {
 	protected readonly presentation = computed(() =>
 		resolveConsentPresentation({
 			override: {
-				blocking: focusBlocking(
+				blockUntilChoice: focusBlocking(
 					'prompt',
 					this.#consent.presentation(),
 					{ scrollLock: this.scrollLock(), trapFocus: this.trapFocus() },
