@@ -7,8 +7,8 @@
  */
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface.
-export { ConsentBootData, ServerBootData } from './consent-boot-data';
-export type { ConsentBootDataProps } from './consent-boot-data';
+export { ConsentBootData, ServerBootData } from './server-boot-data';
+export type { ConsentBootDataProps } from './server-boot-data';
 export type { DeferredEngineHostProps } from './deferred-engine-host';
 export { DeferredEngineHost } from './deferred-engine-host';
 export {

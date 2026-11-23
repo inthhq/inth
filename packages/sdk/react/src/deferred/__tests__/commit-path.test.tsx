@@ -38,7 +38,7 @@ import { useScriptLoader } from '../../module-hooks/script-loader';
 import type { Script } from '../../module-hooks/script-loader';
 import { readConsentBoot } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../consent-boot-data';
+import { ConsentBootData, ServerBootData } from '../server-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
 import { recordOnce } from '../recorded-promise.model';
