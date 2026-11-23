@@ -746,7 +746,9 @@
 		</button>
 	{:else}
 		<ConsentButton
-			bind:ref={expandEl}
+			onref={(element) => {
+				expandEl = element;
+			}}
 			action="custom-consent"
 			performDefaultAction={false}
 			{...appearance('customize', true)}

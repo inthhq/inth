@@ -28,6 +28,7 @@
 		baseClassName,
 		performDefaultAction = true,
 		ref = $bindable(null),
+		onref,
 		...restProps
 	}: Omit<HTMLButtonAttributes, 'class'> & {
 		action:
@@ -61,7 +62,23 @@
 		performDefaultAction?: boolean;
 		/** The rendered button. */
 		ref?: HTMLButtonElement | null;
+		/**
+		 * Called with the rendered button, and with `null` when it goes.
+		 * The stock surfaces use it in place of `bind:ref`: a component
+		 * binding makes Svelte 5.20's server output call a function it never
+		 * declares (`$$render_inner is not defined`).
+		 */
+		onref?: (element: HTMLButtonElement | null) => void;
 	} = $props();
+
+	$effect(() => {
+		if (!onref) {
+			return;
+		}
+		const element = ref;
+		onref(element);
+		return () => onref(null);
+	});
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
