@@ -879,9 +879,38 @@ describe('astro:config:setup', () => {
 			`import iabDialogStyle1 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
 		);
 		expect(boot).toContain(
-			"registerDialogStyles([iabDialogStyle0, iabDialogStyle1], 'iab');"
+			"registerDialogStyles([iabDialogStyle0, iabDialogStyle1, iabDialogStyle2], 'iab');"
 		);
 	});
+
+	it('gives the Svelte IAB dialog the primitives rules it renders its rows with', async () => {
+		const { calls } = await runSetup({
+			iab: { cmpId: 160 },
+			mode: testingMode(),
+			ui: 'svelte',
+		});
+		const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
+		// Without them a collapsed purpose, feature or vendor shows open.
+		expect(boot).toContain(
+			`import iabDialogStyle2 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/primitives.css')}?url`)};`
+		);
+		expect(boot).toContain(
+			"registerDialogStyles([iabDialogStyle0, iabDialogStyle1, iabDialogStyle2], 'iab');"
+		);
+	});
+
+	it.each(['react', 'vue'] as const)(
+		"links no primitives rules for the %s IAB dialog, which renders the widget's",
+		async (ui) => {
+			const { calls } = await runSetup({
+				iab: { cmpId: 160 },
+				mode: testingMode(),
+				ui,
+			});
+			const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
+			expect(boot).not.toContain('primitives.css');
+		}
+	);
 
 	it('gives the React IAB dialog the widget rules its preferences dialog never links', async () => {
 		const { calls } = await runSetup({
@@ -983,6 +1012,10 @@ describe('astro:config:setup', () => {
 			);
 			const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
 			expect(boot).not.toContain('sheets/iab-dialog.css');
+			// `styles.css` carries no primitives rules, which Svelte's IAB
+			// dialog still needs.
+			expect(boot).toContain("registerDialogStyles([iabDialogStyle0], 'iab');");
+			expect(boot).toContain('primitives.css');
 		});
 	});
 
