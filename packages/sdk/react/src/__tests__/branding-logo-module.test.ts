@@ -22,7 +22,7 @@ describe('branding logo module', () => {
 
 	test('only the dialog trigger imports the trigger icons', () => {
 		const importers = Object.entries(rawSources)
-			.filter(([, text]) => /from '[^']*trigger-icons'/u.test(text))
+			.filter(([, text]) => /from '[^']*settings-icon'/u.test(text))
 			.map(([file]) => file)
 			.sort();
 

@@ -11,7 +11,7 @@ import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import type { TriggerIcon as TriggerIconType } from '../consent-dialog-trigger.model';
-import { FingerprintIcon, SettingsIcon } from './trigger-icons';
+import { FingerprintIcon, SettingsIcon } from './settings-icon';
 import { useTriggerContext } from './trigger-root';
 
 export interface TriggerIconProps {
