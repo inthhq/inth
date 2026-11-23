@@ -17,8 +17,8 @@ policy, and the browser resolves each visitor from it.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/javascript dev
 ```
 
@@ -34,5 +34,5 @@ Rebuild after you change the policy, translations or vendors in your project.
 Replace `phc_your_project_key` in `src/main.ts` with your PostHog project
 key.
 
-The [JavaScript quickstart](https://c15t.com/docs/frameworks/javascript/quickstart)
+The [JavaScript quickstart](https://inth.com/docs/frameworks/javascript/quickstart)
 walks through each file.

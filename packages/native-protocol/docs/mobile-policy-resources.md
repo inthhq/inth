@@ -14,14 +14,15 @@ below remains for fixtures that need an explicit expiry.
 
 ## Export at build time
 
-Build the shared schema, then run the exporter from the repository root. Choose
-an expiry that your policy owner approves and rebuild before it expires.
+Build `@inth/sdk`, whose schema the exporter imports, then run the exporter from
+the repository root. Choose an expiry that your policy owner approves and
+rebuild before it expires.
 
 ```sh
-bun turbo run build --filter=@inth/sdk-schema
+bun turbo run build --filter=@inth/sdk
 bunx tsx scripts/export-mobile-policy.ts \
   --endpoint https://your-project.inth.app \
-  --expires-at 2026-11-05T00:00:00Z \
+  --expires-at 2027-02-05T00:00:00Z \
   --languages en,fr \
   --out inth-policy.json
 ```
@@ -52,7 +53,7 @@ subject, receipt, effective permissions, TC string, delivery queue or
 | --- | --- |
 | Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.inth.policy.resource` to its filename in Info.plist. Keep `com.inth.backend.url` set to your Inth project URL. |
 | Bare Android | Put the JSON in `app/src/main/assets`. Set `com.inth.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.inth.BACKEND_URL` configured. |
-| Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `backendURL`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
+| Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `projectUrl`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
 | Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `InthAppleConfiguration.bundledPolicy` to `InthApple.install`. |
 | Kotlin host | Read the resource into `NativeConfig.bundledPolicy` and pass it to `InthAndroid.install`. `InthAndroid.configFrom` can load the declared asset for you. |
 

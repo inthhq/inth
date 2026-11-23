@@ -6,18 +6,17 @@ integration must keep.
 
 ## Where the docs are
 
-The Swift SDK is a private prerelease, and its guides are not published on
-c15t.com yet. Read them from either place:
+The Swift SDK is a private prerelease. Read its guides from either place:
 
-- The Inth source your maintainer supplied: `docs/frameworks/swift/`
+- The Inth source your maintainer supplied: `packages/sdk/docs/frameworks/swift/`
   (`quickstart.mdx`, `uikit.mdx`, `headless.mdx`, `customize.mdx`,
   and the IAB, offline startup, identity and verification pages), built from
-  `docs/shared/mobile/`.
+  `packages/sdk/docs/shared/mobile/`.
 - The `@inth/react-native` package, which bundles the same pages as Markdown
   under `docs/frameworks/swift/`.
 
 `packages/swift/README.md` beside this file lists the products. Once the
-mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swift`.
+mobile SDKs are public, the pages are at `https://inth.com/docs/frameworks/swift`.
 
 ## Rules the integration keeps
 

@@ -16,8 +16,8 @@ measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/svelte dev
 ```
 
@@ -30,4 +30,4 @@ set `VITE_INTH_PROJECT_URL` in `.env.local` to its backend URL and add
 Rebuild after you change the backend URL. Replace `phc_your_project_key` in `src/App.svelte` with
 your PostHog project key.
 
-Docs: [Svelte quickstart](https://c15t.com/docs/frameworks/svelte/quickstart)
+Docs: [Svelte quickstart](https://inth.com/docs/frameworks/svelte/quickstart)

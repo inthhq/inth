@@ -74,8 +74,8 @@ vendor you load has one.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-analytics dev
 ```
 
@@ -93,11 +93,11 @@ config, and the Meta Pixel logs an invalid pixel ID. Put your own IDs in
 
 ## Docs
 
-- [Google Tag Manager](https://c15t.com/docs/integrations/google-tag-manager),
-  [Google Tag](https://c15t.com/docs/integrations/google-tag),
-  [PostHog](https://c15t.com/docs/integrations/posthog) and
-  [Meta Pixel](https://c15t.com/docs/integrations/meta-pixel)
-- [Send events only to allowed integrations](https://c15t.com/docs/integrations/overview#send-events-only-to-allowed-integrations)
-- [Next.js scripts](https://c15t.com/docs/frameworks/next/scripts) and
-  [reload after revocation](https://c15t.com/docs/frameworks/next/components/inth-provider#reload-after-revocation)
-- [DevTools](https://c15t.com/docs/frameworks/next/components/dev-tools)
+- [Google Tag Manager](https://inth.com/docs/integrations/google-tag-manager),
+  [Google Tag](https://inth.com/docs/integrations/google-tag),
+  [PostHog](https://inth.com/docs/integrations/posthog) and
+  [Meta Pixel](https://inth.com/docs/integrations/meta-pixel)
+- [Send events only to allowed integrations](https://inth.com/docs/integrations/overview#send-events-only-to-allowed-integrations)
+- [Next.js scripts](https://inth.com/docs/frameworks/next/scripts) and
+  [reload after revocation](https://inth.com/docs/frameworks/next/components/inth-provider#reload-after-revocation)
+- [DevTools](https://inth.com/docs/frameworks/next/components/dev-tools)

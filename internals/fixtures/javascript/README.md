@@ -15,12 +15,12 @@ YouTube video on measurement and keep a Privacy settings control on the page.
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
-Replace `https://your-project.inth.app` in `src/main.ts`, `src/branded.ts`
-and `src/consent-runtime.ts` with your Inth backend URL, and allow this app's
+Replace `https://your-project.inth.app` in `src/main.ts`, `src/branded.ts`,
+`src/experiment.ts` and `src/consent-runtime.ts` with your Inth backend URL, and allow this app's
 origin in Inth. Replace the PostHog project key and X Pixel ID in
 `src/scripts.ts`. Then run:
 
@@ -35,7 +35,7 @@ reloads the page, so code that already ran is gone.
 Reject, reload, reopen preferences and allow measurement only. The video and
 PostHog should load while X Pixel stays blocked. Then allow marketing. Test
 revocation and a failed backend request as well. The shared acceptance suite
-runs both pages with a fixture backend and intercepted vendor requests. It
+runs `/` and `/headless/` with a fixture backend and intercepted vendor requests. It
 sets `VITE_INTH_PROJECT_URL`, which `src/test-backend.ts` applies over the
 placeholder URL:
 
@@ -55,4 +55,4 @@ Open `/experiment/?arm=wall` to set the arm the way a flag provider would
 (`assignedBy: host`); any other `arm` value runs `control`.
 `src/experiment.ts` passes the experiment to `init()` and logs the
 `onSurfaceShown` and `onChoiceRecorded` callbacks to the page and to
-`window.dataLayer`. See https://c15t.com/docs/guides/banner-experiments.
+`window.dataLayer`. See `packages/sdk/docs/guides/banner-experiments.mdx`.

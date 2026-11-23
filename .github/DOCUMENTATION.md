@@ -12,9 +12,9 @@ pnpm docs:check
 
 `docs:lint` uses pinned Leadtype with strict frontmatter, link, anchor, snippet, and navigation checks. Warnings fail the check. External URL probing is excluded from the merge gate.
 
-`docs:bundle` generates `packages/cli/AGENTS.md`, `SKILL.md`, and `docs/cli/*.md`. It fixes local page links to point at Markdown files. It removes stale generated topics and preserves the existing authored guides directly under `packages/cli/docs`. Generated files are ignored by git; edit the MDX sources instead.
+`docs:bundle` generates `packages/cli/AGENTS.md`, `packages/cli/SKILL.md`, and `packages/cli/docs/cli/*.md`. It fixes local page links to point at Markdown files. It removes stale generated topics and preserves the existing authored guides directly under `packages/cli/docs`. Generated files are ignored by git; edit the MDX sources instead.
 
-`docs:check` also packs `@inth/cli` and checks that the archive contains the index, skill, every current topic, and working local links. The same check generates web artifacts in a temporary directory and verifies every guide in the LLM index, full-context file, search, sitemap, and canonical metadata. It needs no native compiler. `pnpm check` includes this check. CI runs the docs job for pull requests, main pushes, manual runs, and the reusable release workflow.
+`docs:check` also packs `@inth/cli` and checks that the archive contains the index, skill, every current topic, and working local links. The same check generates web artifacts in a temporary directory and verifies every guide in the LLM index, full-context file, search, sitemap, and canonical metadata. It needs no native compiler. `pnpm check` includes this check. CI runs the Documentation job when a change selects the CLI checks (see [CI.md](CI.md)), and the CLI release runs it before it publishes.
 
 ## Package distribution
 

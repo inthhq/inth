@@ -50,7 +50,7 @@ headers either: the page goes to every visitor.
 | `projectUrl` | `string` | the URL `consentManifest()` read | Your Inth project URL. Consent saves go here. |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
 | `cookieName` | `string` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
-| `storage`, `trustForwardedHeaders`, `subjectCookie` | | | Deprecated. They do nothing: Inth no longer sets a subject ID cookie. Removed in v4. |
+| `proxy` | `boolean` | `false` | Sends the browser's consent saves through the route at `routePrefix`, which needs `createConsentRoute({ proxy: true })`. Requires `routePrefix`. |
 | `country`, `region`, `language` | `string` | from headers | Forces the input for every request. |
 
 `event.locals.inth` has this shape, exported as `InthLocals`:

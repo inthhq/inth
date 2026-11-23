@@ -1,7 +1,7 @@
 # Policy conformance driver
 
-`runConformanceSuite(driver, api)` registers the same 125 checks for React,
-Next.js, Vue and Svelte. These include 42 runtime policy scenarios and 58 public
+`runConformanceSuite(driver, api)` registers the same 150 checks for React,
+Next.js, Vue and Svelte. These include 48 runtime policy scenarios and 61 public
 producer/codec vectors. Solid registers one explicitly named primitives-only
 exclusion. Missing capabilities on a supported adapter fail the test.
 

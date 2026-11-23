@@ -15,13 +15,15 @@ A TanStack Start app wired to Inth through `@inth/tanstack-start`. The files tha
   rendering variant.
 
 ```bash
-bun install
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
+cd internals/fixtures/tanstack-start
 bun run dev        # http://localhost:3010
 ```
 
-`bun run dev` uses the self-hosted `@c15t/backend` mounted at
-`/api/self-host` (`src/routes/api/self-host/$.ts`). Production builds use the
-backend URL written in the root route and the consent server route.
+The app uses the `https://your-project.inth.app` placeholder written in the
+root routes and the consent server route. Point it at your project as
+described in [Pointing at a hosted backend](#pointing-at-a-hosted-backend).
 
 ## Rendering variants
 
@@ -60,33 +62,17 @@ returns the experiment in the state, so `InthProvider` needs no `experiment`
 option. Any other `arm` value runs `control`. The root's `onSurfaceShown` and
 `onChoiceRecorded` callbacks list each impression and choice under the arm and
 push them to `window.dataLayer` as `inth_surface_shown` and
-`inth_choice_recorded`. See https://c15t.com/docs/guides/banner-experiments.
+`inth_choice_recorded`. See `packages/sdk/docs/guides/banner-experiments.mdx`.
 
 ## Demo files
 
 `src/demo` holds the demo pages' components and CSS, and the IAB banner the
-home page shows for the self-hosted backend's IAB policy. Try the region
-preview from the home page, or by hand: `?country=DE` resolves the IAB
-policy, `?country=US&region=CA` resolves an opt-out policy with no banner.
+home page shows for visitors the backend resolves to an IAB policy. Try the
+region preview from the home page, or by hand: on a backend with matching
+policies, `?country=DE` resolves an IAB policy and `?country=US&region=CA` an
+opt-out policy with no banner.
 `scripts/region-preview.mjs` turns the query into geo headers in the dev
 server and in `scripts/serve.mjs`, outside the app. Never ship it.
-
-## Storage
-
-Selection lives in `lib/adapter.ts`, shared by the server route and the CLI
-config. Both modes are Postgres, only the destination changes:
-
-- **Local dev**: [PGlite](https://pglite.dev), Postgres compiled to WASM,
-  running in-process with its data directory in `.pgdata/`. Gitignored,
-  created and migrated on first request, so `bun run dev` needs zero setup.
-- **Deployed**: Postgres via `DATABASE_URL`. Deploys fail fast without it
-  rather than falling back to an embedded database a read-only filesystem
-  can't write. Migrate with `bun run db:migrate`, which runs
-  `@c15t/cli self-host migrate` against `inth-backend.config.ts`.
-
-PGlite rather than SQLite on purpose: SQLite ships with `PRAGMA foreign_keys`
-off, so a consent row referencing a policy that doesn't exist inserts happily
-locally and only fails once deployed. Delete `.pgdata/` to reset the demo.
 
 ## Pointing at a hosted backend
 
@@ -96,8 +82,8 @@ Replace `https://your-project.inth.app` in the root routes and
 trusted origins.
 
 `VITE_INTH_PROJECT_URL` overrides that URL without editing the files.
-`src/test-backend.ts` applies it; `bun run dev` and the acceptance suite use
-it.
+`src/test-backend.ts` applies it. Set it when you run `bun run dev` by hand;
+the acceptance suite sets it for its builds.
 
 ## Production build
 
@@ -105,9 +91,6 @@ it.
 bun run build
 bun run start
 ```
-
-To build against the self-hosted route instead, set
-`VITE_INTH_PROJECT_URL=/api/self-host` and `DATABASE_URL`.
 
 `vite build` emits `dist/server/server.js` as a bare `{ fetch }` handler with
 no listener, so `bun run start` hosts it with `scripts/serve.mjs`: srvx on

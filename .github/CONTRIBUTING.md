@@ -66,7 +66,7 @@ A maintainer reviews every pull request. Changes under `.github/` need review fr
 
 ## Release notes
 
-Add a `.tegami/*.md` note for a change to a published package. Today that means the CLI only; the SDK packages publish once they carry Inth names. Use explicit bumps and a heading:
+Add a `.tegami/*.md` note for a change to the CLI. Use explicit bumps and a heading:
 
 ```md
 ---
@@ -78,6 +78,8 @@ packages:
 
 The prompt no longer hangs when the terminal has no TTY.
 ```
+
+A change to the web SDK packages takes a note in `.tegami/sdk/` instead, with `"group:sdk"` as the package. Run `pnpm tegami:sdk` to write one; [Publishing the SDK](../.tegami/sdk/README.md) shows the format.
 
 See [publishing with Tegami](../.tegami/README.md) for how versions and releases work. Each product has its own release workflow; see [CI.md](CI.md#releases).
 

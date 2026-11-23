@@ -21,7 +21,7 @@ prove that the coordinates can be resolved remotely.
 ## Autolinking
 
 React Native's settings plugin autolinks a package by pointing a Gradle project at the
-directory in `../../react-native.config.js`, and it discovers the library's Java package by
+directory in `../react-native.config.js`, and it discovers the library's Java package by
 reading two files in that directory: a `package` attribute in `src/main/AndroidManifest.xml`,
 then a namespace in `build.gradle[.kts]`. AGP dropped the manifest attribute, so the namespace
 has to be readable in the build file at exactly that path. It is declared in
@@ -32,7 +32,8 @@ Both halves matter together. Pointed at this directory, the CLI matches a build 
 namespace, `react-native config` exits non-zero, and a host app fails while its
 `settings.gradle` is still being evaluated. A namespace declared only in `library.gradle` is
 invisible to the same lookup. `scripts/react-native-autolink.ts` runs the real command from
-`internals/fixtures/react-native-bare` and fails CI on both mistakes.
+`internals/fixtures/react-native-bare` and fails on both mistakes; the `React Native` job in
+`.github/workflows/ci.yml` runs it.
 
 `inth-react-native/build.gradle.kts` is the only build script the library has, in a host app and
 in this standalone build alike; the `build.gradle.kts` one level up configures nothing. What is left in
@@ -84,8 +85,8 @@ Codegen owns one file here: `NativeInthSpec`. Everything else in this directory 
 hand-written and compiles against that spec through a `compileOnly` edge, because the class is
 generated per app build and a second copy in one APK is a duplicate-class failure. `codegen`
 mode does not change that: generated output lands in `:inth-spec/build/` and goes no further.
-The published bridge AAR contains no `NativeInthSpec` entry in either mode, and CI asserts it
-by unzipping `classes.jar`.
+The published bridge AAR contains no `NativeInthSpec` entry in either mode. No CI step unzips
+`classes.jar` to check it.
 
 Two checks hold the hand-written side to the generated one, and they grade different things:
 
@@ -98,9 +99,9 @@ Two checks hold the hand-written side to the generated one, and they grade diffe
   different overrides to a Kotlin subclass and both compile green, which is the drift that
   passes a build here and fails in someone's app.
 
-Both run in CI's `Mobile SDK (android-js)` job on a plain Linux runner. The Node check is part
-of the package test suite; the Gradle command is a step of its own that fails if generation
-produces nothing, or if the spec reaches the AAR.
+`InthModuleSurfaceTest` runs in the `Android` job of `.github/workflows/ci.yml`, through
+`:inth-react-native:testDebugUnitTest`. The Node check is part of the package test suite, which
+the `React Native` job runs. No CI step runs the `codegen` Gradle command.
 
 ## Configuration
 
@@ -141,6 +142,8 @@ or removes the provider entry with `tools:node="remove"` on
 
 ## Not here
 
-No IAB, TC string, or GVL handling; no Android UI; no old bridge. Prompts are JavaScript's
-business, and `inth-core` has no `android.*` import, which is what lets all of this be tested
-without an emulator.
+No consent decisions, IAB evaluation, TC string, or GVL handling: those live in `inth-core`
+in [`packages/android`](../../android). No Compose screens either: `src/nativeUi` asks
+`inth-consent-ui` to present them, and `src/withoutNativeUi` replaces it when the
+`inth.nativeUI` Gradle property is `false`. No old bridge. `inth-core` has no `android.*`
+import, which is what lets the core be tested without an emulator.

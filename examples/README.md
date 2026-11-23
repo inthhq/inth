@@ -33,7 +33,7 @@ runnable native apps, test fixtures and installation snippets.
    `https://example-inth.inth.app` demo project, so it still builds and runs
    on clone. That `.env` holds nothing else; list it in the root `.gitignore`
    exceptions.
-4. **Runs on clone.** `bun install`, build the workspace packages, then
+4. **Runs on clone.** `pnpm install`, build the workspace packages, then
    `bun run --cwd examples/<name> dev`.
 5. **Real app code.** No `?design=` switches, debug readouts or links to other
    variants. A reader can paste a file into their own app.
@@ -50,8 +50,8 @@ quickstarts. See `scripts/example-doc-sources.ts` for the marker syntax.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/nuxt dev
 ```
 

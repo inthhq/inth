@@ -25,8 +25,8 @@ no `/init` request. PostHog loads only after the visitor allows measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/nextjs-pages-router dev
 ```
 
@@ -41,5 +41,5 @@ its backend URL, and add the app's origin to its trusted origins. Rebuild after
 you change the policy, translations or vendors in your project. Replace
 `phc_your_project_key` in `inth.config.ts` with your PostHog project key.
 
-The [Pages Router guide](https://c15t.com/docs/frameworks/next/pages-router)
+The [Pages Router guide](https://inth.com/docs/frameworks/next/pages-router)
 walks through these files.

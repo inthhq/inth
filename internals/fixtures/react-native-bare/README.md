@@ -53,7 +53,7 @@ the package from the registry.
 ## Setup
 
 ```sh
-bun install                        # from the repository root
+pnpm install                       # from the repository root
 cp .env.example .env
 ```
 
@@ -64,7 +64,7 @@ so `INTH_FAKE_NATIVE=true bun run android` overrides the file.
 
 The app defaults to the public Inth demo, `https://example-inth.inth.app/`.
 It embeds a native policy resource for fresh offline startup. The checked-in demo
-resource expires on 5 November 2026. Re-export it before testing after that date.
+resource expires on 5 February 2027. Re-export it before testing after that date.
 See [mobile policy resources](../../../packages/native-protocol/docs/mobile-policy-resources.md)
 for the export command, expiry semantics and native resource configuration.
 No hosted save has been verified against the public demo.
@@ -97,8 +97,8 @@ systems and outside those countries. Per-locale Markdown goes in
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
-The deterministic native E2E lane uses a task-owned loopback backend on port 3108
-and replaces only build artifacts. Its Release build reaches loopback through the
+The deterministic native E2E lane uses a task-owned loopback backend (port 39873
+by default) and replaces only build artifacts. Its Release build reaches loopback through the
 SDK's internal install API, which an app does not use. It does not change these
 hosted defaults.
 
@@ -302,7 +302,7 @@ Run them from this directory, or from the root with `bun run --cwd internals/fix
 | `bun run pod-install` | `pod install` for `ios/` |
 | `bun run ios` / `bun run android` | Build and launch |
 | `bun run bundle` | Release bundle for both platforms into `.artifacts/` |
-| `bun run test` | Vitest over `src/`, which is the demo-link grammar and the verb table |
+| `bun run test` | Vitest over `src/**/*.test.ts`: the demo-link grammar and verb table, `.env` inlining, intent parsing and the vendor capture endpoints |
 | `bun run check-types` | `tsc --noEmit` |
 | `bun run lint` / `bun run fmt` | Oxlint and Oxfmt, from the repo presets |
 
@@ -360,8 +360,9 @@ Before the fix in [packages/react-native](../../../packages/react-native/android
 the first command exited 1 with `Failed to build the app: No package name found`, and with it
 this app's Gradle configuration died before compiling a single file; `pod install` only worked
 because the Podfile passed an iOS-scoped autolink command around it. Both workarounds are gone.
-`bun run check:react-native-autolink` re-runs that first command from this app's own install,
-and the mobile SDK CI group runs it.
+`bun scripts/react-native-autolink.ts`, run from the repository root, asks the unscoped
+`react-native config` from this app's own install, then again with the packed package in place
+of the workspace symlink. The `React Native` job in `.github/workflows/ci.yml` runs it.
 
 Two warnings from that `pod install` belong to the package too.
 `InthReactNative.podspec` declares `license => '../../LICENSE.md'`, which is this
@@ -372,7 +373,7 @@ checkout, not in a consumer's `node_modules`. And React Native notes that callin
 Two more notes for anyone building natively from a checkout:
 
 - `@react-native/gradle-plugin` is a devDependency of this app on purpose. The template
-  includes it at the literal path `../node_modules/@react-native/gradle-plugin`, and Bun's
+  includes it at the literal path `../node_modules/@react-native/gradle-plugin`, and pnpm's
   isolated install layout does not link a package that only `react-native` depends on into
   this directory, so the `includeBuild` would not resolve.
 
@@ -611,8 +612,9 @@ Set `INTH_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
 settings are `INTH_IOS_RUNTIME`, `INTH_IOS_DEVICE`, `INTH_ANDROID_IMAGE` and
 `INTH_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
 image. CI uses x86_64. A run fails if its selected backend port is occupied. Run platforms
-sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
-dispatchable, and has no publication dependency.
+sequentially. In CI, `.github/workflows/android-emulator.yml` builds the Android app in
+one job and runs the default journey on an emulator in another. No CI job runs the iOS
+E2E.
 
 ### Real vendor SDKs
 
@@ -645,7 +647,7 @@ physical devices and minimum supported OS versions need separate acceptance.
 
 ## Monorepo notes
 
-Two things in `metro.config.js` are consequences of running an app inside a Bun
+Two things in `metro.config.js` are consequences of running an app inside a pnpm
 workspace, not SDK behaviour, and both are commented in the file:
 
 - `watchFolders` has to include the repository root, because the real files behind

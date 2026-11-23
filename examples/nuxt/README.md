@@ -16,8 +16,8 @@ allows measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/nuxt dev
 ```
 
@@ -33,4 +33,4 @@ Rebuild after you change the policy, translations or vendors in your project.
 Replace `phc_your_project_key` in `app/app.config.ts` with your PostHog project
 key.
 
-See the [Nuxt quickstart](https://c15t.com/docs/frameworks/nuxt/quickstart).
+See the [Nuxt quickstart](https://inth.com/docs/frameworks/nuxt/quickstart).
