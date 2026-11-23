@@ -74,7 +74,7 @@ import {
 import { bool, cx, slotPart } from '../parts/part-class-names.model';
 import { SaleRightsRow } from '../parts/sale-rights-row';
 import { SurfaceDraft } from '../parts/surface-draft';
-import { BrandMarkIcon } from '../shared/icons';
+import { BrandMarkIcon } from '../shared/brand-mark-icon';
 import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
 import { PromptOptionsPanel, PromptPreferences } from './panel';
