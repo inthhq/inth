@@ -4,6 +4,7 @@ import type {
 	HydrationResult,
 	InitResponse,
 	KernelEvent,
+	KernelUser,
 } from '../consent-kernel.model';
 /**
  * Kernel verbs that only core's own modules call: the runtime, persistence
@@ -19,6 +20,7 @@ import type { UserConsent } from '@inth/sdk-schema/types';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import type {
 	AccountConsentLayer,
+	AccountLayerSource,
 	BrowserConsentRecords,
 } from './account-layer';
 
@@ -131,6 +133,13 @@ export interface InternalKernel extends ConsentKernel {
 	getBrowserRecords: () => BrowserConsentRecords;
 	/** Current account consent layer, or `null` when none is held. */
 	getAccountLayer: () => AccountConsentLayer | null;
+	/** Provenance (`'incoming' | 'stored'`) of the current account consent layer. */
+	getAccountLayerSource: () => AccountLayerSource;
+	/**
+	 * Atomically update the current user (dropping any mismatched account layer)
+	 * and optionally set `userConsentPending` in one single kernel commit.
+	 */
+	setUserWithPending: (user: KernelUser | null, pending?: boolean) => void;
 	/**
 	 * Monotonic generation bumped on user change, logout, clear, dispose, and
 	 * successful account opt-out lift. Async `userConsent` Promises capture it

@@ -319,7 +319,7 @@ const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
 	optOut: fingerprint([null, null, false, null, null, false]),
-	vendors: fingerprint([null, null]),
+	vendors: fingerprint([null, null, null]),
 };
 
 /**
@@ -362,6 +362,7 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 		prints.vendors = fingerprint([
 			stored.vendorChoice,
 			stored.vendorChoice ? read.vendorSubject : null,
+			stored.vendorChoice ? (stored.vendorDeclared ?? null) : null,
 		]);
 	}
 	return prints;
@@ -926,16 +927,25 @@ export const selectReconciledRecords = function selectReconciledRecords(
 		rules.merge
 	);
 
-	if (
-		movement.changed('vendors') &&
-		adoptNewer(
-			view.vendorChoice,
-			stored.vendorChoice ?? null,
-			movement.removed('vendors'),
-			(record) => record.confirmedAt
-		)
-	) {
-		records.vendorChoice = stored.vendorChoice ?? null;
+	if (movement.changed('vendors')) {
+		if (
+			adoptNewer(
+				view.vendorChoice,
+				stored.vendorChoice ?? null,
+				movement.removed('vendors'),
+				(record) => record.confirmedAt
+			)
+		) {
+			records.vendorChoice = stored.vendorChoice ?? null;
+			if (stored.vendorDeclared !== undefined) {
+				records.vendorDeclared = stored.vendorDeclared;
+			}
+		} else if (
+			stored.vendorDeclared !== undefined &&
+			sameRecord(view.vendorChoice, stored.vendorChoice ?? null)
+		) {
+			records.vendorDeclared = stored.vendorDeclared;
+		}
 	}
 
 	reconcileOptOutRecord(view, stored, movement, records);

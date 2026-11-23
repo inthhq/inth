@@ -108,6 +108,7 @@ export interface AccountPartHeader {
 	readonly checkedAt: number;
 	readonly skew: number;
 	readonly appliedAt: number;
+	readonly liftedAt?: number;
 }
 
 interface DecodedChoicesPart {
@@ -162,14 +163,20 @@ const field = (key: string, value: string | number): string =>
 const encodeHeaderFields = (
 	layer: AccountConsentLayer,
 	rev: string
-): string[] => [
-	COMPACT_ACCOUNT_PREFIX,
-	field('r', rev),
-	field('eid', encodeURIComponent(layer.externalId)),
-	field('c', layer.checkedAt),
-	field('s', layer.skew),
-	field('a', layer.appliedAt),
-];
+): string[] => {
+	const fields = [
+		COMPACT_ACCOUNT_PREFIX,
+		field('r', rev),
+		field('eid', encodeURIComponent(layer.externalId)),
+		field('c', layer.checkedAt),
+		field('s', layer.skew),
+		field('a', layer.appliedAt),
+	];
+	if (layer.liftedAt !== undefined) {
+		fields.push(field('la', layer.liftedAt));
+	}
+	return fields;
+};
 
 const basisKey = (basis: ChoiceBasis): string => {
 	if (basis.kind === 'choice-v1') {
@@ -263,7 +270,7 @@ export const encodeAccountLocalJson = function encodeAccountLocalJson(
 	layer: AccountConsentLayer,
 	rev: string
 ): string {
-	return JSON.stringify({
+	const record: Record<string, unknown> = {
 		appliedAt: layer.appliedAt,
 		checkedAt: layer.checkedAt,
 		choices: layer.choices,
@@ -273,7 +280,11 @@ export const encodeAccountLocalJson = function encodeAccountLocalJson(
 		skew: layer.skew,
 		vendors: layer.vendors,
 		version: 1,
-	});
+	};
+	if (layer.liftedAt !== undefined) {
+		record.liftedAt = layer.liftedAt;
+	}
+	return JSON.stringify(record);
 };
 
 // ---------------------------------------------------------------------------
@@ -337,13 +348,17 @@ const parseHeader = (fields: Map<string, string>): AccountPartHeader | null => {
 	const checkedAt = parseNonNegativeInt(fields.get('c'));
 	const skew = parseNonNegativeInt(fields.get('s'));
 	const appliedAt = parseNonNegativeInt(fields.get('a'));
+	const rawLiftedAt = fields.get('la');
+	const liftedAt =
+		rawLiftedAt === undefined ? undefined : parseNonNegativeInt(rawLiftedAt);
 	if (
 		!rev ||
 		!REVISION_PATTERN.test(rev) ||
 		rawEid === undefined ||
 		checkedAt === null ||
 		skew === null ||
-		appliedAt === null
+		appliedAt === null ||
+		liftedAt === null
 	) {
 		return null;
 	}
@@ -351,10 +366,12 @@ const parseHeader = (fields: Map<string, string>): AccountPartHeader | null => {
 	if (!externalId || externalId.length === 0) {
 		return null;
 	}
-	return { appliedAt, checkedAt, externalId, rev, skew };
+	return liftedAt === undefined
+		? { appliedAt, checkedAt, externalId, rev, skew }
+		: { appliedAt, checkedAt, externalId, liftedAt, rev, skew };
 };
 
-const HEADER_KEYS = new Set(['r', 'eid', 'c', 's', 'a']);
+const HEADER_KEYS = new Set(['r', 'eid', 'c', 's', 'a', 'la']);
 
 const parseBasisTable = (raw: string): ChoiceBasis[] | null => {
 	if (raw.length === 0) {
@@ -602,14 +619,25 @@ export const decodeAccountLocalJson = function decodeAccountLocalJson(
 	if (!layer) {
 		return null;
 	}
+	const header: AccountPartHeader =
+		layer.liftedAt === undefined
+			? {
+					appliedAt: layer.appliedAt,
+					checkedAt: layer.checkedAt,
+					externalId: layer.externalId,
+					rev,
+					skew: layer.skew,
+				}
+			: {
+					appliedAt: layer.appliedAt,
+					checkedAt: layer.checkedAt,
+					externalId: layer.externalId,
+					liftedAt: layer.liftedAt,
+					rev,
+					skew: layer.skew,
+				};
 	return {
-		header: {
-			appliedAt: layer.appliedAt,
-			checkedAt: layer.checkedAt,
-			externalId: layer.externalId,
-			rev,
-			skew: layer.skew,
-		},
+		header,
 		kind: 'local',
 		layer,
 	};
@@ -629,11 +657,16 @@ interface PartGroup {
 }
 
 const groupKey = (header: AccountPartHeader): string =>
-	`${header.rev}\0${header.externalId}\0${header.checkedAt}\0${header.skew}\0${header.appliedAt}`;
+	`${header.rev}\0${header.externalId}\0${header.checkedAt}\0${header.skew}\0${header.appliedAt}\0${header.liftedAt ?? ''}`;
 
 const compareGroups = (left: PartGroup, right: PartGroup): number => {
 	if (left.header.checkedAt !== right.header.checkedAt) {
 		return left.header.checkedAt - right.header.checkedAt;
+	}
+	const leftLift = left.header.liftedAt ?? -1;
+	const rightLift = right.header.liftedAt ?? -1;
+	if (leftLift !== rightLift) {
+		return leftLift - rightLift;
 	}
 	if (left.header.appliedAt !== right.header.appliedAt) {
 		return left.header.appliedAt - right.header.appliedAt;
@@ -696,11 +729,13 @@ const isPartialAccountGroup = function isPartialAccountGroup(
 	groupCount: number,
 	vendorsOverflow: boolean
 ): boolean {
-	if (groupCount > 1) {
-		return true;
-	}
+	// A complete localStorage entry for the winning revision is never partial,
+	// even when older stale cookies from a failed write remain alongside it.
 	if (winner.local) {
 		return false;
+	}
+	if (groupCount > 1) {
+		return true;
 	}
 	return (
 		!winner.choices || !winner.vendors || !winner.optOut || vendorsOverflow
@@ -732,7 +767,7 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 	if (!winner) {
 		return { layer: null, partial: false };
 	}
-	const { appliedAt, checkedAt, externalId, skew } = winner.header;
+	const { appliedAt, checkedAt, externalId, liftedAt, skew } = winner.header;
 	const choices = winner.choices?.choices ?? winner.local?.layer.choices ?? {};
 	const optOut =
 		winner.optOut === undefined
@@ -749,10 +784,10 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 		skew,
 		vendors: mergeGroupVendors(winner),
 	};
+	const withLift =
+		liftedAt === undefined ? baseLayer : { ...baseLayer, liftedAt };
 	return {
-		layer: vendorsOverflow
-			? { ...baseLayer, vendorsOverflow: true }
-			: baseLayer,
+		layer: vendorsOverflow ? { ...withLift, vendorsOverflow: true } : withLift,
 		partial,
 	};
 };
@@ -769,16 +804,21 @@ export const assembleAccountParts = function assembleAccountParts(
 
 const readLocalTextDetailed = (
 	key: string
-): { readonly text: string | null; readonly threw: boolean } => {
+): { readonly text: string | null; readonly degraded: boolean } => {
 	try {
-		if (typeof window !== 'undefined' && window.localStorage) {
-			return { text: window.localStorage.getItem(key), threw: false };
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return { degraded: typeof document !== 'undefined', text: null };
 		}
+		return { degraded: false, text: window.localStorage.getItem(key) };
 	} catch {
-		return { text: null, threw: true };
+		return { degraded: true, text: null };
 	}
-	return { text: null, threw: false };
 };
+
+const readCookieRawDetailed = (
+	name: string,
+	markDegraded: () => void
+): string | null => getRawCookieValue(name, markDegraded);
 
 const decodePartTrackingDegraded = function decodePartTrackingDegraded<
 	T extends DecodedAccountPart,
@@ -812,21 +852,21 @@ export const readStoredAccountLayerDetailed =
 			degraded = true;
 		};
 		const localRead = readLocalTextDetailed(keys.accountState);
-		if (localRead.threw) {
+		if (localRead.degraded) {
 			degraded = true;
 		}
 		const choicesPart = decodePartTrackingDegraded(
-			getRawCookieValue(keys.accountChoices),
+			readCookieRawDetailed(keys.accountChoices, markDegraded),
 			decodeAccountChoicesCookie,
 			markDegraded
 		);
 		const vendorsPart = decodePartTrackingDegraded(
-			getRawCookieValue(keys.accountVendors),
+			readCookieRawDetailed(keys.accountVendors, markDegraded),
 			decodeAccountVendorsCookie,
 			markDegraded
 		);
 		const optOutPart = decodePartTrackingDegraded(
-			getRawCookieValue(keys.accountOptOut),
+			readCookieRawDetailed(keys.accountOptOut, markDegraded),
 			decodeAccountOptOutCookie,
 			markDegraded
 		);

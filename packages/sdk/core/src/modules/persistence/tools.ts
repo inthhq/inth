@@ -6,6 +6,7 @@
  *
  * @internal
  */
+import { shouldAdoptAccountLayer } from '../../kernel/account-layer';
 import { mergeNewestChoice } from '../../kernel/record-validation.model';
 import {
 	deleteCookie,
@@ -61,6 +62,7 @@ export const persistenceTools: PersistenceTools = {
 	rawCookie: getRawCookieValue,
 	read: readStoredRecordsForReconcile,
 	removeLocal: removeLocalStorageKey,
+	shouldAdoptAccount: shouldAdoptAccountLayer,
 	validateEnvelope: validateStoredConsentEnvelope,
 	vendorsSince: vendorChoiceSinceEpoch,
 	writeCookie,

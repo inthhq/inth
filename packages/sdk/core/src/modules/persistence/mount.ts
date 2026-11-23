@@ -3,6 +3,7 @@ import type {
 	ConsentSubject,
 	HydrationRecords,
 } from '../../consent-kernel.model';
+import { shouldAdoptAccountLayer } from '../../kernel/account-layer';
 /**
  * Persistence's first-load half: hydration, event wiring and lifecycle.
  * `index.ts` is the public entry; see it for the invariants.
@@ -545,6 +546,7 @@ export const mountPersistence = function mountPersistence(
 					optOutReference: receipt.reference,
 					optOutRightsConfirmed: receipt.rightsConfirmed,
 					vendorChoice: queuedBrowser.vendorChoice,
+					vendorDeclared: queuedBrowser.vendorDeclared,
 				}
 			: records;
 	};
@@ -847,31 +849,16 @@ export const mountPersistence = function mountPersistence(
 		currentAccount: ReturnType<InternalKernel['getAccountLayer']>,
 		user: ConsentSnapshot['user']
 	): storedAccount is NonNullable<HydrationRecords['accountLayer']> {
-		if (
-			!storedAccount ||
-			!user ||
-			storedAccount.externalId !== user.externalId
-		) {
-			return false;
-		}
-		if (currentAccount === null) {
-			return true;
-		}
-		if (storedAccount.checkedAt > currentAccount.checkedAt) {
-			return true;
-		}
-		if (storedAccount.checkedAt < currentAccount.checkedAt) {
-			return false;
-		}
 		return (
-			storedAccount.appliedAt > currentAccount.appliedAt ||
-			Object.keys(storedAccount.choices).length >
-				Object.keys(currentAccount.choices).length ||
-			Object.keys(storedAccount.vendors).length >
-				Object.keys(currentAccount.vendors).length ||
-			(currentAccount.optOut === null && storedAccount.optOut !== null) ||
-			(currentAccount.vendorsOverflow === true &&
-				!storedAccount.vendorsOverflow)
+			storedAccount !== undefined &&
+			storedAccount !== null &&
+			shouldAdoptAccountLayer({
+				current: currentAccount,
+				currentSource: kernel.getAccountLayerSource(),
+				incoming: storedAccount,
+				incomingSource: 'stored',
+				userExternalId: user?.externalId ?? null,
+			})
 		);
 	};
 

@@ -40,6 +40,7 @@ import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
 import { deriveEffectiveRecords, freezeAccountLayer } from './account-layer';
 import type {
 	AccountConsentLayer,
+	AccountLayerSource,
 	BrowserConsentRecords,
 } from './account-layer';
 import { createListenerSet } from './create-dispatcher';
@@ -76,6 +77,8 @@ export type AnnouncedEvent = Extract<
 export interface RuntimeCommitOptions {
 	/** Replace or clear the internal account consent layer in this commit. */
 	accountLayer?: AccountConsentLayer | null;
+	/** Provenance of `accountLayer` when set (`'incoming'` vs `'stored'`). */
+	accountLayerSource?: AccountLayerSource;
 	/** Notify account persistence even when `accountLayer` stayed `null`. */
 	forceAccountNotify?: boolean;
 	/** Suppress persistence write-back when hydrating the account layer. */
@@ -121,6 +124,8 @@ export interface KernelRuntime {
 	getBrowserRecords: () => BrowserConsentRecords;
 	/** Account consent layer kept apart from browser records. */
 	getAccountLayer: () => AccountConsentLayer | null;
+	/** Provenance (`'incoming' | 'stored'`) of the current account layer. */
+	getAccountLayerSource: () => AccountLayerSource;
 	/** Monotonic fence for async `userConsent` Promises and lifts. */
 	getAccountSyncGeneration: () => number;
 	/** Bump the account sync generation and return the new counter. */
@@ -197,6 +202,8 @@ export interface RuntimeOptions {
 	initialBrowserRecords?: BrowserConsentRecords;
 	/** Initial account consent layer, kept separate from browser records. */
 	initialAccountLayer?: AccountConsentLayer | null;
+	/** Initial provenance of `initialAccountLayer`. */
+	initialAccountLayerSource?: AccountLayerSource;
 	/** Initial local GPC report mark hydrated from stored records. */
 	initialOptOutGpcReported?: boolean;
 	/** Initial local opt-out receipt data hydrated from stored records. */
@@ -231,6 +238,8 @@ export const createRuntime = function createRuntime(
 	let accountLayer: AccountConsentLayer | null = freezeAccountLayer(
 		options.initialAccountLayer ?? null
 	);
+	let accountLayerSource: AccountLayerSource =
+		options.initialAccountLayerSource ?? 'stored';
 	let accountSyncGeneration = 0;
 	let accountLayerListeners:
 		| ListenerSet<{
@@ -769,7 +778,8 @@ export const createRuntime = function createRuntime(
 		accountChanged: boolean,
 		syncGenShouldBump: boolean,
 		fromHydration: boolean,
-		forceAccountNotify = false
+		forceAccountNotify = false,
+		nextAccountSource?: AccountLayerSource
 	): void {
 		if (browserChanged) {
 			browserRecords = freezeBrowser(nextBrowser);
@@ -779,6 +789,10 @@ export const createRuntime = function createRuntime(
 		}
 		if (accountChanged) {
 			accountLayer = nextAccount;
+			accountLayerSource =
+				nextAccount === null
+					? 'stored'
+					: (nextAccountSource ?? (fromHydration ? 'stored' : 'incoming'));
 			notifyAccountLayerChange(accountLayer, fromHydration);
 		} else if (forceAccountNotify) {
 			notifyAccountLayerChange(accountLayer, fromHydration);
@@ -810,6 +824,66 @@ export const createRuntime = function createRuntime(
 			: null;
 	};
 
+	const finalizeCommittedSnapshot = function finalizeCommittedSnapshot(
+		current: ConsentSnapshot,
+		adopted: ConsentSnapshot,
+		patch: SnapshotPatch,
+		recordedGpcOptOut: boolean,
+		recordedBrowserOptOut: OptOutRecord | null,
+		emitOptOutSynced: boolean
+	): void {
+		snapshot = adopted;
+		const shown = nextShownSurface(current, adopted, patch);
+		if (recordedGpcOptOut) {
+			optOutActVersion += 1;
+			gpcReportAttempted = true;
+			setOptOutReceiptData({
+				localAct: 'gpc',
+				reference: createIdempotencyKey(),
+				rightsConfirmed: false,
+			});
+			publish(current, adopted, shown, recordedBrowserOptOut ?? adopted.optOut);
+		} else {
+			if (browserRecords.optOut === null) {
+				setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
+			}
+			publish(current, adopted, shown, null, emitOptOutSynced);
+			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
+		}
+		if (adopted.nextDeadline !== current.nextDeadline) {
+			onDeadlineChange();
+		}
+	};
+
+	const notifyDroppedLegacyOptOut = function notifyDroppedLegacyOptOut(
+		dropped: boolean
+	): void {
+		if (!dropped) {
+			return;
+		}
+		setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
+		emit({
+			optOut: snapshot.optOut,
+			snapshot,
+			type: 'opt-out:synced',
+		});
+	};
+
+	const shouldEmitAccountOptOutSynced = function shouldEmitAccountOptOutSynced(
+		droppedLegacy: boolean,
+		userExternalIdChanged: boolean,
+		previousAccount: AccountConsentLayer | null,
+		current: ConsentSnapshot,
+		adopted: ConsentSnapshot
+	): boolean {
+		return (
+			droppedLegacy ||
+			(userExternalIdChanged &&
+				previousAccount !== null &&
+				!sameOptOutRecord(current.optOut, adopted.optOut))
+		);
+	};
+
 	const commit = function commit(
 		patch: SnapshotPatch,
 		commitOptions?: RuntimeCommitOptions
@@ -832,6 +906,10 @@ export const createRuntime = function createRuntime(
 		let recordedGpcOptOut = false;
 		let recordedBrowserOptOut: OptOutRecord | null = null;
 		const previousAccount = accountLayer;
+		const droppedLegacyPersonOptOut =
+			patch.optOut === undefined &&
+			browserRecords.optOut?.heldBy === 'person' &&
+			nextBrowser.optOut === null;
 		const forceAccountNotify = commitOptions?.forceAccountNotify === true;
 		const syncGenShouldBump =
 			userExternalIdChanged ||
@@ -873,8 +951,10 @@ export const createRuntime = function createRuntime(
 					accountChanged,
 					syncGenShouldBump,
 					fromHydration,
-					forceAccountNotify
+					forceAccountNotify,
+					commitOptions?.accountLayerSource
 				);
+				notifyDroppedLegacyOptOut(droppedLegacyPersonOptOut);
 				return false;
 			}
 			adopted = freezeSnapshot(derived.next);
@@ -886,33 +966,23 @@ export const createRuntime = function createRuntime(
 			accountChanged,
 			syncGenShouldBump,
 			fromHydration,
-			forceAccountNotify
+			forceAccountNotify,
+			commitOptions?.accountLayerSource
 		);
-		snapshot = adopted;
-		const shown = nextShownSurface(current, adopted, patch);
-		const emitOptOutSynced =
-			userExternalIdChanged &&
-			previousAccount !== null &&
-			!sameOptOutRecord(current.optOut, adopted.optOut);
-		if (recordedGpcOptOut) {
-			optOutActVersion += 1;
-			gpcReportAttempted = true;
-			setOptOutReceiptData({
-				localAct: 'gpc',
-				reference: createIdempotencyKey(),
-				rightsConfirmed: false,
-			});
-			publish(current, adopted, shown, recordedBrowserOptOut ?? adopted.optOut);
-		} else {
-			if (browserRecords.optOut === null) {
-				setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
-			}
-			publish(current, adopted, shown, null, emitOptOutSynced);
-			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
-		}
-		if (adopted.nextDeadline !== current.nextDeadline) {
-			onDeadlineChange();
-		}
+		finalizeCommittedSnapshot(
+			current,
+			adopted,
+			patch,
+			recordedGpcOptOut,
+			recordedBrowserOptOut,
+			shouldEmitAccountOptOutSynced(
+				droppedLegacyPersonOptOut,
+				userExternalIdChanged,
+				previousAccount,
+				current,
+				adopted
+			)
+		);
 		return true;
 	};
 
@@ -991,6 +1061,7 @@ export const createRuntime = function createRuntime(
 		commit,
 		emit,
 		getAccountLayer: () => accountLayer,
+		getAccountLayerSource: () => accountLayerSource,
 		getAccountSyncGeneration: () => accountSyncGeneration,
 		getBrowserRecords: () => browserRecords,
 		getGeneration: () => generation,

@@ -440,10 +440,13 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			const existing = tools.read(storageConfig, at).records.accountLayer;
 			if (
 				existing &&
-				existing.externalId === layer.externalId &&
-				(existing.checkedAt > layer.checkedAt ||
-					(existing.checkedAt === layer.checkedAt &&
-						existing.appliedAt > layer.appliedAt))
+				tools.shouldAdoptAccount({
+					current: layer,
+					currentSource: 'stored',
+					incoming: existing,
+					incomingSource: 'stored',
+					userExternalId: layer.externalId,
+				})
 			) {
 				return;
 			}
@@ -523,27 +526,15 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		}
 		seenAccount = nextPrint;
 		const currentUser = kernel.getSnapshot().user;
-		if (
-			currentUser === null ||
-			normalized.externalId !== currentUser.externalId
-		) {
-			return undefined;
-		}
-		if (currentAccount === null) {
-			return normalized;
-		}
-		if (normalized.checkedAt > currentAccount.checkedAt) {
-			return normalized;
-		}
-		if (
-			normalized.checkedAt === currentAccount.checkedAt &&
-			normalized.appliedAt > currentAccount.appliedAt &&
-			currentAccount.optOut !== null &&
-			normalized.optOut === null
-		) {
-			return normalized;
-		}
-		return undefined;
+		return tools.shouldAdoptAccount({
+			current: currentAccount,
+			currentSource: kernel.getAccountLayerSource(),
+			incoming: normalized,
+			incomingSource: 'stored',
+			userExternalId: currentUser?.externalId ?? null,
+		})
+			? normalized
+			: undefined;
 	};
 
 	const reconcile = function reconcile(): boolean {

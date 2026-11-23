@@ -18,6 +18,8 @@ import { createClearOnRevocation } from '../../modules/clear-on-revocation';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { createPersistence } from '../../modules/persistence';
+import { readStoredAccountLayer } from '../../modules/persistence/account-codec';
+import { readStoredRecordsFromCookieHeader } from '../../modules/persistence/hydrate';
 import { createScriptLoader } from '../../modules/script-loader';
 import { createPreferenceDraft } from '../../preference-draft';
 import { canDeferEngine } from '../../surface-actions/defer-engine';
@@ -1573,5 +1575,403 @@ describe('kernel regressions (set 1)', () => {
 		expect(kMalformed.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
 		expect(kMalformed.getSnapshot().effectivePermissions.marketing).toBe(false);
 		kMalformed.dispose();
+	});
+});
+
+describe('kernel regressions (set 2)', () => {
+	test('after opt-out lift, reloading with cached pre-lift initialUserConsent stays lifted on SSR, client, and storage', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const preLiftDoc = makeUserConsent({
+			checkedAt: NOW,
+			externalId: 'user_a',
+			optOut: {
+				method: 'button',
+				recordedAt: NOW - 5000,
+				rights: ['sale', 'share'],
+			},
+		});
+
+		const k1 = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: (_u, subjectId) =>
+						Promise.resolve({ subjectId: subjectId ?? 'sub_a' }),
+					liftOptOut: () => Promise.resolve({ ok: true, optOut: null }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const p1 = createPersistence({ kernel: k1 });
+		k1.syncUserConsent(preLiftDoc);
+		expect(k1.getSnapshot().optOut?.heldBy).toBe('person');
+
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 2000);
+		const lifted = await k1.commands.optIn();
+		expect(lifted).toEqual({ ok: true, optOut: null });
+		expect(k1.getAccountLayer()?.liftedAt).toBe(NOW + 2000);
+		await flushMacrotasks();
+		p1.dispose();
+		k1.dispose();
+
+		// Reload SSR: server reads stored lifted cookies AND passes cached pre-lift `initialUserConsent`!
+		const ssrStored = readStoredRecordsFromCookieHeader(
+			document.cookie,
+			undefined,
+			NOW + 3000
+		);
+		const ssrKernel = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialRecords: ssrStored,
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: structuredClone(preLiftDoc),
+			now: NOW + 3000,
+		});
+		expect(ssrKernel.getSnapshot().optOut).toBeNull();
+		expect(ssrKernel.getAccountLayer()?.optOut).toBeNull();
+		expect(ssrKernel.getAccountLayer()?.liftedAt).toBe(NOW + 2000);
+
+		// Client mounts persistence with skipHydration over the SSR kernel and re-syncs cached doc.
+		const p2 = createPersistence({ kernel: ssrKernel, skipHydration: true });
+		ssrKernel.syncUserConsent(structuredClone(preLiftDoc));
+		await flushMacrotasks();
+		expect(ssrKernel.getSnapshot().optOut).toBeNull();
+		expect(ssrKernel.getAccountLayer()?.optOut).toBeNull();
+		expect(readStoredAccountLayer(undefined)?.optOut).toBeNull();
+		p2.dispose();
+		ssrKernel.dispose();
+	});
+
+	test('legacy heldBy person browser opt-out is deleted from storage when dropped on logout', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+
+		// Seed a legacy `heldBy: 'person'` browser opt-out record into storage.
+		window.localStorage.setItem(
+			'inth-opt-out',
+			JSON.stringify({
+				heldBy: 'person',
+				method: 'button',
+				recordedAt: NOW - 5000,
+				rights: ['sale', 'share'],
+				version: 1,
+			})
+		);
+		document.cookie = `inth-opt-out=v=1&t=${NOW - 5000}&r=sa|sh&m=b&h=p; path=/`;
+
+		// User A signs in, syncs account doc with optOut: null (effective optOut is now null), then logs out.
+		const kA = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const pA = createPersistence({ kernel: kA });
+		expect(kA.getBrowserRecords().optOut?.heldBy).toBe('person');
+		kA.syncUserConsent(
+			makeUserConsent({ checkedAt: NOW, externalId: 'user_a', optOut: null })
+		);
+		expect(kA.getSnapshot().optOut).toBeNull();
+
+		// Logout drops account layer and removes the legacy browser person opt-out — must also delete from storage!
+		kA.set.user(null);
+		await flushMacrotasks();
+		pA.dispose();
+		kA.dispose();
+
+		// Reload signed out: must NOT be opted out!
+		const anon = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			now: NOW + 1000,
+		});
+		const pAnon = createPersistence({ kernel: anon });
+		expect(anon.getSnapshot().optOut).toBeNull();
+		expect(anon.getSnapshot().effectivePermissions.marketing).toBe(true);
+		pAnon.dispose();
+		anon.dispose();
+	});
+
+	test('save vendor map never emits a grant for an undeclared vendor or an account-denied vendor never decided on this site', async () => {
+		const resolution = matchedResolution(optInRule());
+		const fp = resolution.fingerprints.choice;
+		const savedPayloads: SavePayload[] = [];
+
+		// Domain B declares ONLY vendor-y initially.
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'measurement',
+							id: 'vendor-y',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: {
+					save: (payload) => {
+						savedPayloads.push(payload);
+						return Promise.resolve({ ok: true, subjectId: 'sub_b' });
+					},
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+
+		// Account A denied vendor-x.
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+					measurement: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+				},
+				externalId: 'user_a',
+				vendors: {
+					'vendor-x': { confirmedAt: NOW - 5000, value: false },
+				},
+			})
+		);
+
+		// Step 1: B saves vendor-y while vendor-x is NOT declared on B.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 1000);
+		await kernel.commands.save({ vendors: { 'vendor-y': false } });
+		expect(savedPayloads).toHaveLength(1);
+		expect(savedPayloads[0]?.vendorChoice?.grants).not.toHaveProperty(
+			'vendor-x'
+		);
+		expect(savedPayloads[0]?.vendorChoice?.grants).toEqual({
+			'vendor-y': false,
+		});
+
+		// Step 2: Later, vendor-x is added to B's manifest, and visitor makes a category-only save.
+		kernel.set.vendors({
+			declared: [
+				{
+					category: 'marketing',
+					id: 'vendor-x',
+					presentable: true,
+					source: 'config',
+				},
+				{
+					category: 'measurement',
+					id: 'vendor-y',
+					presentable: true,
+					source: 'config',
+				},
+			],
+			listVersion: 'v2',
+		});
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 2000);
+		await kernel.commands.save({ marketing: true });
+		expect(savedPayloads).toHaveLength(2);
+		// No `vendor-x: true` may be sent because the visitor never decided vendor-x on B!
+		expect(savedPayloads[1]?.vendorChoice?.grants).not.toHaveProperty(
+			'vendor-x'
+		);
+		kernel.dispose();
+	});
+
+	test('late lift response does not clear a newer account opt-out synced while the lift was in flight', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const liftDeferred = Promise.withResolvers<{
+			ok: boolean;
+			optOut: null;
+		}>();
+
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: (_u, subjectId) =>
+						Promise.resolve({ subjectId: subjectId ?? 'sub_a' }),
+					liftOptOut: () => liftDeferred.promise,
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		await kernel.commands.identify({
+			externalId: 'user_a',
+			identityToken: 'tok_a',
+		});
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+
+		// Start lifting the NOW opt-out; request hangs in flight.
+		const liftPromise = kernel.commands.optIn();
+		await Promise.resolve();
+
+		// Meanwhile, a newer /check arrives with a newer opt-out at NOW + 5000.
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW + 5000,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW + 4000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+
+		// Now the stale lift resolves with `optOut: null` -> MUST NOT clear the newer opt-out!
+		liftDeferred.resolve({ ok: true, optOut: null });
+		const result = await liftPromise;
+		expect(result).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(kernel.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
+		expect(kernel.getAccountLayer()?.optOut).not.toBeNull();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		kernel.dispose();
+	});
+
+	test('plain-value /check document fetched before a lift is rejected even if its checkedAt is newer than the pre-lift doc', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: (_u, subjectId) =>
+						Promise.resolve({ subjectId: subjectId ?? 'sub_a' }),
+					liftOptOut: () => Promise.resolve({ ok: true, optOut: null }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		await kernel.commands.identify({
+			externalId: 'user_a',
+			identityToken: 'tok_a',
+		});
+
+		// Stored doc was checked at NOW - 5000.
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW - 5000,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 10_000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+
+		// Lift succeeds at NOW -> liftedAt = NOW.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const lifted = await kernel.commands.optIn();
+		expect(lifted).toEqual({ ok: true, optOut: null });
+
+		// A plain-value /check fetched BEFORE the lift (checkedAt = NOW - 1000, which is > NOW - 5000 but < liftedAt NOW) arrives now.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 500);
+		const applied = kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW - 1000,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 10_000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+		expect(applied).toBe(false);
+		expect(kernel.getAccountLayer()?.optOut).toBeNull();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		kernel.dispose();
+	});
+
+	test('a both answer covering the browser device opt-out confirms its receipt without copying account rights', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 2000,
+						rights: ['targeted_ads'],
+					},
+					optOutRightsConfirmed: false,
+					subject: { subjectId: 'sub_device' },
+				},
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: () =>
+						Promise.resolve({
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW - 1000,
+								rights: ['sale', 'targeted_ads'],
+							},
+							subjectId: 'sub_device',
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 3000,
+					rights: ['sale'],
+				},
+			})
+		);
+		expect(kernel.getOptOutReceiptData().rightsConfirmed).toBe(false);
+
+		await kernel.commands.identify({
+			externalId: 'user_a',
+			identityToken: 'tok_a',
+		});
+
+		// Receipt is now confirmed, while browser records STILL keep only `targeted_ads`!
+		expect(kernel.getOptOutReceiptData().rightsConfirmed).toBe(true);
+		expect(kernel.getBrowserRecords().optOut?.rights).toEqual(['targeted_ads']);
+		kernel.dispose();
 	});
 });

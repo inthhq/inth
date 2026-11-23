@@ -377,15 +377,23 @@ const resolveVendorSelection = function resolveVendorSelection(
 const vendorChoicePayload = function vendorChoicePayload(
 	snapshot: ConsentSnapshot,
 	browserVendorChoice: ConsentSnapshot['vendorChoice'],
-	previous: ConsentSnapshot['vendorChoice']
+	previous: ConsentSnapshot['vendorChoice'],
+	browserDeclared: readonly string[] | null | undefined = null
 ): SavePayload['vendorChoice'] {
 	const declared = snapshot.vendors?.declared ?? [];
 	if (!vendorAxisActive(snapshot) || browserVendorChoice === null) {
 		return undefined;
 	}
 	const denied = new Set(browserVendorChoice.denied);
+	const covered =
+		browserDeclared !== null && browserDeclared !== undefined
+			? new Set(browserDeclared)
+			: null;
 	const grants: Record<string, boolean> = {};
 	for (const vendor of declared) {
+		if (covered !== null && !covered.has(vendor.id) && !denied.has(vendor.id)) {
+			continue;
+		}
 		Object.defineProperty(grants, vendor.id, {
 			configurable: true,
 			enumerable: true,
@@ -408,10 +416,9 @@ const vendorChoicePayload = function vendorChoicePayload(
 			});
 		}
 	}
-	// A denial this action lifted for a vendor nothing declares is a
-	// decision too. Only a bulk action can lift one, and it decided every
-	// vendor, so the grant is explicit rather than left for the backend to
-	// read as an omission.
+	// A browser-owned denial this action lifted for a vendor nothing declares
+	// is a decision too. `previous` is always browser-only (never merged with
+	// an account layer), so an account-denied vendor is never emitted as true.
 	for (const id of previous?.denied ?? []) {
 		if (!Object.hasOwn(grants, id)) {
 			Object.defineProperty(grants, id, {
@@ -751,14 +758,34 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			? null
 			: browserOptOut;
 
+	const captureAccountLiftBasis = (): {
+		checkedAt: number | null;
+		optOutRaw: number | null;
+	} => {
+		const layer = runtime.getAccountLayer();
+		return {
+			checkedAt: layer?.checkedAt ?? null,
+			optOutRaw: layer?.optOut?.rawRecordedAt ?? null,
+		};
+	};
+
 	const isAccountLiftFresh = (
 		actVersion: number,
 		generation: number,
 		externalId: string | null,
+		startedBasis: { checkedAt: number | null; optOutRaw: number | null },
 		expectedSubjectId?: string | null
 	): boolean => {
 		const current = getSnapshot();
+		const currentLayer = runtime.getAccountLayer();
+		const basisMatches =
+			startedBasis.checkedAt === null ||
+			(currentLayer !== null &&
+				currentLayer.checkedAt === startedBasis.checkedAt &&
+				(currentLayer.optOut?.rawRecordedAt ?? null) ===
+					startedBasis.optOutRaw);
 		return (
+			basisMatches &&
 			runtime.getOptOutActVersion() === actVersion &&
 			runtime.getGeneration() === generation &&
 			(current.user?.externalId ?? null) === externalId &&
@@ -845,9 +872,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			activeAccount.externalId === current.user.externalId
 				? {
 						...activeAccount,
-						// Advance appliedAt past the pre-lift value so localStorage
-						// outranks stale pre-lift cookies if cookie writes fail.
+						// Advance appliedAt past the pre-lift value and record explicit
+						// liftedAt so localStorage outranks stale pre-lift cookies and
+						// rejects pre-lift /check documents.
 						appliedAt: Math.max(at, activeAccount.appliedAt + 1),
+						liftedAt: at,
 						optOut: null,
 					}
 				: undefined;
@@ -856,7 +885,9 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			runtime.bumpAccountSyncGeneration();
 			commit(
 				{ now: at, optOut: null },
-				nextAccount === undefined ? undefined : { accountLayer: nextAccount }
+				nextAccount === undefined
+					? undefined
+					: { accountLayer: nextAccount, accountLayerSource: 'stored' }
 			);
 			const after = getSnapshot();
 			if (emitLifted) {
@@ -890,8 +921,12 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		// subject while it is out makes its answer stale.
 		const identity = runtime.getIdentityVersion();
 		const externalId = before.user?.externalId ?? null;
+		const startedBasis = captureAccountLiftBasis();
 		const linked = await ensureLinkedSubjectForAccountLift(before, false);
-		if (!linked.ok || !isAccountLiftFresh(actVersion, generation, externalId)) {
+		if (
+			!linked.ok ||
+			!isAccountLiftFresh(actVersion, generation, externalId, startedBasis)
+		) {
 			return { ok: false, reason: 'held-by-account' };
 		}
 		const liftedRights = filterSupportedOptOutRights(before.optOut?.rights);
@@ -908,7 +943,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			: null;
 		if (
 			!outcome.ok ||
-			!isAccountLiftFresh(actVersion, generation, externalId, expectedSubjectId)
+			!isAccountLiftFresh(
+				actVersion,
+				generation,
+				externalId,
+				startedBasis,
+				expectedSubjectId
+			)
 		) {
 			return { ok: false, reason: 'held-by-account' };
 		}
@@ -963,6 +1004,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		liftedRights: readonly OptOutRight[]
 	): Promise<void> {
 		const initialSnapshot = getSnapshot();
+		const startedBasis = captureAccountLiftBasis();
 		if (
 			hasActiveAccountOptOut(initialSnapshot) &&
 			(!initialSnapshot.user?.externalId || !initialSnapshot.user.identityToken)
@@ -978,7 +1020,14 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		) {
 			return;
 		}
-		if (!isAccountLiftFresh(optOutActVersion, generation, externalId)) {
+		if (
+			!isAccountLiftFresh(
+				optOutActVersion,
+				generation,
+				externalId,
+				startedBasis
+			)
+		) {
 			return;
 		}
 		const currentBeforeLift = getSnapshot();
@@ -999,6 +1048,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				optOutActVersion,
 				generation,
 				externalId,
+				startedBasis,
 				expectedSubjectId
 			)
 		) {
@@ -1522,7 +1572,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const vendorChoice = vendorChoicePayload(
 				after,
 				browserVendorAfter,
-				vendorsChanged ? before.vendorChoice : browserBefore.vendorChoice
+				browserBefore.vendorChoice,
+				browserAfter.vendorDeclared
 			);
 			if (vendorChoice) {
 				payload.vendorChoice = vendorChoice;

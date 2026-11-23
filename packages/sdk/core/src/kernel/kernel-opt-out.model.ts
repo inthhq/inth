@@ -423,14 +423,31 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	// While an account layer for the current `externalId` is active, server
 	// opt-out answers held by `'person'` or `'both'` never write to browser
 	// records and never mutate the account layer (`appliedAt` or `optOut`).
-	// Only a device-only answer or an explicit clear updates browser records.
-	if (next !== null && next.heldBy !== 'device') {
-		return false;
-	}
-	const at = runtime.now();
+	// When a `'both'` answer covers every right on the browser device record,
+	// mark that browser record's receipt confirmed without copying rights.
 	const browserOptOut = runtime.getBrowserRecords().optOut;
 	const effectiveBrowserOptOut =
 		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
+	const currentReceipt = runtime.getOptOutReceiptData();
+	if (next !== null && next.heldBy !== 'device') {
+		if (
+			next.heldBy === 'both' &&
+			effectiveBrowserOptOut !== null &&
+			fence.confirmed !== false &&
+			!currentReceipt.rightsConfirmed &&
+			effectiveBrowserOptOut.rights.every((right) =>
+				next.rights.includes(right)
+			)
+		) {
+			runtime.setOptOutReceiptData({
+				...currentReceipt,
+				rightsConfirmed: true,
+			});
+			return true;
+		}
+		return false;
+	}
+	const at = runtime.now();
 	const localAct = answersLocalAct(next, effectiveBrowserOptOut, fence);
 	const nextBrowserOptOut =
 		next !== null
@@ -440,7 +457,6 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 		effectiveBrowserOptOut,
 		nextBrowserOptOut
 	);
-	const currentReceipt = runtime.getOptOutReceiptData();
 	const nextReceipt = nextSyncedOptOutReceipt(
 		effectiveBrowserOptOut,
 		nextBrowserOptOut,

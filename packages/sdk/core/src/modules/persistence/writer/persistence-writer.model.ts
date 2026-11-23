@@ -1,3 +1,4 @@
+import type { shouldAdoptAccountLayer } from '../../../kernel/account-layer';
 import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 /**
  * The interface between persistence's first-load part (`../index.ts`) and
@@ -74,6 +75,7 @@ export interface PersistenceTools {
 	encodeAccountVendorsCookie: typeof encodeAccountVendorsCookie;
 	encodeAccountOptOutCookie: typeof encodeAccountOptOutCookie;
 	encodeAccountLocalJson: typeof encodeAccountLocalJson;
+	shouldAdoptAccount: typeof shouldAdoptAccountLayer;
 }
 
 /** What {@link createRecordStore} calls. @internal */

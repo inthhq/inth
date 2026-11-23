@@ -74,6 +74,11 @@ export interface AccountConsentLayer {
 	readonly checkedAt: number;
 	readonly skew: number;
 	readonly appliedAt: number;
+	/**
+	 * Local epoch ms when an account opt-out lift succeeded for this layer.
+	 * Rejects older pre-lift documents whose converted `checkedAt` precedes it.
+	 */
+	readonly liftedAt?: number;
 	readonly choices: Readonly<
 		Partial<Record<OptionalConsentCategory, AccountCategoryDecision>>
 	>;
@@ -84,6 +89,23 @@ export interface AccountConsentLayer {
 	 * its entries on SSR (so server-side vendor decisions are incomplete).
 	 */
 	readonly vendorsOverflow?: boolean;
+}
+
+/** Provenance of an account consent layer candidate for S1 adoption ordering. */
+export type AccountLayerSource = 'incoming' | 'stored';
+
+/** Inputs to {@link shouldAdoptAccountLayer}. */
+export interface AccountAdoptionOptions {
+	readonly current: AccountConsentLayer | null;
+	readonly incoming: AccountConsentLayer | null;
+	readonly userExternalId: string | null;
+	readonly currentSource: AccountLayerSource;
+	readonly incomingSource: AccountLayerSource;
+	/**
+	 * Allow client-clock reconversion of an identical, unlifted equal-`checkedAt`
+	 * document during initial client `start()`.
+	 */
+	readonly forceClientSync?: boolean;
 }
 
 /** Browser-made consent records kept apart from the account layer. */
@@ -370,11 +392,13 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 	const choices = normalizeAccountChoices(rawChoices, 'rawConfirmedAt', true);
 	const vendors = normalizeAccountVendors(rawVendors, 'rawConfirmedAt', true);
 	const optOut = normalizeAccountOptOut(rawOptOut, 'rawRecordedAt', true);
+	const rawLiftedAt = ownValue(input, 'liftedAt');
 	const rawOverflow = ownValue(input, 'vendorsOverflow');
 	if (
 		!choices ||
 		!vendors ||
 		!optOut.ok ||
+		(rawLiftedAt !== undefined && !isValidAccountTimestamp(rawLiftedAt)) ||
 		(rawOverflow !== undefined && typeof rawOverflow !== 'boolean')
 	) {
 		return null;
@@ -388,7 +412,11 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 		skew,
 		vendors,
 	};
-	return rawOverflow === true ? { ...layer, vendorsOverflow: true } : layer;
+	const withLifted =
+		rawLiftedAt === undefined ? layer : { ...layer, liftedAt: rawLiftedAt };
+	return rawOverflow === true
+		? { ...withLifted, vendorsOverflow: true }
+		: withLifted;
 };
 
 const sameBasis = function sameBasis(
@@ -497,6 +525,94 @@ export const sameAccountLayerContent = function sameAccountLayerContent(
 		sameAccountVendors(left.vendors, right.vendors) &&
 		sameAccountOptOutContent(left.optOut, right.optOut)
 	);
+};
+
+const isMoreCompleteAccountLayer = function isMoreCompleteAccountLayer(
+	incoming: AccountConsentLayer,
+	current: AccountConsentLayer
+): boolean {
+	return (
+		Object.keys(incoming.choices).length >
+			Object.keys(current.choices).length ||
+		Object.keys(incoming.vendors).length >
+			Object.keys(current.vendors).length ||
+		(current.optOut === null &&
+			current.liftedAt === undefined &&
+			incoming.optOut !== null) ||
+		(current.vendorsOverflow === true && !incoming.vendorsOverflow)
+	);
+};
+
+const passesLiftFloor = function passesLiftFloor(
+	current: AccountConsentLayer,
+	incoming: AccountConsentLayer
+): boolean {
+	if (current.liftedAt === undefined) {
+		return true;
+	}
+	if (incoming.liftedAt !== undefined) {
+		return incoming.liftedAt >= current.liftedAt;
+	}
+	const incomingConvertedCheckedAt = Math.max(
+		0,
+		incoming.checkedAt - incoming.skew
+	);
+	return incomingConvertedCheckedAt >= current.liftedAt;
+};
+
+/**
+ * Single account-layer adoption rule shared by SSR construction, hydration,
+ * persistence recovery/reconcile, streamed adoption, and `syncUserConsent`.
+ *
+ * Order:
+ * 1. Identity gate (`externalId` must match the current user).
+ * 2. Lift floor (`checkedAt - skew` of a non-lifted doc cannot precede `current.liftedAt`).
+ * 3. Strictly newer `checkedAt` wins.
+ * 4. Equal `checkedAt`: stored beats incoming; between two stored candidates,
+ *    higher `liftedAt`, then higher `appliedAt`, then more complete part set wins.
+ */
+export const shouldAdoptAccountLayer = function shouldAdoptAccountLayer({
+	current,
+	currentSource,
+	forceClientSync = false,
+	incoming,
+	incomingSource,
+	userExternalId,
+}: AccountAdoptionOptions): boolean {
+	if (!incoming || !userExternalId || incoming.externalId !== userExternalId) {
+		return false;
+	}
+	if (!current || current.externalId !== userExternalId) {
+		return true;
+	}
+	if (!passesLiftFloor(current, incoming)) {
+		return false;
+	}
+	if (incoming.checkedAt > current.checkedAt) {
+		return true;
+	}
+	if (incoming.checkedAt < current.checkedAt) {
+		return false;
+	}
+	if (incomingSource === 'incoming') {
+		return (
+			forceClientSync &&
+			current.liftedAt === undefined &&
+			sameAccountLayerContent(current, incoming)
+		);
+	}
+	if (currentSource === 'incoming') {
+		return true;
+	}
+	const incomingLift = incoming.liftedAt ?? -1;
+	const currentLift = current.liftedAt ?? -1;
+	if (incomingLift !== currentLift) {
+		return incomingLift > currentLift;
+	}
+	if (incoming.appliedAt !== current.appliedAt) {
+		return incoming.appliedAt > current.appliedAt;
+	}
+	return isMoreCompleteAccountLayer(incoming, current);
 };
 
 /** Deep-freeze an `AccountConsentLayer` so snapshot/runtime consumers cannot mutate it. */

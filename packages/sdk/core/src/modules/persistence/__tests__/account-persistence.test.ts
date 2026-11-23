@@ -659,12 +659,27 @@ describe('persistence regressions (set 1)', () => {
 				__inthRender?: { starts?: Record<string, number> };
 			};
 			delete w.__inthRender;
-			// oxlint-disable-next-line no-new-func -- Testing generated serverStart inline script
-			new Function(code)();
+			const rafSpy = vi
+				.spyOn(window, 'requestAnimationFrame')
+				.mockImplementation(() => 0);
+			try {
+				// oxlint-disable-next-line no-new-func -- Testing generated serverStart inline script
+				new Function(code)();
+			} finally {
+				rafSpy.mockRestore();
+			}
 			return w.__inthRender?.starts?.ads === 1 ? 1 : 0;
 		};
 
-		const scripts = [
+		const categoryScripts = [
+			{
+				category: 'marketing' as const,
+				id: 'ads',
+				serverStart: () => ({ prelude: 'window.__adsRan = 1;' }),
+				src: 'https://cdn.example.test/ads.js',
+			},
+		];
+		const vendorScripts = [
 			{
 				category: 'marketing' as const,
 				id: 'ads',
@@ -698,7 +713,7 @@ describe('persistence regressions (set 1)', () => {
 				initialUserConsent: serverGrantDoc,
 				now: NOW,
 			},
-			scripts,
+			scripts: categoryScripts,
 		});
 		expect(code1).toBeDefined();
 		// Positive control: without a newer localStorage copy, serverStart proceeds.
@@ -744,7 +759,7 @@ describe('persistence regressions (set 1)', () => {
 				initialUser: { externalId: 'user_a' },
 				now: NOW,
 			},
-			scripts,
+			scripts: vendorScripts,
 		});
 		expect(code2).toBeDefined();
 		document.cookie = `${keys.accountChoices}=${encodeAccountChoicesCookie(
@@ -797,8 +812,366 @@ describe('persistence regressions (set 1)', () => {
 				initialUser: { externalId: 'user_a' },
 				now: NOW,
 			},
-			scripts,
+			scripts: vendorScripts,
 		});
 		expect(codeOverflow).toBeUndefined();
+	});
+});
+
+describe('persistence and SSR regressions (set 2)', () => {
+	test('250 declared vendors with accept-all then deny-one keeps <key>-vendors cookie small (denied IDs only) and stores declared list in localStorage', async () => {
+		const resolution = matchedResolution(optInRule());
+		const declared = Array.from({ length: 250 }, (_, index) => ({
+			category: 'marketing' as const,
+			id: `vendor-partner-${String(index).padStart(3, '0')}`,
+			presentable: true,
+			source: 'config' as const,
+		}));
+		const kernel = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialVendors: { declared, listVersion: 'v250' },
+			now: NOW,
+		});
+		const p = createPersistence({ kernel });
+
+		await kernel.commands.save('all');
+		await flushMacrotasks();
+		await kernel.commands.save({
+			vendors: { 'vendor-partner-042': false },
+		});
+		await flushMacrotasks();
+
+		const cookieMap = readCookieMap();
+		const vendorsCookie = cookieMap.get('inth-vendors') ?? '';
+		expect(vendorsCookie).toContain('d=vendor-partner-042');
+		expect(vendorsCookie).not.toContain('g=');
+		expect(vendorsCookie.length).toBeLessThan(200);
+
+		const localVendors = JSON.parse(
+			window.localStorage.getItem('inth-vendors') ?? '{}'
+		) as { denied?: string[]; granted?: string[] };
+		expect(localVendors.denied).toEqual(['vendor-partner-042']);
+		expect(localVendors.granted).toHaveLength(249);
+
+		p.dispose();
+		kernel.dispose();
+	});
+
+	test('cookie read throw keeps in-memory account layer, and tab 1 adopts tab 2 lift from localStorage even when stale cookies remain', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const doc = makeUserConsent({
+			checkedAt: NOW,
+			externalId: 'user_a',
+			optOut: {
+				method: 'button',
+				recordedAt: NOW - 5000,
+				rights: ['sale', 'share'],
+			},
+		});
+
+		const tab1 = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+			now: NOW,
+		});
+		const p1 = createPersistence({ kernel: tab1 });
+		tab1.syncUserConsent(doc);
+		await flushMacrotasks();
+		expect(tab1.getAccountLayer()?.optOut).not.toBeNull();
+
+		// Case A: `document.cookie` getter throws -> reconcile treats read as degraded and keeps in-memory layer.
+		const cookieDesc = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'cookie'
+		);
+		Object.defineProperty(document, 'cookie', {
+			configurable: true,
+			get: () => {
+				throw new Error('cookie access denied');
+			},
+			set: () => {
+				throw new Error('cookie access denied');
+			},
+		});
+		p1.reconcile();
+		expect(tab1.getAccountLayer()?.optOut).not.toBeNull();
+		if (cookieDesc) {
+			Object.defineProperty(document, 'cookie', cookieDesc);
+		}
+
+		// Case B: Tab 2 lifts while cookie writes fail (leaving stale pre-lift cookies alongside post-lift localStorage).
+		const keys = resolveAccountStorageKeys();
+		const staleCookies = document.cookie;
+		window.localStorage.setItem(
+			keys.accountState,
+			JSON.stringify({
+				appliedAt: NOW + 1000,
+				checkedAt: NOW,
+				choices: {},
+				externalId: 'user_a',
+				liftedAt: NOW + 1000,
+				optOut: null,
+				rev: 'rev_lift_tab2',
+				skew: 0,
+				vendors: {},
+				version: 1,
+			})
+		);
+		expect(staleCookies).toContain(keys.accountOptOut);
+
+		// Tab 1 reconciles: localStorage has a complete post-lift revision -> MUST NOT be treated as partial; tab 1 adopts lift!
+		p1.reconcile();
+		expect(tab1.getAccountLayer()?.optOut).toBeNull();
+		expect(tab1.getSnapshot().optOut).toBeNull();
+
+		p1.dispose();
+		tab1.dispose();
+	});
+
+	test('inline serverStart converts account grant time with client clock skew and skips vendor-gated scripts when account layer exists', () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const FIVE_MIN = 5 * 60 * 1000;
+
+		const runInline = (code: string | undefined, scriptId: string): number => {
+			if (!code) {
+				return 0;
+			}
+			const w = window as unknown as {
+				__inthRender?: { starts?: Record<string, number> };
+			};
+			delete w.__inthRender;
+			const rafSpy = vi
+				.spyOn(window, 'requestAnimationFrame')
+				.mockImplementation(() => 0);
+			try {
+				// oxlint-disable-next-line no-new-func -- Testing generated serverStart inline script
+				new Function(code)();
+			} finally {
+				rafSpy.mockRestore();
+			}
+			return w.__inthRender?.starts?.[scriptId] === 1 ? 1 : 0;
+		};
+
+		// vendor-gated script must NOT server-start when an account layer exists.
+		const vendorCode = serverScriptStart({
+			consentCategories: ['marketing'],
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW },
+				initialUser: { externalId: 'user_a' },
+				initialUserConsent: makeUserConsent({
+					checkedAt: NOW,
+					choices: {
+						marketing: {
+							basis: { fingerprint: fp, kind: 'choice-v1' },
+							confirmedAt: NOW - 1000,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				}),
+				now: NOW,
+			},
+			scripts: [
+				{
+					category: 'marketing' as const,
+					id: 'vendor-script',
+					serverStart: () => ({ prelude: 'window.__v = 1;' }),
+					src: 'https://cdn.example.test/v.js',
+					vendor: 'ads-vendor',
+				},
+			],
+		});
+		expect(vendorCode).toBeUndefined();
+
+		// Server clock is 5 min ahead (`serverNow = NOW + FIVE_MIN`).
+		// Account grant was 10 s ago (`NOW + FIVE_MIN - 10_000`), while browser has a NEWER local denial 5 s ago (`NOW - 5_000`).
+		vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const skewedCode = serverScriptStart({
+			consentCategories: ['marketing'],
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW + FIVE_MIN },
+				initialUser: { externalId: 'user_a' },
+				initialUserConsent: makeUserConsent({
+					checkedAt: NOW + FIVE_MIN,
+					choices: {
+						marketing: {
+							basis: { fingerprint: fp, kind: 'choice-v1' },
+							confirmedAt: NOW + FIVE_MIN - 10_000,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				}),
+				now: NOW + FIVE_MIN,
+			},
+			scripts: [
+				{
+					category: 'marketing' as const,
+					id: 'cat-script',
+					serverStart: () => ({ prelude: 'window.__c = 1;' }),
+					src: 'https://cdn.example.test/c.js',
+				},
+			],
+		});
+		expect(skewedCode).toBeDefined();
+
+		// Put a newer local denial at NOW - 5_000 in browser localStorage: inline check MUST abort!
+		window.localStorage.setItem(
+			'inth',
+			JSON.stringify({
+				categories: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: false,
+					},
+				},
+				version: 3,
+			})
+		);
+		expect(runInline(skewedCode, 'cat-script')).toBe(0);
+	});
+
+	test('cross-tab reconcile and withQueued preserve vendorDeclared so unseen account vendor denials survive', async () => {
+		const resolution = matchedResolution(optInRule());
+		const fp = resolution.fingerprints.choice;
+
+		// Tab 1 starts with both vendor-x and vendor-y declared and account denying vendor-x.
+		const tab1 = createKernel({
+			consentCategories: ['marketing', 'measurement'],
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialVendors: {
+				declared: [
+					{
+						category: 'marketing',
+						id: 'vendor-x',
+						presentable: true,
+						source: 'config',
+					},
+					{
+						category: 'measurement',
+						id: 'vendor-y',
+						presentable: true,
+						source: 'config',
+					},
+				],
+				listVersion: 'v2',
+			},
+			now: NOW,
+		});
+		const p1 = createPersistence({ kernel: tab1 });
+		tab1.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+					measurement: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+				},
+				externalId: 'user_a',
+				vendors: {
+					'vendor-x': { confirmedAt: NOW - 5000, value: false },
+				},
+			})
+		);
+		await flushMacrotasks();
+
+		// Tab 2 (on a page declaring ONLY vendor-y) saves vendor-y = false at NOW + 1000.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 1000);
+		window.localStorage.setItem(
+			'inth-vendors',
+			JSON.stringify({
+				confirmedAt: NOW + 1000,
+				denied: ['vendor-y'],
+				granted: [],
+				version: 1,
+			})
+		);
+		document.cookie = `inth-vendors=v=1&t=${NOW + 1000}&d=vendor-y; path=/`;
+
+		// Tab 1 reconciles: vendorDeclared MUST be carried through reconcile so vendor-x stays denied!
+		p1.reconcile();
+		expect(tab1.getBrowserRecords().vendorDeclared).toEqual(['vendor-y']);
+		expect(tab1.getSnapshot().vendorChoice?.denied).toContain('vendor-x');
+		expect(tab1.getSnapshot().vendorChoice?.denied).toContain('vendor-y');
+
+		// Also verify withQueued: kernel B with a queued vendor save (not yet flushed) passes vendorDeclared to kernel C on mount.
+		clearBrowserStorage();
+		const tabA = createKernel({
+			consentCategories: ['measurement'],
+			initialPolicyResolution: resolution,
+			initialVendors: {
+				declared: [
+					{
+						category: 'measurement',
+						id: 'vendor-y',
+						presentable: true,
+						source: 'config',
+					},
+				],
+				listVersion: 'v1',
+			},
+			now: NOW + 2000,
+		});
+		const pA = mountPersistence(
+			{ kernel: tabA },
+			() =>
+				new Promise<WriterModule>(() => {
+					/* stays pending so tabA's vendor save remains in queuedWrites */
+				})
+		);
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 2000);
+		void tabA.commands.save({ vendors: { 'vendor-y': false } });
+		// Do NOT flush yet: mount tabB while tabA's write is still queued.
+		const tabB = createKernel({
+			consentCategories: ['marketing', 'measurement'],
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialVendors: {
+				declared: [
+					{
+						category: 'marketing',
+						id: 'vendor-x',
+						presentable: true,
+						source: 'config',
+					},
+					{
+						category: 'measurement',
+						id: 'vendor-y',
+						presentable: true,
+						source: 'config',
+					},
+				],
+				listVersion: 'v2',
+			},
+			now: NOW + 2000,
+		});
+		const pB = createPersistence({ kernel: tabB });
+		expect(tabB.getBrowserRecords().vendorDeclared).toEqual(['vendor-y']);
+
+		pB.dispose();
+		tabB.dispose();
+		pA.dispose();
+		tabA.dispose();
+		p1.dispose();
+		tab1.dispose();
 	});
 });

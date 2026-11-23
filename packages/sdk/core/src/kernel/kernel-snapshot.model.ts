@@ -38,9 +38,11 @@ import {
 	deriveEffectiveRecords,
 	freezeAccountLayer,
 	normalizeUserConsent,
+	shouldAdoptAccountLayer,
 } from './account-layer';
 import type {
 	AccountConsentLayer,
+	AccountLayerSource,
 	BrowserConsentRecords,
 } from './account-layer';
 import {
@@ -319,6 +321,7 @@ export interface InitialKernelState {
 	readonly snapshot: ConsentSnapshot;
 	readonly browserRecords: BrowserConsentRecords;
 	readonly accountLayer: AccountConsentLayer | null;
+	readonly accountLayerSource: AccountLayerSource;
 }
 
 /**
@@ -377,32 +380,41 @@ export const buildInitialKernelState = function buildInitialKernelState(
 		vendorDeclared: browserVendorDeclared,
 	};
 
+	const userExternalId = user?.externalId ?? null;
 	const storedAccount =
 		records?.accountLayer &&
-		user !== null &&
-		records.accountLayer.externalId === user.externalId
+		userExternalId !== null &&
+		records.accountLayer.externalId === userExternalId
 			? records.accountLayer
 			: null;
 	let accountLayer: AccountConsentLayer | null = null;
+	let accountLayerSource: AccountLayerSource = 'stored';
 	if (config.initialUserConsent === null) {
 		accountLayer = null;
-	} else if (config.initialUserConsent !== undefined) {
-		const normalizedInitial =
-			user !== null &&
-			config.initialUserConsent.sync?.externalId === user.externalId
-				? normalizeUserConsent(config.initialUserConsent, now)
-				: null;
-		if (
-			normalizedInitial !== null &&
-			(storedAccount === null ||
-				normalizedInitial.checkedAt >= storedAccount.checkedAt)
-		) {
-			accountLayer = freezeAccountLayer(normalizedInitial);
-		} else if (storedAccount !== null) {
+	} else {
+		if (storedAccount !== null) {
 			accountLayer = freezeAccountLayer(storedAccount);
+			accountLayerSource = 'stored';
 		}
-	} else if (storedAccount !== null) {
-		accountLayer = freezeAccountLayer(storedAccount);
+		if (config.initialUserConsent !== undefined && userExternalId !== null) {
+			const normalizedInitial =
+				config.initialUserConsent.sync?.externalId === userExternalId
+					? normalizeUserConsent(config.initialUserConsent, now)
+					: null;
+			if (
+				normalizedInitial !== null &&
+				shouldAdoptAccountLayer({
+					current: accountLayer,
+					currentSource: accountLayerSource,
+					incoming: normalizedInitial,
+					incomingSource: 'incoming',
+					userExternalId,
+				})
+			) {
+				accountLayer = freezeAccountLayer(normalizedInitial);
+				accountLayerSource = 'incoming';
+			}
+		}
 	}
 
 	const derivedRecords = deriveEffectiveRecords(
@@ -519,7 +531,7 @@ export const buildInitialKernelState = function buildInitialKernelState(
 		draftSnapshot.hasAccountLayer = true;
 	}
 	const snapshot = freezeSnapshot(draftSnapshot);
-	return { accountLayer, browserRecords, snapshot };
+	return { accountLayer, accountLayerSource, browserRecords, snapshot };
 };
 
 /**

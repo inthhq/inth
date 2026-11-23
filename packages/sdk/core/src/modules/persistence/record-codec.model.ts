@@ -911,7 +911,7 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 		if (readSubjectField(key, value, subject, issues)) {
 			continue;
 		}
-		if (key !== 't' && key !== 'd' && key !== 'g') {
+		if (key !== 't' && key !== 'd') {
 			issues.push({ code: 'unknown-key', path: key });
 		}
 	}
@@ -927,13 +927,6 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 		denied: deniedResult.ids,
 		version: 1,
 	};
-	if (fields.has('g')) {
-		const grantedResult = decodeCompactVendorList(fields.get('g'), 'g');
-		if (!grantedResult.ok) {
-			return grantedResult;
-		}
-		candidate.granted = grantedResult.ids;
-	}
 	if (Object.keys(subject).length > 0) {
 		candidate.subject = subject;
 	}

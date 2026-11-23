@@ -322,8 +322,8 @@ export const encodeVendorChoice = function encodeVendorChoice(
 /**
  * Compact vendor denials for the `<key>-vendors` cookie:
  * `v=1&t=<confirmedAt>&d=<uri-encoded id>|<uri-encoded id>`, followed by the
- * optional `g=<granted ids>` and subject fields (`sid`, `eid`, `idp`).
- * The `d` field is omitted when nothing is denied.
+ * subject fields (`sid`, `eid`, `idp`). The `d` field is omitted when nothing
+ * is denied; the declared/granted list stays in localStorage JSON only.
  */
 export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 	record: StoredVendorChoice
@@ -334,17 +334,6 @@ export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 			field(
 				'd',
 				[...record.denied]
-					.sort()
-					.map((id) => encodeURIComponent(id))
-					.join(LIST_SEPARATOR)
-			)
-		);
-	}
-	if (record.granted !== undefined) {
-		fields.push(
-			field(
-				'g',
-				[...record.granted]
 					.sort()
 					.map((id) => encodeURIComponent(id))
 					.join(LIST_SEPARATOR)

@@ -30,7 +30,7 @@ import { isProductionBuild } from '../libs/is-production';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import {
 	normalizeUserConsent,
-	sameAccountLayerContent,
+	shouldAdoptAccountLayer,
 	splitServerOptOutForAccount,
 } from './account-layer';
 import type {
@@ -326,11 +326,17 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			commitOptions = { accountLayer: null, fromHydration: true };
 		} else if (
 			incomingAccountLayer !== undefined &&
-			before.user !== null &&
-			incomingAccountLayer.externalId === before.user.externalId
+			shouldAdoptAccountLayer({
+				current: runtime.getAccountLayer(),
+				currentSource: runtime.getAccountLayerSource(),
+				incoming: incomingAccountLayer,
+				incomingSource: 'stored',
+				userExternalId: before.user?.externalId ?? null,
+			})
 		) {
 			commitOptions = {
 				accountLayer: incomingAccountLayer,
+				accountLayerSource: 'stored',
 				fromHydration: true,
 			};
 		}
@@ -551,21 +557,17 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			return null;
 		}
-		const currentAccount = runtime.getAccountLayer();
 		if (
-			currentAccount !== null &&
-			currentAccount.externalId === normalized.externalId
+			!shouldAdoptAccountLayer({
+				current: runtime.getAccountLayer(),
+				currentSource: runtime.getAccountLayerSource(),
+				forceClientSync: options?.forceClientSync,
+				incoming: normalized,
+				incomingSource: 'incoming',
+				userExternalId: user.externalId,
+			})
 		) {
-			const allowEqualClientReconvert =
-				options?.forceClientSync === true &&
-				normalized.checkedAt === currentAccount.checkedAt &&
-				sameAccountLayerContent(currentAccount, normalized);
-			if (
-				normalized.checkedAt <= currentAccount.checkedAt &&
-				!allowEqualClientReconvert
-			) {
-				return null;
-			}
+			return null;
 		}
 		return normalized;
 	};
@@ -623,6 +625,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		runtime.batch(() => {
 			changed = commit(patch, {
 				accountLayer: normalized,
+				accountLayerSource: 'incoming',
 				preserveDialog: true,
 			});
 			const after = getSnapshot();

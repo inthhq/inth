@@ -186,6 +186,7 @@ export const createKernel = function createKernel(
 		dispatcher,
 		emit: eventBus.emit,
 		initialAccountLayer: initialState.accountLayer,
+		initialAccountLayerSource: initialState.accountLayerSource,
 		initialBrowserRecords: initialState.browserRecords,
 		initialOptOutGpcReported,
 		initialOptOutReceiptData,
@@ -288,6 +289,7 @@ export const createKernel = function createKernel(
 			on: eventBus.on,
 		},
 		getAccountLayer: runtime.getAccountLayer,
+		getAccountLayerSource: runtime.getAccountLayerSource,
 		getAccountSyncGeneration: runtime.getAccountSyncGeneration,
 		getBrowserRecords: runtime.getBrowserRecords,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
@@ -316,6 +318,20 @@ export const createKernel = function createKernel(
 		},
 		setUserConsentPending: (pending: boolean) => {
 			runtime.commit({ now: runtime.now(), userConsentPending: pending });
+		},
+		setUserWithPending: (user, pending) => {
+			const patch: {
+				now: number;
+				user: typeof user;
+				userConsentPending?: boolean;
+			} = {
+				now: runtime.now(),
+				user: user ? { ...user } : null,
+			};
+			if (pending !== undefined) {
+				patch.userConsentPending = pending;
+			}
+			runtime.commit(patch);
 		},
 		settleUserConsent: records.syncUserConsent,
 		subscribe: runtime.subscribe,
