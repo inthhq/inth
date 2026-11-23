@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { theTradeDeskPixel } from './vendors/ads-and-pixels/the-trade-desk';
 
 describe('The Trade Desk core loader consent contract', () => {

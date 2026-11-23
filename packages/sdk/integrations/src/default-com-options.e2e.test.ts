@@ -4,7 +4,6 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultComFormsSdkMock } from './__tests__/default-com-sdk';
-import { grantedServerStart } from './__tests__/helpers';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -13,7 +12,8 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import { grantedServerStart } from './__tests__/helpers';
 import type * as DefaultCom from './vendors/analytics/default-com';
 
 let helpers: typeof DefaultCom;

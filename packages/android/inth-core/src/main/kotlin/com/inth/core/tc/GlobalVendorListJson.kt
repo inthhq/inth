@@ -21,7 +21,7 @@ import kotlinx.serialization.json.contentOrNull
 /**
  * Reads `/init`'s `gvl` key, and hands the same document back out for a bridge.
  *
- * The acceptance rules are `packages/sdk/iab/src/tcf/fetch-gvl.ts`'s, field for field. That is the
+ * The acceptance rules are `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`'s, field for field. That is the
  * client half of the web, and the half that decides whether a device ends up holding a list at all:
  * the backend embeds `gvl` only when the matched policy's model is `iab`
  * (`packages/backend/src/http/init.ts`), and the client then refuses the list unless

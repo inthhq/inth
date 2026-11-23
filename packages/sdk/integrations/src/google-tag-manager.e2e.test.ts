@@ -14,8 +14,8 @@ import {
 	registerVendorContractCleanup,
 	toArgs,
 	updateScripts,
-} from './e2e-test-utils';
-import type { TestWindow } from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import type { TestWindow } from './__tests__/e2e-test-utils';
 import { googleTagManager } from './vendors/tag-managers/google-tag-manager';
 
 describe('googleTagManager contract', () => {

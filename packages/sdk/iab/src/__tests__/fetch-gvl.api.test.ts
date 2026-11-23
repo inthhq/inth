@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { clearGVLCache, fetchGVL } from '../tcf/fetch-gvl';
+import { clearGVLCache, fetchGVL } from '../tcf/fetch-gvl.api';
 
 beforeEach(() => {
 	clearGVLCache();

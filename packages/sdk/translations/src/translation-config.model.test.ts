@@ -1,14 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { baseTranslations as bundledTranslations } from './translations';
-import type {
-	I18nConfig,
-	TranslationConfig,
-	Translations,
-} from './translations.model';
+import { detectBrowserLanguage } from './detect-browser-language';
 import {
 	deepMergeTranslations,
-	detectBrowserLanguage,
 	mergeTranslationConfigs,
 	migrateLegacyTranslationKeys,
 	normalizeI18nConfig,
@@ -16,7 +10,13 @@ import {
 	prepareTranslationConfig,
 	selectLanguage,
 	toTranslationConfig,
-} from './utils';
+} from './translation-config.model';
+import { baseTranslations as bundledTranslations } from './translations';
+import type {
+	I18nConfig,
+	TranslationConfig,
+	Translations,
+} from './translations.model';
 
 describe('bundled privacyChoices translations', () => {
 	const english = bundledTranslations.en.privacyChoices;
@@ -799,7 +799,8 @@ describe('migrateLegacyTranslationKeys', () => {
 
 	it('warns once per page outside production', async () => {
 		vi.resetModules();
-		const { migrateLegacyTranslationKeys: migrate } = await import('./utils');
+		const { migrateLegacyTranslationKeys: migrate } =
+			await import('./translation-config.model');
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		migrate({ frame: { title: 'Blocked' } });
 		migrate({ frame: { title: 'Again' } });

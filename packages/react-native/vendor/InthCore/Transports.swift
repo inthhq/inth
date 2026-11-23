@@ -35,7 +35,7 @@ extension Inth {
     /// How many declared ids this build will still put on one request line.
     ///
     /// The same ceiling as `MAX_GVL_QUERY_VENDOR_IDS` in
-    /// `packages/sdk/iab/src/tcf/fetch-gvl.ts` and `packages/backend/src/http/gvl.ts`,
+    /// `packages/sdk/iab/src/tcf/fetch-gvl.api.ts` and `packages/backend/src/http/gvl.ts`,
     /// for the same reason: past it the scope stops fitting comfortably in a
     /// request line, the producer is expected to fetch the list whole, and every
     /// consumer narrows locally. `packages/backend` and `packages/sdk/iab` both keep the

@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { amazonAdsTag } from './vendors/ads-and-pixels/amazon-ads';
 
 describe('Amazon Ads core loader consent contract', () => {

@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonObject
  * Inth sends the scope upstream rather than filtering after the fact: `gvlRequestUrl` in
  * `packages/backend/src/http/gvl.ts` puts `vendorIds` on the GVL request, `narrowToVendorIds` in that
  * file then runs the filter over the document that came back before it is cached, and
- * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` runs it over a list that reached the
+ * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` runs it over a list that reached the
  * browser by another route so server-resolved state and a client fetch disclose the same partners.
  * The filter has to run somewhere, and a device holding the complete list is one careless render away
  * from disclosing every GVL vendor to a subject who was only ever shown a publisher's own partners.

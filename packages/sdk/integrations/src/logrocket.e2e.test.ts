@@ -11,7 +11,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { logRocket } from './vendors/analytics/logrocket';
 
 describe('logRocket contract', () => {

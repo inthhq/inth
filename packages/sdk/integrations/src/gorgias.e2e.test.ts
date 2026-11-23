@@ -12,7 +12,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { gorgiasChat } from './vendors/functional/gorgias';
 
 interface GorgiasWindow extends Window {

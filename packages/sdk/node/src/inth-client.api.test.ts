@@ -9,7 +9,7 @@ import * as v from 'valibot';
 import { assert, describe, expectTypeOf, it, vi } from 'vitest';
 
 import document from '../../schema/vendor/backend-openapi/openapi.json' with { type: 'json' };
-import { hashDocument, Inth, InthError } from './index';
+import { hashDocument, Inth, InthError } from './inth-client.api';
 import type {
 	AcceptDocumentsParams,
 	InthApiCode,
@@ -18,7 +18,7 @@ import type {
 	InthDocumentType,
 	InthOptions,
 	InthRequestOptions,
-} from './index';
+} from './inth-client.api';
 import { version } from './version';
 
 const SECRET = 'inth_prj_test';

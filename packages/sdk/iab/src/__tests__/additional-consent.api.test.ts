@@ -11,8 +11,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
+import { additionalConsentFor } from '../tcf/additional-consent-for.model';
 import {
-	additionalConsentFor,
 	decodeAdditionalConsent,
 	encodeAdditionalConsent,
 	fetchAdTechProviders,

@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { statableAnalytics } from './vendors/analytics/statable-analytics';
 
 describe('Statable consent lifecycle', () => {

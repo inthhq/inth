@@ -15,7 +15,7 @@ import XCTest
 ///
 /// The vectors are the shared `packages/native-protocol/vendor-list-scope-*` fixtures this core already claims
 /// in ``VendorListScopeTests``, graded here through the kernel rather than against the helper
-/// directly. Their oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by
+/// directly. Their oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, called by
 /// the generator, so what a scoped device ends up holding is the browser build's answer and not
 /// Swift's opinion about it. Kotlin runs the same axes against the same files in
 /// `DeclaredVendorScopeTest`.

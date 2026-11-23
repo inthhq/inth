@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { grantedServerStart } from './__tests__/helpers';
-import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
 	grantedMarketingConsents,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import { grantedServerStart } from './__tests__/helpers';
+import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import { hubspot } from './vendors/analytics/hubspot';
 import type { HubSpotOptions } from './vendors/analytics/hubspot';
 

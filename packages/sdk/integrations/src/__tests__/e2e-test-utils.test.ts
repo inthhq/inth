@@ -3,6 +3,9 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { liveIntentTag } from '../vendors/ads-and-pixels/liveintent';
+import { theTradeDeskPixel } from '../vendors/ads-and-pixels/the-trade-desk';
+import { vector } from '../vendors/ads-and-pixels/vector';
 import {
 	clearAllScripts,
 	grantedMarketingConsents,
@@ -10,9 +13,6 @@ import {
 	registerVendorContractCleanup,
 	resetVendorGlobals,
 } from './e2e-test-utils';
-import { liveIntentTag } from './vendors/ads-and-pixels/liveintent';
-import { theTradeDeskPixel } from './vendors/ads-and-pixels/the-trade-desk';
-import { vector } from './vendors/ads-and-pixels/vector';
 
 describe('vendor contract cleanup', () => {
 	registerVendorContractCleanup();

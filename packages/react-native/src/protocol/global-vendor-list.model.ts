@@ -222,7 +222,7 @@ export interface GVLVendor {
  *
  * Both cores gate a list on the same four fields before they hold one --
  * `vendorListVersion`, `tcfPolicyVersion`, `purposes`, `vendors`, from
- * `packages/sdk/iab/src/tcf/fetch-gvl.ts` -- and both refuse silently, reading a
+ * `packages/sdk/iab/src/tcf/fetch-gvl.api.ts` -- and both refuse silently, reading a
  * refused list as "no list today". Those four are the only members here a reader
  * can treat as settled. Everything below them belongs to a third-party
  * document, where any field may be absent: one partner missing a `name` is a

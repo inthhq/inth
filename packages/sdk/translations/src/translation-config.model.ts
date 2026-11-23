@@ -1,3 +1,4 @@
+import { detectBrowserLanguage } from './detect-browser-language';
 import type {
 	I18nConfig,
 	TranslationConfig,
@@ -405,25 +406,6 @@ export const mergeTranslationConfigs = function mergeTranslationConfigs(
 		locale: normalizedCustom?.locale ?? normalizedDefault.locale,
 		messages: translations as Record<string, Partial<Translations>>,
 	});
-};
-
-export const detectBrowserLanguage = function detectBrowserLanguage(
-	translations: Record<string, unknown>,
-	defaultLanguage: string | undefined,
-	disableAutoSwitch = false
-): string {
-	if (disableAutoSwitch) {
-		return defaultLanguage || 'en';
-	}
-
-	if (typeof window === 'undefined') {
-		return defaultLanguage || 'en';
-	}
-
-	const browserLang = window.navigator.language?.split('-')[0] || '';
-	return browserLang && browserLang in translations
-		? browserLang
-		: defaultLanguage || 'en';
 };
 
 /**

@@ -3,7 +3,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ALL_DENIED } from './e2e-test-utils';
+import { ALL_DENIED } from './__tests__/e2e-test-utils';
 import { fullStory } from './vendors/analytics/fullstory';
 import type {
 	FullStoryApi,
