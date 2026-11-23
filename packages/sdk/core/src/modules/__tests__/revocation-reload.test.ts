@@ -730,6 +730,9 @@ describe('watchRevocationReload with durable opt-out', () => {
 					recordedAt: NOW - 1000,
 					rights: ['sale', 'share'],
 				},
+				// A person-held opt-out reaches a browser through a linked
+				// subject; a browser with no subject cannot lift it.
+				subject: { subjectId: 'sub_linked_cap' },
 			},
 			transport: {
 				liftOptOut,
@@ -788,6 +791,9 @@ describe('watchRevocationReload with durable opt-out', () => {
 					recordedAt: NOW - 1000,
 					rights: ['sale', 'share'],
 				},
+				// A person-held opt-out reaches a browser through a linked
+				// subject; a browser with no subject cannot lift it.
+				subject: { subjectId: 'sub_linked_wait' },
 			},
 			transport: {
 				liftOptOut,

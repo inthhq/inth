@@ -896,10 +896,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		wasProvisional: boolean,
 		liftedRights: readonly OptOutRight[]
 	): Promise<void> {
-		if (
-			!(await prepareSubjectForSaveLift(wasProvisional)) ||
-			!isAccountLiftFresh(optOutActVersion, generation, externalId)
-		) {
+		// Only a provisional subject waits to be linked. A linked subject starts
+		// the lift in the same tick the save resolves, so the revocation
+		// reload sees it as pending.
+		if (wasProvisional && !(await prepareSubjectForSaveLift(wasProvisional))) {
+			return;
+		}
+		if (!isAccountLiftFresh(optOutActVersion, generation, externalId)) {
 			return;
 		}
 		const currentBeforeLift = getSnapshot();
