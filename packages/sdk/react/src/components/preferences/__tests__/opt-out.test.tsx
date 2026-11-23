@@ -12,7 +12,6 @@ import { page } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentDialog } from '~/aggregate-components';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { useOptOutState } from '~/hooks';
@@ -357,7 +356,7 @@ const createDeferredOptOutMode = function createDeferredOptOutMode() {
 	};
 };
 
-describe('sale-and-sharing block in dialog and widget', () => {
+describe('sale-and-sharing block in the widget', () => {
 	test('renders before the category list outside accordion items, opts out in one click, and shows the receipt on reopen', async () => {
 		const fixture = policyFixture(undefined, OPT_OUT_RULE);
 		const { unmount } = await render(
@@ -373,11 +372,10 @@ describe('sale-and-sharing block in dialog and widget', () => {
 				}}
 			>
 				<Capture />
-				<ConsentDialog disableAnimation />
+				<ConsentWidget />
 			</InthProvider>
 		);
 
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-opt-out'))
 			.toBeVisible();
@@ -409,11 +407,9 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			expect(kernel.getSnapshot().optOut).not.toBeNull();
 		});
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
-		expect(kernel.getSnapshot().activeUI).not.toBe('dialog');
 
-		// Reopen the dialog and confirm the block now shows the status, time and reference without an opt-out button.
+		// The block now shows the status, time and reference without an opt-out button.
 		closeOptOutConfirmation(kernel);
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-opt-out-status'))
 			.toBeVisible();
@@ -530,10 +526,7 @@ describe('sale-and-sharing block in dialog and widget', () => {
 					presentation: { optOutLink: 'privacy-choices' },
 				}}
 			>
-				<ConsentDialog
-					disableAnimation
-					open
-				/>
+				<ConsentWidget />
 			</InthProvider>
 		);
 
@@ -555,7 +548,7 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		unmount();
 	});
 
-	test('omits the block under an opt-in policy and keeps the existing dialog structure', async () => {
+	test('omits the block under an opt-in policy and keeps the widget structure', async () => {
 		const fixture = policyFixture(undefined, OPT_IN_RULE);
 		const { unmount } = await render(
 			<InthProvider
@@ -566,10 +559,7 @@ describe('sale-and-sharing block in dialog and widget', () => {
 					prefetch: fixture,
 				}}
 			>
-				<ConsentDialog
-					disableAnimation
-					open
-				/>
+				<ConsentWidget />
 			</InthProvider>
 		);
 
@@ -582,12 +572,6 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		expect(
 			document.querySelector('[data-testid="consent-widget-opt-out-status"]')
 		).toBeNull();
-		expect(
-			document.querySelector('[data-testid="consent-dialog-title"]')
-		).not.toBeNull();
-		expect(
-			document.querySelector('[data-testid="consent-dialog-description"]')
-		).not.toBeNull();
 		expect(
 			document.querySelector(
 				'[data-testid="consent-widget-accordion-item-necessary"]'

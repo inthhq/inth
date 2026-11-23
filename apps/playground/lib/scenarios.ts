@@ -726,7 +726,7 @@ const authoredScenarios: Omit<
 			validity: { choiceDays: 365 },
 		},
 		presentation: {
-			prompt: { variant: 'wall' },
+			prompt: { container: { position: 'center', type: 'card' } },
 		},
 	},
 	{

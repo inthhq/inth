@@ -3,20 +3,20 @@ packages:
   "group:sdk": patch
 ---
 
-### The classic banner and dialog variables style the Privacy Choices UI too
+### The classic banner and dialog variables style the consent UI
 
-If you styled the consent banner or dialog through their component variables, such as `--consent-banner-border-radius` or `--consent-dialog-background-color`, that styling now carries over to the Privacy Choices UI. Each part reads its own Privacy Choices hook first, then the classic variable, then the theme token, so `--consent-card-radius` wins over `--consent-banner-border-radius` on the Card. A `-dark` variable applies in dark mode only, as before.
+If you styled the consent banner or dialog through their component variables, such as `--consent-banner-border-radius` or `--consent-dialog-background-color`, that styling carries over. Each part reads its own hook first, then the classic variable, then the theme token, so `--consent-card-radius` wins over `--consent-banner-border-radius` on the Card. A `-dark` variable applies in dark mode only, as before.
 
-The classic sheets no longer declare these variables on `:root`; each default now sits where the variable is read, with the same value. Two things change as a result:
+The stylesheets no longer declare these variables on `:root`; each default now sits where the variable is read, with the same value. Two things change as a result:
 
-- A palette scoped to `.inth-theme-root` or to the banner now reaches every part of the classic banner and dialog that these variables style. Before, they resolved their tokens once, on `:root`.
+- A palette scoped to `.inth-theme-root` or to the banner now reaches every part of the banner and dialog that these variables style. Before, they resolved their tokens once, on `:root`.
 - `getComputedStyle(document.documentElement).getPropertyValue('--consent-banner-z-index')` and the like return an empty string unless you set the variable yourself.
 
-When you import `styles.css` and `styles/privacy-choices.css` together, the Privacy Choices dialog now caps its height at `min(640px, 100%)`, as it does with the per-surface sheets, instead of the classic dialog's `calc(100dvh - 2 * var(--consent-dialog-card-padding-mobile))`. Set `--consent-dialog-max-height` to keep the old cap.
+The dialog caps its height at `min(640px, 100%)`. Set `--consent-dialog-max-height` to change the cap.
 
-The full table, including the classic variables Privacy Choices doesn't read and why, is in the theme tokens docs under "Keep classic variables on Privacy Choices".
+The full table, including the classic variables Inth doesn't read and why, is in the theme tokens docs under "Classic variable compatibility".
 
-| Classic variable | v6 hook that wins | v6 part |
+| Classic variable | Hook that wins | Part |
 | --- | --- | --- |
 | `--consent-banner-font-family` | — | Card, Banner, Drawer: the layer font |
 | `--consent-banner-line-height` | — | Card, Banner, Drawer: the layer line height |
@@ -73,8 +73,8 @@ The full table, including the classic variables Privacy Choices doesn't read and
 | `--consent-dialog-footer-padding-y` | — | Dialog: the footer padding above and below |
 | `--consent-dialog-card-radius` | `--consent-dialog-radius` | Dialog: the card corners |
 | `--consent-dialog-max-width` | `--consent-dialog-width` | Dialog: the card width |
-| `--consent-dialog-max-height` | — | Dialog: the card height cap (v6 reads it under the same name) |
-| `--consent-dialog-z-index` | — | Dialog: the layer stacking (v6 reads it under the same name) |
+| `--consent-dialog-max-height` | — | Dialog: the card height cap (read under the same name) |
+| `--consent-dialog-z-index` | — | Dialog: the layer stacking (read under the same name) |
 | `--consent-dialog-card-shadow` | — | Dialog: the card shadow, under its edge |
 | `--consent-dialog-border-width` | — | Dialog: the card edge and the footer divider |
 | `--consent-dialog-border-style` | — | Dialog: the footer divider style |

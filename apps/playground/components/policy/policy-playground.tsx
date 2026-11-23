@@ -16,10 +16,10 @@ import {
 } from '@inth/react/iab';
 import { testing } from '@inth/react/testing';
 import type {
+	ConsentContainerType,
 	ConsentSnapshot,
 	KernelEvent,
-	PromptPosition,
-	PromptVariant,
+	PromptPresentation,
 } from '@inth/sdk/engine';
 import { readStoredRecords } from '@inth/sdk/modules/persistence';
 import type { StoredRecords } from '@inth/sdk/modules/persistence';
@@ -35,9 +35,11 @@ import { useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
 import {
-	autoVariantFor,
+	autoContainerFor,
 	buildBackendSnippet,
 	buildProviderSnippet,
+	CONTAINER_HINTS,
+	CONTAINER_TYPES,
 	DEFAULT_PRESENTATION_FORM,
 	DEMO_NOTICE_PRESENTATION,
 	defaultPositionFor,
@@ -47,14 +49,13 @@ import {
 	inspectPlaygroundRule,
 	isRecommendedPreset,
 	playgroundPresets,
+	positionOf,
 	positionOptionsFor,
 	presentationForRule,
-	PROMPT_VARIANTS,
 	promptsForModel,
 	resolvePlaygroundPresentation,
-	setPresentationVariant,
+	setPresentationContainer,
 	toPolicyRule,
-	VARIANT_HINTS,
 } from '../../lib/policy-playground';
 import type {
 	PlaygroundPresentationForm,
@@ -592,18 +593,18 @@ const RuleEditor = ({
 // Presentation editor
 // ---------------------------------------------------------------------------
 
-const describeAutoVariant = function describeAutoVariant(
+const describeAutoContainer = function describeAutoContainer(
 	form: PlaygroundPresentationForm,
 	rule: Pick<PolicyRule, 'id' | 'prompt'>,
-	autoVariant: PromptVariant
+	autoContainer: ConsentContainerType
 ): string {
-	if (form.variant !== 'auto') {
-		return VARIANT_HINTS[form.variant];
+	if (form.container !== 'auto') {
+		return CONTAINER_HINTS[form.container];
 	}
-	if (presentationForRule(rule)?.variant) {
-		return `Per policy (demo) picks ${autoVariant} for ${rule.id}.`;
+	if (presentationForRule(rule)?.container) {
+		return `Per policy (demo) picks a ${autoContainer} for ${rule.id}.`;
 	}
-	return `Auto leaves it to the resolver: ${autoVariant} for a ${rule.prompt} prompt.`;
+	return `Auto leaves it to the resolver: a ${autoContainer} for a ${rule.prompt} prompt.`;
 };
 
 const PresentationEditor = ({
@@ -616,51 +617,56 @@ const PresentationEditor = ({
 	onChange: (next: PlaygroundPresentationForm) => void;
 }) => {
 	const { prompt } = rule;
-	const autoVariant = autoVariantFor(rule);
-	const demoPresentation = presentationForRule(rule);
-	const positions = positionOptionsFor(form.variant, prompt, autoVariant);
+	const autoContainer = autoContainerFor(rule);
+	const demoContainer = presentationForRule(rule)?.container;
+	const positions = positionOptionsFor(form.container, prompt, autoContainer);
+	const demoPosition =
+		form.container === 'auto' && demoContainer
+			? positionOf(demoContainer)
+			: undefined;
 	const autoPosition =
-		form.variant === 'auto' && demoPresentation?.position
-			? demoPresentation.position
-			: defaultPositionFor(form.variant, prompt, autoVariant);
-	const variantHint = describeAutoVariant(form, rule, autoVariant);
+		demoPosition ?? defaultPositionFor(form.container, prompt, autoContainer);
+	const containerHint = describeAutoContainer(form, rule, autoContainer);
 	return (
 		<div className="grid gap-5 sm:grid-cols-3">
 			<Field
-				label="Variant"
-				hint={variantHint}
+				label="Container"
+				hint={containerHint}
 			>
 				<Select
-					testId="playground-variant"
-					value={form.variant}
+					testId="playground-container"
+					value={form.container}
 					onChange={(value) =>
 						onChange(
-							setPresentationVariant(
+							setPresentationContainer(
 								form,
-								value as PromptVariant | 'auto',
+								value as ConsentContainerType | 'auto',
 								prompt,
-								autoVariant
+								autoContainer
 							)
 						)
 					}
 					options={[
 						{ label: 'per policy (demo)', value: 'auto' },
-						...PROMPT_VARIANTS.map((variant) => ({
-							label: variant,
-							value: variant,
+						...CONTAINER_TYPES.map((type) => ({
+							label: type,
+							value: type,
 						})),
 					]}
 				/>
 			</Field>
 			<Field
 				label="Position"
-				hint={`Auto is ${autoPosition}. Only positions the variant accepts are listed.`}
+				hint={`Auto is ${autoPosition}. Only positions the container accepts are listed.`}
 			>
 				<Select
 					testId="playground-position"
 					value={form.position}
 					onChange={(value) =>
-						onChange({ ...form, position: value as PromptPosition | 'auto' })
+						onChange({
+							...form,
+							position: value as PlaygroundPresentationForm['position'],
+						})
 					}
 					options={[
 						{ label: 'per policy (demo)', value: 'auto' },
@@ -673,16 +679,37 @@ const PresentationEditor = ({
 			</Field>
 			<Field
 				label="Blocking"
-				hint="Backdrop, scroll lock, focus trap and no outside dismissal. A wall always blocks; a notice never does."
+				hint="Backdrop, scroll lock, focus trap and no outside dismissal. A centred Card always blocks; a notice never does."
 			>
 				<Checkbox
-					label="Block the page"
-					checked={form.blocking}
-					onChange={(blocking) => onChange({ ...form, blocking })}
+					label="Block until a choice"
+					checked={form.blockUntilChoice}
+					onChange={(blockUntilChoice) =>
+						onChange({ ...form, blockUntilChoice })
+					}
 				/>
 			</Field>
 		</div>
 	);
+};
+
+const describeContainer = function describeContainer(
+	presentation: PromptPresentation
+): string {
+	const { container } = presentation;
+	if (!container) {
+		return 'auto';
+	}
+	const parts: string[] = [container.type];
+	const position = positionOf(container);
+	if (position) {
+		parts.push(position);
+	}
+	const centred = container.type === 'card' && container.position === 'center';
+	if (centred || presentation.blockUntilChoice) {
+		parts.push('blocking');
+	}
+	return parts.join(' · ');
 };
 
 const describePromptPresentation = function describePromptPresentation(
@@ -701,19 +728,12 @@ const describePromptPresentation = function describePromptPresentation(
 	if (!demoPresentation) {
 		return 'resolver default';
 	}
-	const parts = [demoPresentation.variant ?? 'auto'];
-	if (demoPresentation.position) {
-		parts.push(demoPresentation.position);
-	}
-	if (demoPresentation.variant === 'wall' || demoPresentation.blocking) {
-		parts.push('blocking');
-	}
-	return parts.join(' · ');
+	return describeContainer(demoPresentation);
 };
 
 /**
- * Read-only view of the shapes this demo gives each preset, so the variant
- * system is visible side by side without editing anything.
+ * Read-only view of the containers this demo gives each preset, so they
+ * are visible side by side without editing anything.
  */
 const PresentationMap = ({
 	activePresetId,
@@ -756,8 +776,7 @@ const PresentationMap = ({
 				>
 					<span>Any notice prompt</span>
 					<code className="font-mono">
-						{DEMO_NOTICE_PRESENTATION.variant} ·{' '}
-						{DEMO_NOTICE_PRESENTATION.position}
+						{describeContainer(DEMO_NOTICE_PRESENTATION)}
 					</code>
 				</li>
 			</ul>
@@ -998,20 +1017,18 @@ const RuntimeInspector = ({
 					<p
 						className="font-mono text-xs"
 						data-testid="playground-surface"
-						data-variant={banner.variant}
-						data-position={banner.position}
-						data-position-source={banner.positionSource}
+						data-placement={banner.container?.desktop.placement}
 						data-blocking={banner.blocking ? 'true' : 'false'}
 						data-consent-ui={noConsentUi ? 'none' : 'shown'}
 					>
 						{noConsentUi
 							? 'no consent UI · none model with no rights'
-							: `${banner.variant} · ${banner.position} (${banner.positionSource})${banner.blocking ? ' · blocking' : ' · non-blocking'}`}
+							: `${banner.container?.desktop.placement ?? 'none'} · phone ${banner.container?.phone.placement ?? 'none'}${banner.blocking ? ' · blocking' : ' · non-blocking'}`}
 					</p>
 					<p className="text-muted-foreground text-xs leading-5">
-						Shape and placement come from the host, never the rule. The resolver
-						fills what the host leaves out and rejects what the variant cannot
-						accept.
+						The container comes from the host, then the rule's surface. The
+						resolver fills what both leave out and moves what the viewport
+						cannot show.
 					</p>
 				</div>
 				<div className="space-y-1">

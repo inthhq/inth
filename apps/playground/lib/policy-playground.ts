@@ -7,17 +7,13 @@
  * here (no React) lets `policy-playground.test.ts` cover it in Node.
  */
 
-import {
-	PROMPT_VARIANT_DEFAULT_POSITION,
-	PROMPT_VARIANT_POSITIONS,
-	resolveConsentPresentation,
-} from '@inth/sdk/engine';
+import { resolveConsentPresentation } from '@inth/sdk/engine';
 import type {
+	ConsentContainer,
+	ConsentContainerType,
 	ConsentPresentation,
 	PresentationDiagnostic,
-	PromptPosition,
 	PromptPresentation,
-	PromptVariant,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 import type {
@@ -487,98 +483,150 @@ export const promptsForModel = function promptsForModel(
 
 /**
  * Host presentation the playground applies to the prompt. `auto` uses the
- * demo's per-policy shape (`presentationForRule`) when the rule has one,
- * and otherwise leaves the field to the resolver.
+ * demo's per-policy container (`presentationForRule`) when the rule has
+ * one, and otherwise leaves the field to the resolver.
  */
 export interface PlaygroundPresentationForm {
-	variant: PromptVariant | 'auto';
-	position: PromptPosition | 'auto';
-	/** `false` leaves blocking to the variant; `wall` always blocks. */
-	blocking: boolean;
+	container: ConsentContainerType | 'auto';
+	/** A Card's position, a Banner's edge or a Drawer's side. */
+	position: ContainerPosition | 'auto';
+	/** `false` leaves blocking to the container; a centred Card always blocks. */
+	blockUntilChoice: boolean;
 }
 
+/** A Card's position, a Banner's edge or a Drawer's side. */
+export type ContainerPosition = 'start' | 'end' | 'center' | 'bottom' | 'top';
+
 export const DEFAULT_PRESENTATION_FORM: PlaygroundPresentationForm = {
-	blocking: false,
+	blockUntilChoice: false,
+	container: 'auto',
 	position: 'auto',
-	variant: 'auto',
 };
 
-export const PROMPT_VARIANTS = [
-	'floating',
-	'bar',
-	'widget',
-	'wall',
-] as const satisfies readonly PromptVariant[];
+export const CONTAINER_TYPES = [
+	'card',
+	'banner',
+	'drawer',
+] as const satisfies readonly ConsentContainerType[];
 
-export const VARIANT_HINTS: Record<PromptVariant, string> = {
-	bar: 'Full-width edge bar.',
-	floating:
-		'Card in a corner or edge center. The resolver default for every prompt.',
-	wall: 'Centered blocker with a backdrop, scroll lock and focus trap.',
-	widget: 'Compact chip in a corner.',
+export const CONTAINER_HINTS: Record<ConsentContainerType, string> = {
+	banner: 'Full-width banner along the top or bottom edge.',
+	card: 'Floating card in a bottom corner, or centred over a backdrop. The resolver default for every prompt.',
+	drawer: 'Panel from one side that shows every choice at once on desktop.',
 };
 
-/** Variant the resolver picks when the host sets none: a floating card for every prompt. */
-export const defaultVariantFor = function defaultVariantFor(
+const CONTAINER_POSITIONS: Record<
+	ConsentContainerType,
+	readonly ContainerPosition[]
+> = {
+	banner: ['bottom', 'top'],
+	card: ['start', 'end', 'center'],
+	drawer: ['bottom', 'top', 'start', 'end'],
+};
+
+const DEFAULT_POSITIONS: Record<ConsentContainerType, ContainerPosition> = {
+	banner: 'bottom',
+	card: 'start',
+	drawer: 'bottom',
+};
+
+/** Container the resolver picks when the host sets none: a Card for every prompt. */
+export const defaultContainerFor = function defaultContainerFor(
 	_prompt: PolicyPrompt
-): PromptVariant {
-	return 'floating';
+): ConsentContainerType {
+	return 'card';
 };
 
 /**
  * Positions the position select may offer. With `auto` the list follows
- * the variant the resolver would pick for the prompt.
+ * the container the resolver would pick for the prompt.
  */
 export const positionOptionsFor = function positionOptionsFor(
-	variant: PromptVariant | 'auto',
+	container: ConsentContainerType | 'auto',
 	prompt: PolicyPrompt,
-	autoVariant: PromptVariant = defaultVariantFor(prompt)
-): readonly PromptPosition[] {
-	const resolved = variant === 'auto' ? autoVariant : variant;
-	return PROMPT_VARIANT_POSITIONS[resolved];
+	autoContainer: ConsentContainerType = defaultContainerFor(prompt)
+): readonly ContainerPosition[] {
+	return CONTAINER_POSITIONS[container === 'auto' ? autoContainer : container];
 };
 
-/** Position the resolver fills for a variant when the host sets none. */
+/** Position the resolver fills for a container when the host sets none. */
 export const defaultPositionFor = function defaultPositionFor(
-	variant: PromptVariant | 'auto',
+	container: ConsentContainerType | 'auto',
 	prompt: PolicyPrompt,
-	autoVariant: PromptVariant = defaultVariantFor(prompt)
-): PromptPosition {
-	const resolved = variant === 'auto' ? autoVariant : variant;
-	return PROMPT_VARIANT_DEFAULT_POSITION[resolved];
+	autoContainer: ConsentContainerType = defaultContainerFor(prompt)
+): ContainerPosition {
+	return DEFAULT_POSITIONS[container === 'auto' ? autoContainer : container];
 };
 
 /**
- * Change the variant and drop a position the new variant does not accept,
- * so the form never asks the resolver for an invalid pair.
+ * Change the container and drop a position the new container does not
+ * accept, so the form never holds an invalid pair.
  */
-export const setPresentationVariant = function setPresentationVariant(
+export const setPresentationContainer = function setPresentationContainer(
 	form: PlaygroundPresentationForm,
-	variant: PromptVariant | 'auto',
+	container: ConsentContainerType | 'auto',
 	prompt: PolicyPrompt,
-	autoVariant: PromptVariant = defaultVariantFor(prompt)
+	autoContainer: ConsentContainerType = defaultContainerFor(prompt)
 ): PlaygroundPresentationForm {
-	const allowed = positionOptionsFor(variant, prompt, autoVariant);
+	const allowed = positionOptionsFor(container, prompt, autoContainer);
 	const position =
 		form.position !== 'auto' && allowed.includes(form.position)
 			? form.position
 			: 'auto';
-	return { ...form, position, variant };
+	return { ...form, container, position };
+};
+
+/** The container a type and position make. */
+export const containerOf = function containerOf(
+	type: ConsentContainerType,
+	position: ContainerPosition | undefined
+): ConsentContainer {
+	switch (type) {
+		case 'banner':
+			return position === 'top' || position === 'bottom'
+				? { edge: position, type }
+				: { type };
+		case 'drawer':
+			return position && position !== 'center'
+				? { side: position, type }
+				: { type };
+		default:
+			return position === 'start' ||
+				position === 'end' ||
+				position === 'center'
+				? { position, type }
+				: { type };
+	}
+};
+
+/** The position a container carries, or `undefined` when it sets none. */
+export const positionOf = function positionOf(
+	container: ConsentContainer
+): ContainerPosition | undefined {
+	switch (container.type) {
+		case 'banner':
+			return container.edge;
+		case 'drawer':
+			return container.side;
+		default:
+			return container.position;
+	}
 };
 
 /** Host `presentation` for the provider, or `undefined` when every field is auto. */
 export const toPromptPresentation = function toPromptPresentation(
-	form: PlaygroundPresentationForm
+	form: PlaygroundPresentationForm,
+	autoContainer: ConsentContainerType = 'card'
 ): PromptPresentation | undefined {
 	const prompt: PromptPresentation = {};
-	if (form.variant !== 'auto') {
-		prompt.variant = form.variant;
+	if (form.container !== 'auto' || form.position !== 'auto') {
+		prompt.container = containerOf(
+			form.container === 'auto' ? autoContainer : form.container,
+			form.position === 'auto' ? undefined : form.position
+		);
 	}
-	if (form.position !== 'auto') {
-		prompt.position = form.position;
-	}
-	if (form.blocking) {
-		prompt.blocking = true;
+	if (form.blockUntilChoice) {
+		prompt.blockUntilChoice = true;
 	}
 	return Object.keys(prompt).length > 0 ? prompt : undefined;
 };
@@ -596,45 +644,44 @@ export const toConsentPresentation = function toConsentPresentation(
 // ---------------------------------------------------------------------------
 
 /**
- * Prompt shape this demo uses for each shipped preset, keyed by resolved
- * rule id. Presentation is host configuration: it never enters the policy
- * or its fingerprints, so a host can give every regime its own shape
- * without re-prompting anyone.
+ * Prompt container this demo uses for each shipped preset, keyed by
+ * resolved rule id. Presentation is host configuration: it never enters the
+ * policy or its fingerprints, so a host can give every regime its own
+ * container without re-prompting anyone.
  */
 export const DEMO_PRESENTATION_BY_RULE: Record<
 	string,
 	ConsentPresentation['prompt']
 > = {
-	// This example places the California choice in a centered card.
-	california_opt_in: { position: 'bottom-center', variant: 'floating' },
+	// This example places the California choice in a bottom banner.
+	california_opt_in: { container: { edge: 'bottom', type: 'banner' } },
 	// No prompt, so no banner: the trigger toolbar is the persistent route.
 	california_opt_out: undefined,
 	// A dismissible corner card is the common GDPR treatment.
-	europe_opt_in: { position: 'bottom-left', variant: 'floating' },
-	// This example uses a wall for Quebec.
-	quebec_opt_in: { variant: 'wall' },
+	europe_opt_in: { container: { position: 'start', type: 'card' } },
+	// This example uses a centred Card, which blocks, for Quebec.
+	quebec_opt_in: { container: { position: 'center', type: 'card' } },
 	// A none rule owes no prompt and no rights, so no consent UI renders.
 	world_none: undefined,
 	// No prompt here either.
 	world_opt_out_no_prompt: undefined,
-	// IAB has its own surfaces; variants do not apply.
+	// IAB has its own surfaces; containers do not apply.
 	// europe_iab: unmapped on purpose.
 };
 
 /**
- * Shape for any notice prompt, including a preset edited to `notice` in the
- * playground. A small bottom-left card with the opt-out button and OK; the trigger toolbar keeps the bottom-right corner, so the two never
- * overlap.
+ * Container for any notice prompt, including a preset edited to `notice`
+ * in the playground. A small `start` card with the opt-out link and OK;
+ * the trigger toolbar keeps the other corner, so the two never overlap.
  */
 export const DEMO_NOTICE_PRESENTATION: PromptPresentation = {
-	position: 'bottom-left',
-	variant: 'floating',
+	container: { position: 'start', type: 'card' },
 };
 
 /**
  * Prompt presentation this demo applies to a rule, or `undefined` when the
- * rule has no mapped shape. A notice prompt takes precedence over the id
- * map so an edited preset keeps the notice treatment.
+ * rule has no mapped container. A notice prompt takes precedence over the
+ * id map so an edited preset keeps the notice treatment.
  */
 export const presentationForRule = function presentationForRule(
 	rule: Pick<PolicyRule, 'id' | 'prompt'>
@@ -645,18 +692,20 @@ export const presentationForRule = function presentationForRule(
 	return DEMO_PRESENTATION_BY_RULE[rule.id];
 };
 
-/** Variant the playground's `auto` picks: the demo map, else the resolver. */
-export const autoVariantFor = function autoVariantFor(
+/** Container the playground's `auto` picks: the demo map, else the resolver. */
+export const autoContainerFor = function autoContainerFor(
 	rule: Pick<PolicyRule, 'id' | 'prompt'>
-): PromptVariant {
-	return presentationForRule(rule)?.variant ?? defaultVariantFor(rule.prompt);
+): ConsentContainerType {
+	return (
+		presentationForRule(rule)?.container?.type ?? defaultContainerFor(rule.prompt)
+	);
 };
 
 /**
- * Host presentation for the provider: the demo's per-policy shape with
- * manual form fields layered on top. A manual variant discards the mapped
- * position, which may not fit the new variant, so the resolver picks the
- * variant's default instead.
+ * Host presentation for the provider: the demo's per-policy container with
+ * manual form fields layered on top. A manual container type discards the
+ * mapped position, which may not fit the new type, so the resolver picks
+ * the type's default instead.
  */
 export const resolvePlaygroundPresentation =
 	function resolvePlaygroundPresentation(
@@ -664,20 +713,21 @@ export const resolvePlaygroundPresentation =
 		rule: Pick<PolicyRule, 'id' | 'prompt'>
 	): ConsentPresentation | undefined {
 		const demo = presentationForRule(rule);
-		const manual = toPromptPresentation(form) ?? {};
 		const prompt: PromptPresentation = {};
-		const variant = manual.variant ?? demo?.variant;
-		if (variant) {
-			prompt.variant = variant;
+		const type =
+			form.container === 'auto' ? demo?.container?.type : form.container;
+		let position: ContainerPosition | undefined;
+		if (form.position !== 'auto') {
+			({ position } = form);
+		} else if (form.container === 'auto' && demo?.container) {
+			position = positionOf(demo.container);
 		}
-		const position =
-			manual.position ?? (manual.variant ? undefined : demo?.position);
-		if (position) {
-			prompt.position = position;
+		if (type || position) {
+			prompt.container = containerOf(type ?? 'card', position);
 		}
-		const blocking = manual.blocking ?? demo?.blocking;
-		if (blocking !== undefined) {
-			prompt.blocking = blocking;
+		const blockUntilChoice = form.blockUntilChoice || demo?.blockUntilChoice;
+		if (blockUntilChoice) {
+			prompt.blockUntilChoice = true;
 		}
 		return Object.keys(prompt).length > 0 ? { prompt } : undefined;
 	};

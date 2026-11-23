@@ -19,7 +19,7 @@ const backend = {
 // `control` is the stock banner. `wall` blocks the page until the visitor
 // chooses.
 const bannerExperiment = defineExperiment({
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 	id: 'banner-shape',
 });
 

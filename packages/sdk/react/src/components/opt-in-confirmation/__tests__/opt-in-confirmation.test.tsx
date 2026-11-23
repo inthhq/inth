@@ -69,7 +69,6 @@ const renderOptOutDialog = async function renderOptOutDialog(
 			| typeof CHOICE_OPT_OUT_RULE
 			| typeof NOTICE_OPT_OUT_RULE
 			| typeof OPT_IN_RULE;
-		standaloneWidget?: boolean;
 	} = {}
 ) {
 	const rule = params.rule ?? NOTICE_OPT_OUT_RULE;
@@ -101,11 +100,7 @@ const renderOptOutDialog = async function renderOptOutDialog(
 		>
 			<Capture />
 			<ConsentBanner disableAnimation />
-			{params.standaloneWidget ? (
-				<ConsentWidget disableAnimation />
-			) : (
-				<ConsentDialog disableAnimation />
-			)}
+			<ConsentWidget disableAnimation />
 		</InthProvider>
 	);
 	await vi.waitFor(() => {
@@ -205,7 +200,7 @@ describe('never ask an opted-out visitor to opt back in automatically (React)', 
 			>
 				<Capture />
 				<ConsentBanner disableAnimation />
-				<ConsentDialog disableAnimation />
+				<ConsentWidget disableAnimation />
 			</InthProvider>
 		);
 
@@ -219,7 +214,6 @@ describe('never ask an opted-out visitor to opt back in automatically (React)', 
 			document.querySelector('[data-testid="consent-banner-root"]')
 		).toBeNull();
 
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-opt-out-status'))
 			.toBeVisible();
@@ -232,9 +226,8 @@ describe('never ask an opted-out visitor to opt back in automatically (React)', 
 });
 
 describe('two-step opt-in confirmation (React)', () => {
-	test('opt back in link requires separate confirmation, focuses cancel first, stays outside dialog content, and lifts on confirm', async () => {
+	test('opt back in link requires separate confirmation, focuses cancel first, stays outside the widget, and lifts on confirm', async () => {
 		const { unmount } = await renderOptOutDialog();
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-opt-in-link'))
 			.toBeVisible();
@@ -251,10 +244,10 @@ describe('two-step opt-in confirmation (React)', () => {
 		const confirmationRoot = document.querySelector(
 			'[data-testid="opt-in-confirmation-root"]'
 		) as HTMLElement;
-		const dialogContent = document.querySelector(
-			'[data-testid="consent-dialog-content"]'
+		const widget = document.querySelector(
+			'[data-testid="consent-widget-root"]'
 		) as HTMLElement;
-		expect(dialogContent.contains(confirmationRoot)).toBe(false);
+		expect(widget.contains(confirmationRoot)).toBe(false);
 		expect(confirmationRoot.getAttribute('role')).toBe('dialog');
 		expect(confirmationRoot.getAttribute('aria-modal')).toBe('true');
 
@@ -289,7 +282,6 @@ describe('two-step opt-in confirmation (React)', () => {
 
 	test('opt-in confirmation description names confirmed rights once answered by the backend', async () => {
 		const { unmount } = await renderOptOutDialog({ rightsConfirmed: true });
-		kernel.set.activeUI('dialog');
 		await page.getByTestId('consent-widget-opt-in-link').click();
 		await expect
 			.element(page.getByTestId('opt-in-confirmation-root'))
@@ -307,9 +299,8 @@ describe('two-step opt-in confirmation (React)', () => {
 		unmount();
 	});
 
-	test('opt back in link then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
+	test('opt back in link then cancel (button and Escape) leaves opt-out held and saves nothing', async () => {
 		const { unmount } = await renderOptOutDialog();
-		kernel.set.activeUI('dialog');
 
 		await page.getByTestId('consent-widget-opt-in-link').click();
 		await expect
@@ -324,7 +315,6 @@ describe('two-step opt-in confirmation (React)', () => {
 		});
 		expect(kernel.getSnapshot().optOut).not.toBeNull();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(kernel.getSnapshot().activeUI).toBe('dialog');
 
 		// Open again and cancel with Escape.
 		await page.getByTestId('consent-widget-opt-in-link').click();
@@ -341,14 +331,12 @@ describe('two-step opt-in confirmation (React)', () => {
 		});
 		expect(kernel.getSnapshot().optOut).not.toBeNull();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(kernel.getSnapshot().activeUI).toBe('dialog');
 
 		unmount();
 	});
 
-	test('Accept All in the dialog defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in the widget defers save until confirmed, then lifts opt-out and grants categories', async () => {
 		const { unmount } = await renderOptOutDialog();
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-footer-accept-all-button'))
 			.toBeVisible();
@@ -359,7 +347,6 @@ describe('two-step opt-in confirmation (React)', () => {
 			.toBeVisible();
 		expect(kernel.getSnapshot().optOut).not.toBeNull();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(kernel.getSnapshot().activeUI).toBe('dialog');
 
 		await page.getByTestId('opt-in-confirmation-confirm-button').click();
 		await vi.waitFor(() => {
@@ -370,12 +357,11 @@ describe('two-step opt-in confirmation (React)', () => {
 		expect(
 			kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 		).toBe(true);
-		expect(kernel.getSnapshot().activeUI).not.toBe('dialog');
 
 		unmount();
 	});
 
-	test('Accept All in a banner defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in a banner never lifts a held opt-out and asks nothing', async () => {
 		const { unmount } = await renderOptOutDialog({
 			rule: CHOICE_OPT_OUT_RULE,
 		});
@@ -385,23 +371,22 @@ describe('two-step opt-in confirmation (React)', () => {
 			.toBeVisible();
 
 		await page.getByTestId('consent-banner-accept-button').click();
-		await expect
-			.element(page.getByTestId('opt-in-confirmation-root'))
-			.toBeVisible();
-		expect(kernel.getSnapshot().optOut).not.toBeNull();
-		expect(kernel.getSnapshot().explicitChoice).toBeNull();
-
-		await page.getByTestId('opt-in-confirmation-confirm-button').click();
+		// A banner commit keeps sale and sharing off (PERM-02); lifting the
+		// opt-out takes the dialog's or the widget's own confirmation.
 		await vi.waitFor(() => {
-			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(kernel.getSnapshot().activeUI).toBe('none');
 		});
-		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(
+			document.querySelector('[data-testid="opt-in-confirmation-root"]')
+		).toBeNull();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 
 		unmount();
 	});
 
 	test('turning Marketing on then Save opens confirmation and cancelling leaves opt-out held', async () => {
-		const { unmount } = await renderOptOutDialog({ standaloneWidget: true });
+		const { unmount } = await renderOptOutDialog();
 		const marketing = page.getByTestId('consent-widget-switch-marketing');
 		await expect.element(marketing).toHaveAttribute('aria-checked', 'false');
 
@@ -429,7 +414,7 @@ describe('two-step opt-in confirmation (React)', () => {
 	});
 
 	test('saving without granting the deciding category completes with no confirmation', async () => {
-		const { unmount } = await renderOptOutDialog({ standaloneWidget: true });
+		const { unmount } = await renderOptOutDialog();
 		const measurement = page.getByTestId('consent-widget-switch-measurement');
 
 		await measurement.click();
@@ -449,7 +434,6 @@ describe('two-step opt-in confirmation (React)', () => {
 
 	test('with active GPC signal there is no opt back in link', async () => {
 		const { unmount } = await renderOptOutDialog({ gpc: true });
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-opt-out-status'))
 			.toBeVisible();
@@ -485,7 +469,6 @@ describe('two-step opt-in confirmation (React)', () => {
 			heldBy: 'person',
 			mode: refusingMode,
 		});
-		kernel.set.activeUI('dialog');
 
 		await expect
 			.element(page.getByTestId('consent-widget-opt-in-link'))
@@ -508,7 +491,6 @@ describe('two-step opt-in confirmation (React)', () => {
 
 	test('under an opt-in policy with an opt-out held, Accept lifts in one step without confirmation', async () => {
 		const { unmount } = await renderOptOutDialog({ rule: OPT_IN_RULE });
-		kernel.set.activeUI('dialog');
 		await expect
 			.element(page.getByTestId('consent-widget-footer-accept-all-button'))
 			.toBeVisible();

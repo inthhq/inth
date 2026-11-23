@@ -217,9 +217,9 @@
 			"default": "./dist/components/prompt/index.js"
 		},
 		"./components/consent-dialog": {
-			"types": "./dist-types/components/panel/index.d.ts",
-			"import": "./dist/components/panel/index.js",
-			"default": "./dist/components/panel/index.js"
+			"types": "./dist-types/components/dialog/index.d.ts",
+			"import": "./dist/components/dialog/index.js",
+			"default": "./dist/components/dialog/index.js"
 		},
 		"./components/consent-dialog-trigger": {
 			"types": "./dist-types/components/panel-trigger/index.d.ts",

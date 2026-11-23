@@ -85,16 +85,7 @@ const LoadedSurface = ({
 			/>
 		);
 	}
-	return (
-		<ConsentDialog.Root>
-			<ConsentDialog.Card>
-				<ConsentDialog.Header>
-					<ConsentDialog.HeaderTitle />
-				</ConsentDialog.Header>
-				<ConsentDialog.Content>Ready</ConsentDialog.Content>
-			</ConsentDialog.Card>
-		</ConsentDialog.Root>
-	);
+	return <ConsentDialog disableAnimation />;
 };
 const Surface = ({ variant }: { variant: string }) => {
 	const active = useActiveUI();
