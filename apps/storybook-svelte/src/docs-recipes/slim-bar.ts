@@ -9,7 +9,7 @@ import './slim-bar.css';
  */
 export const slimBar = {
 	presentation: {
-		prompt: { position: 'bottom', variant: 'bar' },
+		prompt: { container: { edge: 'bottom', type: 'banner' } },
 	},
 	theme: {
 		slots: {

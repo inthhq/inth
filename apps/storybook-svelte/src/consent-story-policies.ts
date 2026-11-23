@@ -1,15 +1,11 @@
 /**
- * The offline rules the Privacy Choices stories resolve, one per first
+ * The offline rules the banner and dialog stories resolve, one per first
  * layer (§2), with the same ids as React's stories.
  */
 import type { PolicyRule } from '../../../packages/sdk/schema/src/types';
 import { storybookPolicy } from '../../storybook-consent-policy';
 
-export type PrivacyChoicesRegion =
-	| 'eu'
-	| 'us-opt-in'
-	| 'us-notice'
-	| 'us-opt-out';
+export type StoryRegion = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 
 const US_GPC = { gpc: { denyCategories: ['marketing', 'measurement'] } };
 const US_RIGHTS: PolicyRule['rights'] = [
@@ -20,7 +16,7 @@ const US_RIGHTS: PolicyRule['rights'] = [
 
 /** The banner stories' rules. */
 export const BANNER_POLICIES: Record<
-	Exclude<PrivacyChoicesRegion, 'us-opt-out'>,
+	Exclude<StoryRegion, 'us-opt-out'>,
 	PolicyRule
 > = {
 	eu: { ...storybookPolicy, id: 'storybook-privacy-choices-eu' },
@@ -40,7 +36,7 @@ export const BANNER_POLICIES: Record<
 };
 
 /** The dialog stories' rules. */
-export const DIALOG_POLICIES: Record<PrivacyChoicesRegion, PolicyRule> = {
+export const DIALOG_POLICIES: Record<StoryRegion, PolicyRule> = {
 	eu: { ...storybookPolicy, id: 'storybook-privacy-choices-dialog-eu' },
 	'us-notice': {
 		...storybookPolicy,
