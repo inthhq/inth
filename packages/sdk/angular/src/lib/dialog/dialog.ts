@@ -64,7 +64,8 @@ import { uniqueId } from '../core/unique-id';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
 import type { OpenVendorsRequest } from '../parts/category-group';
 import { ChoiceButton } from '../parts/choice-button';
-import { CheckIcon, ChevronIcon } from '../parts/icons';
+import { CheckIcon } from '../parts/check-icon';
+import { ChevronIcon } from '../parts/chevron-icon';
 import {
 	injectPhoneLayout,
 	injectSurfaceSession,

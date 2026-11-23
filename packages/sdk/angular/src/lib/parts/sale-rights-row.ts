@@ -46,7 +46,7 @@ import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
 import { ChoiceButton } from './choice-button';
-import { CheckIcon } from './icons';
+import { CheckIcon } from './check-icon';
 import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
 import { bool, cx, slotPart } from './part-class-names.model';
 
