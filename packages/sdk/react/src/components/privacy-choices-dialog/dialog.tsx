@@ -521,6 +521,11 @@ const DialogContent = ({
 	// It asks once each time it turns true; Close and Escape then close the
 	// dialog as usual.
 	const openRequested = useRef(false);
+	// Whether the consent manager's dialog is this one's: asked for by a
+	// controlled `open`, or shown. It is held from the request, not from the
+	// first paint, so `open` turning false while the deferred styles still
+	// load closes the dialog too, and the banner comes back.
+	const claimed = useRef(false);
 	useBrowserLayoutEffect(() => {
 		if (openProp !== true) {
 			openRequested.current = false;
@@ -530,6 +535,7 @@ const DialogContent = ({
 			return;
 		}
 		openRequested.current = true;
+		claimed.current = true;
 		if (kernel.getSnapshot().activeUI !== 'dialog') {
 			showConsentSurface(kernel, 'dialog');
 		}
@@ -540,25 +546,28 @@ const DialogContent = ({
 		hasConsentUI &&
 		modelAllowed &&
 		sheetsReady;
-	// A controlled `open` turning false closes a shown dialog through the
-	// consent manager, as Close does, so an unanswered banner comes back and
-	// no sheet stays pushed under a hidden dialog.
-	const shownRef = useRef(false);
+	// A controlled `open` turning false closes the dialog it asked for or
+	// showed through the consent manager, as Close does, so an unanswered
+	// banner comes back and no sheet stays pushed under a hidden dialog. A
+	// dialog the consent manager opened while `open` was already false
+	// stays its own.
 	useBrowserLayoutEffect(() => {
-		const wasShown = shownRef.current;
-		shownRef.current = open;
-		if (
-			!wasShown ||
-			openProp !== false ||
-			kernel.getSnapshot().activeUI !== 'dialog'
-		) {
+		if (open) {
+			claimed.current = true;
+		}
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
+			claimed.current = false;
 			return;
 		}
+		if (openProp !== false || !claimed.current) {
+			return;
+		}
+		claimed.current = false;
 		showConsentSurface(kernel, 'none');
 		if (kernel.getSnapshot().activeUI === 'banner') {
 			focusReturningBanner();
 		}
-	}, [open, openProp, kernel]);
+	}, [open, openProp, activeUI, kernel]);
 	// Phone sheets take the prompt's resolved phone edge style, which the
 	// policy and a Card's own rule (always inset) have already settled.
 	const container = useMemo(
