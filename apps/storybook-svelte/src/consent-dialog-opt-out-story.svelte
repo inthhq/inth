@@ -10,7 +10,7 @@
 		storybookOptOutRecords,
 	} from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	type OptOutDialogKind = 'not-opted-out' | 'request' | 'confirmed' | 'gpc';
 

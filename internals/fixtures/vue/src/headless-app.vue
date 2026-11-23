@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useConsentActiveUI } from '@inth/vue/vue-plugin';
 
-import ConsentPrompt from './ConsentPrompt.vue';
-import HomePage from './HomePage.vue';
+import ConsentPrompt from './consent-prompt.vue';
+import HomePage from './home-page.vue';
 
 const activeUI = useConsentActiveUI();
 </script>

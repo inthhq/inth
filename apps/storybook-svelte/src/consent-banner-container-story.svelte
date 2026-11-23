@@ -4,9 +4,9 @@
 
 	import { storybookMode } from '../../storybook-consent-policy';
 	import { BANNER_POLICIES } from './consent-story-policies';
-	import ConsentBannerDemoPage from './ConsentBannerDemoPage.svelte';
+	import ConsentBannerDemoPage from './consent-banner-demo-page.svelte';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	/**
 	 * The stock `ConsentBanner` for one first layer and container.

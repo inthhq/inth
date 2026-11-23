@@ -7,7 +7,7 @@ import { expect, within } from 'storybook/test';
 
 import ConsentWidgetOptOutStory from './consent-widget-opt-out-story.svelte';
 import ConsentWidgetVendorsStory from './consent-widget-vendors-story.svelte';
-import ConsentWidgetStory from './ConsentWidgetStory.svelte';
+import ConsentWidgetStory from './consent-widget-story.svelte';
 
 const meta = {
 	component: ConsentWidgetStory,

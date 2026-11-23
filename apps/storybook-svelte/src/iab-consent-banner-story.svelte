@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { IABConsentBanner, IABConsentDialog } from '@inth/svelte';
 
-	import StorybookIABProvider from './StorybookIABProvider.svelte';
+	import StorybookIABProvider from './storybook-iab-provider.svelte';
 
 	let { includeDialog = false }: { includeDialog?: boolean } = $props();
 </script>

@@ -11,8 +11,8 @@ import type {
 	ConsentEdgeStyle,
 } from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import type { StoryRegion } from './consent-story-policies';
-import ConsentBannerContainerStory from './ConsentBannerContainerStory.svelte';
-import ConsentBannerStory from './ConsentBannerStory.svelte';
+import ConsentBannerContainerStory from './consent-banner-container-story.svelte';
+import ConsentBannerStory from './consent-banner-story.svelte';
 
 const meta = {
 	component: ConsentBannerStory,

@@ -5,7 +5,7 @@
 
 	import RecipePage from './docs-recipe-page.svelte';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	let {
 		recipe,

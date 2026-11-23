@@ -1,7 +1,7 @@
 import { linkOpensDialog } from '@inth/conformance/play/consent-dialog-link';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import ConsentDialogLinkStory from './ConsentDialogLinkStory.svelte';
+import ConsentDialogLinkStory from './consent-dialog-link-story.svelte';
 
 const meta = {
 	component: ConsentDialogLinkStory,

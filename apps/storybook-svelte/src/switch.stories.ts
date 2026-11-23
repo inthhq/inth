@@ -2,8 +2,8 @@ import { controlledToggle, toggleOnOff } from '@inth/conformance/play/switch';
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import SwitchDemo from './SwitchDemo.svelte';
-import SwitchSizesDemo from './SwitchSizesDemo.svelte';
+import SwitchDemo from './switch-demo.svelte';
+import SwitchSizesDemo from './switch-sizes-demo.svelte';
 
 const { consentTypes } = enTranslations;
 

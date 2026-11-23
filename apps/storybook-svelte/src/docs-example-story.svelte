@@ -4,8 +4,8 @@
 	import type { Component } from 'svelte';
 
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
-	import StorybookIABProvider from './StorybookIABProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
+	import StorybookIABProvider from './storybook-iab-provider.svelte';
 
 	/**
 	 * Renders one file from `docs-examples/` inside a provider with an

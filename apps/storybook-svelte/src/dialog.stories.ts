@@ -1,8 +1,8 @@
 import { escCloses, openAndClose } from '@inth/conformance/play/dialog';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import DialogControlledDemo from './DialogControlledDemo.svelte';
-import DialogDemo from './DialogDemo.svelte';
+import DialogControlledDemo from './dialog-controlled-demo.svelte';
+import DialogDemo from './dialog-demo.svelte';
 
 const meta = {
 	component: DialogDemo,

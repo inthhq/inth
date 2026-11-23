@@ -23,7 +23,7 @@
 
 	import { createDemoScripts } from '#lib/consent-manager/demo-scripts.js';
 	import { themePresetStore } from '#lib/consent-manager/theme-store.svelte.js';
-	import ThemeTokens from '#lib/consent-manager/ThemeTokens.svelte';
+	import ThemeTokens from '#lib/consent-manager/theme-tokens.svelte';
 
 	let { children, data } = $props();
 	const devTools = dev ? import('@inth/svelte/devtools') : null;

@@ -11,7 +11,7 @@
 		hosted,
 	} from '@inth/svelte';
 
-	import ExamplePage from './ExamplePage.svelte';
+	import ExamplePage from './example-page.svelte';
 	import {
 		experimentCallbacks,
 		experimentFromSearch,

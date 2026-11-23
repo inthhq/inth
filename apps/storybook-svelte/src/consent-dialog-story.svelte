@@ -5,7 +5,7 @@
 		editableConsentOptions,
 		editableStoredConsent,
 	} from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	let {
 		open = undefined,

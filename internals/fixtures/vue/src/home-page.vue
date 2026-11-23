@@ -5,9 +5,9 @@
  */
 import { useConsentSnapshot } from '@inth/vue/vue-plugin';
 
-import ConsentDevTools from './ConsentDevTools.vue';
-import ExperimentReadout from './ExperimentReadout.vue';
-import VideoEmbed from './VideoEmbed.vue';
+import ConsentDevTools from './consent-dev-tools.vue';
+import ExperimentReadout from './experiment-readout.vue';
+import VideoEmbed from './video-embed.vue';
 
 const snapshot = useConsentSnapshot();
 </script>

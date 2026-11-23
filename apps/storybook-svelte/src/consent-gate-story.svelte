@@ -2,7 +2,7 @@
 	import { ConsentGate } from '@inth/svelte';
 
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	let { granted = false }: { granted?: boolean } = $props();
 

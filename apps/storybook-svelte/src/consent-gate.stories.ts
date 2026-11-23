@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import ConsentGateStory from './ConsentGateStory.svelte';
+import ConsentGateStory from './consent-gate-story.svelte';
 
 const meta = {
 	component: ConsentGateStory,

@@ -2,8 +2,8 @@
 	import { getConsentManager } from '@inth/svelte';
 	import { DevTools } from '@inth/svelte/devtools';
 
-	import ExperimentReadout from './ExperimentReadout.svelte';
-	import YouTubeEmbed from './YouTubeEmbed.svelte';
+	import ExperimentReadout from './experiment-readout.svelte';
+	import YouTubeEmbed from './youtube-embed.svelte';
 
 	let { experiment = false }: { experiment?: boolean } = $props();
 	const consent = getConsentManager();

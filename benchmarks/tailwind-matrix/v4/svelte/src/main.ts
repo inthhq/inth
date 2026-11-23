@@ -1,7 +1,7 @@
 import { mount } from 'svelte';
 
 import './app.css';
-import App from './App.svelte';
+import App from './app.svelte';
 
 const target = document.querySelector('#app');
 if (!target) {

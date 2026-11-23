@@ -2,7 +2,7 @@
 import { inth, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
-import App from './App.vue';
+import App from './app.vue';
 
 createApp(App)
 	.use(inth, {

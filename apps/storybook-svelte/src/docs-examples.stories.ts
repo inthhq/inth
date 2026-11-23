@@ -14,7 +14,7 @@ import { networkBlocker } from './docs-examples/network-blocker';
 import OwnPreferences from './docs-examples/own-preferences.svelte';
 import PrivacyControls from './docs-examples/privacy-controls.svelte';
 import PrivacySettingsPage from './docs-examples/privacy-settings-page.svelte';
-import DocsExampleStory from './DocsExampleStory.svelte';
+import DocsExampleStory from './docs-example-story.svelte';
 
 /**
  * The component and getter examples the Svelte and SvelteKit docs publish.

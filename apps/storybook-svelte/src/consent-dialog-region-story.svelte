@@ -8,10 +8,10 @@
 	} from '../../storybook-consent-policy';
 	import { DIALOG_POLICIES } from './consent-story-policies';
 	import type { StoryRegion } from './consent-story-policies';
-	import ConsentDialogDemoPage from './ConsentDialogDemoPage.svelte';
-	import OpenDialogOnMount from './OpenDialogOnMount.svelte';
+	import ConsentDialogDemoPage from './consent-dialog-demo-page.svelte';
+	import OpenDialogOnMount from './open-dialog-on-mount.svelte';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	/**
 	 * The stock `ConsentDialog`, open on a page, or, for a full flow,

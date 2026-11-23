@@ -1,7 +1,7 @@
 import { inth } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
-import App from './App.vue';
+import App from './app.vue';
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';
 
