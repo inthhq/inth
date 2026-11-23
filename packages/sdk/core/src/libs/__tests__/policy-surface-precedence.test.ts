@@ -533,6 +533,25 @@ describe('resolveConsentPresentation: policy surface precedence', () => {
 		});
 	});
 
+	// Until the default flips, only the host's own `container` or `design`
+	// selects Privacy Choices; a policy surface shapes the layout of whichever
+	// design the host renders.
+	it('keeps the classic design when only the policy sets a container', () => {
+		expect(
+			resolveConsentPresentation({
+				policy: optIn({ container: { side: 'start', type: 'drawer' } }),
+				surface: 'prompt',
+			}).design
+		).toBe('classic');
+		expect(
+			resolveConsentPresentation({
+				policy: optIn({ container: { type: 'banner' } }),
+				presentation: { design: 'privacy-choices' },
+				surface: 'prompt',
+			}).design
+		).toBe('privacy-choices');
+	});
+
 	it('applies required blocking on both viewports', () => {
 		const { container } = resolveConsentPresentation({
 			policy: optIn({ blocking: 'required' }),
