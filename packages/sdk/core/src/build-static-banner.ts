@@ -42,7 +42,9 @@ export interface StaticBannerRenderer {
 	 * `STATIC_BANNER_SHEETS`. Absent from releases before it, which inline
 	 * every container's.
 	 */
-	staticBannerSheets?: (markup: string | undefined) => readonly StaticBannerSheet[];
+	staticBannerSheets?: (
+		markup: string | undefined
+	) => readonly StaticBannerSheet[];
 }
 
 /**
