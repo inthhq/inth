@@ -92,7 +92,7 @@ import {
 	GLOBAL_KEY,
 	getWindow,
 	readPageNonce,
-} from './page-state';
+} from './read-page-nonce';
 import {
 	scheduleDeferredEngine,
 	unhideEarlyTap,

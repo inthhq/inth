@@ -33,7 +33,7 @@ import type {
 import type { AstroConsentClient } from './astro-consent-client.model';
 import { warmDialogTarget } from './browser/attach-banner-actions';
 import { preloadDialogChunks } from './browser/load-dialog';
-import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
+import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/read-page-nonce';
 import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**

@@ -103,7 +103,7 @@ import {
 	getWindow,
 	nonceOf,
 	readPageNonce,
-} from './browser/page-state';
+} from './browser/read-page-nonce';
 import type * as IABPromptRenderer from './browser/render-iab-prompt-into-slot';
 import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
 import {
