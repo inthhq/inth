@@ -882,12 +882,8 @@ export const mountPersistence = function mountPersistence(
 		);
 		if (vendors) {
 			patch.vendorChoice = vendors.value;
-			if (records.vendorDeclared !== undefined) {
-				patch.vendorDeclared = records.vendorDeclared;
-			}
-			if (records.vendorTimes !== undefined) {
-				patch.vendorTimes = records.vendorTimes;
-			}
+			patch.vendorDeclared = records.vendorDeclared ?? null;
+			patch.vendorTimes = records.vendorTimes ?? null;
 			return;
 		}
 		if (

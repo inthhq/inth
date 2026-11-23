@@ -590,6 +590,17 @@ export const createRuntime = function createRuntime(
 		return accountLayer;
 	};
 
+	const resolveNextVendorMeta = <T>(
+		explicit: T | undefined,
+		previous: T | undefined,
+		clearOnReplace: boolean
+	): T | null | undefined => {
+		if (explicit !== undefined) {
+			return explicit;
+		}
+		return clearOnReplace ? null : previous;
+	};
+
 	const resolveNextBrowser = function resolveNextBrowser(
 		patch: SnapshotPatch,
 		accountDroppedOrReplaced: boolean,
@@ -604,22 +615,10 @@ export const createRuntime = function createRuntime(
 		) {
 			nextOptOut = null;
 		}
-		let nextVendorDeclared: readonly string[] | null | undefined;
-		if (commitOptions?.vendorDeclared !== undefined) {
-			nextVendorDeclared = commitOptions.vendorDeclared;
-		} else if (patch.vendorChoice === null) {
-			nextVendorDeclared = null;
-		} else {
-			nextVendorDeclared = browserRecords.vendorDeclared;
-		}
-		let nextVendorTimes: Readonly<Record<string, number>> | null | undefined;
-		if (commitOptions?.vendorTimes !== undefined) {
-			nextVendorTimes = commitOptions.vendorTimes;
-		} else if (patch.vendorChoice === null) {
-			nextVendorTimes = null;
-		} else {
-			nextVendorTimes = browserRecords.vendorTimes;
-		}
+		const clearVendorMeta =
+			patch.vendorChoice === null ||
+			(patch.vendorChoice !== undefined &&
+				patch.vendorChoice !== browserRecords.vendorChoice);
 		const nextBrowser: BrowserConsentRecords = {
 			choice:
 				patch.explicitChoice === undefined
@@ -630,8 +629,16 @@ export const createRuntime = function createRuntime(
 				patch.vendorChoice === undefined
 					? browserRecords.vendorChoice
 					: patch.vendorChoice,
-			vendorDeclared: nextVendorDeclared,
-			vendorTimes: nextVendorTimes,
+			vendorDeclared: resolveNextVendorMeta(
+				commitOptions?.vendorDeclared,
+				browserRecords.vendorDeclared,
+				clearVendorMeta
+			),
+			vendorTimes: resolveNextVendorMeta(
+				commitOptions?.vendorTimes,
+				browserRecords.vendorTimes,
+				clearVendorMeta
+			),
 		};
 		const browserChanged =
 			nextBrowser.choice !== browserRecords.choice ||

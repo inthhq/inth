@@ -1104,6 +1104,7 @@ describe('persistence and SSR regressions (set 2)', () => {
 				confirmedAt: NOW + 1000,
 				denied: ['vendor-y'],
 				granted: [],
+				vendorTimes: { 'vendor-y': NOW + 1000 },
 				version: 1,
 			})
 		);
@@ -1188,6 +1189,7 @@ describe('persistence and SSR regressions (set 3)', () => {
 				confirmedAt: NOW - 500,
 				denied: ['vendor-y'],
 				granted: [],
+				vendorTimes: { 'vendor-y': NOW - 500 },
 				version: 1,
 			})
 		);

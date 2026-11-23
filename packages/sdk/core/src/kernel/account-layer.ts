@@ -131,33 +131,13 @@ export interface BrowserConsentRecords {
 
 /**
  * Effective per-vendor browser confirmation times, or `null` when coverage is
- * unknown (SSR cookie-only read or legacy vendor record with no coverage data).
+ * unknown (SSR cookie-only read or legacy vendor record with no per-vendor times).
  */
 export const resolveBrowserVendorTimes = function resolveBrowserVendorTimes(
-	browser: Pick<
-		BrowserConsentRecords,
-		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
-	>
+	browser: Pick<BrowserConsentRecords, 'vendorChoice' | 'vendorTimes'>
 ): Readonly<Record<string, number>> | null {
 	if (browser.vendorTimes !== null && browser.vendorTimes !== undefined) {
 		return browser.vendorTimes;
-	}
-	if (
-		browser.vendorDeclared !== null &&
-		browser.vendorDeclared !== undefined &&
-		browser.vendorChoice !== null
-	) {
-		const times: Record<string, number> = {};
-		const at = browser.vendorChoice.confirmedAt;
-		for (const id of browser.vendorDeclared) {
-			Object.defineProperty(times, id, {
-				configurable: true,
-				enumerable: true,
-				value: at,
-				writable: true,
-			});
-		}
-		return times;
 	}
 	return null;
 };

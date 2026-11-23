@@ -109,18 +109,12 @@ const kernelVendorChoice = function kernelVendorChoice(
 const kernelVendorDeclared = function kernelVendorDeclared(
 	record: StoredVendorChoice | null
 ): HydrationRecords['vendorDeclared'] {
-	if (!record) {
+	if (!record || record.vendorTimes === undefined) {
 		return undefined;
 	}
-	if (record.vendorTimes !== undefined) {
-		return [
-			...new Set([...record.denied, ...Object.keys(record.vendorTimes)]),
-		].sort();
-	}
-	if (record.granted === undefined) {
-		return undefined;
-	}
-	return [...new Set([...record.denied, ...record.granted])].sort();
+	return [
+		...new Set([...record.denied, ...Object.keys(record.vendorTimes)]),
+	].sort();
 };
 
 /** Strip storage-only identity before applying a notice to the kernel. */

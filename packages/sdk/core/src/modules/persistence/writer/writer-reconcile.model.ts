@@ -946,12 +946,8 @@ export const selectReconciledRecords = function selectReconciledRecords(
 			)
 		) {
 			records.vendorChoice = stored.vendorChoice ?? null;
-			if (stored.vendorDeclared !== undefined) {
-				records.vendorDeclared = stored.vendorDeclared;
-			}
-			if (stored.vendorTimes !== undefined) {
-				records.vendorTimes = stored.vendorTimes;
-			}
+			records.vendorDeclared = stored.vendorDeclared ?? null;
+			records.vendorTimes = stored.vendorTimes ?? null;
 		} else if (sameRecord(view.vendorChoice, stored.vendorChoice ?? null)) {
 			if (stored.vendorDeclared !== undefined) {
 				records.vendorDeclared = stored.vendorDeclared;

@@ -60,7 +60,6 @@ import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice.model';
 import { saveRecordsOptOut } from '../surface-actions/instant-commit';
 import {
-	accountOrderingTime,
 	filterSupportedOptOutRights,
 	resolveBrowserVendorTimes,
 } from './account-layer';
@@ -207,10 +206,26 @@ const settledBySelection = function settledBySelection(
  */
 const advanceVendorTimes = function advanceVendorTimes(
 	existing: Readonly<Record<string, number>> | null,
+	untouchedDenied: Iterable<string>,
+	priorConfirmedAt: number | undefined,
 	decidedIds: Iterable<string>,
 	actionAt: number
 ): Record<string, number> {
 	const next: Record<string, number> = existing ? { ...existing } : {};
+	// Untouched browser denials on a record with no per-vendor times keep the
+	// record's old confirmedAt so a scoped or explicit save never renews them.
+	if (priorConfirmedAt !== undefined) {
+		for (const id of untouchedDenied) {
+			if (!Object.hasOwn(next, id)) {
+				Object.defineProperty(next, id, {
+					configurable: true,
+					enumerable: true,
+					value: priorConfirmedAt,
+					writable: true,
+				});
+			}
+		}
+	}
 	for (const id of decidedIds) {
 		Object.defineProperty(next, id, {
 			configurable: true,
@@ -255,6 +270,7 @@ const sameVendorTimesMap = (
 };
 
 interface ResolvedVendorSelection {
+	decidedVendorIds: readonly string[];
 	vendorChoice: VendorChoice | null;
 	vendorDeclared?: readonly string[] | null;
 	vendorTimes?: Readonly<Record<string, number>> | null;
@@ -288,26 +304,35 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 	}
 	if (governed.size === 0) {
 		return {
+			decidedVendorIds: [],
 			vendorChoice: browserVendorChoice,
 			vendorDeclared: browser.vendorDeclared,
 			vendorTimes: browser.vendorTimes,
 		};
 	}
-	// A scoped bulk save advances ONLY the vendors it governs; older timestamps
-	// for other vendors in browser records stay untouched.
-	const existingTimes = resolveBrowserVendorTimes(browser);
-	const vendorTimes = advanceVendorTimes(existingTimes, governed, actionAt);
-	const vendorDeclared = Object.keys(vendorTimes).sort();
 	// Read browser records, never the account-merged effective view, so an
 	// unseen account-only vendor denial is never copied into browser records.
 	const denied = (browserVendorChoice?.denied ?? []).filter(
 		(id) => !governed.has(id)
 	);
+	// A scoped bulk save advances ONLY the vendors it governs; untouched
+	// browser denials keep their old per-vendor time (or record confirmedAt).
+	const existingTimes = resolveBrowserVendorTimes(browser);
+	const vendorTimes = advanceVendorTimes(
+		existingTimes,
+		denied,
+		browserVendorChoice?.confirmedAt,
+		governed,
+		actionAt
+	);
+	const vendorDeclared = Object.keys(vendorTimes).sort();
+	const decidedVendorIds = [...governed].sort();
 	if (
 		browserVendorChoice &&
 		denied.length === browserVendorChoice.denied.length
 	) {
 		return {
+			decidedVendorIds,
 			vendorChoice:
 				browserVendorChoice.confirmedAt >= actionAt
 					? browserVendorChoice
@@ -321,6 +346,7 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
 		};
 	}
 	return {
+		decidedVendorIds,
 		vendorChoice: { confirmedAt: actionAt, denied, version: 1 },
 		vendorDeclared,
 		vendorTimes,
@@ -411,9 +437,9 @@ const resolveVendorSelection = function resolveVendorSelection(
 	>
 ): ResolvedVendorSelection {
 	const browserVendorChoice = browser.vendorChoice;
-	const current = snapshot.vendorChoice;
 	if (!vendorAxisActive(snapshot)) {
 		return {
+			decidedVendorIds: [],
 			vendorChoice: browserVendorChoice,
 			vendorDeclared: browser.vendorDeclared,
 			vendorTimes: browser.vendorTimes,
@@ -432,6 +458,7 @@ const resolveVendorSelection = function resolveVendorSelection(
 			);
 			if (vendorChoice === null) {
 				return {
+					decidedVendorIds: [],
 					vendorChoice: null,
 					vendorDeclared: browser.vendorDeclared,
 					vendorTimes: browser.vendorTimes,
@@ -440,10 +467,13 @@ const resolveVendorSelection = function resolveVendorSelection(
 			const existingTimes = resolveBrowserVendorTimes(browser);
 			const vendorTimes = advanceVendorTimes(
 				existingTimes,
+				[],
+				undefined,
 				allDeclared,
 				actionAt
 			);
 			return {
+				decidedVendorIds: allDeclared,
 				vendorChoice,
 				vendorDeclared: Object.keys(vendorTimes).sort(),
 				vendorTimes,
@@ -459,43 +489,45 @@ const resolveVendorSelection = function resolveVendorSelection(
 	}
 	if (explicit === undefined) {
 		return {
+			decidedVendorIds: [],
 			vendorChoice: browserVendorChoice,
 			vendorDeclared: browser.vendorDeclared,
 			vendorTimes: browser.vendorTimes,
 		};
 	}
 	const toggleable = toggleableVendorIds(snapshot);
-	const toggledIds = Object.keys(explicit).filter((id) => toggleable.has(id));
+	const toggledIds = Object.keys(explicit)
+		.filter((id) => toggleable.has(id))
+		.sort();
 	if (toggledIds.length === 0) {
 		return {
+			decidedVendorIds: [],
 			vendorChoice: browserVendorChoice,
 			vendorDeclared: browser.vendorDeclared,
 			vendorTimes: browser.vendorTimes,
 		};
 	}
-	// Declared vendors start from what the visitor sees in the effective view
-	// (so an account grant that already overrode an older browser denial stays
-	// granted). Undeclared browser denials are kept unless already overridden
-	// by the effective view; undeclared account denials stay account-only.
-	const declaredIds = new Set(allDeclared);
-	const effectiveDenied = new Set<string>(current?.denied);
-	const baseDenied = new Set<string>();
-	for (const id of effectiveDenied) {
-		if (declaredIds.has(id)) {
-			baseDenied.add(id);
-		}
-	}
-	for (const id of browserVendorChoice?.denied ?? []) {
-		if (!declaredIds.has(id) && effectiveDenied.has(id)) {
-			baseDenied.add(id);
-		}
-	}
-	const denied = applyVendorGrants(snapshot, [...baseDenied], explicit);
+	// Start from browser records only so an account-only denial is never copied
+	// into browser records. Untouched browser denials keep their old time.
+	const denied = applyVendorGrants(
+		snapshot,
+		browserVendorChoice?.denied,
+		explicit
+	);
+	const toggledSet = new Set(toggledIds);
+	const untouchedDenied = denied.filter((id) => !toggledSet.has(id));
 	const existingTimes = resolveBrowserVendorTimes(browser);
 	// Advance only the vendors toggled by this save (keeping older timestamps
-	// for other vendors so a single toggle never renews an older browser grant).
-	const vendorTimes = advanceVendorTimes(existingTimes, toggledIds, actionAt);
+	// for other vendors so a single toggle never renews an older browser decision).
+	const vendorTimes = advanceVendorTimes(
+		existingTimes,
+		untouchedDenied,
+		browserVendorChoice?.confirmedAt,
+		toggledIds,
+		actionAt
+	);
 	return {
+		decidedVendorIds: toggledIds,
 		vendorChoice: { confirmedAt: actionAt, denied, version: 1 },
 		vendorDeclared: [
 			...new Set([...denied, ...Object.keys(vendorTimes)]),
@@ -515,48 +547,6 @@ const setVendorGrant = (
 		value,
 		writable: true,
 	});
-};
-
-const shouldEmitDeclaredVendorWithAccount = (
-	id: string,
-	denied: ReadonlySet<string>,
-	vendorTimes: Readonly<Record<string, number>> | null,
-	browserConfirmedAt: number,
-	activeAccount: AccountConsentLayer
-): boolean => {
-	const accountEntry = Object.hasOwn(activeAccount.vendors, id)
-		? activeAccount.vendors[id]
-		: undefined;
-	const perVendorTime =
-		vendorTimes !== null && Object.hasOwn(vendorTimes, id)
-			? vendorTimes[id]
-			: undefined;
-	if (denied.has(id)) {
-		if (accountEntry?.value === true) {
-			const accountAt = accountOrderingTime(
-				accountEntry.rawConfirmedAt,
-				activeAccount
-			);
-			return (perVendorTime ?? browserConfirmedAt) >= accountAt;
-		}
-		return true;
-	}
-	// Never emit a grant when browser coverage is unknown, when this vendor's
-	// browser decision is older than this save's confirmation time, or when a
-	// newer/tied account denial overrides it.
-	if (perVendorTime === undefined || perVendorTime < browserConfirmedAt) {
-		return false;
-	}
-	if (accountEntry?.value === false) {
-		const accountAt = accountOrderingTime(
-			accountEntry.rawConfirmedAt,
-			activeAccount
-		);
-		if (accountAt >= perVendorTime) {
-			return false;
-		}
-	}
-	return true;
 };
 
 const addLiftedBrowserDenials = (
@@ -581,7 +571,8 @@ const vendorChoicePayload = function vendorChoicePayload(
 		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
 	>,
 	previous: ConsentSnapshot['vendorChoice'],
-	activeAccount: AccountConsentLayer | null = null
+	activeAccount: AccountConsentLayer | null = null,
+	decidedVendorIds: readonly string[] = []
 ): SavePayload['vendorChoice'] {
 	const browserVendorChoice = browserAfter.vendorChoice;
 	const declared = snapshot.vendors?.declared ?? [];
@@ -589,35 +580,31 @@ const vendorChoicePayload = function vendorChoicePayload(
 		return undefined;
 	}
 	const denied = new Set(browserVendorChoice.denied);
-	const vendorTimes = resolveBrowserVendorTimes(browserAfter);
 	const hasAccountLayer = activeAccount !== null;
 	const grants: Record<string, boolean> = {};
-	for (const vendor of declared) {
-		const emit = hasAccountLayer
-			? shouldEmitDeclaredVendorWithAccount(
-					vendor.id,
-					denied,
-					vendorTimes,
-					browserVendorChoice.confirmedAt,
-					activeAccount
-				)
-			: true;
-		if (emit) {
-			setVendorGrant(grants, vendor.id, !denied.has(vendor.id));
+	if (hasAccountLayer) {
+		// With an account layer, send only the vendors this save decided.
+		for (const id of decidedVendorIds) {
+			setVendorGrant(grants, id, !denied.has(id));
 		}
+		if (Object.keys(grants).length === 0) {
+			return undefined;
+		}
+		return {
+			confirmedAt: browserVendorChoice.confirmedAt,
+			grants,
+			version: 1,
+		};
+	}
+	for (const vendor of declared) {
+		setVendorGrant(grants, vendor.id, !denied.has(vendor.id));
 	}
 	for (const id of denied) {
 		if (!Object.hasOwn(grants, id)) {
 			setVendorGrant(grants, id, false);
 		}
 	}
-	// Without an account layer, a browser-owned denial a bulk action just
-	// lifted for a vendor nothing declares travels as `true`. With an account
-	// layer, never emit a grant for a vendor that is no longer declared.
-	addLiftedBrowserDenials(grants, previous, hasAccountLayer);
-	if (hasAccountLayer && Object.keys(grants).length === 0) {
-		return undefined;
-	}
+	addLiftedBrowserDenials(grants, previous, false);
 	return {
 		confirmedAt: browserVendorChoice.confirmedAt,
 		grants,
@@ -892,6 +879,10 @@ export interface ChoiceRecorderOptions {
  * | `heldBy: 'both'`  | yes                    | `held-by-account` | unchanged                                          | unchanged                              |
  * | `heldBy: 'device'`| no                     | success           | clear opt-out, set `liftedRecordedAt`              | adopt answer as this device's opt-out  |
  * | `heldBy: 'device'`| yes                    | `held-by-account` | unchanged                                          | unchanged                              |
+ *
+ * On success, lifted rights are removed from any existing browser device opt-out
+ * (clearing it if empty) before applying the row; "unchanged" means never adding
+ * rights to the browser.
  */
 const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	answerOptOut: OptOutRecord | null | undefined,
@@ -1075,6 +1066,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 
 	const applyAccountLiftSuccess = function applyAccountLiftSuccess(
 		answerOptOut: OptOutRecord | null | undefined,
+		liftedRights: readonly OptOutRight[],
 		actionAt: number,
 		uiSource: SaveUISource | undefined,
 		emitLifted: boolean
@@ -1096,7 +1088,22 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					liftedRecordedAt?: number;
 			  })
 			| undefined;
+		// On success, remove the lifted rights from any existing browser device
+		// opt-out (clearing it if no rights remain) before applying the row.
+		const browserOptOut = runtime.getBrowserRecords().optOut;
 		let browserOptOutPatch: OptOutRecord | null | undefined;
+		if (browserOptOut?.heldBy === 'device') {
+			const liftedSet = new Set<string>(liftedRights);
+			const remainingBrowserRights = browserOptOut.rights.filter(
+				(right) => !liftedSet.has(right)
+			);
+			if (remainingBrowserRights.length !== browserOptOut.rights.length) {
+				browserOptOutPatch =
+					remainingBrowserRights.length === 0
+						? null
+						: { ...browserOptOut, rights: remainingBrowserRights };
+			}
+		}
 		let adoptDeviceReceipt = false;
 
 		if (hasActiveAccount) {
@@ -1237,7 +1244,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			if (optOutLiftBlocker(getSnapshot()) === 'gpc-active') {
 				return { ok: false, reason: 'gpc-active' };
 			}
-			applyAccountLiftSuccess(outcome.optOut, actionAt, uiSource, true);
+			applyAccountLiftSuccess(
+				outcome.optOut,
+				liftedRights,
+				actionAt,
+				uiSource,
+				true
+			);
 			return { ok: true, optOut: null };
 		}
 		// Failed account-layer lifts leave both account and browser layers unchanged.
@@ -1357,7 +1370,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		}
 		if (isAccountLiftSucceeded(outcome.optOut, liftedRights)) {
 			if (optOutLiftBlocker(getSnapshot()) !== 'gpc-active') {
-				applyAccountLiftSuccess(outcome.optOut, actionAt, uiSource, false);
+				applyAccountLiftSuccess(
+					outcome.optOut,
+					liftedRights,
+					actionAt,
+					uiSource,
+					false
+				);
 			}
 			return;
 		}
@@ -1641,6 +1660,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			// Vendor denials resolve before any early return so a vendor-only
 			// toggle is recorded even when no category receipt is owed.
 			const {
+				decidedVendorIds,
 				vendorChoice: nextVendorChoice,
 				vendorDeclared: nextVendorDeclared,
 				vendorTimes: nextVendorTimes,
@@ -1898,7 +1918,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				after,
 				browserAfter,
 				browserBefore.vendorChoice,
-				activeAccountForPayload
+				activeAccountForPayload,
+				decidedVendorIds
 			);
 			if (vendorChoice) {
 				payload.vendorChoice = vendorChoice;

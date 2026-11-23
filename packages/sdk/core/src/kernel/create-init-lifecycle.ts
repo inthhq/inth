@@ -878,7 +878,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			folded.patch,
 			folded.nextAccount === undefined
 				? undefined
-				: { accountLayer: folded.nextAccount }
+				: { accountLayer: folded.nextAccount, accountLayerSource: 'stored' }
 		);
 	};
 

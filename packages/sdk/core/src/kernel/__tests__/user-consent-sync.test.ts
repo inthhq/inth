@@ -22,6 +22,8 @@ import { createNetworkBlocker } from '../../modules/network-blocker';
 import { createPersistence } from '../../modules/persistence';
 import { readStoredAccountLayer } from '../../modules/persistence/account-codec';
 import { readStoredRecordsFromCookieHeader } from '../../modules/persistence/hydrate';
+import { mountPersistence } from '../../modules/persistence/mount';
+import { encodeVendorChoiceCompact } from '../../modules/persistence/writer/encode';
 import { createScriptLoader } from '../../modules/script-loader';
 import { createPreferenceDraft } from '../../preference-draft';
 import { canDeferEngine } from '../../surface-actions/defer-engine';
@@ -187,12 +189,12 @@ describe('userConsent two-layer read split and re-POST prevention', () => {
 		// Account vendor denial still holds after category-only save.
 		expect(reloaded.getSnapshot().vendorChoice?.denied).toEqual(['meta-pixel']);
 
-		// Now save one vendor (posthog: false): account vendor denial (meta-pixel) is confirmed, not overwritten.
+		// Now save one vendor (posthog: false): sends only the toggled vendor;
+		// account-only denial (meta-pixel) stays account-only and is not copied into browser records.
 		vi.spyOn(Date, 'now').mockReturnValue(NOW + 3000);
 		await reloaded.commands.save({ vendors: { posthog: false } });
 		expect(savedPayloads).toHaveLength(2);
 		expect(savedPayloads[1]?.vendorChoice?.grants).toEqual({
-			'meta-pixel': false,
 			posthog: false,
 		});
 		expect(reloaded.getSnapshot().vendorChoice?.denied).toEqual([
@@ -1790,9 +1792,9 @@ describe('kernel regressions (set 2)', () => {
 		await kernel.commands.save({ marketing: true });
 		expect(savedPayloads).toHaveLength(2);
 		// No `vendor-x: true` may be sent because the visitor never decided vendor-x on B!
-		expect(savedPayloads[1]?.vendorChoice?.grants).not.toHaveProperty(
-			'vendor-x'
-		);
+		expect(
+			savedPayloads[1]?.vendorChoice?.grants?.['vendor-x']
+		).toBeUndefined();
 		kernel.dispose();
 	});
 
@@ -2215,6 +2217,7 @@ describe('kernel regressions (set 3)', () => {
 						version: 1,
 					},
 					vendorDeclared: ['vendor-x'],
+					vendorTimes: { 'vendor-x': NOW - 1500 },
 				},
 				initialUser: { externalId: 'user_a' },
 				initialVendors: {
@@ -2270,6 +2273,7 @@ describe('kernel regressions (set 3)', () => {
 						version: 1,
 					},
 					vendorDeclared: ['vendor-x'],
+					vendorTimes: { 'vendor-x': NOW - 1500 },
 				},
 				initialUser: { externalId: 'user_a' },
 				initialVendors: {
@@ -2836,6 +2840,7 @@ describe('kernel regressions (set 5): per-vendor times and the lift outcome tabl
 					now: NOW,
 					vendorChoice: { confirmedAt: NOW - 5000, denied: [], version: 1 },
 					vendorDeclared: ['measurement-vendor'],
+					vendorTimes: { 'measurement-vendor': NOW - 5000 },
 				},
 				initialUser: { externalId: 'a' },
 				initialVendors: {
@@ -3338,4 +3343,662 @@ describe('kernel regressions (set 5): per-vendor times and the lift outcome tabl
 			}
 		});
 	}
+});
+
+describe('kernel regressions (set 6)', () => {
+	test('a legacy browser list with no per-vendor times cannot defeat an account denial', () => {
+		const resolution = matchedResolution(optOutRule());
+		const kernel = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialRecords: {
+				now: NOW,
+				vendorChoice: { confirmedAt: NOW - 1000, denied: [], version: 1 },
+				vendorDeclared: ['x'],
+			},
+			initialUser: { externalId: 'a' },
+			initialVendors: {
+				declared: [
+					{
+						category: 'marketing',
+						id: 'x',
+						presentable: true,
+						source: 'config',
+					},
+				],
+				listVersion: 'v1',
+			},
+			now: NOW,
+		});
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					vendors: { x: { confirmedAt: NOW - 3000, value: false } },
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'x')).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('an unrelated vendor toggle does not copy an account-only denial into the browser', async () => {
+		const resolution = matchedResolution(optOutRule());
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId ?? 'sub_a' })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'x',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'marketing',
+							id: 'y',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					vendors: { x: { confirmedAt: NOW - 3000, value: false } },
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'x')).toBe(false);
+			expect((await kernel.commands.save({ vendors: { y: true } })).ok).toBe(
+				true
+			);
+			const posted = save.mock.calls[0]?.[0].vendorChoice?.grants;
+			kernel.syncUserConsent(null);
+			expect({
+				denied: kernel.getBrowserRecords().vendorChoice?.denied,
+				posted,
+			}).toEqual({
+				denied: [],
+				posted: { y: true },
+			});
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('a scoped save cannot renew a cookie-only denial for a vendor it did not show', async () => {
+		const resolution = matchedResolution(optOutRule());
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId ?? 'sub_a' })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					vendorChoice: {
+						confirmedAt: NOW - 4000,
+						denied: ['x'],
+						version: 1,
+					},
+				},
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'measurement',
+							id: 'x',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'marketing',
+							id: 'y',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					vendors: { x: { confirmedAt: NOW - 3000, value: true } },
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'x')).toBe(true);
+			expect(
+				(await kernel.commands.save('all', { categories: ['marketing'] })).ok
+			).toBe(true);
+			expect({
+				allowed: isVendorAllowed(kernel.getSnapshot(), 'x'),
+				postedDenial: save.mock.calls[0]?.[0].vendorChoice?.grants?.x === false,
+			}).toEqual({ allowed: true, postedDenial: false });
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	const T1 = NOW - 10_000;
+	const T2 = NOW - 5000;
+	const T4 = NOW - 1000;
+	const accountGrantResolution = matchedResolution(optInRule());
+	const accountGrantDocument = () =>
+		makeUserConsent({
+			choices: {
+				marketing: {
+					basis: {
+						fingerprint: accountGrantResolution.fingerprints.choice,
+						kind: 'choice-v1',
+					},
+					confirmedAt: T2,
+					value: true,
+				},
+			},
+			externalId: 'a',
+			vendors: { v: { confirmedAt: T2, value: true } },
+		});
+	const makeAccountGrantKernel = (records: Record<string, unknown>) =>
+		createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: accountGrantResolution,
+				initialRecords: { now: NOW, ...records },
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'v',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+
+	test('cold start: a newer browser denial with no per-vendor times beats an older account grant', () => {
+		const k = makeAccountGrantKernel({
+			vendorChoice: { confirmedAt: T4, denied: ['v'], version: 1 },
+		});
+		k.syncUserConsent(accountGrantDocument());
+		try {
+			expect(isVendorAllowed(k.getSnapshot(), 'v')).toBe(false);
+		} finally {
+			k.dispose();
+		}
+	});
+
+	test('hydrate: a newer vendor record without times must not keep the old per-vendor time', () => {
+		const k = makeAccountGrantKernel({
+			vendorChoice: { confirmedAt: T1, denied: [], version: 1 },
+			vendorTimes: { v: T1 },
+		});
+		k.syncUserConsent(accountGrantDocument());
+		try {
+			expect(isVendorAllowed(k.getSnapshot(), 'v')).toBe(true);
+			k.hydrate({
+				now: NOW,
+				vendorChoice: { confirmedAt: T4, denied: ['v'], version: 1 },
+			});
+			expect(k.getBrowserRecords().vendorChoice?.denied).toEqual(['v']);
+			expect({
+				allowed: isVendorAllowed(k.getSnapshot(), 'v'),
+				times: k.getBrowserRecords().vendorTimes ?? null,
+			}).toEqual({ allowed: false, times: null });
+		} finally {
+			k.dispose();
+		}
+	});
+
+	test('cross-tab: another tab stores a newer denial with no vendorTimes', async () => {
+		const k = makeAccountGrantKernel({
+			vendorChoice: { confirmedAt: T1, denied: [], version: 1 },
+			vendorTimes: { v: T1 },
+		});
+		const p = createPersistence({ kernel: k });
+		k.syncUserConsent(accountGrantDocument());
+		try {
+			await flushMacrotasks();
+			expect(isVendorAllowed(k.getSnapshot(), 'v')).toBe(true);
+			window.localStorage.setItem(
+				'inth-vendors',
+				JSON.stringify({ confirmedAt: T4, denied: ['v'], version: 1 })
+			);
+			window.dispatchEvent(
+				new StorageEvent('storage', { key: 'inth-vendors' })
+			);
+			await flushMacrotasks();
+			expect(k.getBrowserRecords().vendorChoice?.denied).toEqual(['v']);
+			expect(isVendorAllowed(k.getSnapshot(), 'v')).toBe(false);
+		} finally {
+			p.dispose();
+			k.dispose();
+		}
+	});
+
+	test('cross-tab v2: own save stored times, then another writer stores a newer denial without times', async () => {
+		const k = makeAccountGrantKernel({});
+		const p = createPersistence({ kernel: k });
+		try {
+			await flushMacrotasks();
+			await k.commands.save('all', { actionAt: T1 });
+			await flushMacrotasks();
+			k.syncUserConsent(accountGrantDocument());
+			expect({
+				allowed: isVendorAllowed(k.getSnapshot(), 'v'),
+				times: k.getBrowserRecords().vendorTimes,
+			}).toMatchObject({ allowed: true, times: { v: T1 } });
+			window.localStorage.setItem(
+				'inth-vendors',
+				JSON.stringify({ confirmedAt: T4, denied: ['v'], version: 1 })
+			);
+			window.dispatchEvent(
+				new StorageEvent('storage', { key: 'inth-vendors' })
+			);
+			await flushMacrotasks();
+			expect({
+				allowed: isVendorAllowed(k.getSnapshot(), 'v'),
+				rec: k.getBrowserRecords(),
+			}).toMatchObject({
+				allowed: false,
+				rec: { vendorChoice: { denied: ['v'] } },
+			});
+		} finally {
+			p.dispose();
+			k.dispose();
+		}
+	});
+
+	test('cross-subdomain: a sibling subdomain writes a newer vendors-cookie denial', async () => {
+		const k = makeAccountGrantKernel({});
+		const p = createPersistence({ kernel: k });
+		try {
+			await flushMacrotasks();
+			await k.commands.save('all', { actionAt: T1 });
+			await flushMacrotasks();
+			k.syncUserConsent(accountGrantDocument());
+			expect(isVendorAllowed(k.getSnapshot(), 'v')).toBe(true);
+			document.cookie = `inth-vendors=${encodeVendorChoiceCompact({ confirmedAt: T4, denied: ['v'], version: 1 })}; path=/`;
+			window.dispatchEvent(new Event('focus'));
+			await flushMacrotasks();
+			expect({
+				allowed: isVendorAllowed(k.getSnapshot(), 'v'),
+				rec: k.getBrowserRecords(),
+			}).toMatchObject({
+				allowed: false,
+				rec: { vendorChoice: { denied: ['v'] } },
+			});
+		} finally {
+			p.dispose();
+			k.dispose();
+		}
+	});
+
+	test('cross-subdomain reload: same storage read fresh denies v', async () => {
+		const k0 = makeAccountGrantKernel({});
+		const p0 = createPersistence({ kernel: k0 });
+		await flushMacrotasks();
+		await k0.commands.save('all', { actionAt: T1 });
+		await flushMacrotasks();
+		p0.dispose();
+		k0.dispose();
+		document.cookie = `inth-vendors=${encodeVendorChoiceCompact({ confirmedAt: T4, denied: ['v'], version: 1 })}; path=/`;
+		const k = makeAccountGrantKernel({});
+		const p = createPersistence({ kernel: k });
+		k.syncUserConsent(accountGrantDocument());
+		try {
+			await flushMacrotasks();
+			expect({
+				allowed: isVendorAllowed(k.getSnapshot(), 'v'),
+				rec: k.getBrowserRecords(),
+			}).toMatchObject({
+				allowed: false,
+				rec: { vendorChoice: { denied: ['v'] } },
+			});
+		} finally {
+			p.dispose();
+			k.dispose();
+		}
+	});
+
+	const existingDeviceLiftRows: {
+		readonly name: string;
+		readonly answer: OptOutRecord | null;
+		readonly expectEffectiveRights: readonly string[] | null;
+		readonly expectAccountRights: readonly string[] | null;
+		readonly expectBrowserRights: readonly string[] | null;
+	}[] = [
+		{
+			answer: null,
+			expectAccountRights: null,
+			expectBrowserRights: null,
+			expectEffectiveRights: null,
+			name: 'null',
+		},
+		{
+			answer: {
+				heldBy: 'person',
+				method: 'button',
+				recordedAt: NOW - 4000,
+				rights: ['targeted_ads'],
+			},
+			expectAccountRights: ['targeted_ads'],
+			expectBrowserRights: null,
+			expectEffectiveRights: ['targeted_ads'],
+			name: 'person/no',
+		},
+		{
+			answer: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: NOW - 4000,
+				rights: ['targeted_ads'],
+			},
+			expectAccountRights: null,
+			expectBrowserRights: null,
+			expectEffectiveRights: null,
+			name: 'both/no',
+		},
+	];
+
+	for (const row of existingDeviceLiftRows) {
+		for (const via of ['optIn', 'save'] as const) {
+			test(`lift (${via}): ${row.name} answer with a browser device opt-out already held`, async () => {
+				const user = { externalId: 'a', identityToken: 'token-a' };
+				const res = matchedResolution(optOutRule({ prompt: 'choice' }));
+				const liftOptOut = vi.fn(() =>
+					Promise.resolve({ ok: true, optOut: row.answer })
+				);
+				const k = createKernel(
+					{
+						consentCategories: ['marketing'],
+						initialPolicyResolution: res,
+						initialRecords: {
+							now: NOW,
+							optOut: {
+								heldBy: 'device',
+								method: 'button',
+								recordedAt: NOW - 8000,
+								rights: ['sale'],
+							},
+							subject: { subjectId: 'sub_a' },
+						},
+						initialUser: user,
+						now: NOW,
+						transport: {
+							identify: (_u, id) =>
+								Promise.resolve({ subjectId: id ?? 'sub_a' }),
+							liftOptOut,
+							save: () => Promise.resolve({ ok: true, subjectId: 'sub_a' }),
+						},
+					},
+					{ outboxStore: createMemoryOutboxStore() }
+				);
+				try {
+					await k.commands.identify(user);
+					k.syncUserConsent(
+						makeUserConsent({
+							externalId: 'a',
+							optOut: {
+								method: 'button',
+								recordedAt: NOW - 5000,
+								rights: ['sale'],
+							},
+						})
+					);
+					if (via === 'optIn') {
+						await k.commands.optIn();
+					} else {
+						await k.commands.save({ marketing: true });
+						await flushMacrotasks();
+					}
+					expect(liftOptOut).toHaveBeenCalledTimes(1);
+					expect(k.getSnapshot().optOut?.rights ?? null).toEqual(
+						row.expectEffectiveRights
+					);
+					expect(k.getBrowserRecords().optOut?.rights ?? null).toEqual(
+						row.expectBrowserRights
+					);
+					expect(k.getAccountLayer()?.optOut?.rights ?? null).toEqual(
+						row.expectAccountRights
+					);
+				} finally {
+					k.dispose();
+				}
+			});
+		}
+	}
+
+	test('vendorChoicePayload does not re-emit a stale browser denial overridden by a newer account grant', async () => {
+		const optInResolution = matchedResolution(optInRule());
+		let now = NOW;
+		vi.spyOn(Date, 'now').mockImplementation(() => now);
+		const postedPayloads: SavePayload[] = [];
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: optInResolution,
+				initialUser: { externalId: 'user-a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'v-mkt',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'v-meas',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now,
+				transport: {
+					save: (payload) => {
+						postedPayloads.push(payload);
+						return Promise.resolve({ ok: true, subjectId: 'sub-1' });
+					},
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.save(
+				{ marketing: true, measurement: true },
+				{ actionAt: NOW, vendors: { 'v-meas': false } }
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v-meas')).toBe(false);
+
+			now = NOW + 1000;
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW + 1000,
+					externalId: 'user-a',
+					vendors: { 'v-meas': { confirmedAt: NOW + 1000, value: true } },
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v-meas')).toBe(true);
+
+			now = NOW + 2000;
+			postedPayloads.length = 0;
+			await kernel.commands.save('all', {
+				actionAt: NOW + 2000,
+				categories: ['marketing'],
+			});
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v-meas')).toBe(true);
+			expect(postedPayloads).toHaveLength(1);
+			expect(postedPayloads[0]?.vendorChoice?.grants['v-meas']).toBeUndefined();
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('cross-tab reconcile clears stale vendorTimes when adopting a newer cookie-only vendorChoice', async () => {
+		const optInResolution = matchedResolution(optInRule());
+		let now = NOW;
+		vi.spyOn(Date, 'now').mockImplementation(() => now);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: optInResolution,
+				initialUser: { externalId: 'user-a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'v1',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const persistence = mountPersistence({ kernel, now: () => now });
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 500,
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: optInResolution.fingerprints.choice,
+								kind: 'choice-v1',
+							},
+							confirmedAt: NOW - 500,
+							value: true,
+						},
+					},
+					externalId: 'user-a',
+					vendors: { v1: { confirmedAt: NOW - 500, value: false } },
+				})
+			);
+			await kernel.commands.save(
+				{ marketing: true },
+				{ actionAt: NOW, vendors: { v1: false } }
+			);
+			persistence.reconcile();
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v1')).toBe(false);
+
+			now = NOW + 1000;
+			const newerCookie = encodeVendorChoiceCompact({
+				confirmedAt: NOW + 1000,
+				denied: [],
+				version: 1,
+			});
+			document.cookie = `inth-vendors=${newerCookie}; path=/`;
+			persistence.reconcile();
+
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v1')).toBe(false);
+			expect(kernel.getBrowserRecords().vendorTimes).toBeNull();
+		} finally {
+			persistence.dispose();
+			kernel.dispose();
+		}
+	});
+
+	test('scoped bulk save on an old record (no vendorTimes) does not bump an unrelated browser denial past a newer account grant', async () => {
+		const optInResolution = matchedResolution(optInRule());
+		const now = NOW + 2000;
+		vi.spyOn(Date, 'now').mockImplementation(() => now);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: optInResolution,
+				initialRecords: {
+					now,
+					vendorChoice: { confirmedAt: NOW, denied: ['v-meas'], version: 1 },
+				},
+				initialUser: { externalId: 'user-a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'v-mkt',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'v-meas',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW + 1000,
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: optInResolution.fingerprints.choice,
+								kind: 'choice-v1',
+							},
+							confirmedAt: NOW + 1000,
+							value: true,
+						},
+						measurement: {
+							basis: {
+								fingerprint: optInResolution.fingerprints.choice,
+								kind: 'choice-v1',
+							},
+							confirmedAt: NOW + 1000,
+							value: true,
+						},
+					},
+					externalId: 'user-a',
+					vendors: { 'v-meas': { confirmedAt: NOW + 1000, value: true } },
+				})
+			);
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v-meas')).toBe(true);
+
+			await kernel.commands.save('all', {
+				actionAt: NOW + 2000,
+				categories: ['marketing'],
+			});
+			expect(isVendorAllowed(kernel.getSnapshot(), 'v-meas')).toBe(true);
+		} finally {
+			kernel.dispose();
+		}
+	});
 });
