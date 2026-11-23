@@ -104,7 +104,7 @@ test('accepting then rejecting through the UI removes real cookies and both stor
 	assertPreservedData();
 
 	await screen.getByText('Privacy settings', { exact: true }).click();
-	await screen.getByTestId('consent-widget-reject-button').click();
+	await screen.getByTestId('consent-dialog-reject-all').click();
 	await expect.element(screen.getByText('Measurement denied')).toBeVisible();
 	await vi.waitFor(() => assertIntegrationData(false));
 	assertPreservedData();
@@ -117,7 +117,7 @@ test('a returning denied visitor clears stale data without restarting the integr
 	await first.getByTestId('consent-banner-accept-button').click();
 	await vi.waitFor(() => expect(onLoad).toHaveBeenCalledOnce());
 	await first.getByText('Privacy settings', { exact: true }).click();
-	await first.getByTestId('consent-widget-reject-button').click();
+	await first.getByTestId('consent-dialog-reject-all').click();
 	await vi.waitFor(() => assertIntegrationData(false));
 	await first.unmount();
 
