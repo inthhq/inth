@@ -7,7 +7,7 @@ import {
 	rememberConsentInputs,
 	renderedForVisitor,
 	servedByConsentRoute,
-} from './libs/consent-request-inputs.model';
+} from './consent-request/consent-request-inputs.model';
 
 /** Options for {@link consentRequestMiddleware}. */
 export interface ConsentRequestMiddlewareOptions {

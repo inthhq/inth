@@ -50,7 +50,7 @@ import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { readPrefetchedInitialData } from './libs/consent-prefetch-head';
+import { readPrefetchedInitialData } from './consent-prefetch-head';
 import { isPending, startsFromHTML } from './inth-provider-options.model';
 import type { InthProviderProps } from './inth-provider-options.model';
 import type { ConsentState } from './server';
