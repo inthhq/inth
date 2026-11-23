@@ -603,9 +603,13 @@ export const createFrameworkPolicyDriver = ({
 				await click('opt-out-confirmation-preferences-link');
 			}
 		};
-		// Save stays disabled until a switch changes (EU-03), and the opt-out
-		// regime has no Save: its rows and switches record as they change. Without
-		// an enabled Save, the engine saves what is shown, and Done closes.
+		// Save stays disabled until a switch changes (EU-03), and the notice
+		// regime has no Save: its rows and switches record as they change, and
+		// Done closes without recording anything (LAW-04). The visitor's control
+		// is an enabled Save, or else Done or Close, and the scenario asserts what
+		// pressing it did. Only with no prompt owed does the engine first save
+		// what the switches show, as the kernel contract does; closing that
+		// dialog answers nothing either way.
 		const saveCurrentInDialog = async () => {
 			await vi.waitFor(
 				() => {
@@ -623,23 +627,29 @@ export const createFrameworkPolicyDriver = ({
 			if (save && !save.disabled) {
 				save.click();
 			} else {
-				// What the switches show: each category's current permission,
-				// with a live signal's restrictions applied.
 				const snapshot = kernel.getSnapshot();
-				const shown = Object.fromEntries(
-					snapshot.policyRule.scope
-						.filter((category) => category !== 'necessary')
-						.map((category) => [
-							category,
-							snapshot.effectivePermissions[category] === true,
-						])
+				if (snapshot.promptRequirement.kind === 'none') {
+					// What the switches show: each category's current permission,
+					// with a live signal's restrictions applied.
+					const shown = Object.fromEntries(
+						snapshot.policyRule.scope
+							.filter((category) => category !== 'necessary')
+							.map((category) => [
+								category,
+								snapshot.effectivePermissions[category] === true,
+							])
+					);
+					await kernel.commands.save(shown, { uiSource: 'dialog' });
+				}
+				const close = document.querySelector<HTMLButtonElement>(
+					'[data-testid="consent-dialog-done"]:not(:disabled), [data-testid="consent-dialog-close"]:not(:disabled)'
 				);
-				await kernel.commands.save(shown, { uiSource: 'dialog' });
-				document
-					.querySelector<HTMLButtonElement>(
-						'[data-testid="consent-dialog-done"], [data-testid="consent-dialog-close"]'
-					)
-					?.click();
+				if (!close) {
+					throw new Error(
+						'Required rendered control missing: an enabled Save, Done or Close'
+					);
+				}
+				close.click();
 			}
 			await settle();
 		};
