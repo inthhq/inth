@@ -1318,13 +1318,6 @@ export const readStoredOptOutRecord = function readStoredOptOutRecord(
 					fromLocal.record.categories
 				);
 				const record: StoredOptOutRecord = { ...newer.record, rights };
-				if (
-					localAt === cookieAt &&
-					record.serverWrittenAt === undefined &&
-					fromCookie.record.serverWrittenAt !== undefined
-				) {
-					record.serverWrittenAt = fromCookie.record.serverWrittenAt;
-				}
 				if (categories === undefined) {
 					delete record.categories;
 				} else {

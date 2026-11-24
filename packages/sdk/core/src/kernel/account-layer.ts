@@ -63,6 +63,9 @@ export interface AccountOptOutRecord {
 	readonly method: OptOutMethod;
 }
 
+/** Per right, the raw server time this person last opted back in to it. */
+export type AccountOptIn = Readonly<Partial<Record<OptOutRight, number>>>;
+
 /**
  * Normalized account consent layer kept apart from browser-made records.
  *
@@ -86,6 +89,12 @@ export interface AccountConsentLayer {
 	>;
 	readonly vendors: Readonly<Record<string, AccountVendorDecision>>;
 	readonly optOut: AccountOptOutRecord | null;
+	/**
+	 * Per right, the raw server time of this person's latest confirmed opt-in
+	 * (`sync.optIn`). Left out when there is none, or when the document came
+	 * from a backend that doesn't send it.
+	 */
+	readonly optIn?: AccountOptIn;
 	/**
 	 * True when the `<key>-acct-v` cookie exceeded its size budget and dropped
 	 * its entries on SSR (so server-side vendor decisions are incomplete).
@@ -330,6 +339,41 @@ const normalizeAccountOptOut = function normalizeAccountOptOut(
 };
 
 /**
+ * Read `sync.optIn`. Unknown rights are dropped. An invalid time drops the
+ * right (`strict: false`, an incoming document) or fails the whole read
+ * (`strict: true`, a stored layer). Returns `undefined` for no opt-ins.
+ */
+const normalizeAccountOptIn = function normalizeAccountOptIn(
+	rawOptIn: unknown,
+	strict: boolean
+): { ok: true; optIn: AccountOptIn | undefined } | { ok: false } {
+	if (rawOptIn === undefined) {
+		return { ok: true, optIn: undefined };
+	}
+	if (!isPlainRecord(rawOptIn)) {
+		return strict ? { ok: false } : { ok: true, optIn: undefined };
+	}
+	const optIn: Partial<Record<OptOutRight, number>> = {};
+	for (const right of OPT_OUT_RIGHTS) {
+		const at = ownValue(rawOptIn, right);
+		if (at === undefined) {
+			continue;
+		}
+		if (!isValidAccountTimestamp(at)) {
+			if (strict) {
+				return { ok: false };
+			}
+			continue;
+		}
+		optIn[right] = at;
+	}
+	return {
+		ok: true,
+		optIn: Object.keys(optIn).length > 0 ? optIn : undefined,
+	};
+};
+
+/**
  * Normalize a raw `UserConsent` document into an `AccountConsentLayer` at
  * `localNow`. Returns `null` when the document is structurally invalid.
  *
@@ -370,9 +414,10 @@ export const normalizeUserConsent = function normalizeUserConsent(
 	if (!choices || !vendors) {
 		return null;
 	}
+	const optIn = normalizeAccountOptIn(ownValue(sync, 'optIn'), false);
 	const appliedAt = isValidAccountTimestamp(localNow) ? localNow : 0;
 	const skew = Math.max(0, checkedAt - appliedAt);
-	return {
+	const layer: AccountConsentLayer = {
 		appliedAt,
 		checkedAt,
 		choices,
@@ -381,6 +426,9 @@ export const normalizeUserConsent = function normalizeUserConsent(
 		skew,
 		vendors,
 	};
+	return optIn.ok && optIn.optIn !== undefined
+		? { ...layer, optIn: optIn.optIn }
+		: layer;
 };
 
 /**
@@ -413,19 +461,21 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 	const choices = normalizeAccountChoices(rawChoices, 'rawConfirmedAt', true);
 	const vendors = normalizeAccountVendors(rawVendors, 'rawConfirmedAt', true);
 	const optOut = normalizeAccountOptOut(rawOptOut, 'rawRecordedAt', true);
+	const optIn = normalizeAccountOptIn(ownValue(input, 'optIn'), true);
 	const rawLiftedRecordedAt = ownValue(input, 'liftedRecordedAt');
 	const rawOverflow = ownValue(input, 'vendorsOverflow');
 	if (
 		!choices ||
 		!vendors ||
 		!optOut.ok ||
+		!optIn.ok ||
 		(rawLiftedRecordedAt !== undefined &&
 			!isValidAccountTimestamp(rawLiftedRecordedAt)) ||
 		(rawOverflow !== undefined && typeof rawOverflow !== 'boolean')
 	) {
 		return null;
 	}
-	const layer: AccountConsentLayer = {
+	const base: AccountConsentLayer = {
 		appliedAt,
 		checkedAt,
 		choices,
@@ -434,6 +484,8 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 		skew,
 		vendors,
 	};
+	const layer =
+		optIn.optIn === undefined ? base : { ...base, optIn: optIn.optIn };
 	const withLifted =
 		rawLiftedRecordedAt === undefined
 			? layer
@@ -524,10 +576,17 @@ const sameAccountOptOutContent = function sameAccountOptOutContent(
 	);
 };
 
+const sameAccountOptIn = function sameAccountOptIn(
+	left: AccountOptIn | undefined,
+	right: AccountOptIn | undefined
+): boolean {
+	return OPT_OUT_RIGHTS.every((name) => left?.[name] === right?.[name]);
+};
+
 /**
  * Whether two account layers hold identical document content (`externalId`,
- * `checkedAt`, `choices`, `vendors`, `optOut`). Used so re-passing an equal
- * resolved `UserConsent` value is a no-op.
+ * `checkedAt`, `choices`, `vendors`, `optOut`, `optIn`). Used so re-passing an
+ * equal resolved `UserConsent` value is a no-op.
  */
 export const sameAccountLayerContent = function sameAccountLayerContent(
 	left: AccountConsentLayer | null,
@@ -547,7 +606,8 @@ export const sameAccountLayerContent = function sameAccountLayerContent(
 	return (
 		sameAccountChoices(left.choices, right.choices) &&
 		sameAccountVendors(left.vendors, right.vendors) &&
-		sameAccountOptOutContent(left.optOut, right.optOut)
+		sameAccountOptOutContent(left.optOut, right.optOut) &&
+		sameAccountOptIn(left.optIn, right.optIn)
 	);
 };
 
@@ -674,6 +734,9 @@ export const freezeAccountLayer = function freezeAccountLayer(
 		Object.freeze(vendor);
 	}
 	Object.freeze(layer.vendors);
+	if (layer.optIn) {
+		Object.freeze(layer.optIn);
+	}
 	if (layer.optOut) {
 		Object.freeze(layer.optOut.rights);
 		Object.freeze(layer.optOut);
@@ -836,6 +899,78 @@ const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 	return { confirmedAt, denied, version: 1 };
 };
 
+/**
+ * This browser's device opt-out as it counts while `account` is active.
+ *
+ * Across domains, opt-outs and opt-ins combine like this:
+ * - An opt-out on any device applies to the account. The backend copies it to
+ *   the person, so it reaches this browser as the account's opt-out.
+ * - An account with no opt-out never clears this device's opt-out.
+ * - A confirmed opt-in on the account (`sync.optIn`) outranks this device's
+ *   opt-out for each right it opted back in to, when it is newer, while that
+ *   user is signed in. Times compare like category times: the opt-in's server
+ *   time through the layer's skew, the device opt-out's local time as is. On a
+ *   tie the opt-out wins.
+ * - A GPC device opt-out always counts.
+ *
+ * The browser record itself never changes here. When the account layer goes
+ * away (sign-out, another user), the device opt-out applies again in full.
+ *
+ * Returns `browserOptOut` itself when no right is outranked, a copy with the
+ * remaining rights, or `null` when none remain. A legacy person-held browser
+ * record reads as `null`.
+ */
+export const deviceOptOutUnderAccount = function deviceOptOutUnderAccount(
+	browserOptOut: Readonly<OptOutRecord> | null,
+	account: AccountConsentLayer | null
+): Readonly<OptOutRecord> | null {
+	if (!browserOptOut || browserOptOut.heldBy === 'person') {
+		return null;
+	}
+	const optIn = account?.optIn;
+	if (!account || !optIn || browserOptOut.method === 'gpc') {
+		return browserOptOut;
+	}
+	const rights = browserOptOut.rights.filter((right) => {
+		const optedInAt = optIn[right];
+		return (
+			optedInAt === undefined ||
+			accountOrderingTime(optedInAt, account) <= browserOptOut.recordedAt
+		);
+	});
+	// A record with no rights yet (waiting for the backend's answer) has
+	// nothing an opt-in can outrank, so it stays as it is.
+	if (rights.length === browserOptOut.rights.length) {
+		return browserOptOut;
+	}
+	return rights.length === 0 ? null : { ...browserOptOut, rights };
+};
+
+/**
+ * The account's own opt-out rights that still count: a right the person
+ * opted back in to later (raw server times, same clock) no longer does. On a
+ * tie the opt-out wins.
+ */
+const accountOptOutAfterOptIn = function accountOptOutAfterOptIn(
+	account: AccountConsentLayer
+): AccountOptOutRecord | null {
+	const { optOut, optIn } = account;
+	if (!optOut || optOut.rights.length === 0) {
+		return null;
+	}
+	if (!optIn) {
+		return optOut;
+	}
+	const rights = optOut.rights.filter((right) => {
+		const optedInAt = optIn[right];
+		return optedInAt === undefined || optedInAt <= optOut.rawRecordedAt;
+	});
+	if (rights.length === optOut.rights.length) {
+		return optOut;
+	}
+	return rights.length === 0 ? null : { ...optOut, rights };
+};
+
 const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 	browserOptOut: Readonly<OptOutRecord> | null,
 	account: AccountConsentLayer
@@ -843,10 +978,9 @@ const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 	// While an account layer is active, ignore any legacy `heldBy: 'person'`
 	// record already stored in browser records so only device opt-outs merge
 	// with the account layer.
-	const deviceOptOut =
-		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
-	const accountOptOut = account.optOut;
-	if (!accountOptOut || accountOptOut.rights.length === 0) {
+	const deviceOptOut = deviceOptOutUnderAccount(browserOptOut, account);
+	const accountOptOut = accountOptOutAfterOptIn(account);
+	if (!accountOptOut) {
 		return deviceOptOut;
 	}
 	const accountRecordedAt = accountOrderingTime(

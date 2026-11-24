@@ -47,6 +47,7 @@ import type { KernelRuntime, RuntimeCommitOptions } from './create-runtime';
 import {
 	answerOwnedBy,
 	applySyncedOptOut,
+	browserOptOutFromAnswer,
 	sameOptOutAnswer,
 	sameOptOutRecord,
 } from './kernel-opt-out.model';
@@ -90,11 +91,17 @@ const foldServerAccountLayer = function foldServerAccountLayer(
 const foldServerOptOut = function foldServerOptOut(
 	browserOptOut: BrowserConsentRecords['optOut'],
 	incoming: OptOutAnswer | null,
-	activeAccount: AccountConsentLayer | null
+	activeAccount: AccountConsentLayer | null,
+	hasUser: boolean
 ): OptOutRecord | null | undefined {
 	if (activeAccount === null) {
-		const stripped = incoming === null ? null : stripOptOutDevice(incoming);
-		return mergeNewestOptOut(browserOptOut, stripped);
+		if (incoming === null) {
+			return mergeNewestOptOut(browserOptOut, null);
+		}
+		const fromAnswer = browserOptOutFromAnswer(incoming, hasUser);
+		return fromAnswer === undefined
+			? undefined
+			: mergeNewestOptOut(browserOptOut, fromAnswer);
 	}
 	if (
 		incoming === null ||
@@ -162,7 +169,8 @@ export const foldServerRecords = function foldServerRecords(
 		const foldedOptOut = foldServerOptOut(
 			browser.optOut,
 			records.optOut,
-			activeAccount
+			activeAccount,
+			current.user !== null
 		);
 		if (foldedOptOut !== undefined) {
 			patch.optOut = foldedOptOut;
@@ -178,6 +186,13 @@ export const foldServerRecords = function foldServerRecords(
 	return nextAccount === undefined ? { patch } : { nextAccount, patch };
 };
 
+/**
+ * Receipt metadata after an answer carrying `device`. The answer confirms the
+ * browser record only when it is the same act (same time and method). When
+ * the fold replaced the browser record with this answer, the receipt starts
+ * over for the new act. When the fold kept the browser record because the
+ * answer was older or different, the receipt stays as it was.
+ */
 const syncDeviceServerOptOutReceipt = function syncDeviceServerOptOutReceipt(
 	runtime: KernelRuntime,
 	beforeOptOut: Readonly<OptOutRecord> | null,
@@ -190,25 +205,13 @@ const syncDeviceServerOptOutReceipt = function syncDeviceServerOptOutReceipt(
 		return;
 	}
 	const confirmed = incomingDevice.rights.length > 0;
-	const deviceAnswer: OptOutRecord = {
-		heldBy: 'device',
-		method: incomingOptOut.method,
-		recordedAt: incomingOptOut.recordedAt,
-		rights: [...incomingDevice.rights],
-	};
-	const matchesExistingDevice =
+	if (
 		beforeOptOut !== null &&
 		beforeOptOut.heldBy !== 'person' &&
-		(sameOptOutAnswer(beforeOptOut, incomingOptOut) ||
-			sameOptOutAnswer(beforeOptOut, deviceAnswer) ||
-			incomingOptOut.heldBy === 'both' ||
-			incomingOptOut.heldBy === 'device');
-	if (matchesExistingDevice) {
-		if (!confirmed) {
-			return;
-		}
+		answersHeldOptOut(incomingOptOut, beforeOptOut)
+	) {
 		const current = runtime.getOptOutReceiptData();
-		if (!current.rightsConfirmed) {
+		if (confirmed && !current.rightsConfirmed) {
 			runtime.setOptOutReceiptData(
 				{
 					localAct: current.localAct,
@@ -218,19 +221,15 @@ const syncDeviceServerOptOutReceipt = function syncDeviceServerOptOutReceipt(
 				fromHydration
 			);
 		}
-		runtime.setOptOutServerWrittenAt(incomingDevice.writtenAt, fromHydration);
 		return;
 	}
 	if (
-		sameOptOutAnswer(foldedOptOut, incomingOptOut) ||
-		sameOptOutAnswer(foldedOptOut, deviceAnswer)
+		foldedOptOut !== null &&
+		foldedOptOut !== undefined &&
+		answersHeldOptOut(foldedOptOut, incomingOptOut)
 	) {
 		runtime.setOptOutReceiptData(
 			{ localAct: null, reference: null, rightsConfirmed: confirmed },
-			fromHydration
-		);
-		runtime.setOptOutServerWrittenAt(
-			confirmed ? incomingDevice.writtenAt : null,
 			fromHydration
 		);
 	}
@@ -269,11 +268,13 @@ export const syncAdoptedServerOptOutReceipt =
 		const currentSnapshot = runtime.getSnapshot();
 		const activeAccount = runtime.getAccountLayer();
 		// Older backend without `device`: never confirm under an active account
-		// layer and never store a `serverWrittenAt`.
+		// layer, and never confirm a `both` answer's merged rights while a user
+		// is set.
 		if (
-			activeAccount !== null &&
-			currentSnapshot.user !== null &&
-			activeAccount.externalId === currentSnapshot.user.externalId
+			(activeAccount !== null &&
+				currentSnapshot.user !== null &&
+				activeAccount.externalId === currentSnapshot.user.externalId) ||
+			(incomingOptOut.heldBy === 'both' && currentSnapshot.user !== null)
 		) {
 			return;
 		}
@@ -303,7 +304,6 @@ export const syncAdoptedServerOptOutReceipt =
 				{ localAct: null, reference: null, rightsConfirmed },
 				fromHydration
 			);
-			runtime.setOptOutServerWrittenAt(null, fromHydration);
 		}
 	};
 
@@ -321,10 +321,6 @@ export interface RecordsBoundaryOptions {
 		to: string,
 		owned?: () => boolean
 	) => Promise<string | null>;
-	/** Whether an opt-out request for this device is in flight or queued. */
-	hasPendingOptOut?: (subjectId?: string | null) => boolean;
-	/** Verified external user ID linked to the initial subject, if hydrated at construction. */
-	initialLinkedExternalId?: string | null;
 }
 
 export interface SyncUserConsentOptions {
@@ -365,18 +361,12 @@ export interface RecordsBoundary {
 	noteRecordedSubject: (id: string | undefined) => void;
 	/** Whether `subjectId` was proven linked to `externalId` in this session. */
 	isSubjectLinked: (subjectId: string | null, externalId: string) => boolean;
-	/** Verified external user ID linked to `subjectId`, when known. */
-	getLinkedExternalId: (subjectId: string | null) => string | undefined;
 	/** Record a proven link between `subjectId` and `externalId` in this session. */
 	markSubjectLinked: (subjectId: string, externalId: string) => void;
-	/** Subscribe to newly verified subject links so persistence can store them. */
-	onSubjectLinked: (listener: () => void) => () => void;
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
 	adoptSubject,
-	hasPendingOptOut,
-	initialLinkedExternalId,
 	runtime,
 	transport,
 	start,
@@ -389,22 +379,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
 	// Proven (subjectId -> externalId) links established with an identityToken
-	// (or restored from persisted local opt-out metadata), cleared when records
-	// or subject are reset.
+	// in this session, cleared when records or subject are reset.
 	const verifiedLinks = new Map<string, string>();
-	const initialSubjectId = getSnapshot().subject?.subjectId ?? null;
-	if (initialLinkedExternalId && initialSubjectId) {
-		verifiedLinks.set(initialSubjectId, initialLinkedExternalId);
-	}
-	const subjectLinkListeners = new Set<() => void>();
 	const recordVerifiedLink = (subjectId: string, externalId: string): void => {
-		if (verifiedLinks.get(subjectId) === externalId) {
-			return;
-		}
 		verifiedLinks.set(subjectId, externalId);
-		for (const listener of subjectLinkListeners) {
-			listener();
-		}
 	};
 
 	const applyHydratedGpcMark = function applyHydratedGpcMark(
@@ -481,35 +459,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		);
 	};
 
-	const applyHydratedOptOutServerWrittenAt =
-		function applyHydratedOptOutServerWrittenAt(
-			before: ConsentSnapshot,
-			hydrated: ValidatedRecords
-		): void {
-			if (hydrated.optOut === null) {
-				runtime.setOptOutServerWrittenAt(null, true);
-				return;
-			}
-			const hydratedWrittenAt =
-				hydrated.optOutServerWrittenAt === undefined
-					? hydrated.optOut?.device?.writtenAt
-					: hydrated.optOutServerWrittenAt;
-			if (hydratedWrittenAt !== undefined) {
-				const hasOptOut =
-					hydrated.optOut === undefined
-						? before.optOut !== null
-						: hydrated.optOut !== null;
-				runtime.setOptOutServerWrittenAt(
-					hasOptOut ? hydratedWrittenAt : null,
-					true
-				);
-				return;
-			}
-			if (hydrated.optOut !== undefined) {
-				runtime.setOptOutServerWrittenAt(null, true);
-			}
-		};
-
 	const buildHydrationCommit = function buildHydrationCommit(
 		before: ConsentSnapshot,
 		browserBefore: BrowserConsentRecords,
@@ -525,11 +474,9 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			choice,
 			optOut: validatedOptOut,
 			optOutGpcReported: _gpcMark,
-			optOutLinkedExternalId,
 			optOutLocalAct: _localAct,
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
-			optOutServerWrittenAt: _serverWrittenAt,
 			vendorDeclared,
 			vendorTimes,
 			...rest
@@ -574,13 +521,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (reset) {
 			verifiedLinks.clear();
 		}
-		const hydratedSubjectId =
-			validated.subject === undefined
-				? before.subject?.subjectId
-				: validated.subject?.subjectId;
-		if (optOutLinkedExternalId && hydratedSubjectId) {
-			verifiedLinks.set(hydratedSubjectId, optOutLinkedExternalId);
-		}
 		if (reset && before.iab) {
 			patch.iab = { ...before.iab, authority: null, tcString: null };
 		}
@@ -589,10 +529,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			validated
 		);
 		applyHydratedOptOutReceipt(
-			{ ...before, optOut: browserBefore.optOut },
-			validated
-		);
-		applyHydratedOptOutServerWrittenAt(
 			{ ...before, optOut: browserBefore.optOut },
 			validated
 		);
@@ -811,52 +747,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		return applyLiftFloorToIncoming(currentAccount, normalized);
 	};
 
-	/**
-	 * Safety margin (in ms) added to `device.writtenAt` before a null `/check`
-	 * document may drop the browser's device opt-out. Covers the write
-	 * transaction's duration and clock differences between API servers and the
-	 * database.
-	 */
-	const DEVICE_OPT_OUT_DROP_MARGIN_MS = 2000;
-
-	/**
-	 * Whether applying `rawDoc` / `normalized` should drop this browser's own
-	 * device opt-out because a verified remote lift on another domain cleared
-	 * both the person opt-out and this linked device's opt-out.
-	 */
-	const shouldDropDeviceOptOutOnAccountDoc = (
-		snapshot: ConsentSnapshot,
-		rawDoc: UserConsent,
-		normalized: AccountConsentLayer
-	): boolean => {
-		if (rawDoc.optOut !== null || normalized.optOut !== null) {
-			return false;
-		}
-		const browserOptOut = runtime.getBrowserRecords().optOut;
-		if (
-			!browserOptOut ||
-			browserOptOut.heldBy === 'person' ||
-			browserOptOut.method === 'gpc'
-		) {
-			return false;
-		}
-		const subjectId = snapshot.subject?.subjectId ?? null;
-		if (!subjectId || verifiedLinks.get(subjectId) !== normalized.externalId) {
-			return false;
-		}
-		const serverWrittenAt = runtime.getOptOutServerWrittenAt();
-		if (
-			serverWrittenAt === null ||
-			!(serverWrittenAt + DEVICE_OPT_OUT_DROP_MARGIN_MS < normalized.checkedAt)
-		) {
-			return false;
-		}
-		if (hasPendingOptOut?.(subjectId)) {
-			return false;
-		}
-		return true;
-	};
-
 	const syncUserConsent = function syncUserConsent(
 		value: UserConsent | null | undefined,
 		options?: SyncUserConsentOptions
@@ -902,31 +792,19 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			return false;
 		}
 
-		const dropDeviceOptOut = shouldDropDeviceOptOutOnAccountDoc(
-			before,
-			value,
-			normalized
-		);
 		const patch: SnapshotPatch = { now: at };
 		if (clearPending) {
 			patch.userConsentPending = false;
 		}
-		if (dropDeviceOptOut) {
-			patch.optOut = null;
-		}
 		let changed = false;
 		runtime.batch(() => {
-			if (dropDeviceOptOut) {
-				runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
-				runtime.setOptOutServerWrittenAt(null);
-			}
 			changed = commit(patch, {
 				accountLayer: normalized,
 				accountLayerSource: 'incoming',
 				preserveDialog: true,
 			});
 			const after = getSnapshot();
-			if (dropDeviceOptOut || !sameOptOutRecord(before.optOut, after.optOut)) {
+			if (!sameOptOutRecord(before.optOut, after.optOut)) {
 				emit({
 					optOut: after.optOut,
 					snapshot: after,
@@ -956,10 +834,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			commit(patch);
 		},
-		getLinkedExternalId(subjectId) {
-			return subjectId === null ? undefined : verifiedLinks.get(subjectId);
-		},
-
 		getProvisionalSubject: () => provisionalSubjectId,
 
 		hydrate: (records) => applyRecords(records, false),
@@ -1019,13 +893,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 		},
 
-		onSubjectLinked(listener) {
-			subjectLinkListeners.add(listener);
-			return () => {
-				subjectLinkListeners.delete(listener);
-			};
-		},
-
 		setSubjectId(id) {
 			const { subject, iab } = getSnapshot();
 			if ((subject?.subjectId ?? null) === id) {
@@ -1057,7 +924,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			const patch: SnapshotPatch = { now: at, user: nextUser };
 			let commitOptions: RuntimeCommitOptions | undefined;
 
-			let dropDeviceOptOut = false;
 			if (resolvedOptions?.userConsent === null) {
 				patch.userConsentPending = false;
 				commitOptions = {
@@ -1095,14 +961,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 						adoptedAccount = incoming;
 					}
 					if (adoptedAccount !== null) {
-						dropDeviceOptOut = shouldDropDeviceOptOutOnAccountDoc(
-							before,
-							resolvedOptions.userConsent,
-							adoptedAccount
-						);
-						if (dropDeviceOptOut) {
-							patch.optOut = null;
-						}
 						commitOptions = {
 							accountLayer: adoptedAccount,
 							accountLayerSource: 'incoming',
@@ -1118,16 +976,11 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 
 			runtime.batch(() => {
-				if (dropDeviceOptOut) {
-					runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
-					runtime.setOptOutServerWrittenAt(null);
-				}
 				commit(patch, commitOptions);
 				const after = getSnapshot();
 				if (
-					dropDeviceOptOut ||
-					(resolvedOptions?.userConsent !== undefined &&
-						!sameOptOutRecord(before.optOut, after.optOut))
+					resolvedOptions?.userConsent !== undefined &&
+					!sameOptOutRecord(before.optOut, after.optOut)
 				) {
 					emit({
 						optOut: after.optOut,

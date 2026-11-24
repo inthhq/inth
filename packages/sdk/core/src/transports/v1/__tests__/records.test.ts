@@ -799,7 +799,7 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		});
 	});
 
-	test('preserves device.rights and device.writtenAt and filters unsupported rights from device.rights', async () => {
+	test('preserves device.rights, filters unsupported rights from it, and drops a write time an older backend sent', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
 				optOut: {
@@ -819,10 +819,7 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 
 		const result = await transportWith(fetch).optOut(optOutPayload);
 		expect(result.optOut).toEqual({
-			device: {
-				rights: ['sale', 'share'],
-				writtenAt: ACTION_AT + 12_000,
-			},
+			device: { rights: ['sale', 'share'] },
 			heldBy: 'both',
 			method: 'gpc',
 			recordedAt: ACTION_AT + 10_000,

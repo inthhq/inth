@@ -137,11 +137,9 @@ const kernelOptOutRecord = function kernelOptOutRecord(
 	}
 	const {
 		gpcReported: _gpcReported,
-		linkedExternalId: _linkedExternalId,
 		localAct: _localAct,
 		reference: _reference,
 		rightsConfirmed: _rightsConfirmed,
-		serverWrittenAt: _serverWrittenAt,
 		subject: _subject,
 		version: _version,
 		...optOut
@@ -215,12 +213,6 @@ const attachOptOutMeta = function attachOptOutMeta(
 	}
 	if (optOutRecord.rightsConfirmed) {
 		records.optOutRightsConfirmed = true;
-	}
-	if (optOutRecord.linkedExternalId) {
-		records.optOutLinkedExternalId = optOutRecord.linkedExternalId;
-	}
-	if (optOutRecord.serverWrittenAt !== undefined) {
-		records.optOutServerWrittenAt = optOutRecord.serverWrittenAt;
 	}
 };
 
@@ -420,8 +412,6 @@ const readRecords = function readRecords(
 		delete stored.records.optOutReference;
 		delete stored.records.optOutLocalAct;
 		delete stored.records.optOutRightsConfirmed;
-		delete stored.records.optOutLinkedExternalId;
-		delete stored.records.optOutServerWrittenAt;
 	}
 	return stored;
 };

@@ -502,20 +502,6 @@ export const mountPersistence = function mountPersistence(
 				request('optOut');
 			}
 		}),
-		kernel.onOptOutServerWrittenAtChange((_writtenAt, fromHydration) => {
-			if (!fromHydration && kernel.getBrowserRecords().optOut !== null) {
-				state.optOutRecorded = true;
-				state.optOutSynced = true;
-				request('optOut');
-			}
-		}),
-		kernel.onSubjectLinked(() => {
-			if (kernel.getBrowserRecords().optOut !== null) {
-				state.optOutRecorded = true;
-				state.optOutSynced = true;
-				request('optOut');
-			}
-		}),
 		kernel.onAccountLayerChange((layer, fromHydration) => {
 			if (fromHydration) {
 				return;
@@ -558,7 +544,6 @@ export const mountPersistence = function mountPersistence(
 					optOutLocalAct: receipt.localAct,
 					optOutReference: receipt.reference,
 					optOutRightsConfirmed: receipt.rightsConfirmed,
-					optOutServerWrittenAt: queued.getOptOutServerWrittenAt(),
 					vendorChoice: queuedBrowser.vendorChoice,
 					vendorDeclared: queuedBrowser.vendorDeclared,
 					vendorTimes: queuedBrowser.vendorTimes,
@@ -758,12 +743,6 @@ export const mountPersistence = function mountPersistence(
 		if (records.optOutRightsConfirmed) {
 			patch.optOutRightsConfirmed = true;
 		}
-		if (records.optOutLinkedExternalId) {
-			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
-		}
-		if (records.optOutServerWrittenAt !== undefined) {
-			patch.optOutServerWrittenAt = records.optOutServerWrittenAt;
-		}
 	};
 
 	/**
@@ -778,7 +757,6 @@ export const mountPersistence = function mountPersistence(
 		patch.optOutLocalAct = receipt.localAct;
 		patch.optOutReference = receipt.reference;
 		patch.optOutRightsConfirmed = receipt.rightsConfirmed;
-		patch.optOutServerWrittenAt = kernel.getOptOutServerWrittenAt();
 	};
 
 	const mergeSeededOptOutMeta = function mergeSeededOptOutMeta(
@@ -806,23 +784,6 @@ export const mountPersistence = function mountPersistence(
 			!currentReceipt.rightsConfirmed
 		) {
 			patch.optOutRightsConfirmed = true;
-		}
-		if (
-			records.optOutLinkedExternalId &&
-			kernel.getLinkedExternalId(
-				records.subject?.subjectId ??
-					kernel.getSnapshot().subject?.subjectId ??
-					null
-			) !== records.optOutLinkedExternalId
-		) {
-			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
-		}
-		if (
-			records.optOutServerWrittenAt !== undefined &&
-			records.optOutServerWrittenAt !== null &&
-			kernel.getOptOutServerWrittenAt() !== records.optOutServerWrittenAt
-		) {
-			patch.optOutServerWrittenAt = records.optOutServerWrittenAt;
 		}
 	};
 

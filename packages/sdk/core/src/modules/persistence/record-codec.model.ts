@@ -35,7 +35,6 @@ import {
 	checkTimestamp,
 	isNonEmptyString,
 	isPlainRecord,
-	isValidTimestamp,
 	ownKeys,
 	ownValue,
 	validateExplicitChoice,
@@ -140,17 +139,6 @@ export type StoredOptOutRecord = OptOutRecord & {
 	localAct?: OptOutLocalAct;
 	/** Whether `rights` were confirmed by a backend answer. */
 	rightsConfirmed?: boolean;
-	/**
-	 * Verified external user ID linked to `subject.subjectId`. Stored in
-	 * localStorage only so a reloaded page knows this device's opt-out belongs
-	 * to a verified linked subject.
-	 */
-	linkedExternalId?: string;
-	/**
-	 * Raw server `recordedAt` timestamp from the backend confirmation of this
-	 * device's opt-out. Stored in both localStorage and the compact cookie.
-	 */
-	serverWrittenAt?: number;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -1067,6 +1055,7 @@ const OPT_OUT_STORED_KEYS = [
 	'reference',
 	'localAct',
 	'rightsConfirmed',
+	// Written by earlier prereleases. Read without error and ignored.
 	'linkedExternalId',
 	'serverWrittenAt',
 ] as const;
@@ -1092,11 +1081,9 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 	issues: StorageIssue[]
 ): {
 	gpcReported: boolean;
-	linkedExternalId: string | undefined;
 	localAct: OptOutLocalAct | undefined;
 	reference: string | undefined;
 	rightsConfirmed: boolean;
-	serverWrittenAt: number | undefined;
 } {
 	const gpcReported = readOptionalOptOutBoolean(input, 'gpcReported', issues);
 	const rightsConfirmed = readOptionalOptOutBoolean(
@@ -1113,15 +1100,6 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-identifier', path: 'reference' });
 		}
 	}
-	const rawLinkedExternalId = ownValue(input, 'linkedExternalId');
-	let linkedExternalId: string | undefined;
-	if (rawLinkedExternalId !== undefined) {
-		if (isNonEmptyString(rawLinkedExternalId)) {
-			linkedExternalId = rawLinkedExternalId;
-		} else {
-			issues.push({ code: 'invalid-identifier', path: 'linkedExternalId' });
-		}
-	}
 	const rawLocalAct = ownValue(input, 'localAct');
 	let localAct: OptOutLocalAct | undefined;
 	if (rawLocalAct !== undefined) {
@@ -1131,22 +1109,11 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-value', path: 'localAct' });
 		}
 	}
-	const rawServerWrittenAt = ownValue(input, 'serverWrittenAt');
-	let serverWrittenAt: number | undefined;
-	if (rawServerWrittenAt !== undefined) {
-		if (isValidTimestamp(rawServerWrittenAt)) {
-			serverWrittenAt = rawServerWrittenAt;
-		} else {
-			issues.push({ code: 'invalid-timestamp', path: 'serverWrittenAt' });
-		}
-	}
 	return {
 		gpcReported,
-		linkedExternalId,
 		localAct,
 		reference,
 		rightsConfirmed,
-		serverWrittenAt,
 	};
 };
 
@@ -1212,15 +1179,11 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	if (meta.rightsConfirmed) {
 		record.rightsConfirmed = true;
 	}
-	if (meta.linkedExternalId) {
-		record.linkedExternalId = meta.linkedExternalId;
-	}
-	if (meta.serverWrittenAt !== undefined) {
-		record.serverWrittenAt = meta.serverWrittenAt;
-	}
 	return { ok: true, record };
 };
 
+// `s` was a server write time written by earlier prereleases. It is read
+// without error and ignored.
 const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h', 's']);
 
 const checkCompactOptOutField = function checkCompactOptOutField(
@@ -1302,9 +1265,6 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	}
 	if (fields.get('c') === '1') {
 		candidate.rightsConfirmed = true;
-	}
-	if (fields.has('s')) {
-		candidate.serverWrittenAt = parseCompactInteger(fields.get('s'));
 	}
 	return decodeOptOutRecord(candidate, now);
 };

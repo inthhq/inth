@@ -398,12 +398,6 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 	if (record.rightsConfirmed) {
 		encoded.rightsConfirmed = true;
 	}
-	if (record.linkedExternalId) {
-		encoded.linkedExternalId = record.linkedExternalId;
-	}
-	if (record.serverWrittenAt !== undefined) {
-		encoded.serverWrittenAt = record.serverWrittenAt;
-	}
 	return JSON.stringify(encoded);
 };
 
@@ -438,9 +432,6 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 	}
 	if (record.rightsConfirmed) {
 		fields.push(field('c', 1));
-	}
-	if (record.serverWrittenAt !== undefined) {
-		fields.push(field('s', record.serverWrittenAt));
 	}
 	return fields.join(FIELD_SEPARATOR);
 };

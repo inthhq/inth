@@ -526,7 +526,6 @@ describe('opt-out, GPC, and account opt-out lift', () => {
 							optOut: {
 								device: {
 									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -1952,7 +1951,6 @@ describe('kernel regressions (set 2)', () => {
 							optOut: {
 								device: {
 									rights: ['targeted_ads'],
-									writtenAt: NOW - 1000,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -2499,7 +2497,6 @@ describe('kernel regressions (set 3)', () => {
 							optOut: {
 								device: {
 									rights: ['targeted_ads' as const],
-									writtenAt: NOW - 1000,
 								},
 								heldBy: 'both' as const,
 								method: 'button' as const,
@@ -3162,7 +3159,6 @@ describe('kernel regressions (set 5): per-vendor times and the lift outcome tabl
 			| (OptOutRecord & {
 					device?: {
 						rights: ('sale' | 'share' | 'targeted_ads')[];
-						writtenAt: number;
 					};
 			  })
 			| null;
@@ -3227,7 +3223,6 @@ describe('kernel regressions (set 5): per-vendor times and the lift outcome tabl
 			answer: {
 				device: {
 					rights: ['targeted_ads'],
-					writtenAt: NOW - 3000,
 				},
 				heldBy: 'both',
 				method: 'button',
@@ -3259,7 +3254,6 @@ describe('kernel regressions (set 5): per-vendor times and the lift outcome tabl
 			answer: {
 				device: {
 					rights: ['targeted_ads'],
-					writtenAt: NOW - 3000,
 				},
 				heldBy: 'device',
 				method: 'button',
@@ -4059,100 +4053,7 @@ describe('kernel regressions (set 6)', () => {
 	});
 });
 
-describe('e2e findings: remote lift drops stale linked device opt-out & both answer fills requested device rights', () => {
-	// the e2e repro (including reload across persistence!)
-	test('e2e repro: a fresh account doc with null legacy optOut drops a linked browser device opt-out, deletes storage, and emits opt-out:synced', async () => {
-		const rule = optOutRule({ prompt: 'choice' });
-		const resolution = matchedResolution(rule);
-		const user = { externalId: 'u_e2e', identityToken: 'tok_e2e' };
-
-		// Visit 1 on A: signed in as U, optOut() records device opt-out and backend confirms verified link + both
-		const visit1 = createKernel(
-			{
-				consentCategories: ['marketing', 'measurement'],
-				initialPolicyResolution: resolution,
-				initialUser: user,
-				now: NOW - 5000,
-				transport: {
-					optOut: (payload) =>
-						Promise.resolve({
-							link: { stored: true, verifiedBy: 'identity_token' },
-							ok: true,
-							optOut: {
-								device: {
-									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW - 5000,
-								},
-								heldBy: 'both',
-								method: 'button',
-								recordedAt: NOW - 5000,
-								rights: ['sale', 'share', 'targeted_ads'],
-							},
-							recordId: RECORD_UUID,
-							subjectId: payload.subjectId,
-						}),
-				},
-			},
-			{ outboxStore: createMemoryOutboxStore() }
-		);
-		const p1 = createPersistence({ kernel: visit1 });
-		try {
-			visit1.syncUserConsent(
-				makeUserConsent({
-					checkedAt: NOW - 6000,
-					externalId: user.externalId,
-					optOut: null,
-				})
-			);
-			const res = await visit1.commands.optOut({ actionAt: NOW - 5000 });
-			expect(res.ok).toBe(true);
-			await flushMacrotasks();
-			expect(window.localStorage.getItem('inth-opt-out')).not.toBeNull();
-		} finally {
-			p1.dispose();
-			visit1.dispose();
-		}
-
-		// Reload A after B lifted: fresh /check has legacy optOut: null and sync.optOut: null at NOW
-		const visit2 = createKernel(
-			{
-				consentCategories: ['marketing', 'measurement'],
-				initialPolicyResolution: resolution,
-				initialUser: user,
-				now: NOW,
-			},
-			{ outboxStore: createMemoryOutboxStore() }
-		);
-		const p2 = createPersistence({ kernel: visit2 });
-		const syncedEvents: (Readonly<OptOutRecord> | null)[] = [];
-		visit2.events.on('opt-out:synced', ({ optOut }) => {
-			syncedEvents.push(optOut);
-		});
-		try {
-			await flushMacrotasks();
-			expect(visit2.getBrowserRecords().optOut?.heldBy).toBe('device');
-
-			visit2.syncUserConsent(
-				makeUserConsent({
-					checkedAt: NOW,
-					externalId: user.externalId,
-					optOut: null,
-				})
-			);
-			await flushMacrotasks();
-
-			expect(visit2.getBrowserRecords().optOut).toBeNull();
-			expect(visit2.getSnapshot().optOut).toBeNull();
-			expect(visit2.getSnapshot().effectivePermissions.marketing).toBe(true);
-			expect(window.localStorage.getItem('inth-opt-out')).toBeNull();
-			expect(document.cookie).not.toContain('inth-opt-out=');
-			expect(syncedEvents).toEqual([null]);
-		} finally {
-			p2.dispose();
-			visit2.dispose();
-		}
-	});
-
+describe('an account document without an opt-out never clears this device opt-out & both answer fills requested device rights', () => {
 	// local opt-out made after the document's checkedAt survives
 	test('a local device opt-out recorded after the account document checkedAt survives', async () => {
 		const rule = optOutRule({ prompt: 'choice' });
@@ -4171,7 +4072,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 						rights: ['sale', 'share', 'targeted_ads'],
 					},
 					optOutRightsConfirmed: true,
-					optOutServerWrittenAt: NOW - 1000,
 					subject: { subjectId: SUBJECT_UUID },
 				},
 				initialUser: user,
@@ -4218,7 +4118,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 						rights: ['sale', 'share', 'targeted_ads'],
 					},
 					optOutRightsConfirmed: true,
-					optOutServerWrittenAt: NOW - 5000,
 					subject: { subjectId: SUBJECT_UUID },
 				},
 				initialUser: user,
@@ -4264,7 +4163,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 						rights: ['sale', 'share', 'targeted_ads'],
 					},
 					optOutRightsConfirmed: true,
-					optOutServerWrittenAt: NOW - 5000,
 					subject: { subjectId: SUBJECT_UUID },
 				},
 				initialUser: user,
@@ -4305,7 +4203,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 						rights: ['sale', 'share', 'targeted_ads'],
 					},
 					optOutRightsConfirmed: true,
-					optOutServerWrittenAt: NOW - 5000,
 					subject: { subjectId: SUBJECT_UUID },
 				},
 				initialUser: user,
@@ -4365,7 +4262,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 							optOut: {
 								device: {
 									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -4419,7 +4315,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 							optOut: {
 								device: {
 									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -4490,7 +4385,6 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 							optOut: {
 								device: {
 									rights: ['sale', 'targeted_ads'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -4671,7 +4565,6 @@ describe('kernel regressions (set 7)', () => {
 							optOut: {
 								device: {
 									rights: ['sale', 'share'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -4998,7 +4891,6 @@ describe('kernel regressions (set 7)', () => {
 									optOut: {
 										device: {
 											rights: ['sale', 'share', 'targeted_ads'],
-											writtenAt: NOW + 1000,
 										},
 										heldBy: 'both',
 										method: 'button',
@@ -5115,7 +5007,6 @@ describe('kernel regressions (set 7)', () => {
 							optOut: {
 								device: {
 									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW + 6000,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -5297,7 +5188,6 @@ describe('regressions (set 8)', () => {
 							optOut: {
 								device: {
 									rights: ['sale', 'share', 'targeted_ads'],
-									writtenAt: NOW + 3000,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -5318,12 +5208,11 @@ describe('regressions (set 8)', () => {
 			);
 			clock = NOW + 1000;
 			// Click at +1000. Overlapping /check reads no row at +2000.
-			// POST commits at +3000 (device.writtenAt = +3000). /check arrives at +4000.
+			// POST commits at +3000. /check arrives at +4000.
 			expect(
 				await kernel.commands.optOut({ actionAt: NOW + 1000 })
 			).toMatchObject({ ok: true });
 			expect(kernel.getOptOutReceiptData().rightsConfirmed).toBe(true);
-			expect(kernel.getOptOutServerWrittenAt()).toBe(NOW + 3000);
 			expect(kernel.getOptOutRequestsInFlight()).toBe(0);
 			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 			clock = NOW + 4000;
@@ -5361,7 +5250,6 @@ describe('regressions (set 8)', () => {
 							optOut: {
 								device: {
 									rights: ['sale', 'share'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -5468,7 +5356,6 @@ describe('regressions (set 8)', () => {
 								optOut: {
 									device: {
 										rights: ['sale', 'share', 'targeted_ads'],
-										writtenAt: NOW - 5000,
 									},
 									heldBy: 'both',
 									method: 'button',
@@ -5518,61 +5405,6 @@ describe('regressions (set 8)', () => {
 		}
 	});
 
-	test('init() returning heldBy: both before userConsent arrives is dropped when a newer /check says optOut: null', async () => {
-		const user = { externalId: 'user_both_drop', identityToken: 'tok_drop' };
-		const kernel = createKernel(
-			{
-				consentCategories: ['marketing'],
-				initialPolicyResolution: r2Resolution,
-				initialRecords: {
-					now: NOW,
-					optOutLinkedExternalId: user.externalId,
-					subject: { subjectId: SUBJECT_UUID },
-				},
-				initialUser: user,
-				now: NOW,
-				transport: {
-					init: () =>
-						Promise.resolve({
-							policyResolution: writePolicyResolutionWire(r2Resolution),
-							records: {
-								optOut: {
-									device: {
-										rights: ['sale', 'share', 'targeted_ads'],
-										writtenAt: NOW - 5000,
-									},
-									heldBy: 'both',
-									method: 'button',
-									recordedAt: NOW - 5000,
-									rights: ['sale', 'share', 'targeted_ads'],
-								},
-							},
-							subjectId: SUBJECT_UUID,
-						}),
-				},
-			},
-			{ outboxStore: createMemoryOutboxStore() }
-		);
-		try {
-			await kernel.commands.init();
-			expect(kernel.getBrowserRecords().optOut?.heldBy).toBe('both');
-
-			kernel.syncUserConsent(
-				makeUserConsent({
-					checkedAt: NOW,
-					externalId: user.externalId,
-					optOut: null,
-				})
-			);
-
-			expect(kernel.getBrowserRecords().optOut).toBeNull();
-			expect(kernel.getSnapshot().optOut).toBeNull();
-			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
-		} finally {
-			kernel.dispose();
-		}
-	});
-
 	test('save("all") save-triggered lift clears when browserOptOut is heldBy: both', async () => {
 		const user = { externalId: 'user_both_save', identityToken: 'tok_save' };
 		const kernel = createKernel(
@@ -5592,7 +5424,6 @@ describe('regressions (set 8)', () => {
 								optOut: {
 									device: {
 										rights: ['sale', 'share', 'targeted_ads'],
-										writtenAt: NOW - 5000,
 									},
 									heldBy: 'both',
 									method: 'button',
@@ -5692,67 +5523,6 @@ describe('regressions (set 8)', () => {
 		}
 	});
 
-	test('margin & older backend: drop requires writtenAt + 2000 < checkedAt and never drops without writtenAt', () => {
-		const user = { externalId: 'user_margin' };
-		const makeLinkedKernel = (writtenAt: number | null) =>
-			createKernel(
-				{
-					consentCategories: ['marketing'],
-					initialPolicyResolution: r2Resolution,
-					initialRecords: {
-						now: NOW,
-						optOut: {
-							heldBy: 'device',
-							method: 'button',
-							recordedAt: NOW - 10_000,
-							rights: ['sale', 'share'],
-						},
-						optOutLinkedExternalId: user.externalId,
-						optOutRightsConfirmed: writtenAt !== null,
-						optOutServerWrittenAt: writtenAt,
-						subject: { subjectId: SUBJECT_UUID },
-					},
-					initialUser: user,
-					now: NOW,
-				},
-				{ outboxStore: createMemoryOutboxStore() }
-			);
-
-		// Without writtenAt (older backend / older record): never drops
-		const noWrittenAt = makeLinkedKernel(null);
-		try {
-			noWrittenAt.syncUserConsent(
-				makeUserConsent({ checkedAt: NOW, externalId: user.externalId })
-			);
-			expect(noWrittenAt.getBrowserRecords().optOut).not.toBeNull();
-		} finally {
-			noWrittenAt.dispose();
-		}
-
-		// Exactly at margin (writtenAt + 2000 === checkedAt): does not drop
-		const atMargin = makeLinkedKernel(NOW - 2000);
-		try {
-			atMargin.syncUserConsent(
-				makeUserConsent({ checkedAt: NOW, externalId: user.externalId })
-			);
-			expect(atMargin.getBrowserRecords().optOut).not.toBeNull();
-		} finally {
-			atMargin.dispose();
-		}
-
-		// Strictly past margin (writtenAt + 2000 < checkedAt): drops
-		const pastMargin = makeLinkedKernel(NOW - 2001);
-		try {
-			pastMargin.syncUserConsent(
-				makeUserConsent({ checkedAt: NOW, externalId: user.externalId })
-			);
-			expect(pastMargin.getBrowserRecords().optOut).toBeNull();
-			expect(pastMargin.getOptOutServerWrittenAt()).toBeNull();
-		} finally {
-			pastMargin.dispose();
-		}
-	});
-
 	test('partial lift: partial lift on a heldBy: both browser record sets heldBy to device', async () => {
 		const user = { externalId: 'user_both_partial', identityToken: 'tok_bp' };
 		const kernel = createKernel(
@@ -5767,7 +5537,6 @@ describe('regressions (set 8)', () => {
 						recordedAt: NOW - 5000,
 						rights: ['sale', 'share'],
 					},
-					optOutLinkedExternalId: user.externalId,
 					subject: { subjectId: SUBJECT_UUID },
 				},
 				initialUser: user,
@@ -5782,7 +5551,6 @@ describe('regressions (set 8)', () => {
 							optOut: {
 								device: {
 									rights: ['targeted_ads'],
-									writtenAt: NOW,
 								},
 								heldBy: 'both',
 								method: 'button',
@@ -5814,7 +5582,6 @@ describe('regressions (set 8)', () => {
 			expect(kernel.getBrowserRecords().optOut?.rights).toEqual([
 				'targeted_ads',
 			]);
-			expect(kernel.getOptOutServerWrittenAt()).toBe(NOW);
 		} finally {
 			kernel.dispose();
 		}

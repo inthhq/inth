@@ -66,6 +66,7 @@ import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice.model';
 import { saveRecordsOptOut } from '../surface-actions/instant-commit';
 import {
+	deviceOptOutUnderAccount,
 	filterSupportedOptOutRights,
 	resolveBrowserVendorTimes,
 } from './account-layer';
@@ -944,15 +945,20 @@ export interface ChoiceRecorderOptions {
  * | `null`            | —                      | success           | clear opt-out, set `liftedRecordedAt`              | clear any non-`person` browser opt-out (`null`)                                 |
  * | `heldBy: 'person'`| no                     | success           | keep answer's remaining person rights, set floor   | clear any non-`person` browser opt-out (`null`)                                 |
  * | `heldBy: 'person'`| yes                    | `held-by-account` | unchanged                                          | unchanged                                                                       |
- * | `heldBy: 'both'`  | no                     | success           | clear opt-out, set `liftedRecordedAt`              | with `device`: adopt `device.rights` + `device.writtenAt`; without: fallback    |
+ * | `heldBy: 'both'`  | no                     | success           | clear opt-out, set `liftedRecordedAt`              | with `device`: adopt `device.rights`; without: fallback                         |
  * | `heldBy: 'both'`  | yes                    | `held-by-account` | unchanged                                          | unchanged                                                                       |
- * | `heldBy: 'device'`| no                     | success           | clear opt-out, set `liftedRecordedAt`              | with `device`: adopt `device.rights` + `device.writtenAt`; without: fallback    |
+ * | `heldBy: 'device'`| no                     | success           | clear opt-out, set `liftedRecordedAt`              | with `device`: adopt `device.rights`; without: fallback                         |
  * | `heldBy: 'device'`| yes                    | `held-by-account` | unchanged                                          | unchanged                                                                       |
  *
  * Fallback (older backend without `device`): remove lifted rights from any
  * existing non-`person` (`device` or `both`) browser opt-out (setting
  * `heldBy: 'device'` if partial rights remain, clearing to `null` if none),
- * without copying rights from the answer or setting `serverWrittenAt`.
+ * without copying rights from the answer.
+ *
+ * A lift here is this visitor's own act on this device, so it clears this
+ * browser's own device opt-out in every success row. An account opt-in made on
+ * another domain never clears it: it only outranks it in the effective view
+ * while that user is signed in (see `deriveEffectiveOptOut`).
  */
 const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	answerOptOut: OptOutAnswer | null | undefined,
@@ -1069,13 +1075,26 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		);
 	};
 
+	/**
+	 * The browser opt-out a new act on this device compares against. While an
+	 * account layer is active, a legacy person-held record doesn't count, and
+	 * neither does a device opt-out a newer account opt-in outranks, so a new
+	 * click here records a new opt-out.
+	 */
 	const effectiveBrowserOptOutFor = (
 		before: ConsentSnapshot,
 		browserOptOut: Readonly<OptOutRecord> | null
-	): Readonly<OptOutRecord> | null =>
-		hasActiveAccountLayer(before) && browserOptOut?.heldBy === 'person'
-			? null
-			: browserOptOut;
+	): Readonly<OptOutRecord> | null => {
+		if (!hasActiveAccountLayer(before)) {
+			return browserOptOut;
+		}
+		return deviceOptOutUnderAccount(
+			browserOptOut,
+			runtime.getAccountLayer()
+		) === browserOptOut
+			? browserOptOut
+			: null;
+	};
 
 	const captureAccountLiftBasis = (): {
 		checkedAt: number | null;
@@ -1221,7 +1240,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			remaining,
 			liftedRights
 		);
-		let adoptDeviceWrittenAt: number | null = null;
+		let adoptedDeviceRow = false;
 
 		if (hasActiveAccount) {
 			const liftedRecordedAt =
@@ -1265,7 +1284,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						deviceRights,
 						browserOptOut
 					);
-					adoptDeviceWrittenAt = answerOptOut.device.writtenAt;
+					adoptedDeviceRow = true;
 				} else if (browserOptOut && browserOptOut.heldBy !== 'person') {
 					browserOptOutPatch = null;
 				}
@@ -1277,17 +1296,15 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		batch(() => {
 			runtime.noteOptOutAct();
 			runtime.bumpAccountSyncGeneration();
-			if (adoptDeviceWrittenAt !== null) {
+			if (adoptedDeviceRow) {
 				const currentReceipt = runtime.getOptOutReceiptData();
 				runtime.setOptOutReceiptData({
 					localAct: currentReceipt.localAct,
 					reference: currentReceipt.reference,
 					rightsConfirmed: true,
 				});
-				runtime.setOptOutServerWrittenAt(adoptDeviceWrittenAt);
 			} else if (browserOptOutPatch === null) {
 				runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
-				runtime.setOptOutServerWrittenAt(null);
 			}
 			const patch: SnapshotPatch = { now: at };
 			if (browserOptOutPatch !== undefined) {
@@ -1687,7 +1704,6 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					reference,
 					rightsConfirmed: false,
 				});
-				runtime.setOptOutServerWrittenAt(null);
 				commit(patch);
 				const committed = getSnapshot();
 				const optOut = (runtime.getBrowserRecords().optOut ??
@@ -1957,7 +1973,6 @@ export const createChoiceRecorder = function createChoiceRecorder({
 							reference: recordedOptOutReference,
 							rightsConfirmed: false,
 						});
-						runtime.setOptOutServerWrittenAt(null);
 					}
 					commit(
 						patch,

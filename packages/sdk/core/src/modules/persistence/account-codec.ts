@@ -7,7 +7,8 @@
  * - `<key>-acct-c`: compact choices with the shared basis table, raw times,
  *   and optional `expiresAt`
  * - `<key>-acct-v`: denied vendor IDs with raw times
- * - `<key>-acct-o`: person-held opt-out with raw time
+ * - `<key>-acct-o`: person-held opt-out with raw time, and the raw time of
+ *   the person's latest opt-in per right
  *
  * LocalStorage (`<key>-acct`) holds the full layer (including grants and the
  * full vendor map) under the same revision. Any part whose revision differs
@@ -39,6 +40,7 @@ import {
 import type {
 	AccountCategoryDecision,
 	AccountConsentLayer,
+	AccountOptIn,
 	AccountOptOutRecord,
 	AccountVendorDecision,
 } from '../../kernel/account-layer';
@@ -133,6 +135,7 @@ interface DecodedOptOutPart {
 	readonly kind: 'optOut';
 	readonly header: AccountPartHeader;
 	readonly optOut: AccountOptOutRecord | null;
+	readonly optIn?: AccountOptIn;
 }
 
 interface DecodedLocalPart {
@@ -243,13 +246,16 @@ export const encodeAccountVendorsCookie = function encodeAccountVendorsCookie(
 	return encoded;
 };
 
-/** Encode the `<key>-acct-o` cookie. A null opt-out is written explicitly. */
+/**
+ * Encode the `<key>-acct-o` cookie. A null opt-out is written explicitly.
+ * Opt-ins go in `i`, one `right.time` tuple per right.
+ */
 export const encodeAccountOptOutCookie = function encodeAccountOptOutCookie(
 	layer: AccountConsentLayer,
 	rev: string
 ): string {
 	const fields = encodeHeaderFields(layer, rev);
-	const { optOut } = layer;
+	const { optIn, optOut } = layer;
 	if (optOut && optOut.rights.length > 0) {
 		const rightSet = new Set(optOut.rights);
 		const rights = OPT_OUT_RIGHTS.filter((right) => rightSet.has(right))
@@ -261,6 +267,15 @@ export const encodeAccountOptOutCookie = function encodeAccountOptOutCookie(
 				`${rights}${TUPLE_SEPARATOR}${METHOD_TO_CODE[optOut.method]}${TUPLE_SEPARATOR}${optOut.rawRecordedAt}`
 			)
 		);
+	}
+	const optInEntries = OPT_OUT_RIGHTS.flatMap((right) => {
+		const at = optIn?.[right];
+		return at === undefined
+			? []
+			: [`${RIGHT_TO_CODE[right]}${TUPLE_SEPARATOR}${at}`];
+	});
+	if (optInEntries.length > 0) {
+		fields.push(field('i', optInEntries.join(LIST_SEPARATOR)));
 	}
 	return fields.join(FIELD_SEPARATOR);
 };
@@ -283,6 +298,9 @@ export const encodeAccountLocalJson = function encodeAccountLocalJson(
 	};
 	if (layer.liftedRecordedAt !== undefined) {
 		record.liftedRecordedAt = layer.liftedRecordedAt;
+	}
+	if (layer.optIn !== undefined) {
+		record.optIn = layer.optIn;
 	}
 	return JSON.stringify(record);
 };
@@ -566,6 +584,25 @@ const parseOptOutTuple = (raw: string): AccountOptOutRecord | null => {
 	return rights.length > 0 ? { method, rawRecordedAt, rights } : null;
 };
 
+const parseOptInList = (raw: string): AccountOptIn | null => {
+	const optIn: Partial<Record<OptOutRight, number>> = {};
+	for (const entry of raw.split(LIST_SEPARATOR)) {
+		const [code, rawTime, extra] = entry.split(TUPLE_SEPARATOR);
+		const right = code === undefined ? undefined : CODE_TO_RIGHT.get(code);
+		const at = parseNonNegativeInt(rawTime);
+		if (
+			!right ||
+			at === null ||
+			extra !== undefined ||
+			optIn[right] !== undefined
+		) {
+			return null;
+		}
+		optIn[right] = at;
+	}
+	return optIn;
+};
+
 export const decodeAccountOptOutCookie = function decodeAccountOptOutCookie(
 	rawValue: string | null | undefined
 ): DecodedOptOutPart | null {
@@ -582,8 +619,17 @@ export const decodeAccountOptOutCookie = function decodeAccountOptOutCookie(
 		return null;
 	}
 	let optOut: AccountOptOutRecord | null = null;
+	let optIn: AccountOptIn | undefined;
 	for (const [key, value] of fields) {
 		if (HEADER_KEYS.has(key)) {
+			continue;
+		}
+		if (key === 'i') {
+			const parsedOptIn = parseOptInList(value);
+			if (!parsedOptIn) {
+				return null;
+			}
+			optIn = parsedOptIn;
 			continue;
 		}
 		if (key !== 'o') {
@@ -595,7 +641,9 @@ export const decodeAccountOptOutCookie = function decodeAccountOptOutCookie(
 		}
 		optOut = parsed;
 	}
-	return { header, kind: 'optOut', optOut };
+	return optIn === undefined
+		? { header, kind: 'optOut', optOut }
+		: { header, kind: 'optOut', optIn, optOut };
 };
 
 export const decodeAccountLocalJson = function decodeAccountLocalJson(
@@ -717,6 +765,15 @@ const mergeGroupVendors = function mergeGroupVendors(
 	return vendors;
 };
 
+/** The opt-ins of a part group: from the opt-out cookie, else localStorage. */
+const groupOptIn = function groupOptIn(
+	group: PartGroup
+): AccountOptIn | undefined {
+	return group.optOut === undefined
+		? group.local?.layer.optIn
+		: group.optOut.optIn;
+};
+
 /** Detailed result of reading stored account consent parts from browser storage. */
 export interface AccountLayerReadResult {
 	readonly layer: AccountConsentLayer | null;
@@ -776,6 +833,7 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 		winner.optOut === undefined
 			? (winner.local?.layer.optOut ?? null)
 			: winner.optOut.optOut;
+	const optIn = groupOptIn(winner);
 	const vendorsOverflow = winner.vendors?.overflow === true && !winner.local;
 	const partial = isPartialAccountGroup(winner, groups.size, vendorsOverflow);
 	const baseLayer: AccountConsentLayer = {
@@ -787,10 +845,11 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 		skew,
 		vendors: mergeGroupVendors(winner),
 	};
+	const withOptIn = optIn === undefined ? baseLayer : { ...baseLayer, optIn };
 	const withLift =
 		liftedRecordedAt === undefined
-			? baseLayer
-			: { ...baseLayer, liftedRecordedAt };
+			? withOptIn
+			: { ...withOptIn, liftedRecordedAt };
 	return {
 		layer: vendorsOverflow ? { ...withLift, vendorsOverflow: true } : withLift,
 		partial,

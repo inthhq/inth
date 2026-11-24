@@ -398,13 +398,6 @@ export interface HydrationRecords {
 	 * answer. Local fallback rights are not confirmation.
 	 */
 	optOutRightsConfirmed?: boolean;
-	/** Verified external user ID linked to the opt-out record's subject. */
-	optOutLinkedExternalId?: string | null;
-	/**
-	 * Raw server `device.writtenAt` timestamp from the last backend answer
-	 * carrying this browser's device opt-out row, or `null` when absent.
-	 */
-	optOutServerWrittenAt?: number | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/**

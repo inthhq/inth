@@ -297,6 +297,7 @@ const OPT_OUT_KEYS = [
 	'categories',
 ] as const;
 const OPT_OUT_ANSWER_KEYS = [...OPT_OUT_KEYS, 'device'] as const;
+// An older backend also sent `writtenAt`. It is accepted and ignored.
 const OPT_OUT_DEVICE_KEYS = ['rights', 'writtenAt'] as const;
 const OPT_OUT_METHOD_SET: ReadonlySet<string> = new Set(OPT_OUT_METHODS);
 const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
@@ -351,17 +352,10 @@ const readOptOutDeviceRow = function readOptOutDeviceRow(
 		OPT_OUT_RIGHTS,
 		issues
 	);
-	const writtenAt = ownValue(raw, 'writtenAt');
-	if (!isValidTimestamp(writtenAt)) {
-		issues.push({ code: 'invalid-timestamp', path: 'device.writtenAt' });
-	}
 	if (issues.length > 0) {
 		return undefined;
 	}
-	return {
-		rights,
-		writtenAt: writtenAt as number,
-	};
+	return { rights };
 };
 
 /**
@@ -467,7 +461,7 @@ export const stripOptOutDevice = function stripOptOutDevice(
 
 /**
  * Validates an effective opt-out answer from a transport or init response,
- * accepting the optional `/v1` `device` row (`{ rights, writtenAt }`).
+ * accepting the optional `/v1` `device` row (`{ rights }`).
  */
 export const validateOptOutAnswer = function validateOptOutAnswer(
 	input: unknown,

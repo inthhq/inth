@@ -121,12 +121,6 @@ export interface InternalKernel extends ConsentKernel {
 			fromHydration?: boolean
 		) => void
 	) => () => void;
-	/** Raw server `device.writtenAt` from the last backend answer carrying this device's opt-out row, or `null`. */
-	getOptOutServerWrittenAt: () => number | null;
-	/** Subscribe to changes in the raw server write timestamp. */
-	onOptOutServerWrittenAtChange: (
-		listener: (writtenAt: number | null, fromHydration?: boolean) => void
-	) => () => void;
 	/**
 	 * Number of direct opt-out and lift requests currently in flight.
 	 */
@@ -137,10 +131,6 @@ export interface InternalKernel extends ConsentKernel {
 	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
 	/** Browser-made consent records kept apart from the account consent layer. */
 	getBrowserRecords: () => BrowserConsentRecords;
-	/** Verified external user ID linked to `subjectId`, when known. */
-	getLinkedExternalId: (subjectId: string | null) => string | undefined;
-	/** Subscribe to newly verified subject links so persistence can store them. */
-	onSubjectLinked: (listener: () => void) => () => void;
 	/** Current account consent layer, or `null` when none is held. */
 	getAccountLayer: () => AccountConsentLayer | null;
 	/** Provenance (`'incoming' | 'stored'`) of the current account consent layer. */

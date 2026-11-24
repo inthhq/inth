@@ -95,21 +95,6 @@ export interface KernelSeams {
  *
  * @internal
  */
-const resolveInitialOptOutServerWrittenAt =
-	function resolveInitialOptOutServerWrittenAt(
-		hasOptOut: boolean,
-		initialRecords: KernelConfig['initialRecords']
-	): number | null {
-		if (!hasOptOut || !initialRecords) {
-			return null;
-		}
-		return (
-			initialRecords.optOutServerWrittenAt ??
-			initialRecords.optOut?.device?.writtenAt ??
-			null
-		);
-	};
-
 export const createKernel = function createKernel(
 	config: KernelConfig = {},
 	seams: KernelSeams = {}
@@ -144,12 +129,6 @@ export const createKernel = function createKernel(
 						config.initialRecords?.optOutRightsConfirmed === true,
 				});
 	const serverOptOutReceiptData = initialOptOutReceiptData;
-	const initialOptOutServerWrittenAt = resolveInitialOptOutServerWrittenAt(
-		initialState.browserRecords.optOut !== null,
-		config.initialRecords
-	);
-	const initialOptOutLinkedExternalId: string | null =
-		config.initialRecords?.optOutLinkedExternalId ?? null;
 
 	const sendGpcOptOut = function sendGpcOptOut(
 		snapshot: ConsentSnapshot,
@@ -211,7 +190,6 @@ export const createKernel = function createKernel(
 		initialBrowserRecords: initialState.browserRecords,
 		initialOptOutGpcReported,
 		initialOptOutReceiptData,
-		initialOptOutServerWrittenAt,
 		initialSnapshot,
 		// oxlint-disable-next-line no-use-before-define -- Commits run only after assembly.
 		onDeadlineChange: () => lifecycle.armDeadline(),
@@ -246,8 +224,6 @@ export const createKernel = function createKernel(
 	});
 	const records = createRecordsBoundary({
 		adoptSubject: outbox.adoptSubject,
-		hasPendingOptOut: outbox.hasPendingOptOut,
-		initialLinkedExternalId: initialOptOutLinkedExternalId,
 		runtime,
 		start: lifecycle.start,
 		transport,
@@ -319,10 +295,8 @@ export const createKernel = function createKernel(
 		getAccountLayerSource: runtime.getAccountLayerSource,
 		getAccountSyncGeneration: runtime.getAccountSyncGeneration,
 		getBrowserRecords: runtime.getBrowserRecords,
-		getLinkedExternalId: records.getLinkedExternalId,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
-		getOptOutServerWrittenAt: runtime.getOptOutServerWrittenAt,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getSavesHold: outbox.getHold,
@@ -338,8 +312,6 @@ export const createKernel = function createKernel(
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
 		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
-		onOptOutServerWrittenAtChange: runtime.onOptOutServerWrittenAtChange,
-		onSubjectLinked: records.onSubjectLinked,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,
 		set: {

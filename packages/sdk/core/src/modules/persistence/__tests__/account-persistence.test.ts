@@ -36,6 +36,7 @@ import {
 } from '../hydrate';
 import { createPersistence } from '../index';
 import { mountPersistence } from '../mount';
+import { decodeOptOutRecord, decodeOptOutRecordCompact } from '../record-codec';
 import type { WriterModule } from '../writer-loader';
 
 const clearBrowserStorage = () => {
@@ -1279,144 +1280,65 @@ describe('persistence and SSR regressions (set 3)', () => {
 		}
 	});
 
-	// cross-tab reconcile picks up newly linked optOutLinkedExternalId and serverWrittenAt without reload
-	test('cross-tab reconciliation picks up a newly linked opt-out externalId and serverWrittenAt', async () => {
-		const rule = optOutRule({ prompt: 'choice' });
-		const resolution = matchedResolution(rule);
-		const subjectId = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
-		const recordId = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
-		const user = { externalId: 'user_tab_link', identityToken: 'tok_tab' };
-		const tab1 = createKernel({
-			consentCategories: ['marketing'],
-			initialPolicyResolution: resolution,
-			initialUser: user,
-			now: NOW,
-			transport: {
-				identify: (_u, id) =>
-					Promise.resolve({
-						optOut: {
-							device: {
-								rights: ['sale', 'share', 'targeted_ads'],
-								writtenAt: NOW + 4000,
-							},
-							heldBy: 'both',
-							method: 'button',
-							recordedAt: NOW + 4000,
-							rights: ['sale', 'share', 'targeted_ads'],
-						},
-						subjectId: id ?? subjectId,
-					}),
-				optOut: (payload) =>
-					Promise.resolve({
-						ok: true,
-						optOut: {
-							device: {
-								rights: ['sale', 'share', 'targeted_ads'],
-								writtenAt: NOW - 5000,
-							},
-							heldBy: 'device',
-							method: 'button',
-							recordedAt: NOW - 5000,
-							rights: ['sale', 'share', 'targeted_ads'],
-						},
-						recordId,
-						subjectId: payload.subjectId,
-					}),
-			},
+	test('an opt-out record an earlier prerelease stored with a link and a write time still reads, and both fields are ignored', () => {
+		const stored = {
+			heldBy: 'device',
+			linkedExternalId: 'user_a',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+			serverWrittenAt: NOW - 500,
+			version: 1,
+		};
+		const expected = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+			version: 1,
+		};
+		expect(decodeOptOutRecord(stored, NOW)).toEqual({
+			ok: true,
+			record: expected,
 		});
-		const p1 = createPersistence({ kernel: tab1, now: () => NOW });
-		await flushMacrotasks();
-		await tab1.commands.optOut({ actionAt: NOW - 5000 });
-		await flushMacrotasks();
-		const activeSubjectId = tab1.getSnapshot().subject?.subjectId ?? '';
-		expect(activeSubjectId).toBeTruthy();
-
-		// Tab 2 starts before Tab 1 links the subject and hydrates the unlinked opt-out.
-		const tab2 = createKernel({
-			consentCategories: ['marketing'],
-			initialPolicyResolution: resolution,
-			initialUser: user,
-			now: NOW,
-		});
-		const p2 = createPersistence({ kernel: tab2, now: () => NOW });
-		try {
-			await flushMacrotasks();
-			p2.reconcile();
-			await flushMacrotasks();
-			expect(tab2.getLinkedExternalId(activeSubjectId)).toBeUndefined();
-			expect(tab2.getOptOutServerWrittenAt()).toBe(NOW - 5000);
-
-			// Tab 1 now verifies the subject link and persists linkedExternalId.
-			await tab1.commands.identify(user);
-			await flushMacrotasks();
-			expect(tab1.getLinkedExternalId(activeSubjectId)).toBe(user.externalId);
-
-			// Tab 2 reconciles storage without a reload and picks up the link.
-			p2.reconcile();
-			await flushMacrotasks();
-			expect(tab2.getLinkedExternalId(activeSubjectId)).toBe(user.externalId);
-		} finally {
-			p2.dispose();
-			tab2.dispose();
-			p1.dispose();
-			tab1.dispose();
-		}
+		expect(
+			decodeOptOutRecord({ ...stored, serverWrittenAt: 'later' }, NOW)
+		).toEqual({ ok: true, record: expected });
+		expect(
+			decodeOptOutRecordCompact(
+				`v=1&r=sa|sh&m=b&t=${NOW - 1000}&h=d&s=${NOW - 500}`,
+				NOW
+			)
+		).toEqual({ ok: true, record: expected });
 	});
 
-	// persistence + SSR: serverWrittenAt persists in localStorage and compact cookie and reads back on hydrate and SSR
-	test('persistence and SSR: serverWrittenAt persists in localStorage and opt-out cookie and hydrates back on browser and SSR', async () => {
-		const rule = optOutRule({ prompt: 'choice' });
-		const resolution = matchedResolution(rule);
-		const recordId = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
-		const serverWrittenAt = NOW + 6000;
-		const user = { externalId: 'user_srv_time', identityToken: 'tok_srv' };
+	test('the account opt-in persists in localStorage and the opt-out cookie, and reads back in the browser and on the server', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'choice' }));
+		const user = { externalId: 'user_opt_in', identityToken: 'tok_opt_in' };
+		const optIn = { sale: NOW - 2000, targeted_ads: NOW - 1000 };
 		const k1 = createKernel({
 			consentCategories: ['marketing'],
 			initialPolicyResolution: resolution,
 			initialUser: user,
 			now: NOW,
-			transport: {
-				optOut: (payload) =>
-					Promise.resolve({
-						link: { stored: true, verifiedBy: 'identity_token' },
-						ok: true,
-						optOut: {
-							device: {
-								rights: ['sale', 'share', 'targeted_ads'],
-								writtenAt: serverWrittenAt,
-							},
-							heldBy: 'both',
-							method: 'button',
-							recordedAt: NOW,
-							rights: ['sale', 'share', 'targeted_ads'],
-						},
-						recordId,
-						subjectId: payload.subjectId,
-					}),
-			},
 		});
 		const p1 = createPersistence({ kernel: k1, now: () => NOW });
 		try {
 			await flushMacrotasks();
 			k1.syncUserConsent(
-				makeUserConsent({ checkedAt: NOW + 4000, externalId: user.externalId })
+				makeUserConsent({ externalId: user.externalId, optIn })
 			);
-			await k1.commands.optOut({ actionAt: NOW });
 			await flushMacrotasks();
-			expect(k1.getOptOutServerWrittenAt()).toBe(serverWrittenAt);
 
-			// Check localStorage and cookie both carry serverWrittenAt
-			const storedBrowser = readStoredRecords(undefined, NOW);
-			expect(storedBrowser.records.optOutServerWrittenAt).toBe(serverWrittenAt);
-			const storedSsr = readStoredRecordsFromCookieHeader(
-				document.cookie,
-				undefined,
-				NOW
-			);
-			expect(storedSsr.optOutServerWrittenAt).toBe(serverWrittenAt);
+			expect(readStoredAccountLayer(undefined)?.optIn).toEqual(optIn);
+			expect(
+				readStoredAccountLayerFromCookieHeader(document.cookie, undefined)
+					?.optIn
+			).toEqual(optIn);
 
-			// Reload on cookie-only (localStorage cleared) still restores serverWrittenAt
 			window.localStorage.clear();
+			expect(readStoredAccountLayer(undefined)?.optIn).toEqual(optIn);
+
 			const k2 = createKernel({
 				consentCategories: ['marketing'],
 				initialPolicyResolution: resolution,
@@ -1426,7 +1348,7 @@ describe('persistence and SSR regressions (set 3)', () => {
 			const p2 = createPersistence({ kernel: k2, now: () => NOW });
 			try {
 				await flushMacrotasks();
-				expect(k2.getOptOutServerWrittenAt()).toBe(serverWrittenAt);
+				expect(k2.getAccountLayer()?.optIn).toEqual(optIn);
 			} finally {
 				p2.dispose();
 				k2.dispose();
