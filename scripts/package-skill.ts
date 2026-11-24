@@ -154,7 +154,6 @@ export const renderPackageSkill = function renderPackageSkill(
 			'- Branch on `error.retryable` to decide whether to try again later. NEVER resend `documents.publish` blindly: a failed publish may have been stored, so call `documents.current` first.',
 			'- Read the subject ID with `readRequestConsent` from `@inth/sdk/server`. NEVER parse the consent cookie: its format changes between releases.',
 			'- `consents.check` returns the full `UserConsent` document (`categories`, `optOut`, `sync`). Read category booleans from `data.categories`. A category absent from `data.categories` was never answered or has expired; apply the policy default (refused under opt-in).',
-			'- Omit `property` from `consents.check` when passing the returned document to a browser provider as `userConsent` for cross-domain sync.',
 			"- Record acceptance with the `hash` that `documents.current` gave when the form was shown, and the visitor's IP address and user agent from the request. NEVER take the first entry of `x-forwarded-for`: the visitor writes it.",
 			'',
 			'## Finish with a check',
