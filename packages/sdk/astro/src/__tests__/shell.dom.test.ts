@@ -13,6 +13,7 @@ import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { EARLY_CONSENT_TAP_SCRIPT } from '../../../core/src/surface-actions/early-consent-tap-script';
 import type { InthClientOptionsExtension } from '../astro-consent-client.model';
 import { boot, EVENTS_KEY } from '../boot-client-engine';
+import { setPageReloadForTest } from '../browser/recover-chunk-load';
 import { startDeferredClient } from '../browser/start-deferred-client';
 import type { EngineModule } from '../browser/start-deferred-client';
 import {
@@ -390,6 +391,66 @@ describe('the first-load shell', () => {
 			}
 		}
 	);
+
+	// GPT round 2b: Chromium keeps a failed module fetch for the life of
+	// the document, so the tap's retry failed again without a request and
+	// the choice was never recorded. The retry reloads the page once the
+	// chunk answers, and the reloaded page records the tapped choice.
+	it('reloads a page whose engine chunk stays failed, and records the tapped Accept after', async () => {
+		renderPage();
+		// oxlint-disable-next-line no-new-func -- The inline script as shipped.
+		new Function(EARLY_CONSENT_TAP_SCRIPT)();
+		const accept = () =>
+			(document.querySelector('[data-action="accept"]') as HTMLElement).click();
+		const chunk = 'https://example.com/_astro/engine.abc.js';
+		// What Chromium throws for every import of a chunk that failed once.
+		const loadEngine = vi.fn(() =>
+			Promise.reject(
+				new TypeError(`Failed to fetch dynamically imported module: ${chunk}`)
+			)
+		);
+		const probe = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValue(new Response(null, { status: 200 }));
+		const reload = vi.fn();
+		setPageReloadForTest(reload);
+		try {
+			startShell(loadEngine as unknown as () => Promise<EngineModule>);
+			accept();
+			await settle();
+			// The first failure is not the visitor's retry.
+			expect(reload).not.toHaveBeenCalled();
+
+			accept();
+			await settle();
+			expect(probe).toHaveBeenCalledWith(
+				new URL(chunk),
+				expect.objectContaining({ cache: 'no-store', method: 'HEAD' })
+			);
+			expect(reload).toHaveBeenCalledOnce();
+		} finally {
+			(
+				(window as unknown as Record<string, unknown>)[
+					EARLY_TAPS_WINDOW_KEY
+				] as { stop?: () => void } | undefined
+			)?.stop?.();
+			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+				undefined;
+			setPageReloadForTest();
+		}
+
+		// The reloaded page: a fresh shell whose engine loads.
+		client?.dispose();
+		client = null;
+		renderPage();
+		startShell();
+		await settle();
+		expect(getConsentClient()?.getConsent().explicitChoice).not.toBeNull();
+		expect(getConsentClient()?.getConsent().effectivePermissions).toMatchObject(
+			{ marketing: true, measurement: true }
+		);
+		sessionStorage.clear();
+	});
 
 	it('a save the outbox cannot keep goes to the engine, which records it once', async () => {
 		renderPage();

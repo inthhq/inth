@@ -27,6 +27,10 @@ import { setPromptLoaderForTest } from '../boot-client-engine';
 import * as promptChunk from '../browser/mount-prompt';
 import { loadContainerSheets } from '../browser/mount-prompt';
 import {
+	setPageReloadForTest,
+	takePendingChoice,
+} from '../browser/recover-chunk-load';
+import {
 	boot,
 	preloadDialog,
 	registerDialogAdapter,
@@ -411,6 +415,83 @@ describe('a tap before the prompt chunk mounted', () => {
 			}
 		}
 	);
+
+	// GPT round 2b: Chromium keeps a failed module fetch for the life of
+	// the document, so the click's retry failed again without a request.
+	// The retry reloads the page once the chunk answers, keeping the tap.
+	it('reloads a page whose prompt chunk stays failed after a held tap, keeping the choice', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const chunk = 'https://example.com/_astro/mount-prompt.abc.js';
+		const load = vi.fn(() =>
+			Promise.reject(
+				new TypeError(`Failed to fetch dynamically imported module: ${chunk}`)
+			)
+		);
+		setPromptLoaderForTest(load);
+		const probe = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValue(new Response(null, { status: 200 }));
+		const reload = vi.fn();
+		setPageReloadForTest(reload);
+		// oxlint-disable-next-line no-new-func -- The inline script as shipped.
+		new Function(EARLY_CONSENT_TAP_SCRIPT)();
+		const accept = () =>
+			must('consent-banner-root')
+				.querySelector<HTMLButtonElement>('[data-action="accept"]')
+				?.click();
+		try {
+			await mount();
+			accept();
+			await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+			expect(reload).not.toHaveBeenCalled();
+
+			accept();
+			await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+			expect(probe).toHaveBeenCalledWith(
+				new URL(chunk),
+				expect.objectContaining({ method: 'HEAD' })
+			);
+			expect(takePendingChoice()).toBe('all');
+		} finally {
+			(
+				globals[EARLY_TAPS_WINDOW_KEY] as { stop?: () => void } | undefined
+			)?.stop?.();
+			globals[EARLY_TAPS_WINDOW_KEY] = undefined;
+			setPageReloadForTest();
+			sessionStorage.clear();
+			probe.mockRestore();
+			warn.mockRestore();
+		}
+	});
+
+	// GPT round 2b: a prerendered page has no early-tap script, so after the
+	// chunk failed nothing answered the banner's buttons and a tap did
+	// nothing at all.
+	it('retries a failed prompt chunk on a tap when no early-tap script holds it, and records the tap', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		let calls = 0;
+		setPromptLoaderForTest(() => {
+			calls += 1;
+			return calls === 1
+				? Promise.reject(new Error('chunk failed'))
+				: Promise.resolve(promptChunk);
+		});
+		try {
+			const page = await mount();
+			await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+			expect(calls).toBe(1);
+			must('consent-banner-root')
+				.querySelector<HTMLButtonElement>('[data-action="accept"]')
+				?.click();
+			await vi.waitFor(() =>
+				expect(page.getConsent().explicitChoice).not.toBeNull()
+			);
+			expect(calls).toBe(2);
+			expect(page.getConsent().effectivePermissions.marketing).toBe(true);
+		} finally {
+			warn.mockRestore();
+		}
+	});
 
 	it('drops a tap made under another policy, and shows the prompt again', async () => {
 		holdTap('reject', { model: 'opt-out', prompt: 'notice' });
