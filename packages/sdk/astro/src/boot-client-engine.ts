@@ -101,11 +101,7 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/read-page-nonce';
-import {
-	applyRecoveredChoice,
-	choiceFromTaps,
-	recoverChunkLoad,
-} from './browser/recover-chunk-load';
+import { applyRecoveredChoice } from './browser/recover-chunk-load';
 import type { RecoveredChoice } from './browser/recover-chunk-load';
 import type * as IABPromptRenderer from './browser/render-iab-prompt-into-slot';
 import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
@@ -1153,9 +1149,6 @@ const ensureIABPromptRendered = function ensureIABPromptRendered(
 
 type PromptChunk = typeof PromptModule;
 
-/** Clients whose consent prompt chunk failed to load. */
-const promptLoadFailed = new WeakSet<AstroConsentClient>();
-
 const loadDefaultPrompt = (): Promise<PromptChunk> =>
 	import('./browser/mount-prompt');
 
@@ -1197,8 +1190,8 @@ let disarmPromptRetry: (() => void) | null = null;
  * After the prompt failed to load on a page without the early-tap script
  * (a prerendered page), a tap on one of the banner's buttons retries it.
  * Nothing else answers that tap: the prompt that would has not mounted.
- * An accept or reject applies once the prompt mounts, or survives a
- * recovery reload.
+ * An accept or reject applies once the prompt mounts. A retry that
+ * fails again shows the banner again and records nothing.
  */
 const armPromptRetry = function armPromptRetry(
 	client: AstroConsentClient,
@@ -1241,18 +1234,17 @@ const armPromptRetry = function armPromptRetry(
  *
  * Without the prompt the visitor has no way to choose, so a failed
  * download is forgotten and the next snapshot tries again. A load a newer
- * one replaced, for a client that was disposed, is ignored. A visitor's
- * tap that retries a failed download, and fails again, reloads the page
- * when the chunk answers again (see `recoverChunkLoad`).
+ * one replaced, for a client that was disposed, is ignored. Chromium and
+ * WebKit keep a failed chunk for the life of the page, so there a retry
+ * fails again: the banner shows again and the choice waits for the next
+ * page load (see `recover-chunk-load.ts`).
  *
- * @param fromTap - A visitor's tap asked for this load.
  * @param tapChoice - The choice that tap asked for, when no early-tap
  * script holds it for the prompt to replay.
  */
 const ensurePrompt = function ensurePrompt(
 	client: AstroConsentClient,
 	snapshot: ConsentSnapshot,
-	fromTap = false,
 	tapChoice: RecoveredChoice | null = null
 ): void {
 	if (prompt && !prompt.spot.isConnected) {
@@ -1271,7 +1263,6 @@ const ensurePrompt = function ensurePrompt(
 	}
 	const load = { client };
 	promptLoading = load;
-	const retry = fromTap && promptLoadFailed.has(client);
 	void (async () => {
 		let mounted = false;
 		try {
@@ -1303,17 +1294,13 @@ const ensurePrompt = function ensurePrompt(
 			// stood down. Mount on the page as it is now.
 			ensurePrompt(client, client.getConsent());
 		} catch (error) {
-			promptLoadFailed.add(client);
 			const taps = earlyTapQueue()?.taps;
-			if (retry && (tapChoice || taps?.length) && currentClient() === client) {
-				await recoverChunkLoad(error, tapChoice ?? choiceFromTaps(taps));
-			}
 			// A tap the early-tap script held hid the prompt; show it again
 			// while the next snapshot retries the download.
 			unhideEarlyTap();
 			if (!taps && currentClient() === client) {
 				armPromptRetry(client, (choice) => {
-					ensurePrompt(client, client.getConsent(), true, choice);
+					ensurePrompt(client, client.getConsent(), choice);
 				});
 			}
 			console.warn('@inth/astro: the consent banner failed to load.', error);
@@ -1367,7 +1354,7 @@ const routeEarlyTapsToPrompt = function routeEarlyTapsToPrompt(
 	}
 	queue[EARLY_TAP_NOTIFY_KEY] = (): void => {
 		if (currentClient() === client) {
-			ensurePrompt(client, client.getConsent(), true);
+			ensurePrompt(client, client.getConsent());
 		}
 	};
 };

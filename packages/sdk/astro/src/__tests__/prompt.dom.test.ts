@@ -27,10 +27,6 @@ import { setPromptLoaderForTest } from '../boot-client-engine';
 import * as promptChunk from '../browser/mount-prompt';
 import { loadContainerSheets } from '../browser/mount-prompt';
 import {
-	setPageReloadForTest,
-	takePendingChoice,
-} from '../browser/recover-chunk-load';
-import {
 	boot,
 	preloadDialog,
 	registerDialogAdapter,
@@ -416,23 +412,24 @@ describe('a tap before the prompt chunk mounted', () => {
 		}
 	);
 
-	// GPT round 2b: Chromium keeps a failed module fetch for the life of
-	// the document, so the click's retry failed again without a request.
-	// The retry reloads the page once the chunk answers, keeping the tap.
-	it('reloads a page whose prompt chunk stays failed after a held tap, keeping the choice', async () => {
+	// GPT round 2c: the page reloaded itself to get past the failure that
+	// Chromium keeps for the chunk, and a visitor lost what they had typed
+	// into the host page. A retry that fails again now leaves the page as
+	// it is: the banner shows again, and nothing is recorded or allowed.
+	it('leaves the page in place when the prompt chunk stays failed after a held tap', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const chunk = 'https://example.com/_astro/mount-prompt.abc.js';
+		// What Chromium throws for every import of a chunk that failed once.
 		const load = vi.fn(() =>
 			Promise.reject(
 				new TypeError(`Failed to fetch dynamically imported module: ${chunk}`)
 			)
 		);
 		setPromptLoaderForTest(load);
-		const probe = vi
+		const fetchSpy = vi
 			.spyOn(globalThis, 'fetch')
 			.mockResolvedValue(new Response(null, { status: 200 }));
-		const reload = vi.fn();
-		setPageReloadForTest(reload);
+		const stored = vi.spyOn(Storage.prototype, 'setItem');
 		// oxlint-disable-next-line no-new-func -- The inline script as shipped.
 		new Function(EARLY_CONSENT_TAP_SCRIPT)();
 		const accept = () =>
@@ -440,26 +437,35 @@ describe('a tap before the prompt chunk mounted', () => {
 				.querySelector<HTMLButtonElement>('[data-action="accept"]')
 				?.click();
 		try {
-			await mount();
-			accept();
+			const page = await mount();
 			await vi.waitFor(() => expect(warn).toHaveBeenCalled());
-			expect(reload).not.toHaveBeenCalled();
-
+			const loads = load.mock.calls.length;
+			// Each tap retries the chunk, which fails again.
 			accept();
-			await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
-			expect(probe).toHaveBeenCalledWith(
-				new URL(chunk),
-				expect.objectContaining({ method: 'HEAD' })
-			);
-			expect(takePendingChoice()).toBe('all');
+			await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(loads + 1));
+			accept();
+			await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(loads + 2));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			// No probe of the chunk, and nothing kept for a reloaded page.
+			expect(fetchSpy).not.toHaveBeenCalled();
+			expect(
+				stored.mock.calls.filter(([key]) => key.startsWith('inth:astro:'))
+			).toEqual([]);
+			// The banner shows again, and the choice is not recorded.
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+			expect(root().hidden).toBe(false);
+			expect(page.getConsent().explicitChoice).toBeNull();
+			expect(page.getConsent().activeUI).toBe('banner');
+			expect(page.getConsent().effectivePermissions.marketing).toBe(false);
 		} finally {
 			(
 				globals[EARLY_TAPS_WINDOW_KEY] as { stop?: () => void } | undefined
 			)?.stop?.();
 			globals[EARLY_TAPS_WINDOW_KEY] = undefined;
-			setPageReloadForTest();
-			sessionStorage.clear();
-			probe.mockRestore();
+			stored.mockRestore();
+			fetchSpy.mockRestore();
 			warn.mockRestore();
 		}
 	});

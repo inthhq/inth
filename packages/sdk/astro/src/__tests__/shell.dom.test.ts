@@ -13,7 +13,6 @@ import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { EARLY_CONSENT_TAP_SCRIPT } from '../../../core/src/surface-actions/early-consent-tap-script';
 import type { InthClientOptionsExtension } from '../astro-consent-client.model';
 import { boot, EVENTS_KEY } from '../boot-client-engine';
-import { setPageReloadForTest } from '../browser/recover-chunk-load';
 import { startDeferredClient } from '../browser/start-deferred-client';
 import type { EngineModule } from '../browser/start-deferred-client';
 import {
@@ -392,11 +391,11 @@ describe('the first-load shell', () => {
 		}
 	);
 
-	// GPT round 2b: Chromium keeps a failed module fetch for the life of
-	// the document, so the tap's retry failed again without a request and
-	// the choice was never recorded. The retry reloads the page once the
-	// chunk answers, and the reloaded page records the tapped choice.
-	it('reloads a page whose engine chunk stays failed, and records the tapped Accept after', async () => {
+	// GPT round 2c: the page reloaded itself to get past the failure that
+	// Chromium keeps for the chunk, and a visitor lost what they had typed
+	// into the host page. A retry that fails again now leaves the page as
+	// it is: the banner shows again, and nothing is recorded or started.
+	it('leaves the page in place when the engine chunk stays failed after a tap', async () => {
 		renderPage();
 		// oxlint-disable-next-line no-new-func -- The inline script as shipped.
 		new Function(EARLY_CONSENT_TAP_SCRIPT)();
@@ -409,25 +408,37 @@ describe('the first-load shell', () => {
 				new TypeError(`Failed to fetch dynamically imported module: ${chunk}`)
 			)
 		);
-		const probe = vi
+		const fetchSpy = vi
 			.spyOn(globalThis, 'fetch')
 			.mockResolvedValue(new Response(null, { status: 200 }));
-		const reload = vi.fn();
-		setPageReloadForTest(reload);
+		const stored = vi.spyOn(Storage.prototype, 'setItem');
 		try {
-			startShell(loadEngine as unknown as () => Promise<EngineModule>);
-			accept();
-			await settle();
-			// The first failure is not the visitor's retry.
-			expect(reload).not.toHaveBeenCalled();
-
-			accept();
-			await settle();
-			expect(probe).toHaveBeenCalledWith(
-				new URL(chunk),
-				expect.objectContaining({ cache: 'no-store', method: 'HEAD' })
+			const { client: shell } = startShell(
+				loadEngine as unknown as () => Promise<EngineModule>,
+				{ scripts: [SCRIPT] }
 			);
-			expect(reload).toHaveBeenCalledOnce();
+			accept();
+			await settle();
+			accept();
+			await settle();
+			expect(loadEngine).toHaveBeenCalledTimes(2);
+			// No probe of the chunk, and nothing kept for a reloaded page.
+			expect(fetchSpy).not.toHaveBeenCalled();
+			expect(
+				stored.mock.calls.filter(([key]) => key.startsWith('inth:astro:'))
+			).toEqual([]);
+			// The banner shows again, and the gates stay closed.
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+			expect(
+				(document.querySelector(EARLY_TAP_ROOT) as HTMLElement).hidden
+			).toBe(false);
+			expect(shell.getConsent().explicitChoice).toBeNull();
+			expect(shell.getConsent().activeUI).toBe('banner');
+			expect(shell.getConsent().effectivePermissions.measurement).toBe(false);
+			expect(
+				document.querySelectorAll(`script[src="${SCRIPT.src}"]`)
+			).toHaveLength(0);
+			expect(document.cookie).not.toMatch(/(?:^|; )inth=/u);
 		} finally {
 			(
 				(window as unknown as Record<string, unknown>)[
@@ -436,20 +447,7 @@ describe('the first-load shell', () => {
 			)?.stop?.();
 			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
 				undefined;
-			setPageReloadForTest();
 		}
-
-		// The reloaded page: a fresh shell whose engine loads.
-		client?.dispose();
-		client = null;
-		renderPage();
-		startShell();
-		await settle();
-		expect(getConsentClient()?.getConsent().explicitChoice).not.toBeNull();
-		expect(getConsentClient()?.getConsent().effectivePermissions).toMatchObject(
-			{ marketing: true, measurement: true }
-		);
-		sessionStorage.clear();
 	});
 
 	it('a save the outbox cannot keep goes to the engine, which records it once', async () => {
