@@ -4897,7 +4897,6 @@ describe('kernel regressions (set 7)', () => {
 										recordedAt: NOW + 1000,
 										rights: ['sale', 'share', 'targeted_ads'],
 									},
-									recordId: RECORD_UUID,
 									subjectId: payload.subjectId,
 								});
 						}),

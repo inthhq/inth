@@ -664,7 +664,7 @@ describe('persistence regressions (set 1)', () => {
 			const w = window as unknown as {
 				__inthRender?: { starts?: Record<string, number> };
 			};
-			delete w.__inthRender;
+			Reflect.deleteProperty(w, '__inthRender');
 			const rafSpy = vi
 				.spyOn(window, 'requestAnimationFrame')
 				.mockImplementation(() => 0);
@@ -681,7 +681,7 @@ describe('persistence regressions (set 1)', () => {
 			{
 				category: 'marketing' as const,
 				id: 'ads',
-				serverStart: () => ({ prelude: 'window.__adsRan = 1;' }),
+				serverStart: () => ({ code: 'window.__adsRan = 1;' }),
 				src: 'https://cdn.example.test/ads.js',
 			},
 		];
@@ -689,7 +689,7 @@ describe('persistence regressions (set 1)', () => {
 			{
 				category: 'marketing' as const,
 				id: 'ads',
-				serverStart: () => ({ prelude: 'window.__adsRan = 1;' }),
+				serverStart: () => ({ code: 'window.__adsRan = 1;' }),
 				src: 'https://cdn.example.test/ads.js',
 				vendor: 'ads-vendor',
 			},
@@ -949,7 +949,7 @@ describe('persistence and SSR regressions (set 2)', () => {
 			const w = window as unknown as {
 				__inthRender?: { starts?: Record<string, number> };
 			};
-			delete w.__inthRender;
+			Reflect.deleteProperty(w, '__inthRender');
 			const rafSpy = vi
 				.spyOn(window, 'requestAnimationFrame')
 				.mockImplementation(() => 0);
@@ -988,7 +988,7 @@ describe('persistence and SSR regressions (set 2)', () => {
 				{
 					category: 'marketing' as const,
 					id: 'vendor-script',
-					serverStart: () => ({ prelude: 'window.__v = 1;' }),
+					serverStart: () => ({ code: 'window.__v = 1;' }),
 					src: 'https://cdn.example.test/v.js',
 					vendor: 'ads-vendor',
 				},
@@ -1024,7 +1024,7 @@ describe('persistence and SSR regressions (set 2)', () => {
 				{
 					category: 'marketing' as const,
 					id: 'cat-script',
-					serverStart: () => ({ prelude: 'window.__c = 1;' }),
+					serverStart: () => ({ code: 'window.__c = 1;' }),
 					src: 'https://cdn.example.test/c.js',
 				},
 			],
@@ -1140,10 +1140,12 @@ describe('persistence and SSR regressions (set 2)', () => {
 		});
 		const pA = mountPersistence(
 			{ kernel: tabA },
-			() =>
-				new Promise<WriterModule>(() => {
-					/* stays pending so tabA's vendor save remains in queuedWrites */
-				})
+			{
+				load: () =>
+					new Promise<WriterModule>(() => {
+						/* stays pending so tabA's vendor save remains in queuedWrites */
+					}),
+			}
 		);
 		vi.spyOn(Date, 'now').mockReturnValue(NOW + 2000);
 		void tabA.commands.save({ vendors: { 'vendor-y': false } });
@@ -1237,7 +1239,7 @@ describe('persistence and SSR regressions (set 3)', () => {
 				{
 					category: 'marketing',
 					id: 'vendor-script',
-					serverStart: () => ({ prelude: 'window.__v = 1;' }),
+					serverStart: () => ({ code: 'window.__v = 1;' }),
 					src: 'https://cdn.example.test/v.js',
 					vendor: 'ads-vendor',
 				},
