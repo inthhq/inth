@@ -67,7 +67,7 @@ import {
 	isSubjectConflict,
 } from '../../transports/consent-save-rejected-error';
 import type { KernelRuntime } from '../create-runtime';
-import { applySyncedOptOut } from '../kernel-opt-out.model';
+import { answerOwnedBy, applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
 	EnqueueResult,
 	OptOutEnqueueOutcome,
@@ -112,6 +112,12 @@ export interface RecordedAction {
 export interface OptOutActionContext {
 	actVersion: number;
 	generation: number;
+	/**
+	 * Identification generation when the act was handed over. The outbox
+	 * reads it itself; the answer applies only while the act's account is
+	 * still the identified one.
+	 */
+	identity?: number;
 	/** Called once a GPC report is stored durably or answered by the backend. */
 	onGpcReported?: () => void;
 }
@@ -658,10 +664,13 @@ export const createSaveOutbox = function createSaveOutbox({
 			result.subjectId,
 			action.snapshot.subject?.subjectId
 		);
+		// The answer is the account's that saved: after a sign-out or
+		// another `identify()`, its opt-out is someone else's.
 		if (
 			result.optOut !== undefined &&
 			directOptOutSends.size === 0 &&
-			!(await hasQueued('optOuts'))
+			!(await hasQueued('optOuts')) &&
+			getSnapshot().user === action.snapshot.user
 		) {
 			applySyncedOptOut(runtime, result.optOut, {
 				actVersion: action.optOutActVersion,
@@ -950,15 +959,24 @@ export const createSaveOutbox = function createSaveOutbox({
 				}
 				await discardOptOut(act.payload.idempotencyKey);
 				markSettled();
-				const adopted = await adoptServerSubjectById(
-					result.subjectId,
-					act.payload.subjectId
-				);
-				if (result.optOut !== undefined) {
+				// Recorded either way; only the account that made the act
+				// takes its answer, the subject it names included.
+				const owned =
+					context.identity === undefined ||
+					answerOwnedBy(runtime, act.payload.user, context.identity);
+				const adopted = owned
+					? await adoptServerSubjectById(
+							result.subjectId,
+							act.payload.subjectId
+						)
+					: undefined;
+				if (owned && result.optOut !== undefined) {
 					applySyncedOptOut(runtime, result.optOut, {
+						account: act.payload.user,
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
 						generation: context.generation,
+						identity: context.identity,
 						ownAct: act.kind === 'record',
 						subjectId: adopted ?? act.payload.subjectId,
 					});
@@ -1022,6 +1040,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	// oxlint-disable-next-line complexity -- Direct account lift shares queue-before-send, 404, 409 reassignment and rejection cleanup.
 	const performAccountLift = async function performAccountLift(
 		payload: LiftOptOutPayload,
+		identity: number,
 		reassign: boolean,
 		markSettled: () => void,
 		alreadyQueued = false
@@ -1084,10 +1103,12 @@ export const createSaveOutbox = function createSaveOutbox({
 			}
 			await discardOptOut(payload.idempotencyKey);
 			markSettled();
-			const adopted = await adoptServerSubjectById(
-				result.subjectId,
-				payload.subjectId
-			);
+			// The lift is recorded, but its answer is the account's that
+			// asked: after a sign-out or another `identify()` it must not move
+			// the current subject. The recorder then drops the answer.
+			const adopted = answerOwnedBy(runtime, payload.user, identity)
+				? await adoptServerSubjectById(result.subjectId, payload.subjectId)
+				: undefined;
 			return {
 				ok: true,
 				optOut: result.optOut,
@@ -1109,6 +1130,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				if (subjectId !== null) {
 					return performAccountLift(
 						{ ...payload, subjectId },
+						identity,
 						false,
 						markSettled,
 						staged !== 'unstored'
@@ -1149,12 +1171,16 @@ export const createSaveOutbox = function createSaveOutbox({
 				}
 			})();
 		},
-		liftAccountOptOut: (payload) =>
-			optOutsUnsupported || !transport?.liftOptOut
+		liftAccountOptOut(payload) {
+			// Read before anything awaits: the lift belongs to the account
+			// identified when it was asked for.
+			const identity = runtime.getIdentityVersion();
+			return optOutsUnsupported || !transport?.liftOptOut
 				? Promise.resolve({ ok: false })
 				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
-						performAccountLift(payload, true, markSettled)
-					),
+						performAccountLift(payload, identity, true, markSettled)
+					);
+		},
 		onOptOutRequestsChange(listener) {
 			optOutRequestListeners.add(listener);
 			return () => {
@@ -1164,27 +1190,31 @@ export const createSaveOutbox = function createSaveOutbox({
 		replay,
 		send: (payload, action) =>
 			trackDirectSend(payload, () => performSendAction(payload, action, true)),
-		sendOptOut: (payload, context) =>
-			optOutsUnsupported || (!transport?.optOut && !held)
+		sendOptOut(payload, context) {
+			const owned = { ...context, identity: runtime.getIdentityVersion() };
+			return optOutsUnsupported || (!transport?.optOut && !held)
 				? Promise.resolve()
 				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
 						performSendOptOut(
 							{ kind: 'record', payload },
-							context,
+							owned,
 							true,
 							markSettled
 						)
-					),
-		sendOptOutLift: (payload, context) =>
-			optOutsUnsupported || (!transport?.liftOptOut && !held)
+					);
+		},
+		sendOptOutLift(payload, context) {
+			const owned = { ...context, identity: runtime.getIdentityVersion() };
+			return optOutsUnsupported || (!transport?.liftOptOut && !held)
 				? Promise.resolve()
 				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
 						performSendOptOut(
 							{ kind: 'lift', payload },
-							context,
+							owned,
 							true,
 							markSettled
 						)
-					),
+					);
+		},
 	};
 };

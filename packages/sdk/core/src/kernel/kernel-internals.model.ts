@@ -55,6 +55,15 @@ export interface InternalKernel extends ConsentKernel {
 	 * notice acknowledgement that carries it clears the mark.
 	 */
 	markProvisionalSubject: (id: string | null) => void;
+	/**
+	 * Sign the identified account out: `snapshot.user` becomes `null` and
+	 * the identification generation advances at once, so an answer to a
+	 * request made for that account (an opt-out lift, a link, a subject
+	 * read) no longer applies. IAB authority given under the account is
+	 * retired, as on `identify()`. The subject, its records and the held
+	 * opt-out stay. The runtime calls it for `identify(undefined)`.
+	 */
+	clearIdentity: () => void;
 	/** The ID {@link markProvisionalSubject} marked, `null` for none. */
 	getProvisionalSubject: () => string | null;
 	/**

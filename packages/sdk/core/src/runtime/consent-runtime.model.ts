@@ -748,6 +748,11 @@ export interface ConsentRuntime {
 	/**
 	 * Identify the current subject with the backend.
 	 *
+	 * `undefined` signs the identified account out: no one is identified
+	 * from then on, and the answer to a request made for that account, such
+	 * as an opt-out lift still in flight, no longer applies. The subject and
+	 * its records stay.
+	 *
 	 * Rejections are swallowed: failures surface through the `command:error`
 	 * event and the `onError` callback.
 	 */

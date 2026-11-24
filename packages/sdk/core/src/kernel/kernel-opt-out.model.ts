@@ -7,6 +7,7 @@ import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSnapshot,
+	KernelUser,
 	LiftOptOutPayload,
 	OptOutPayload,
 	SaveUISource,
@@ -250,6 +251,12 @@ export interface OptOutAnswerFence {
 	 * anyone on this subject, the answer is that account's no longer.
 	 */
 	identity?: number;
+	/**
+	 * The account the request was made for (`null` for none), when the
+	 * answer is that account's: it applies only while that account is still
+	 * the identified one. Leave unset for an answer about the subject alone.
+	 */
+	account?: Readonly<KernelUser> | null;
 	/** Only a lift answer may clear `snapshot.optOut` to `null`. */
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
@@ -330,6 +337,43 @@ const answersLocalAct = function answersLocalAct(
 	return fence.ownAct === true || answersHeldOptOut(answer, held);
 };
 
+/**
+ * Whether two users are the same account: the same external ID, ID type
+ * and identity provider. `null` (no one identified) matches only `null`.
+ * The identity token and properties do not name the account.
+ */
+export const sameAccount = function sameAccount(
+	left: Readonly<KernelUser> | null | undefined,
+	right: Readonly<KernelUser> | null | undefined
+): boolean {
+	if (!left || !right) {
+		return !left && !right;
+	}
+	return (
+		left.externalId === right.externalId &&
+		(left.externalIdType ?? null) === (right.externalIdType ?? null) &&
+		(left.identityProvider ?? null) === (right.identityProvider ?? null)
+	);
+};
+
+/**
+ * Whether an answer to a request made for `account` at identification
+ * generation `identity` still belongs to whoever is identified now: no
+ * `identify()` or sign-out happened since, and `account` is the current
+ * user. A stale answer must not change the opt-out, the subject or the
+ * categories of the account identified now.
+ */
+export const answerOwnedBy = function answerOwnedBy(
+	runtime: KernelRuntime,
+	account: Readonly<KernelUser> | null,
+	identity: number
+): boolean {
+	return (
+		runtime.getIdentityVersion() === identity &&
+		sameAccount(account, runtime.getSnapshot().user)
+	);
+};
+
 /** Whether nothing an answer is fenced against changed since its request. */
 const fenceHolds = function fenceHolds(
 	runtime: KernelRuntime,
@@ -341,6 +385,7 @@ const fenceHolds = function fenceHolds(
 		runtime.getGeneration() === fence.generation &&
 		(fence.identity === undefined ||
 			runtime.getIdentityVersion() === fence.identity) &&
+		(fence.account === undefined || sameAccount(fence.account, current.user)) &&
 		(current.subject?.subjectId ?? null) === fence.subjectId
 	);
 };

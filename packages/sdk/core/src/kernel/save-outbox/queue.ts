@@ -43,7 +43,7 @@ import type {
 	isSubjectConflict,
 } from '../../transports/consent-save-rejected-error';
 import type { KernelRuntime } from '../create-runtime';
-import type { applySyncedOptOut } from '../kernel-opt-out.model';
+import type { answerOwnedBy, applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
 	appendOptOut,
 	appendSave,
@@ -72,6 +72,7 @@ import type {
  * @internal
  */
 export interface QueueTools {
+	answerOwnedBy: typeof answerOwnedBy;
 	appendOptOut: typeof appendOptOut;
 	appendSave: typeof appendSave;
 	applySyncedOptOut: typeof applySyncedOptOut;
@@ -791,6 +792,7 @@ export const createQueueWorker = function createQueueWorker({
 }: QueueWorkerOptions): QueueWorker {
 	const { batch, commit, emit, getSnapshot } = runtime;
 	const {
+		answerOwnedBy,
 		appendOptOut,
 		appendSave,
 		applySyncedOptOut,
@@ -1292,6 +1294,7 @@ export const createQueueWorker = function createQueueWorker({
 		let answeredOptOut: OptOutRecord | undefined;
 		const actVersion = getSaveActVersion(key) ?? runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
+		const identity = runtime.getIdentityVersion();
 		try {
 			const result = await save(entry.payload);
 			outcome = result.ok ? 'saved' : 'retry';
@@ -1332,16 +1335,21 @@ export const createQueueWorker = function createQueueWorker({
 			outcome === 'saved' ? canonical : undefined,
 			moved
 		);
+		// The opt-out a save answers with is the saving account's: it applies
+		// only while that account is still the identified one.
 		if (
 			outcome === 'saved' &&
 			answeredOptOut !== undefined &&
 			!hasPendingOptOuts &&
-			!hasOptOutInFlight()
+			!hasOptOutInFlight() &&
+			answerOwnedBy(runtime, entry.payload.user, identity)
 		) {
 			applySyncedOptOut(runtime, answeredOptOut, {
+				account: entry.payload.user,
 				actVersion,
 				allowClear: false,
 				generation,
+				identity,
 				subjectId: adopted ?? subjectId,
 			});
 		}
@@ -1497,6 +1505,10 @@ export const createQueueWorker = function createQueueWorker({
 		let answeredOptOut: OptOutRecord | null | undefined;
 		const actVersion = runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
+		// A queued act is the account's that made it, possibly on an earlier
+		// page. Its answer applies only while that account is identified and
+		// no one was identified or signed out while it was out.
+		const identity = runtime.getIdentityVersion();
 		try {
 			const result = await dispatchOptOutReplay(
 				transports,
@@ -1554,14 +1566,19 @@ export const createQueueWorker = function createQueueWorker({
 			written,
 			failure
 		);
-		if (outcome === 'saved') {
+		if (
+			outcome === 'saved' &&
+			answerOwnedBy(runtime, entry.payload.user, identity)
+		) {
 			const { subjectId } = entry.payload;
 			const adopted = await followCanonicalSubject(subjectId, canonical, moved);
 			if (isLast && remainingCount === 0 && answeredOptOut !== undefined) {
 				applySyncedOptOut(runtime, answeredOptOut, {
+					account: entry.payload.user,
 					actVersion,
 					allowClear: entry.kind === 'lift',
 					generation,
+					identity,
 					ownAct: entry.kind === 'record',
 					subjectId: adopted ?? subjectId,
 				});
