@@ -244,6 +244,12 @@ export interface OptOutAnswerFence {
 	generation: number;
 	/** Subject ID the request belongs to (after any `sub_` canonicalization). */
 	subjectId: string | null;
+	/**
+	 * Identification generation when the request started, for a request
+	 * made on behalf of the identified account. Once the site identifies
+	 * anyone on this subject, the answer is that account's no longer.
+	 */
+	identity?: number;
 	/** Only a lift answer may clear `snapshot.optOut` to `null`. */
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
@@ -324,6 +330,21 @@ const answersLocalAct = function answersLocalAct(
 	return fence.ownAct === true || answersHeldOptOut(answer, held);
 };
 
+/** Whether nothing an answer is fenced against changed since its request. */
+const fenceHolds = function fenceHolds(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	fence: OptOutAnswerFence
+): boolean {
+	return (
+		runtime.getOptOutActVersion() === fence.actVersion &&
+		runtime.getGeneration() === fence.generation &&
+		(fence.identity === undefined ||
+			runtime.getIdentityVersion() === fence.identity) &&
+		(current.subject?.subjectId ?? null) === fence.subjectId
+	);
+};
+
 /**
  * Apply the backend's authoritative opt-out answer to `runtime` when it is
  * still current. Emits `opt-out:synced` and never triggers another request or
@@ -349,11 +370,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		next = validated.record;
 	}
 	const current = runtime.getSnapshot();
-	if (
-		runtime.getOptOutActVersion() !== fence.actVersion ||
-		runtime.getGeneration() !== fence.generation ||
-		(current.subject?.subjectId ?? null) !== fence.subjectId
-	) {
+	if (!fenceHolds(runtime, current, fence)) {
 		return false;
 	}
 	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {

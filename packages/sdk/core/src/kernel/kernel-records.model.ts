@@ -157,9 +157,9 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	start,
 }: RecordsBoundaryOptions): RecordsBoundary {
 	const { getSnapshot, commit, emit } = runtime;
-	// Bumped by every `identify()` so a subject read started by an earlier
-	// identify cannot apply after a later one.
-	let identifyGeneration = 0;
+	// Bumped by every `identify()` (`runtime.noteIdentify()`) so a subject
+	// read started by an earlier identify cannot apply after a later one.
+	const identifyGeneration = runtime.getIdentityVersion;
 	// An ID Inth generated that no record carries yet. It lives in memory
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
@@ -312,7 +312,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		try {
 			const records = await transport.loadSubjectRecord(subjectId);
 			const stale =
-				identifyAttempt !== identifyGeneration ||
+				identifyAttempt !== identifyGeneration() ||
 				runtime.getGeneration() !== generation ||
 				(getSnapshot().subject?.subjectId ?? null) !== subjectId;
 			if (records && !stale) {
@@ -357,7 +357,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				effectiveSubjectId = adopted;
 			}
 		}
-		if (attempt === identifyGeneration && linked?.optOut !== undefined) {
+		if (attempt === identifyGeneration() && linked?.optOut !== undefined) {
 			applySyncedOptOut(runtime, linked.optOut, {
 				actVersion: optOutActVersion,
 				allowClear: false,
@@ -377,8 +377,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			if (getSnapshot().externalPermissions) {
 				return;
 			}
-			identifyGeneration += 1;
-			const attempt = identifyGeneration;
+			const attempt = runtime.noteIdentify();
 			const generation = runtime.getGeneration();
 			const optOutActVersion = runtime.getOptOutActVersion();
 			const { subject, iab } = getSnapshot();
@@ -402,7 +401,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				optOutActVersion
 			);
 			if (
-				attempt !== identifyGeneration ||
+				attempt !== identifyGeneration() ||
 				runtime.getGeneration() !== generation ||
 				(getSnapshot().subject?.subjectId ?? null) !== effectiveSubjectId
 			) {

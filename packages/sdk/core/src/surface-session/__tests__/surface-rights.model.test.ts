@@ -351,19 +351,22 @@ describe('resolveSaleRight', () => {
 			const saves = save.mock.calls.length;
 			void kernel.commands.identify({ ...next });
 			answer({ ok: true, optOut: null });
-			await vi.waitFor(() => expect(kernel.getSnapshot().optOut).toBeNull());
 			await new Promise((resolve) => {
 				setTimeout(resolve, 20);
 			});
-			// No grant was saved on the new user's behalf, and the control,
-			// still on the refusal, is not announced as allowed.
+			// The answer was the earlier account's: the opt-out still holds
+			// for the new user, no grant was saved on their behalf, and the
+			// control, still on the refusal, says the account holds it.
+			expect(kernel.getSnapshot().optOut).toMatchObject({ heldBy: 'person' });
 			expect(save.mock.calls.length).toBe(saves);
 			expect(
 				kernel.getSnapshot().explicitChoice?.categories?.marketing?.value
 			).toBe(false);
 			expect(resolveSaleRight(kernel.getSnapshot()).selected).toBe('protect');
 			expect(onAllowed).not.toHaveBeenCalled();
-			expect(getSurfaceSession(kernel).getState().announcement).toBeFalsy();
+			expect(
+				getSurfaceSession(kernel).getState().announcement?.message
+			).toMatch(/account has opted out/u);
 		}
 	);
 

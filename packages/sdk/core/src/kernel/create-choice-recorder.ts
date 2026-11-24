@@ -674,6 +674,9 @@ export const createChoiceRecorder = function createChoiceRecorder({
 	): Promise<OptInResult> {
 		const actVersion = runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
+		// The lift is the account's that asked: identifying anyone on this
+		// subject while it is out makes its answer stale.
+		const identity = runtime.getIdentityVersion();
 		const existingSubjectId = before.subject?.subjectId ?? null;
 		const requestSubjectId = existingSubjectId ?? generateUuidV7();
 		const payload = buildLiftOptOutPayload(
@@ -694,6 +697,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		const fresh =
 			runtime.getOptOutActVersion() === actVersion &&
 			runtime.getGeneration() === generation &&
+			runtime.getIdentityVersion() === identity &&
 			(current.subject?.subjectId ?? null) === expectedSubjectId;
 		if (!fresh) {
 			return { ok: false, reason: 'held-by-account' };
@@ -722,6 +726,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				actVersion,
 				allowClear: false,
 				generation,
+				identity,
 				subjectId: expectedSubjectId,
 			});
 		}
@@ -732,9 +737,9 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		subjectId: string,
 		actionAt: number,
 		uiSource: SaveUISource,
-		optOutActVersion: number,
-		generation: number
+		fence: { optOutActVersion: number; generation: number; identity: number }
 	): Promise<void> {
+		const { optOutActVersion, generation, identity } = fence;
 		const liftSubjectId = getSnapshot().subject?.subjectId ?? subjectId;
 		const liftPayload = buildLiftOptOutPayload(
 			getSnapshot(),
@@ -748,6 +753,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				actVersion: optOutActVersion,
 				allowClear: true,
 				generation,
+				identity,
 				subjectId: outcome.subjectId ?? liftSubjectId,
 			});
 		}
@@ -1137,6 +1143,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			// Listeners run when the batch closes, after this action's events
 			// are queued: `after` and the events carry this action's snapshot
 			// even when a listener records another choice in response.
+			// A follow-up account lift belongs to the account that saved.
+			const identity = runtime.getIdentityVersion();
 			const { after, generation, optOutActVersion } = batch(() => {
 				const actVersion =
 					liftsOptOut || recordedOptOut !== null || keepsOptOut
@@ -1253,15 +1261,14 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				liftsAccountOptOut &&
 				runtime.getOptOutActVersion() === optOutActVersion &&
 				runtime.getGeneration() === generation &&
+				runtime.getIdentityVersion() === identity &&
 				optOutLiftBlocker(getSnapshot()) === 'held-by-account'
 			) {
-				void liftAccountOptOutAfterSave(
-					subjectId,
-					actionAt,
-					uiSource,
+				void liftAccountOptOutAfterSave(subjectId, actionAt, uiSource, {
+					generation,
+					identity,
 					optOutActVersion,
-					generation
-				);
+				});
 			}
 			emit({ result, type: 'command:save:completed' });
 			return result;
