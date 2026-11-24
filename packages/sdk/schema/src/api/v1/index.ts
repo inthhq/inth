@@ -23,6 +23,7 @@ export {
 	type V1ErrorBody,
 	type V1ValidationDetails,
 	v1CanonicalSubjectIdSchema,
+	v1EffectiveOptOutDeviceSchema,
 	v1EffectiveOptOutSchema,
 	v1EpochMillisecondsSchema,
 	v1ErrorBodySchema,
