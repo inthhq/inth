@@ -140,16 +140,28 @@ const openStory = async function openStory(
 	});
 	await page.locator('#storybook-root').waitFor({ state: 'attached' });
 	await page.evaluate(() => document.fonts.ready);
-	// Enter/leave transitions on the banner and dialog settle well inside
-	// this; `animations: 'disabled'` only applies to screenshots.
+	// Reduced motion turns the surfaces' transitions off. Without it, a play
+	// that opens Customize leaves Chromium's raster of the card's scroll area
+	// at the sub-pixel offset of whichever frame of the height transition it
+	// painted, and the lines inside it land a pixel apart from load to load.
+	const reducedMotion = await page.evaluate(
+		() => matchMedia('(prefers-reduced-motion: reduce)').matches
+	);
+	if (!reducedMotion) {
+		throw new Error(`[parity] ${storyId} did not load with reduced motion`);
+	}
+	// Settle time for anything reduced motion leaves running;
+	// `animations: 'disabled'` only applies to screenshots.
 	await page.waitForTimeout(250);
 };
 
 test.describe('cross-framework visual parity', () => {
 	test.use({
 		colorScheme: 'light',
+		// Playwright Test has no `reducedMotion` option of its own: set at the
+		// top level of `test.use`, it is silently ignored.
+		contextOptions: { reducedMotion: 'reduce' },
 		deviceScaleFactor: 1,
-		reducedMotion: 'reduce',
 		viewport: { height: 800, width: 1280 },
 	});
 
