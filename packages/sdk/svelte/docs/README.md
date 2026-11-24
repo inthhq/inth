@@ -104,6 +104,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 ## Guides
 
 - [Banner experiments](./guides/banner-experiments.md): Run A/B tests on consent banner presentation with a feature flag or built-in assignment, and track impressions and choices per arm.
+- [Cross-domain consent](./guides/cross-domain-consent.md): Sync signed-in users' consent across domains with @inth/node consents.check() and the userConsent provider option.
 - [Troubleshooting](./guides/troubleshooting.md): Fix missing consent banners, scripts loading before consent, CORS errors, failed manifest builds, and missing projectUrl errors in Inth.
 - [Verify consent](./guides/verify-consent.md): Verify in a production build that tracking scripts wait for consent, rejections persist across reloads, preferences reopen, and GPC applies.
 - [Migrate from c15t](./migrate-from-c15t.md): Migrate a c15t or @c15t/* app to @inth/* packages, InthProvider, hooks, callbacks, and themes while keeping visitors' stored choices.

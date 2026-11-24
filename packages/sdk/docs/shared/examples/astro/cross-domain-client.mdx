@@ -1,0 +1,11 @@
+{/* Generated from internals/doc-snippets/astro/src/cross-domain.client.ts (docs:cross-domain-client) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="src/inth.client.ts"
+import type { InthClientOptionsExtension } from '@inth/astro';
+
+export default async function (): Promise<InthClientOptionsExtension> {
+	const res = await fetch('/api/user');
+	const { user, userConsent } = await res.json();
+	return { user, userConsent };
+}
+```

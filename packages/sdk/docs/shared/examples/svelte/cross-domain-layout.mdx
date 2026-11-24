@@ -1,0 +1,16 @@
+{/* Generated from internals/doc-snippets/svelte/src/cross-domain-layout.svelte (docs:cross-domain-layout) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```svelte title="+layout.svelte"
+<script lang="ts">
+	import { InthProvider } from '@inth/svelte';
+	let { data, children } = $props();
+</script>
+
+<InthProvider
+	projectUrl={import.meta.env.VITE_INTH_PROJECT_URL}
+	user={data.user}
+	userConsent={data.userConsent}
+>
+	{@render children()}
+</InthProvider>
+```

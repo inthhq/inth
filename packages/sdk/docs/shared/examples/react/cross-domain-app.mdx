@@ -1,0 +1,32 @@
+{/* Generated from internals/doc-snippets/react/src/cross-domain-app.tsx (docs:cross-domain-app) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```tsx title="App.tsx"
+import { InthProvider } from '@inth/react';
+import { useMemo } from 'react';
+
+export function App({ user, children }) {
+	const userConsent = useMemo(
+		() =>
+			user
+				? fetch('/api/user').then((res) =>
+						res.ok ? res.json().then((data) => data.userConsent) : undefined
+					)
+				: null,
+		[user?.externalId]
+	);
+
+	return (
+		<InthProvider
+			options={{
+				projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
+				user: user
+					? { externalId: user.externalId, identityToken: user.identityToken }
+					: undefined,
+				userConsent,
+			}}
+		>
+			{children}
+		</InthProvider>
+	);
+}
+```

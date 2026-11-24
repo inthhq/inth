@@ -1,0 +1,11 @@
+{/* Generated from internals/doc-snippets/vue/src/cross-domain-main.ts (docs:cross-domain-main) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="main.ts"
+import { inth } from '@inth/vue';
+
+app.use(inth, {
+	projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
+	user: { externalId: user.id, identityToken },
+	userConsent,
+});
+```

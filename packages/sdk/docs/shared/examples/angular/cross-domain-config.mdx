@@ -1,0 +1,15 @@
+{/* Generated from internals/doc-snippets/angular/src/app/cross-domain-config.ts (docs:cross-domain-config) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="app.config.ts"
+import { provideInth } from '@inth/angular';
+
+export const appConfig = {
+	providers: [
+		provideInth({
+			projectUrl: 'https://your-project.inth.app',
+			user: { externalId: user.id, identityToken },
+			userConsent,
+		}),
+	],
+};
+```

@@ -2841,6 +2841,9 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../../packages/sdk/nextjs
+      '@inth/node':
+        specifier: workspace:*
+        version: link:../../../packages/sdk/node
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react
@@ -2988,6 +2991,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../../packages/sdk/integrations
+      '@inth/node':
+        specifier: workspace:*
+        version: link:../../../packages/sdk/node
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react

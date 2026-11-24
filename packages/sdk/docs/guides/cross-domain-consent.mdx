@@ -12,38 +12,7 @@ Your server's `GET /user` endpoint reads the user's consent document with `@inth
 
 Call `inth.consents.check()` without `property` so choices from every domain in your project are included. Mint a short-lived identity token alongside it so the browser can link itself and lift account-held opt-outs.
 
-```ts title="GET /api/user"
-import { Inth } from '@inth/node';
-
-const inth = new Inth();
-const noStore = { 'cache-control': 'private, no-store' };
-
-export async function GET(request: Request) {
-	const user = await getSessionUser(request);
-	if (!user) {
-		return Response.json(
-			{ user: null, userConsent: null },
-			{ headers: noStore }
-		);
-	}
-
-	const [consentResult, tokenResult] = await Promise.all([
-		inth.consents.check({ externalId: user.id }),
-		inth.users.createIdentityToken({ externalId: user.id }),
-	]);
-
-	return Response.json(
-		{
-			user: {
-				externalId: user.id,
-				identityToken: tokenResult.error ? undefined : tokenResult.data.token,
-			},
-			userConsent: consentResult.error ? undefined : consentResult.data,
-		},
-		{ headers: noStore }
-	);
-}
-```
+<include src="../shared/examples/node/node-user-consent-route.mdx" />
 
 Omit `property` on `consents.check()`. Passing `property` restricts the answer to one host name and hides decisions made on your other domains.
 
@@ -59,36 +28,7 @@ Always pass `user` alongside `userConsent`. Inth ignores `userConsent` when `use
 
 Pass either the resolved `UserConsent` document or a memoized `Promise<UserConsent | null | undefined>`.
 
-```tsx title="App.tsx"
-import { InthProvider } from '@inth/react';
-import { useMemo } from 'react';
-
-export function App({ user, children }) {
-	const userConsent = useMemo(
-		() =>
-			user
-				? fetch('/api/user').then((res) =>
-						res.ok ? res.json().then((data) => data.userConsent) : undefined
-					)
-				: null,
-		[user?.externalId]
-	);
-
-	return (
-		<InthProvider
-			options={{
-				projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
-				user: user
-					? { externalId: user.externalId, identityToken: user.identityToken }
-					: undefined,
-				userConsent,
-			}}
-		>
-			{children}
-		</InthProvider>
-	);
-}
-```
+<include src="../shared/examples/react/cross-domain-app.mdx" />
 
 Keep `userConsent` as `undefined` when `/api/user` or `consents.check()` fails so the browser keeps its stored account consent layer. Pass `null` only when the visitor is signed out, which clears any stored account layer.
 
@@ -96,85 +36,13 @@ Keep `userConsent` as `undefined` when `/api/user` or `consents.check()` fails s
 
 Fold `user` and `userConsent` on the server in `resolveConsent()` so server HTML, hydration, and `serverStart` scripts match without a flash. Pass the full `user` (with `identityToken`) on the client.
 
-```tsx title="app/layout.tsx"
-import { InthProvider } from '@inth/nextjs';
-import { resolveConsent } from '@inth/nextjs/server';
-import { Inth } from '@inth/node';
-
-const inth = new Inth();
-
-export default async function RootLayout({ children }) {
-	const sessionUser = await getSessionUser();
-	const [consentResult, tokenResult] = sessionUser
-		? await Promise.all([
-				inth.consents.check({ externalId: sessionUser.id }),
-				inth.users.createIdentityToken({ externalId: sessionUser.id }),
-			])
-		: [null, null];
-	const userConsent =
-		sessionUser === null
-			? null
-			: consentResult?.error
-				? undefined
-				: consentResult?.data;
-
-	const state = await resolveConsent({
-		user: sessionUser ? { externalId: sessionUser.id } : undefined,
-		userConsent,
-	});
-
-	return (
-		<html lang="en">
-			<body>
-				<InthProvider
-					state={state}
-					options={{
-						user: sessionUser
-							? {
-									externalId: sessionUser.id,
-									identityToken: tokenResult?.error
-										? undefined
-										: tokenResult?.data.token,
-								}
-							: undefined,
-						userConsent,
-					}}
-				>
-					{children}
-				</InthProvider>
-			</body>
-		</html>
-	);
-}
-```
+<include src="../shared/examples/nextjs/cross-domain-layout.mdx" />
 
 On reload, if you omit `userConsent` (`undefined`) and still pass `user: { externalId }`, `resolveConsent()` reads the visitor's account cookies gated by `user.externalId`.
 
 ### TanStack Start
 
-```tsx title="src/routes/__root.tsx"
-import { Inth } from '@inth/node';
-import { resolveConsent } from '@inth/tanstack-start/server';
-
-const inth = new Inth();
-
-// Inside your server loader:
-const sessionUser = await getSessionUser();
-const consentResult = sessionUser
-	? await inth.consents.check({ externalId: sessionUser.id })
-	: null;
-const userConsent =
-	sessionUser === null
-		? null
-		: consentResult?.error
-			? undefined
-			: consentResult?.data;
-
-const consentState = await resolveConsent({
-	user: sessionUser ? { externalId: sessionUser.id } : undefined,
-	userConsent,
-});
-```
+<include src="../shared/examples/tanstack-start/cross-domain-root.mdx" />
 
 Pass `consentState` to `<InthProvider state={consentState} options={{ user, userConsent }}>`.
 
@@ -182,62 +50,21 @@ Pass `consentState` to `<InthProvider state={consentState} options={{ user, user
 
 Pass `user` and `userConsent` in the plugin options or reactive config:
 
-```ts title="main.ts"
-import { inth } from '@inth/vue';
-
-app.use(inth, {
-	projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
-	user: { externalId: user.id, identityToken },
-	userConsent,
-});
-```
+<include src="../shared/examples/vue/cross-domain-main.mdx" />
 
 ### Svelte
 
-```svelte title="+layout.svelte"
-<script lang="ts">
-	import { InthProvider } from '@inth/svelte';
-	let { data, children } = $props();
-</script>
-
-<InthProvider
-	projectUrl={import.meta.env.VITE_INTH_PROJECT_URL}
-	user={data.user}
-	userConsent={data.userConsent}
->
-	{@render children()}
-</InthProvider>
-```
+<include src="../shared/examples/svelte/cross-domain-layout.mdx" />
 
 ### Angular
 
-```ts title="app.config.ts"
-import { provideInth } from '@inth/angular';
-
-export const appConfig = {
-	providers: [
-		provideInth({
-			projectUrl: 'https://your-project.inth.app',
-			user: { externalId: user.id, identityToken },
-			userConsent,
-		}),
-	],
-};
-```
+<include src="../shared/examples/angular/cross-domain-config.mdx" />
 
 ### Astro
 
 Pass `user` and `userConsent` from your `clientEntrypoint` extension:
 
-```ts title="src/inth.client.ts"
-import type { InthClientOptionsExtension } from '@inth/astro';
-
-export default async function (): Promise<InthClientOptionsExtension> {
-	const res = await fetch('/api/user');
-	const { user, userConsent } = await res.json();
-	return { user, userConsent };
-}
-```
+<include src="../shared/examples/astro/cross-domain-client.mdx" />
 
 ### Plain HTML and script tag
 
