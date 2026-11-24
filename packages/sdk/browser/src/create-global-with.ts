@@ -202,6 +202,28 @@ const QUEUE_ACTION_METHODS: ReadonlySet<string> = new Set([
 	'syncUserConsent',
 ]);
 
+/**
+ * What a page queued about the account before its client existed, with no
+ * consent or UI action ahead: the last `identify` user, and whether any
+ * action came first.
+ */
+interface EarlyAccount {
+	user?: unknown;
+	afterAction: boolean;
+}
+
+/** Each API's {@link EarlyAccount}, until its client exists. */
+const earlyAccounts = new WeakMap<GlobalApiBase, EarlyAccount>();
+
+const earlyAccountOf = (api: GlobalApiBase): EarlyAccount => {
+	let early = earlyAccounts.get(api);
+	if (!early) {
+		early = { afterAction: false };
+		earlyAccounts.set(api, early);
+	}
+	return early;
+};
+
 const queuedName = function queuedName(call: unknown): string {
 	return Array.isArray(call) && typeof call[0] === 'string'
 		? call[0]
@@ -246,6 +268,29 @@ const runQueued = async function runQueued(
 		}
 		reportQueuedFailure(call, error);
 	}
+};
+
+/**
+ * Settle a queued call that became a client option once the client is
+ * ready, for the init script's stand-in waiting on its result.
+ */
+const settleAtReady = async function settleAtReady(
+	api: GlobalApiBase,
+	call: QueuedCall
+): Promise<void> {
+	const { settle } = call as QueuedCall & {
+		settle?: (result: unknown, failed?: boolean) => void;
+	};
+	if (!settle) {
+		return;
+	}
+	try {
+		await api.ready();
+	} catch (error) {
+		settle(error, true);
+		return;
+	}
+	settle(undefined);
 };
 
 /** The pending consent and UI actions for one API. */
@@ -322,6 +367,7 @@ const cancelActions = function cancelActions(api: GlobalApiBase): void {
 		chain.cancelled = true;
 		actionChains.delete(api);
 	}
+	earlyAccounts.delete(api);
 };
 
 /**
@@ -351,13 +397,39 @@ const replayQueue = function replayQueue(
 			continue;
 		}
 		const queued = call as QueuedCall;
+		const [, value] = queued;
+		const early = api.client === null ? earlyAccountOf(api) : null;
 		if (QUEUE_SETUP_METHODS.has(method)) {
 			void runQueued(api, queued);
+		} else if (
+			method === 'syncUserConsent' &&
+			early !== null &&
+			!early.afterAction
+		) {
+			// The client starts with the account's consent, and with the user
+			// a queued `identify` names, instead of releasing scripts the
+			// account denied. `identify` itself still runs as an action.
+			api.config(
+				early.user === undefined
+					? { userConsent: value as ScriptTagClientOptions['userConsent'] }
+					: {
+							user: early.user as KernelUser,
+							userConsent: value as ScriptTagClientOptions['userConsent'],
+						}
+			);
+			void settleAtReady(api, queued);
 		} else if (QUEUE_INIT_METHODS.has(method)) {
 			api.onInit(() => {
 				void runQueued(api, queued);
 			});
 		} else if (QUEUE_ACTION_METHODS.has(method)) {
+			if (early !== null) {
+				if (method === 'identify') {
+					early.user = value;
+				} else {
+					early.afterAction = true;
+				}
+			}
 			actions.push(queued);
 		} else {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.

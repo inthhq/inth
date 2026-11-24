@@ -321,6 +321,9 @@ export const runInitScript = function runInitScript(
 		}
 	};
 
+	// Set once the page queues `syncUserConsent` for the engine.
+	let accountQueued = false;
+
 	/**
 	 * Queue a call for the engine and load it now. A method that returns a
 	 * promise resolves with the engine's result.
@@ -330,6 +333,9 @@ export const runInitScript = function runInitScript(
 			return (
 				api as unknown as Record<string, (...rest: unknown[]) => unknown>
 			)[method]?.(...args);
+		}
+		if (method === 'syncUserConsent') {
+			accountQueued = true;
 		}
 		const call: SettledCall = [method, ...args];
 		let result: Promise<unknown> | undefined;
@@ -363,6 +369,11 @@ export const runInitScript = function runInitScript(
 	 * engine's loader, which then loads at once.
 	 */
 	const startScripts = function startScripts(next: ConsentSnapshot): void {
+		// Only the engine applies an account's consent document, so it
+		// starts the scripts once the page queued one.
+		if (accountQueued) {
+			return;
+		}
 		const current = options ?? scriptOptions;
 		const scripts = current.scripts ?? [];
 		startPlainScripts(scripts, next, current.nonce);

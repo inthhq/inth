@@ -125,4 +125,63 @@ describe('window.inth.syncUserConsent and ScriptTagClientOptions.userConsent', (
 		expect(api.has('marketing')).toBe(false);
 		client.dispose();
 	});
+
+	it('applies identify and syncUserConsent queued before the tag loads before the policy releases scripts', async () => {
+		const rule = {
+			id: 'us-opt-out',
+			match: { isDefault: true },
+			model: 'opt-out' as const,
+			prompt: 'choice' as const,
+		};
+		const denial: UserConsent = {
+			categories: { marketing: false },
+			optOut: null,
+			sync: {
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'any-fp', kind: 'choice-v1' },
+						confirmedAt: NOW - 1000,
+						value: false,
+					},
+				},
+				externalId: 'user_queued',
+				optOut: null,
+				vendors: {},
+			},
+		};
+		testWindow.inth = [
+			[
+				'config',
+				{
+					consentCategories: ['measurement', 'marketing'],
+					mode: testing({ policy: [rule] }).transport,
+					ui: false,
+				},
+			],
+			['identify', { externalId: 'user_queued' }],
+			['syncUserConsent', denial],
+		];
+		const api: GlobalApi = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
+		const client = api.init();
+		const released: boolean[] = [];
+		const record = () => {
+			const snapshot = client.getSnapshot();
+			if (!snapshot.policyPending && !snapshot.userConsentPending) {
+				released.push(snapshot.effectivePermissions.marketing);
+			}
+		};
+		record();
+		client.subscribe(record);
+		await api.ready();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+
+		expect(client.getSnapshot().user?.externalId).toBe('user_queued');
+		expect(api.has('marketing')).toBe(false);
+		expect(released.length).toBeGreaterThan(0);
+		expect(released).not.toContain(true);
+		client.dispose();
+	});
 });
