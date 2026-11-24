@@ -14,7 +14,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Choose your setup](./docs/concepts/choose-your-setup.md): Pick the Inth SDK setup for your web framework, rendering mode or native mobile platform.
 - [Performance](./docs/performance.md): How Inth removes /v1/consent/init latency with build-time manifests, streams SSR consent without blocking paint, and defers UI and engine JavaScript.
 - [How consent works](./docs/concepts/how-consent-works.md): Learn how Inth evaluates policies, stored choices, and browser privacy signals on every page load to gate scripts and save consent.
-- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Verify consent](./docs/guides/verify-consent.md): Verify in a production build that tracking scripts wait for consent, rejections persist across reloads, preferences reopen, and GPC applies.
 - [Migrate from c15t](./docs/migrate-from-c15t.md): Migrate a c15t or @c15t/* app to @inth/* packages, InthProvider, hooks, callbacks, and themes while keeping visitors' stored choices.
 
@@ -27,15 +27,15 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Callbacks](./docs/frameworks/react/callbacks.md): Run React callbacks on consent choices, permission changes, errors, and before revocation reloads.
 - [Clear on revocation](./docs/frameworks/react/clear-on-revocation.md): Delete first-party cookies and Web Storage keys in React when a visitor withdraws consent.
 - [Components](./docs/frameworks/react/components.md): Reference every Inth component exported by @inth/react, what it renders, and where to mount it.
-- [ConsentBanner](./docs/frameworks/react/components/consent-banner.md): Render the Inth consent banner in React, configure its variant and position, and compose its parts.
-- [ConsentDialog](./docs/frameworks/react/components/consent-dialog.md): Mount the modal ConsentDialog preference center in React, wire triggers, and control blocking and focus.
+- [ConsentBanner](./docs/frameworks/react/components/consent-banner.md): Render the Inth consent banner in React and choose its container, edge style, and blocking.
+- [ConsentDialog](./docs/frameworks/react/components/consent-dialog.md): Mount ConsentDialog, the Your Privacy Choices dialog, in React and open it from links, triggers, or your own code.
 - [ConsentDialogLink](./docs/frameworks/react/components/consent-dialog-link.md): Add a ConsentDialogLink to your React footer so visitors can reopen privacy preferences anytime.
 - [ConsentDialogTrigger](./docs/frameworks/react/components/consent-dialog-trigger.md): Add a floating ConsentDialogTrigger button or toolbar inside a React InthProvider.
 - [ConsentGate](./docs/frameworks/react/components/consent-gate.md): Gate third-party embeds in React with ConsentGate, showing a placeholder until consent allows them.
 - [ConsentWidget](./docs/frameworks/react/components/consent-widget.md): Embed the Inth preference center inline on a React privacy page with ConsentWidget.
 - [DevTools](./docs/frameworks/react/components/dev-tools.md): Inspect consent state, location, scripts, and events in React development builds with DevTools.
 - [InthProvider](./docs/frameworks/react/components/inth-provider.md): Mount InthProvider in React and configure your Inth project, scripts, storage, blocking, and UI.
-- [Compose your own banner](./docs/frameworks/react/compose.md): Build a custom React consent banner from ConsentBanner compound parts while keeping policy-driven actions.
+- [PrivacyChoicesLink](./docs/frameworks/react/components/privacy-choices-link.md): Add a PrivacyChoicesLink to your React footer for US opt-out regions so visitors can open privacy choices in ConsentDialog.
 - [Content Security Policy](./docs/frameworks/react/content-security-policy.md): Configure Content Security Policy directives and nonces for Inth components and vendor scripts in React.
 - [Customize](./docs/frameworks/react/customize.md): Style the Inth banner and dialog in React with theme tokens, provider options, slots, and dark mode.
 - [Embeds](./docs/frameworks/react/embeds.md): Block YouTube, map, and other third-party iframes in React until consent allows them with ConsentGate.
@@ -74,7 +74,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Class names and CSS-in-JS](./docs/customization/class-names.md): Style Inth consent components with CSS Modules, vanilla-extract, StyleX, Emotion, or plain classes in every supported framework.
 - [Dark mode](./docs/customization/dark-mode.md): Configure Inth dark mode with colorScheme, theme.dark tokens, .dark class tracking, and flash-free SSR rendering.
 - [Motion and animation](./docs/customization/motion.md): Customize Inth animation timing with motion tokens, turn animations off with disableAnimation, and animate on dialog data-state.
-- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Banner designs](./docs/customization/recipes.md): Copy five tested Inth consent banner designs, from a single prop to headless markup, for React, Vue, Svelte, Astro, and HTML.
 - [Component parts](./docs/customization/slots.md): Reference every Inth banner, dialog, widget, trigger, and ConsentGate part key across frameworks, plus data state attributes and noStyle.
 - [Stylesheets and CSS layers](./docs/customization/stylesheets.md): Load Inth component styles automatically or manually, control CSS cascade layer order, defer dialog CSS, and disable default styles.
