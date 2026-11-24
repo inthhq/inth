@@ -738,6 +738,12 @@ export const startDeferredClient = function startDeferredClient(
 			}
 		}
 	} else {
+		// The engine loads now. When it fails, the banner shows again, and a
+		// tap on it is the retry: the script calls this after it records it.
+		const queue = earlyTapQueue();
+		if (queue?.taps) {
+			queue[EARLY_TAP_NOTIFY_KEY] = request;
+		}
 		request();
 	}
 	return client;

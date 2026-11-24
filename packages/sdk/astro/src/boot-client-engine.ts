@@ -39,7 +39,10 @@ import type {
 	RuntimeIABOptions,
 } from '@inth/sdk/runtime';
 import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
-import { earlyTapQueue } from '@inth/sdk/runtime/page-globals';
+import {
+	EARLY_TAP_NOTIFY_KEY,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import {
 	activateOptOutLink,
 	closeOptInConfirmation,
@@ -1274,6 +1277,28 @@ const releaseEarlyTaps = function releaseEarlyTaps(
 	unhideEarlyTap();
 };
 
+/**
+ * From the handoff on, a tap the early-tap script holds needs the prompt,
+ * not the engine: the shell's notify only loads the engine, which has
+ * loaded. A prompt chunk that failed showed the banner again, and the
+ * visitor's next tap on it is the retry. The tap stays queued, and the
+ * prompt that mounts replays it. A mounted prompt claimed the queue, and
+ * the script no longer calls this.
+ */
+const routeEarlyTapsToPrompt = function routeEarlyTapsToPrompt(
+	client: AstroConsentClient
+): void {
+	const queue = earlyTapQueue();
+	if (!queue?.taps) {
+		return;
+	}
+	queue[EARLY_TAP_NOTIFY_KEY] = (): void => {
+		if (currentClient() === client) {
+			ensurePrompt(client, client.getConsent());
+		}
+	};
+};
+
 const attach = function attach(client: AstroConsentClient): void {
 	const snapshot = client.getConsent();
 	ensurePrompt(client, snapshot);
@@ -1330,6 +1355,7 @@ export const boot = function boot(
 	}
 	applyColorScheme(options.colorScheme);
 	attachBannerActions();
+	routeEarlyTapsToPrompt(client);
 
 	let iabReported = false;
 	client.subscribe((snapshot) => {

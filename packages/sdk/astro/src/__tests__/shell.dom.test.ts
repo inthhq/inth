@@ -10,6 +10,7 @@ import {
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../../../core/src/surface-actions/early-consent-tap-script';
 import type { InthClientOptionsExtension } from '../astro-consent-client.model';
 import { boot, EVENTS_KEY } from '../boot-client-engine';
 import { startDeferredClient } from '../browser/start-deferred-client';
@@ -339,6 +340,56 @@ describe('the first-load shell', () => {
 			false
 		);
 	});
+
+	// GPT round 2: a blocking banner loads the engine at once, so nothing
+	// told the shell about the tap the restored banner took, and the engine
+	// never loaded again. A non-blocking one waits, and its taps load it.
+	it.each([
+		['blocking', true],
+		['non-blocking', false],
+	])(
+		'loads the engine again on a tap on a %s banner a failed engine restored',
+		async (_, blocking) => {
+			renderPage();
+			if (blocking) {
+				document
+					.querySelector(EARLY_TAP_ROOT)
+					?.setAttribute('data-blocking', 'true');
+			}
+			// oxlint-disable-next-line no-new-func -- The inline script as shipped.
+			new Function(EARLY_CONSENT_TAP_SCRIPT)();
+			const accept = () =>
+				(
+					document.querySelector('[data-action="accept"]') as HTMLElement
+				).click();
+			let calls = 0;
+			const loadEngine = vi.fn(() => {
+				calls += 1;
+				return calls === 1
+					? Promise.reject(new Error('chunk failed'))
+					: Promise.resolve({ boot } satisfies EngineModule);
+			});
+			try {
+				startShell(loadEngine);
+				accept();
+				await settle();
+				expect(loadEngine).toHaveBeenCalledOnce();
+				expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+
+				// No navigation event: the tap alone retries.
+				accept();
+				await settle();
+				expect(loadEngine).toHaveBeenCalledTimes(2);
+				expect(getConsentClient()?.runtime).toBeDefined();
+			} finally {
+				(
+					(window as unknown as Record<string, unknown>)[
+						EARLY_TAPS_WINDOW_KEY
+					] as { stop?: () => void } | undefined
+				)?.stop?.();
+			}
+		}
+	);
 
 	it('a save the outbox cannot keep goes to the engine, which records it once', async () => {
 		renderPage();
