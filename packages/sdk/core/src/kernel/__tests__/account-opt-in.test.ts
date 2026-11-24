@@ -208,6 +208,56 @@ describe('an account opt-in and this device opt-out', () => {
 		}
 	});
 
+	test('a newer account document without an opt-out keeps a confirmed, linked device opt-out', async () => {
+		// An older backend still sends the device row's write time.
+		const device = {
+			rights: ['sale', 'share', 'targeted_ads'] as OptOutRight[],
+			writtenAt: NOW - 5000,
+		};
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: RESOLUTION,
+				initialUser: USER,
+				now: NOW - 5000,
+				transport: {
+					optOut: (payload) =>
+						Promise.resolve({
+							link: { stored: true, verifiedBy: 'identity_token' },
+							ok: true,
+							optOut: {
+								device,
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW - 5000,
+								rights: ['sale', 'share', 'targeted_ads'],
+							},
+							recordId: RECORD_UUID,
+							subjectId: payload.subjectId,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(accountDocument({ checkedAt: NOW - 6000 }));
+			expect((await kernel.commands.optOut({ actionAt: NOW - 5000 })).ok).toBe(
+				true
+			);
+
+			kernel.syncUserConsent(accountDocument({ checkedAt: NOW }));
+
+			expect(kernel.getBrowserRecords().optOut).toMatchObject({
+				heldBy: 'device',
+				rights: ['sale', 'share', 'targeted_ads'],
+			});
+			expect(kernel.getSnapshot().optOut).not.toBeNull();
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
 	test('the account opt-out and the account opt-in compare per right in server time', () => {
 		const kernel = signedInKernel(null);
 		try {
