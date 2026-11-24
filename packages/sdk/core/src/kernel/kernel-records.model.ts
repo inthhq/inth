@@ -19,11 +19,6 @@
  */
 import type { OptOutRecord, UserConsent } from '@inth/sdk-schema/types';
 
-import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
-import {
-	answersHeldOptOut,
-	carryOptOutCategories,
-} from '../consent-record/opt-out-rules.model';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
@@ -32,6 +27,11 @@ import type {
 	KernelUser,
 	OptOutAnswer,
 } from '../consent-kernel.model';
+import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
 import { isProductionBuild } from '../libs/is-production';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import {

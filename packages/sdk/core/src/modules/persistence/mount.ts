@@ -10,6 +10,7 @@ import type {
  * @internal
  */
 import { carryOptOutCategories } from '../../consent-record/opt-out-rules.model';
+import { shouldAdoptAccountLayer } from '../../kernel/account-layer';
 import { clearKernelRecords } from '../../kernel/clear-records.model';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {

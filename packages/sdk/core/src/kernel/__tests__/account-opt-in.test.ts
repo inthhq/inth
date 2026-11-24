@@ -18,7 +18,7 @@ import {
 	NOW,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import type { OptOutAnswer } from '../../types';
+import type { OptOutAnswer } from '../../consent-kernel.model';
 import {
 	normalizeUserConsent,
 	sameAccountLayerContent,

@@ -17,7 +17,6 @@ import { consentPending } from '../consent-pending';
 import {
 	stripOptOutDevice,
 	validateOptOutAnswer,
-	validateOptOutRecord,
 } from '../consent-record/consent-record-validation.model';
 import {
 	answersHeldOptOut,
@@ -32,8 +31,6 @@ import type { OptionalConsentCategory } from '../consent-record/types';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import { createIdempotencyKey } from '../libs/subject-uuid.model';
-import { splitServerOptOutForAccount } from './account-layer';
-import type { AccountOptOutRecord } from './account-layer';
 import type { KernelRuntime } from './create-runtime';
 
 const inCanonicalOrder = function inCanonicalOrder(

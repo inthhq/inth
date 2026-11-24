@@ -30,13 +30,16 @@ import {
 	readStoredAccountLayerFromCookieHeader,
 } from '../account-codec';
 import { resolveAccountStorageKeys } from '../account-keys';
+import { createPersistence } from '../index';
+import { mountPersistence } from '../mount';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from '../hydrate';
-import { createPersistence } from '../index';
-import { mountPersistence } from '../mount';
-import { decodeOptOutRecord, decodeOptOutRecordCompact } from '../record-codec';
+} from '../persistence-hydrate.store';
+import {
+	decodeOptOutRecord,
+	decodeOptOutRecordCompact,
+} from '../record-codec.model';
 import type { WriterModule } from '../writer-loader';
 
 const clearBrowserStorage = () => {

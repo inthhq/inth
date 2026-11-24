@@ -16,27 +16,27 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelTransport,
+	LiftOptOutPayload,
+	OptOutPayload,
+	SavePayload,
+} from '../../consent-kernel.model';
 import { createClearOnRevocation } from '../../modules/clear-on-revocation';
 import { isVendorAllowed } from '../../modules/has';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { createPersistence } from '../../modules/persistence';
 import { readStoredAccountLayer } from '../../modules/persistence/account-codec';
-import { readStoredRecordsFromCookieHeader } from '../../modules/persistence/hydrate';
 import { mountPersistence } from '../../modules/persistence/mount';
-import { encodeVendorChoiceCompact } from '../../modules/persistence/writer/encode';
+import { readStoredRecordsFromCookieHeader } from '../../modules/persistence/persistence-hydrate.store';
+import { encodeVendorChoiceCompact } from '../../modules/persistence/writer/record-encode.model';
 import { createScriptLoader } from '../../modules/script-loader';
 import { createPreferenceDraft } from '../../preference-draft';
-import { canDeferEngine } from '../../surface-actions/defer-engine';
+import { canDeferEngine } from '../../surface-actions/can-defer-engine';
 import { kernelOnly } from '../../surface-actions/instant-commit';
 import { createV1RecordTransport } from '../../transports/v1/records';
-import type {
-	KernelTransport,
-	LiftOptOutPayload,
-	OptOutPayload,
-	SavePayload,
-} from '../../types';
-import { clearKernelRecords } from '../clear-records';
+import { clearKernelRecords } from '../clear-records.model';
 import { createKernel } from '../index';
 import { createMemoryOutboxStore } from '../save-outbox';
 

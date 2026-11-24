@@ -16,8 +16,16 @@ import type {
 	UserConsent,
 } from '@inth/sdk-schema/types';
 
+import type { KernelUser, VendorChoice } from '../consent-kernel.model';
+import {
+	isNonEmptyString,
+	isOptionalConsentCategory,
+	isPlainRecord,
+	ownKeys,
+	ownValue,
+} from '../consent-record/consent-record-validation.model';
 import { isChoiceBasisCompatible } from '../consent-record/evaluate';
-import { unionOptOutCategories } from '../consent-record/opt-out-rules';
+import { unionOptOutCategories } from '../consent-record/opt-out-rules.model';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
 	CategoryDecision,
@@ -26,15 +34,7 @@ import type {
 	ExplicitChoice,
 	OptionalConsentCategory,
 } from '../consent-record/types';
-import {
-	isNonEmptyString,
-	isOptionalConsentCategory,
-	isPlainRecord,
-	ownKeys,
-	ownValue,
-} from '../consent-record/validation';
 import { isValidVendorId } from '../libs/vendors';
-import type { KernelUser, VendorChoice } from '../types';
 
 /** Largest epoch millisecond value `Date` can represent. */
 const MAX_DATE_MS = 8_640_000_000_000_000;

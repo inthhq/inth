@@ -28,7 +28,6 @@ import {
 	isPlainRecord,
 	ownValue,
 	validateOptOutAnswer,
-	validateOptOutRecord,
 } from '../../consent-record/consent-record-validation.model';
 import { buildDecisionAssertion } from '../decision-inputs.model';
 import type { RememberedDecisionInputs } from '../decision-inputs.model';

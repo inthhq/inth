@@ -24,15 +24,15 @@
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutMethod, OptOutRight } from '@inth/sdk-schema/types';
 
-import type {
-	ChoiceBasis,
-	OptionalConsentCategory,
-} from '../../consent-record/types';
 import {
 	isNonEmptyString,
 	isPlainRecord,
 	ownValue,
-} from '../../consent-record/validation';
+} from '../../consent-record/consent-record-validation.model';
+import type {
+	ChoiceBasis,
+	OptionalConsentCategory,
+} from '../../consent-record/types';
 import {
 	isValidAccountTimestamp,
 	validateAccountConsentLayer,
@@ -51,7 +51,11 @@ import {
 import type { StorageConfig } from '../../libs/cookie';
 import { isValidVendorId } from '../../libs/vendors';
 import { resolveAccountStorageKeys } from './account-keys';
-import { CATEGORY_CODES, decodeComponent, DIGITS_ONLY } from './record-codec';
+import {
+	CATEGORY_CODES,
+	decodeComponent,
+	DIGITS_ONLY,
+} from './record-codec.model';
 
 const FIELD_SEPARATOR = '&';
 const KEY_VALUE_SEPARATOR = '=';

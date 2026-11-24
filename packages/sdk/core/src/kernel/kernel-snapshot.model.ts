@@ -10,7 +10,6 @@
 
 import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 
-import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -23,6 +22,7 @@ import type {
 	PromptSurface,
 } from '../consent-kernel.model';
 import { DEFAULT_BRANDING } from '../consent-kernel.model';
+import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
 import { evaluateConsentRecord } from '../consent-record/evaluate';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {

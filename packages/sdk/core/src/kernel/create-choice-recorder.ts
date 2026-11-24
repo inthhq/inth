@@ -27,11 +27,6 @@ import {
 } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import {
-	answersHeldOptOut,
-	carryOptOutCategories,
-} from '../consent-record/opt-out-rules.model';
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -52,11 +47,16 @@ import {
 	EMPTY_CHOICE,
 	recordCategoryPatch,
 } from '../consent-record/consent-record.model';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
 import { optOutDecidingCategory } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import {
 	createIdempotencyKey,
 	generateUuidV7,
@@ -1042,6 +1042,13 @@ const adoptDeviceLiftAnswer = function adoptDeviceLiftAnswer(
  * `commands.dismissNotice` and `set.draft`.
  */
 // oxlint-disable-next-line max-lines-per-function -- save() keeps the order of one action visible.
+/** See `captureAccountLiftBasis`. */
+interface AccountLiftBasis {
+	checkedAt: number | null;
+	identity: number;
+	optOutRaw: number | null;
+}
+
 export const createChoiceRecorder = function createChoiceRecorder({
 	runtime,
 	outbox,
@@ -1096,13 +1103,16 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			: null;
 	};
 
-	const captureAccountLiftBasis = (): {
-		checkedAt: number | null;
-		optOutRaw: number | null;
-	} => {
+	/**
+	 * What an account lift starts from: the account layer it lifts, and the
+	 * identification generation. Identifying anyone on this subject while
+	 * the lift is out makes its answer stale.
+	 */
+	const captureAccountLiftBasis = (): AccountLiftBasis => {
 		const layer = runtime.getAccountLayer();
 		return {
 			checkedAt: layer?.checkedAt ?? null,
+			identity: runtime.getIdentityVersion(),
 			optOutRaw: layer?.optOut?.rawRecordedAt ?? null,
 		};
 	};
@@ -1111,7 +1121,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		actVersion: number,
 		generation: number,
 		externalId: string | null,
-		startedBasis: { checkedAt: number | null; optOutRaw: number | null },
+		startedBasis: AccountLiftBasis,
 		expectedSubjectId?: string | null
 	): boolean => {
 		const current = getSnapshot();
@@ -1125,6 +1135,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						startedBasis.optOutRaw;
 		return (
 			basisMatches &&
+			runtime.getIdentityVersion() === startedBasis.identity &&
 			runtime.getOptOutActVersion() === actVersion &&
 			runtime.getGeneration() === generation &&
 			(current.user?.externalId ?? null) === externalId &&
@@ -1164,7 +1175,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			fence: {
 				actVersion: number;
 				generation: number;
-				startedBasis: { checkedAt: number | null; optOutRaw: number | null };
+				startedBasis: AccountLiftBasis;
 			}
 		): Promise<
 			{ ok: true; subjectId: string; hadSubject: boolean } | { ok: false }
@@ -1344,9 +1355,6 @@ export const createChoiceRecorder = function createChoiceRecorder({
 	): Promise<OptInResult> {
 		const actVersion = runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
-		// The lift is the account's that asked: identifying anyone on this
-		// subject while it is out makes its answer stale.
-		const identity = runtime.getIdentityVersion();
 		const externalId = before.user?.externalId ?? null;
 		const startedBasis = captureAccountLiftBasis();
 		const linked = await ensureLinkedSubjectForAccountLift(before, false, {
@@ -1404,7 +1412,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				allowClear: false,
 				externalId,
 				generation,
-				identity,
+				identity: startedBasis.identity,
 				subjectId: expectedSubjectId,
 			});
 		}
@@ -1417,7 +1425,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		fence: {
 			actVersion: number;
 			generation: number;
-			startedBasis: { checkedAt: number | null; optOutRaw: number | null };
+			startedBasis: AccountLiftBasis;
 		}
 	): Promise<boolean> {
 		if (
@@ -1446,7 +1454,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		externalId: string | null,
 		wasProvisional: boolean,
 		liftedRights: readonly OptOutRight[],
-		startedBasis: { checkedAt: number | null; optOutRaw: number | null }
+		startedBasis: AccountLiftBasis
 	): Promise<void> {
 		if (
 			!isAccountLiftFresh(
@@ -1531,6 +1539,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				allowClear: true,
 				externalId,
 				generation,
+				identity: startedBasis.identity,
 				subjectId: expectedSubjectId,
 			});
 		}

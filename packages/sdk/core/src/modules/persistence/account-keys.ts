@@ -7,7 +7,7 @@
  * @internal
  */
 import { resolveStorageKeys } from '../../libs/storage-keys';
-import type { StorageConfig } from './types';
+import type { StorageConfig } from './persistence.model';
 
 /** Storage keys for the cross-domain account consent layer. */
 export interface AccountStorageKeys {
