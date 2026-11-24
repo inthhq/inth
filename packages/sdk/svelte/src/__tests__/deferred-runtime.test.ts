@@ -279,3 +279,29 @@ test('[BNR-06] an engine that fails to load shows a banner the early-tap script 
 	expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	logged.mockRestore();
 });
+
+test('a userConsent given after the stand-in started loads the engine', async () => {
+	const harness = createHarness({});
+	const options = () => ({
+		consentCategories: ['necessary', 'measurement', 'marketing'] as const,
+		mode,
+		scripts: [],
+		userConsent: null,
+	});
+	harness.release();
+
+	await harness.runtime.update(options());
+	expect(harness.loadEngine).toHaveBeenCalledTimes(1);
+});
+
+test('an update that leaves userConsent alone keeps the engine waiting', async () => {
+	const harness = createHarness({});
+
+	await harness.runtime.update({
+		consentCategories: ['necessary', 'measurement', 'marketing'],
+		mode,
+		scripts: [],
+	});
+	await settle();
+	expect(harness.loadEngine).not.toHaveBeenCalled();
+});
