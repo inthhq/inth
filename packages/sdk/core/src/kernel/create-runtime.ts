@@ -94,12 +94,13 @@ export interface KernelRuntime {
 	/** Bump the records generation. Only the records boundary calls this. */
 	invalidateRecords: () => void;
 	/**
-	 * Identification generation. Bumped by every `identify()`, so a request
-	 * started for one account can tell that the site identified someone
-	 * else, or the same account again, on the same browser subject.
+	 * Identification generation. Bumped by every `identify()` and by
+	 * signing out (`clearIdentity()`), so a request started for one account
+	 * can tell that the site identified someone else, the same account
+	 * again, or no one, on the same browser subject.
 	 */
 	getIdentityVersion: () => number;
-	/** Record an `identify()` and return the new identification generation. */
+	/** Record an `identify()` or sign-out and return the new identification generation. */
 	noteIdentify: () => number;
 	/**
 	 * Monotonic counter of local opt-out acts (`opt-out:recorded`,

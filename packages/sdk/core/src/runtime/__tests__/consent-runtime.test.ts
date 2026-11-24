@@ -14,6 +14,7 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { KernelTransport } from '../../consent-kernel.model';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { holdNetworkRequests } from '../../modules/network-blocker/hold';
@@ -727,6 +728,26 @@ describe('createConsentRuntime', () => {
 		});
 
 		await runtime.identify(undefined);
+		expect(identify).toHaveBeenCalledTimes(1);
+
+		runtime.dispose();
+	});
+
+	test('`identify(undefined)` signs out at once, so a pending answer is stale', async () => {
+		const identify = vi.fn().mockResolvedValue({});
+		const runtime = createConsentRuntime({
+			mode: transportMode(createTransport({ identify })),
+		});
+		await runtime.identify({ id: 'user_1', identityProvider: 'auth0' });
+		expect(runtime.kernel.getSnapshot().user?.externalId).toBe('user_1');
+
+		const kernel = runtime.kernel as InternalKernel;
+		const clearIdentity = vi.spyOn(kernel, 'clearIdentity');
+		const signedOut = runtime.identify(undefined);
+		// Before anything awaits: a request answered after this is stale.
+		expect(clearIdentity).toHaveBeenCalledTimes(1);
+		expect(runtime.kernel.getSnapshot().user).toBeNull();
+		await signedOut;
 		expect(identify).toHaveBeenCalledTimes(1);
 
 		runtime.dispose();

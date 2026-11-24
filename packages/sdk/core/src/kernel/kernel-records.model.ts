@@ -141,6 +141,8 @@ export interface RecordsBoundaryOptions {
 export interface RecordsBoundary {
 	hydrate: (records: HydrationRecords) => HydrationResult;
 	identify: (user: KernelUser) => Promise<void>;
+	/** See {@link InternalKernel.clearIdentity}. */
+	clearIdentity: () => void;
 	setSubjectId: (id: string | null) => void;
 	/** See {@link InternalKernel.markProvisionalSubject}. */
 	markProvisionalSubject: (id: string | null) => void;
@@ -351,6 +353,11 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			throw error;
 		}
 		let effectiveSubjectId = subjectId;
+		// A link answer is the account's that asked: after another
+		// `identify()` or a sign-out it moves no subject and no opt-out.
+		if (attempt !== identifyGeneration()) {
+			return effectiveSubjectId;
+		}
 		if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
 			const adopted = await adoptSubject(linkedId, linked.subjectId);
 			if (adopted !== null) {
@@ -369,6 +376,25 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	};
 
 	return {
+		clearIdentity() {
+			if (getSnapshot().externalPermissions) {
+				return;
+			}
+			// Synchronous, before anything can answer: a request started for
+			// the account signing out (a lift, a link, a subject read) checks
+			// this generation and no longer applies.
+			runtime.noteIdentify();
+			const { user, iab } = getSnapshot();
+			if (!user) {
+				return;
+			}
+			const patch: SnapshotPatch = { user: null };
+			if (iab) {
+				patch.iab = { ...iab, authority: null, tcString: null };
+			}
+			commit(patch);
+		},
+
 		getProvisionalSubject: () => provisionalSubjectId,
 
 		hydrate: (records) => applyRecords(records, false),

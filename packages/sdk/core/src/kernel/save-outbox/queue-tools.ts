@@ -21,7 +21,7 @@ import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/consent-save-rejected-error';
-import { applySyncedOptOut } from '../kernel-opt-out.model';
+import { answerOwnedBy, applySyncedOptOut } from '../kernel-opt-out.model';
 import type { QueueTools } from './queue';
 import { appendOptOut, appendSave } from './save-outbox.store';
 import { toStoredPayload } from './stored-payload.model';
@@ -29,6 +29,7 @@ import { withoutSuperseded, withSubjectId } from './supersession.model';
 
 /** @internal */
 export const queueTools: QueueTools = {
+	answerOwnedBy,
 	appendOptOut,
 	appendSave,
 	applySyncedOptOut,

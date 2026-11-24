@@ -225,6 +225,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		async identify(user) {
 			const nextUser = normalizeKernelUser(user);
 			if (!nextUser) {
+				// Signing out: no one is identified from here on, and an answer
+				// to a request the previous account started no longer applies.
+				kernel.clearIdentity();
 				return;
 			}
 			try {

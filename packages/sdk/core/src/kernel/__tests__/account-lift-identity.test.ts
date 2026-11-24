@@ -23,6 +23,7 @@ import type {
 import { createKernel } from '../index';
 import type { InternalKernel } from '../kernel-internals.model';
 import { createMemoryOutboxStore } from '../save-outbox';
+import type { SaveOutboxStore } from '../save-outbox/save-outbox.store';
 
 await import('../save-outbox/queue');
 
@@ -64,7 +65,8 @@ interface IdentifyAnswer {
 
 const kernelOn = function kernelOn(
 	transport: KernelTransport,
-	config: KernelConfig = {}
+	config: KernelConfig = {},
+	outboxStore: SaveOutboxStore = createMemoryOutboxStore()
 ): InternalKernel {
 	vi.spyOn(Date, 'now').mockReturnValue(NOW);
 	return createKernel(
@@ -87,7 +89,7 @@ const kernelOn = function kernelOn(
 			transport,
 			...config,
 		},
-		{ outboxStore: createMemoryOutboxStore() }
+		{ outboxStore }
 	);
 };
 
@@ -243,6 +245,234 @@ describe('the lift that follows a granting save', () => {
 		await vi.waitFor(() => expect(kernel.getSnapshot().optOut).toBeNull());
 		expect(liftOptOut.mock.calls[0]?.[0].user?.externalId).toBe('user-a');
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		kernel.dispose();
+	});
+});
+
+// A c15t subject id: an answer for it names its UUID, and adopting that
+// moves the visitor to the UUID.
+const LEGACY_SUBJECT = 'sub_01890000000070008000000000000001';
+const CANONICAL_SUBJECT = '01890000-0000-7000-8000-0000000000aa';
+
+/** Kernel state an answer for another account must leave alone. */
+const accountState = function accountState(kernel: InternalKernel) {
+	const snapshot = kernel.getSnapshot();
+	return {
+		marketing: snapshot.effectivePermissions.marketing,
+		optOut: snapshot.optOut,
+		subjectId: snapshot.subject?.subjectId ?? null,
+		user: snapshot.user?.externalId ?? null,
+	};
+};
+
+describe('signing out while A’s lift is out', () => {
+	test('A’s answer does not change the anonymous state', async () => {
+		const lift = deferred<LiftOptOutTransportResult>();
+		const liftOptOut = vi.fn((_payload: LiftOptOutPayload) => lift.promise);
+		const kernel = kernelOn(
+			{ liftOptOut, optOut: () => Promise.resolve({ ok: true }) },
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_A,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+			}
+		);
+		const lifted = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+
+		const pending = kernel.commands.optIn({ uiSource: 'dialog' });
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		expect(liftOptOut.mock.calls[0]?.[0].user?.externalId).toBe('user-a');
+
+		kernel.clearIdentity();
+		const anonymous = accountState(kernel);
+		expect(anonymous).toMatchObject({
+			marketing: false,
+			subjectId: LEGACY_SUBJECT,
+			user: null,
+		});
+		expect(anonymous.optOut).toMatchObject({ heldBy: 'person' });
+
+		lift.resolve({ ok: true, optOut: null, subjectId: CANONICAL_SUBJECT });
+		const result = await pending;
+		await flushMacrotasks();
+
+		expect(result.ok).toBe(false);
+		expect(lifted).not.toHaveBeenCalled();
+		expect(accountState(kernel)).toEqual(anonymous);
+		kernel.dispose();
+	});
+
+	test('signing out retires IAB authority and needs no request', () => {
+		const kernel = kernelOn({});
+		kernel.set.iab({
+			enabled: true,
+			tcString: 'tc-string-for-a',
+		});
+		kernel.clearIdentity();
+		expect(kernel.getSnapshot().user).toBeNull();
+		expect(kernel.getSnapshot().iab?.tcString).toBeNull();
+		kernel.dispose();
+	});
+});
+
+describe('a queued account lift', () => {
+	test('A’s replayed lift answered while B is current changes nothing of B’s', async () => {
+		const liftOptOut = vi
+			.fn((_payload: LiftOptOutPayload) =>
+				Promise.resolve<LiftOptOutTransportResult>({
+					ok: true,
+					optOut: null,
+					subjectId: CANONICAL_SUBJECT,
+				})
+			)
+			.mockRejectedValueOnce(new Error('offline'));
+		const kernel = kernelOn(
+			{
+				identify: () =>
+					Promise.resolve({ optOut: HELD_B, subjectId: LEGACY_SUBJECT }),
+				liftOptOut,
+				optOut: () => Promise.resolve({ ok: true }),
+			},
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_A,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+			}
+		);
+		// A's lift fails and stays queued.
+		const result = await kernel.commands.optIn({ uiSource: 'dialog' });
+		expect(result.ok).toBe(false);
+		await kernel.commands.identify({ ...USER_B });
+		expectBHeld(kernel);
+		const before = accountState(kernel);
+
+		kernel.replaySaves();
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(2));
+		expect(liftOptOut.mock.calls[1]?.[0].user?.externalId).toBe('user-a');
+		// B's token never travels with A's lift.
+		expect(liftOptOut.mock.calls[1]?.[0].user?.identityToken).toBeUndefined();
+		await flushMacrotasks();
+
+		expect(accountState(kernel)).toEqual(before);
+		expect(before.subjectId).toBe(LEGACY_SUBJECT);
+		kernel.dispose();
+	});
+
+	test('A’s lift queued on an earlier page is not applied to B on this one', async () => {
+		const store = createMemoryOutboxStore();
+		const first = kernelOn(
+			{
+				liftOptOut: () => Promise.reject(new Error('offline')),
+				optOut: () => Promise.resolve({ ok: true }),
+			},
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_A,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+			},
+			store
+		);
+		await first.commands.optIn({ uiSource: 'dialog' });
+		first.dispose();
+
+		const liftOptOut = vi.fn((_payload: LiftOptOutPayload) =>
+			Promise.resolve<LiftOptOutTransportResult>({
+				ok: true,
+				optOut: null,
+				subjectId: CANONICAL_SUBJECT,
+			})
+		);
+		const kernel = kernelOn(
+			{ liftOptOut, optOut: () => Promise.resolve({ ok: true }) },
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_B,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+				initialUser: { ...USER_B },
+			},
+			store
+		);
+		const before = accountState(kernel);
+		kernel.replaySaves();
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		await flushMacrotasks();
+
+		expectBHeld(kernel);
+		expect(accountState(kernel)).toEqual(before);
+		kernel.dispose();
+	});
+
+	test('A’s late direct lift answer does not move B’s subject', async () => {
+		const lift = deferred<LiftOptOutTransportResult>();
+		const liftOptOut = vi.fn((_payload: LiftOptOutPayload) => lift.promise);
+		const kernel = kernelOn(
+			{
+				identify: () =>
+					Promise.resolve({ optOut: HELD_B, subjectId: LEGACY_SUBJECT }),
+				liftOptOut,
+				optOut: () => Promise.resolve({ ok: true }),
+			},
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_A,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+			}
+		);
+		const subjects = vi.fn();
+		kernel.events.on('subject:resolved', subjects);
+
+		const pending = kernel.commands.optIn({ uiSource: 'dialog' });
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		await kernel.commands.identify({ ...USER_B });
+		expectBHeld(kernel);
+		const before = accountState(kernel);
+
+		lift.resolve({ ok: true, optOut: null, subjectId: CANONICAL_SUBJECT });
+		const result = await pending;
+		await flushMacrotasks();
+
+		expect(result.ok).toBe(false);
+		expect(subjects).not.toHaveBeenCalled();
+		expect(accountState(kernel)).toEqual(before);
+		expect(before.subjectId).toBe(LEGACY_SUBJECT);
+		kernel.dispose();
+	});
+
+	test('with no account switch, a replayed lift still lifts A’s opt-out and adopts the UUID', async () => {
+		const liftOptOut = vi
+			.fn((_payload: LiftOptOutPayload) =>
+				Promise.resolve<LiftOptOutTransportResult>({
+					ok: true,
+					optOut: null,
+					subjectId: CANONICAL_SUBJECT,
+				})
+			)
+			.mockRejectedValueOnce(new Error('offline'));
+		const kernel = kernelOn(
+			{ liftOptOut, optOut: () => Promise.resolve({ ok: true }) },
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: HELD_A,
+					subject: { subjectId: LEGACY_SUBJECT },
+				},
+			}
+		);
+		await kernel.commands.optIn({ uiSource: 'dialog' });
+		kernel.replaySaves();
+		await vi.waitFor(() => expect(kernel.getSnapshot().optOut).toBeNull());
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(CANONICAL_SUBJECT);
 		kernel.dispose();
 	});
 });
