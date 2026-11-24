@@ -561,6 +561,40 @@ describe('phone sheets', () => {
 	});
 });
 
+describe('legal links', () => {
+	const legalLinks = {
+		cookiePolicy: { href: '/cookies' },
+		privacyPolicy: { href: '/privacy' },
+	};
+	const footerLink = () => $('consent-dialog-legal-link-privacyPolicy');
+
+	test('with `dialogLegalLinks` unset, the footer links the privacy policy', async () => {
+		await mount({ config: { legalLinks } });
+		await openDialog();
+		expect(footerLink()?.getAttribute('href')).toBe('/privacy');
+	});
+
+	test('an empty `dialogLegalLinks` and a list without the link leave it out', async () => {
+		await mount({ config: { dialogLegalLinks: [], legalLinks } });
+		await openDialog();
+		expect(footerLink()).toBeNull();
+		await unmountConsentUI();
+		await mount({
+			config: { dialogLegalLinks: ['cookiePolicy'], legalLinks },
+		});
+		await openDialog();
+		expect(footerLink()).toBeNull();
+	});
+
+	test('a list that names the link keeps it', async () => {
+		await mount({
+			config: { dialogLegalLinks: ['privacyPolicy'], legalLinks },
+		});
+		await openDialog();
+		expect(footerLink()?.getAttribute('href')).toBe('/privacy');
+	});
+});
+
 describe('customization', () => {
 	test('the dialog parts take their components slots', async () => {
 		await mount({

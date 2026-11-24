@@ -703,3 +703,50 @@ describe('wave B round 1', () => {
 		expect(body.className).not.toBe('');
 	});
 });
+
+describe('legal links', () => {
+	const legalLinks = {
+		cookiePolicy: { href: '/cookies' },
+		privacyPolicy: { href: '/privacy' },
+	};
+	const hrefs = () =>
+		[...must('consent-banner-card').querySelectorAll('a[href^="/"]')].map(
+			(link) => link.getAttribute('href')
+		);
+
+	test('with `bannerLegalLinks` unset, the card links the privacy and cookie policies', async () => {
+		await mount({ config: { legalLinks } });
+		await waitForRoot();
+		expect(hrefs()).toEqual(['/privacy', '/cookies']);
+	});
+
+	test('`bannerLegalLinks` picks which policy links the card shows', async () => {
+		await mount({
+			config: { bannerLegalLinks: ['cookiePolicy'], legalLinks },
+		});
+		await waitForRoot();
+		expect(hrefs()).toEqual(['/cookies']);
+	});
+
+	test('an empty `bannerLegalLinks` shows no policy link', async () => {
+		await mount({ config: { bannerLegalLinks: [], legalLinks } });
+		await waitForRoot();
+		expect(hrefs()).toEqual([]);
+	});
+
+	test('a collapsed Banner keeps to the privacy policy, and drops it when the list leaves it out', async () => {
+		await mount({
+			config: { legalLinks },
+			container: { edge: 'bottom', type: 'banner' },
+		});
+		await waitForRoot();
+		expect(hrefs()).toEqual(['/privacy']);
+		await unmountConsentUI();
+		await mount({
+			config: { bannerLegalLinks: ['cookiePolicy'], legalLinks },
+			container: { edge: 'bottom', type: 'banner' },
+		});
+		await waitForRoot();
+		expect(hrefs()).toEqual([]);
+	});
+});

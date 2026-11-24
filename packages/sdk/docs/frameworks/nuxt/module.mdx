@@ -140,7 +140,8 @@ See [rendering and deployment](/docs/frameworks/nuxt/rendering).
 | `tokens` | Default theme | CSS variables written to `<style id="inth-css-vars">` in `<head>`. See [customize](/docs/frameworks/nuxt/customize#set-theme-tokens). |
 | `presentation` | Policy defaults | The banner's `container`, `edgeStyle`, `blockUntilChoice` and action layout, under `presentation.prompt`. |
 | `components` | Unset | Vue attributes such as `class` and `style` for named component parts. |
-| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Privacy policy links and which surfaces display them. |
+| `legalLinks` | None shown | Links to your privacy and cookie policies. |
+| `bannerLegalLinks`, `dialogLegalLinks` | Each surface's stock links | Which `legalLinks` the banner and the dialog show. A list shows only the links it names, so `[]` shows none. |
 | `hideBranding` and per-surface forms | `false` | Hides the "Consent by" tag. |
 | `showTrigger` and `trigger*` | `false` | Configures the floating trigger. See [ConsentDialogTrigger](/docs/frameworks/nuxt/components/consent-dialog-trigger). |
 | `disableAnimation` | `false` | Disables banner and dialog transitions. |
