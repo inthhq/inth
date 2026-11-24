@@ -104,7 +104,6 @@ export const v1OptOutRightsSchema = v.pipe(
 export const v1EffectiveOptOutDeviceSchema = jsonObject(
 	v.object({
 		rights: v1OptOutRightsSchema,
-		writtenAt: v1EpochMillisecondsSchema,
 	})
 );
 

@@ -105,6 +105,22 @@ export const consentCheckResponseSchema = /* @__PURE__ */ jsonObject(
 						)
 					),
 					externalId: v.string(),
+					optIn: v.optional(
+						v.pipe(
+							/* @__PURE__ */ jsonRecord(
+								v.string(),
+								v.pipe(
+									v.number(),
+									v.integer(),
+									v.minValue(0),
+									v.maxValue(8640000000000000)
+								)
+							),
+							v.description(
+								'The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out.'
+							)
+						)
+					),
 					optOut: v.nullable(
 						/* @__PURE__ */ jsonObject(
 							v.object({

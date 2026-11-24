@@ -28,8 +28,6 @@ export type OptOutHolder = (typeof OPT_OUT_HOLDERS)[number];
 export interface OptOutDeviceRow {
 	/** Refused rights on this device's own row, in canonical order. */
 	rights: OptOutRight[];
-	/** Epoch milliseconds when this device's own row was last written, in server time. */
-	writtenAt: number;
 }
 
 /**

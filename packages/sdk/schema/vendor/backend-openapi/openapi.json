@@ -3411,6 +3411,18 @@
 							"externalId": {
 								"type": "string"
 							},
+							"optIn": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string"
+								},
+								"additionalProperties": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 8640000000000000
+								},
+								"description": "The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out."
+							},
 							"optOut": {
 								"anyOf": [
 									{

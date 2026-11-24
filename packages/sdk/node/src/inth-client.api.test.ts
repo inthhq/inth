@@ -180,6 +180,7 @@ describe('what each call sends', () => {
 					},
 				},
 				externalId: 'user 1',
+				optIn: { sale: 1_763_467_150_000 },
 				optOut: {
 					method: 'button',
 					recordedAt: 1_763_467_100_000,
@@ -273,6 +274,13 @@ describe('what each call sends', () => {
 				sync: {
 					...valid.sync,
 					checkedAt: 1.5,
+				},
+			},
+			{
+				...valid,
+				sync: {
+					...valid.sync,
+					optIn: { sale: -1 },
 				},
 			},
 		]) {

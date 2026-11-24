@@ -296,6 +296,8 @@ const consentAnswer = v.object({
 			})
 		),
 		externalId: v.string(),
+		/** Per opt-out right, the latest time this person opted back in to it */
+		optIn: v.optional(ownRecord(epochMs)),
 		optOut: v.nullable(
 			v.object({
 				method: v.string(),

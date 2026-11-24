@@ -247,6 +247,10 @@ export interface components {
 					};
 				};
 				externalId: string;
+				/** @description The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out. */
+				optIn?: {
+					[key: string]: number;
+				};
 				optOut: {
 					method: string;
 					recordedAt: number;

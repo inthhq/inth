@@ -158,6 +158,7 @@ describe('generated /v1 schemas', () => {
 					},
 				},
 				externalId: 'user_1',
+				optIn: { sale: 1_763_467_150_000 },
 				optOut: {
 					method: 'button',
 					recordedAt: 1_763_467_100_000,
@@ -169,6 +170,16 @@ describe('generated /v1 schemas', () => {
 			},
 		};
 		expect(v.parse(consentCheckResponseSchema, full)).toEqual(full);
+		const { optIn: _optIn, ...olderSync } = full.sync;
+		expect(
+			v.parse(consentCheckResponseSchema, { ...full, sync: olderSync })
+		).toEqual({ ...full, sync: olderSync });
+		expect(
+			v.is(consentCheckResponseSchema, {
+				...full,
+				sync: { ...full.sync, optIn: { sale: 'yesterday' } },
+			})
+		).toBe(false);
 		expect(
 			v.is(consentCheckResponseSchema, { categories: { marketing: false } })
 		).toBe(false);

@@ -400,10 +400,7 @@ describe('POST /v1/consent/opt-outs', () => {
 	it('reads the optional device row on effective opt-out answers and rejects invalid device payloads', () => {
 		const withDevice = {
 			...effectiveOptOut,
-			device: {
-				rights: ['sale', 'share'] as const,
-				writtenAt: 1_763_467_205_000,
-			},
+			device: { rights: ['sale', 'share'] as const },
 			heldBy: 'both' as const,
 			rights: ['sale', 'share', 'targeted_ads'] as const,
 		};
@@ -415,24 +412,31 @@ describe('POST /v1/consent/opt-outs', () => {
 		expect(parsed.optOut).toEqual(withDevice);
 		expect(
 			v.is(v1ConsentOptOutOutputSchema, {
-				optOut: {
-					...withDevice,
-					device: { rights: [], writtenAt: 1_763_467_205_000 },
-				},
+				optOut: { ...withDevice, device: { rights: [] } },
 				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
 		).toBe(false);
 		expect(
 			v.is(v1ConsentOptOutOutputSchema, {
-				optOut: {
-					...withDevice,
-					device: { rights: ['sale'], writtenAt: -1 },
-				},
+				optOut: { ...withDevice, device: { rights: ['resale'] } },
 				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
 		).toBe(false);
+	});
+
+	it('reads a device row from an older backend that also sent a write time, and drops the time', () => {
+		const parsed = v.parse(v1ConsentOptOutOutputSchema, {
+			optOut: {
+				...effectiveOptOut,
+				device: { rights: ['sale'], writtenAt: 1_763_467_205_000 },
+				heldBy: 'device',
+			},
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect(parsed.optOut?.device).toEqual({ rights: ['sale'] });
 	});
 
 	it('reads a null opt-out, the answer to a retry that arrived after a lift', () => {
