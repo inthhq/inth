@@ -105,11 +105,13 @@ interface SubjectReassignment {
 
 /**
  * What `newer` covers of an older save of the same subject: the categories
- * it confirmed and, when it carried one, the vendor map.
+ * it confirmed and the vendors its vendor map carries.
  */
 const supersededBy = (newer: SavePayload): Supersession => ({
 	category: (category) => Object.hasOwn(newer.confirmed.categories, category),
-	vendors: newer.vendorChoice !== undefined,
+	vendor: (id) =>
+		newer.vendorChoice !== undefined &&
+		Object.hasOwn(newer.vendorChoice.grants, id),
 });
 
 /**

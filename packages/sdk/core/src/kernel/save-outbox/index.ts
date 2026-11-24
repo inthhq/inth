@@ -100,7 +100,10 @@ export {
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {
 	/** Browser records the action committed (apart from any account layer). */
-	browserRecords?: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>;
+	browserRecords?: Pick<
+		BrowserConsentRecords,
+		'choice' | 'vendorChoice' | 'vendorTimes'
+	>;
 	/** Records generation the action landed in. */
 	generation: number;
 	/** Local opt-out act counter when the action landed. */

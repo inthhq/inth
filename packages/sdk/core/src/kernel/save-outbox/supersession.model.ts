@@ -24,12 +24,12 @@ export interface PendingSaveEntry {
 }
 
 /**
- * What newer state covers of an older save: the categories decided again
- * since, and whether a newer vendor map replaced the save's own.
+ * What newer state covers of an older save: the categories and the vendors
+ * decided again since.
  */
 export interface Supersession {
 	category: (category: OptionalConsentCategory) => boolean;
-	vendors: boolean;
+	vendor: (id: string) => boolean;
 }
 
 /**
@@ -37,10 +37,11 @@ export interface Supersession {
  *
  * Surviving categories keep their receipts and action time, so a replay
  * records when the visitor decided. A narrowed save is a `custom` action
- * and cannot replay the full TC string. The vendor map is a whole decision
- * of its own: narrowing the categories says nothing about it, and it goes
- * only when a newer map replaced it, taking with it a save that has no
- * category left.
+ * and cannot replay the full TC string. The vendor map is a decision of
+ * its own: narrowing the categories says nothing about it. It keeps the
+ * vendors nothing newer decided, since a save under an account layer sends
+ * only the vendors it decided, and goes once none is left, taking with it
+ * a save that has no category left.
  *
  * Every caller that asks "is this save superseded?" asks it here: the
  * outbox for a send in flight ({@link liveSupersession}) and the queue for
@@ -82,10 +83,21 @@ export const withoutSuperseded = function withoutSuperseded(
 			tcString: null,
 		};
 	}
-	if (selected.vendorChoice === undefined || !by.vendors) {
+	const { vendorChoice, ...remaining } = selected;
+	if (vendorChoice === undefined) {
 		return selected;
 	}
-	const { vendorChoice: _superseded, ...remaining } = selected;
+	const ids = Object.keys(vendorChoice.grants);
+	const keptIds = ids.filter((id) => !by.vendor(id));
+	if (keptIds.length === ids.length) {
+		return selected;
+	}
+	if (keptIds.length > 0) {
+		const grants = Object.fromEntries(
+			keptIds.map((id) => [id, vendorChoice.grants[id] === true])
+		);
+		return { ...remaining, vendorChoice: { ...vendorChoice, grants } };
+	}
 	return Object.keys(remaining.confirmed.categories).length > 0
 		? remaining
 		: null;
@@ -94,20 +106,32 @@ export const withoutSuperseded = function withoutSuperseded(
 /**
  * What the live browser records cover of a save sent from `action`, the
  * browser records the save committed: every category whose browser receipt
- * changed since, and the browser vendor map once another one replaced it.
+ * changed since, and, once another browser vendor map replaced it, every
+ * vendor whose browser time changed. Without per-vendor times on both
+ * sides, the new map covers every vendor.
  *
  * Compares browser records rather than merged snapshots so an account
  * layer sync or sign-out never supersedes an in-flight browser save.
  */
 export const liveSupersession = function liveSupersession(
-	action: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>,
-	current: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>
+	action: Pick<
+		BrowserConsentRecords,
+		'choice' | 'vendorChoice' | 'vendorTimes'
+	>,
+	current: Pick<
+		BrowserConsentRecords,
+		'choice' | 'vendorChoice' | 'vendorTimes'
+	>
 ): Supersession {
+	const before = action.vendorTimes;
+	const after = current.vendorTimes;
 	return {
 		category: (category) =>
 			current.choice?.categories[category] !==
 			action.choice?.categories[category],
-		vendors: current.vendorChoice !== action.vendorChoice,
+		vendor: (id) =>
+			current.vendorChoice !== action.vendorChoice &&
+			(!before || !after || before[id] !== after[id]),
 	};
 };
 
