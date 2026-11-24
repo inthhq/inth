@@ -1096,6 +1096,19 @@ describe('the layout, the panel and the link', () => {
 		must('consent-banner-accept-button').click();
 		await vi.waitFor(() => expect(document.activeElement).toBe(link));
 	});
+
+	it('[BNR-06] a choice skips a Your Privacy Choices the page hides, for the next page control', async () => {
+		await mount({ link: true, region: 'us-opt-in' });
+		await waitForController();
+		const link = await vi.waitFor(() => must('privacy-choices-link'));
+		// The page hides its link with CSS: it stays connected but refuses
+		// focus. jsdom has no layout, so the refusal is modelled directly.
+		link.focus = () => undefined;
+		must('consent-banner-accept-button').click();
+		await vi.waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
 });
 
 describe('the React island', () => {

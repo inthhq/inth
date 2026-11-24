@@ -45,6 +45,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	restoreFocus,
 } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import { tabbableElements } from '@inth/sdk/ui/utils';
@@ -185,13 +186,7 @@ const matches = (query: string): boolean =>
 
 /** Move focus to "Your Privacy Choices", or leave it where it is. */
 const focusReturnTarget = function focusReturnTarget(): void {
-	for (const selector of RETURN_TARGETS) {
-		const target = document.querySelector<HTMLElement>(selector);
-		if (target) {
-			target.focus({ preventScroll: true });
-			return;
-		}
-	}
+	restoreFocus({ fallbacks: RETURN_TARGETS });
 };
 
 /** Build a detached element from a tree node, by patching an empty one. */
