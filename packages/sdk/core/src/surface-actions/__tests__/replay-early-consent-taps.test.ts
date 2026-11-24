@@ -175,6 +175,19 @@ describe('the inline script', () => {
 		expect(hidden()).toBe(false);
 	});
 
+	test('hides the banner again on a retry tap after a failed load showed it', () => {
+		runScript();
+		renderBanner();
+		tap('accept');
+		expect(hidden()).toBe(true);
+		// A failed load removes the style to bring the banner back.
+		document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+		expect(hidden()).toBe(false);
+		tap('accept');
+		expect(hidden()).toBe(true);
+		expect(document.querySelectorAll(`#${EARLY_TAP_STYLE_ID}`)).toHaveLength(1);
+	});
+
 	test('gives the hiding style the nonce of its own script', () => {
 		vi.spyOn(document, 'currentScript', 'get').mockReturnValue(
 			Object.assign(document.createElement('script'), { nonce: 'page-nonce' })
