@@ -318,7 +318,7 @@ const fingerprint = function fingerprint(value: unknown): string {
 const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
-	optOut: fingerprint([null, null, false, null, null, false]),
+	optOut: fingerprint([null, null, false, null, null, false, null, null]),
 	vendors: fingerprint([null, null, null, null]),
 };
 
@@ -369,6 +369,8 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 			stored.optOut ? (stored.optOutReference ?? null) : null,
 			stored.optOut ? (stored.optOutLocalAct ?? null) : null,
 			stored.optOut ? stored.optOutRightsConfirmed === true : false,
+			stored.optOut ? (stored.optOutLinkedExternalId ?? null) : null,
+			stored.optOut ? (stored.optOutServerRecordedAt ?? null) : null,
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
@@ -838,6 +840,7 @@ const copyOptOutMeta = function copyOptOutMeta(
 	records.optOutLocalAct = stored.optOutLocalAct ?? null;
 	records.optOutRightsConfirmed = stored.optOutRightsConfirmed === true;
 	records.optOutLinkedExternalId = stored.optOutLinkedExternalId ?? null;
+	records.optOutServerRecordedAt = stored.optOutServerRecordedAt ?? null;
 };
 
 const reconcileOptOutRecord = function reconcileOptOutRecord(

@@ -156,6 +156,7 @@ export const syncAdoptedServerOptOutReceipt =
 			beforeOptOut !== null &&
 			beforeOptOut.heldBy === 'device' &&
 			incomingOptOut.heldBy === 'both' &&
+			beforeOptOut.rights.length > 0 &&
 			beforeOptOut.rights.every((right) =>
 				incomingOptOut.rights.includes(right)
 			);
@@ -177,11 +178,21 @@ export const syncAdoptedServerOptOutReceipt =
 					fromHydration
 				);
 			}
+			if (runtime.getOptOutServerRecordedAt() === null) {
+				runtime.setOptOutServerRecordedAt(
+					incomingOptOut.recordedAt,
+					fromHydration
+				);
+			}
 			return;
 		}
 		if (sameOptOutAnswer(foldedOptOut, incomingOptOut)) {
 			runtime.setOptOutReceiptData(
 				{ localAct: null, reference: null, rightsConfirmed },
+				fromHydration
+			);
+			runtime.setOptOutServerRecordedAt(
+				rightsConfirmed ? incomingOptOut.recordedAt : null,
 				fromHydration
 			);
 		}
@@ -201,6 +212,10 @@ export interface RecordsBoundaryOptions {
 		to: string,
 		owned?: () => boolean
 	) => Promise<string | null>;
+	/** Whether an opt-out request for this device is in flight or queued. */
+	hasPendingOptOut?: (subjectId?: string | null) => boolean;
+	/** Verified external user ID linked to the initial subject, if hydrated at construction. */
+	initialLinkedExternalId?: string | null;
 }
 
 export interface SyncUserConsentOptions {
@@ -251,6 +266,8 @@ export interface RecordsBoundary {
 
 export const createRecordsBoundary = function createRecordsBoundary({
 	adoptSubject,
+	hasPendingOptOut,
+	initialLinkedExternalId,
 	runtime,
 	transport,
 	start,
@@ -266,6 +283,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// (or restored from persisted local opt-out metadata), cleared when records
 	// or subject are reset.
 	const verifiedLinks = new Map<string, string>();
+	const initialSubjectId = getSnapshot().subject?.subjectId ?? null;
+	if (initialLinkedExternalId && initialSubjectId) {
+		verifiedLinks.set(initialSubjectId, initialLinkedExternalId);
+	}
 	const subjectLinkListeners = new Set<() => void>();
 	const recordVerifiedLink = (subjectId: string, externalId: string): void => {
 		if (verifiedLinks.get(subjectId) === externalId) {
@@ -351,6 +372,31 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		);
 	};
 
+	const applyHydratedOptOutServerRecordedAt =
+		function applyHydratedOptOutServerRecordedAt(
+			before: ConsentSnapshot,
+			hydrated: ValidatedRecords
+		): void {
+			if (hydrated.optOut === null) {
+				runtime.setOptOutServerRecordedAt(null, true);
+				return;
+			}
+			if (hydrated.optOutServerRecordedAt !== undefined) {
+				const hasOptOut =
+					hydrated.optOut === undefined
+						? before.optOut !== null
+						: hydrated.optOut !== null;
+				runtime.setOptOutServerRecordedAt(
+					hasOptOut ? hydrated.optOutServerRecordedAt : null,
+					true
+				);
+				return;
+			}
+			if (hydrated.optOut !== undefined) {
+				runtime.setOptOutServerRecordedAt(null, true);
+			}
+		};
+
 	const buildHydrationCommit = function buildHydrationCommit(
 		before: ConsentSnapshot,
 		browserBefore: BrowserConsentRecords,
@@ -369,6 +415,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			optOutLocalAct: _localAct,
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
+			optOutServerRecordedAt: _serverRecordedAt,
 			vendorDeclared,
 			vendorTimes,
 			...rest
@@ -424,6 +471,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			validated
 		);
 		applyHydratedOptOutReceipt(
+			{ ...before, optOut: browserBefore.optOut },
+			validated
+		);
+		applyHydratedOptOutServerRecordedAt(
 			{ ...before, optOut: browserBefore.optOut },
 			validated
 		);
@@ -667,7 +718,17 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (!subjectId || verifiedLinks.get(subjectId) !== normalized.externalId) {
 			return false;
 		}
-		return browserOptOut.recordedAt < normalized.checkedAt - normalized.skew;
+		const serverRecordedAt = runtime.getOptOutServerRecordedAt();
+		if (
+			serverRecordedAt === null ||
+			!(serverRecordedAt < normalized.checkedAt)
+		) {
+			return false;
+		}
+		if (hasPendingOptOut?.(subjectId)) {
+			return false;
+		}
+		return true;
 	};
 
 	const syncUserConsent = function syncUserConsent(
@@ -731,6 +792,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		runtime.batch(() => {
 			if (dropDeviceOptOut) {
 				runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
+				runtime.setOptOutServerRecordedAt(null);
 			}
 			changed = commit(patch, {
 				accountLayer: normalized,
@@ -932,6 +994,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			runtime.batch(() => {
 				if (dropDeviceOptOut) {
 					runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
+					runtime.setOptOutServerRecordedAt(null);
 				}
 				commit(patch, commitOptions);
 				const after = getSnapshot();

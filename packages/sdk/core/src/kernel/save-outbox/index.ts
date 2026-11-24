@@ -77,7 +77,11 @@ import type {
 	QueueWorkerOptions,
 } from './queue';
 import { queueTools } from './queue-tools';
-import { appendOptOut, appendSave } from './save-outbox.store';
+import {
+	appendOptOut,
+	appendSave,
+	hasStoredOptOutForSubject,
+} from './save-outbox.store';
 import type { OptOutAct, SaveOutboxStore } from './save-outbox.store';
 import {
 	liveSupersession,
@@ -200,6 +204,8 @@ export interface SaveOutbox {
 	areOptOutsUnsupported: () => boolean;
 	/** Number of direct opt-out and lift requests currently in flight. */
 	getOptOutRequestsInFlight: () => number;
+	/** Whether an opt-out request for this device is in flight or queued. */
+	hasPendingOptOut: (subjectId?: string | null) => boolean;
 	/** Subscribe to changes in the in-flight opt-out and lift request count. */
 	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
 }
@@ -282,67 +288,6 @@ const warnOptOutFailed = function warnOptOutFailed(
 	warnInDevelopment(OPT_OUT_FAILED_WARNINGS[outcome], error);
 };
 
-const resolveRawSubject = function resolveRawSubject(
-	reassignments: unknown,
-	id: string
-): string {
-	if (!Array.isArray(reassignments) || reassignments.length === 0) {
-		return id;
-	}
-	const moves = new Map<string, string>();
-	for (const item of reassignments) {
-		if (
-			typeof item === 'object' &&
-			item !== null &&
-			typeof (item as { from?: unknown }).from === 'string' &&
-			typeof (item as { to?: unknown }).to === 'string'
-		) {
-			moves.set((item as { from: string }).from, (item as { to: string }).to);
-		}
-	}
-	let current = id;
-	for (let step = 0; step <= moves.size; step += 1) {
-		const next = moves.get(current);
-		if (next === undefined) {
-			break;
-		}
-		current = next;
-	}
-	return current;
-};
-
-const rawOptOutSubjectId = function rawOptOutSubjectId(
-	entry: unknown
-): string | undefined {
-	if (typeof entry !== 'object' || entry === null) {
-		return undefined;
-	}
-	const { payload } = entry as { payload?: unknown };
-	if (typeof payload !== 'object' || payload === null) {
-		return undefined;
-	}
-	const { subjectId } = payload as { subjectId?: unknown };
-	return typeof subjectId === 'string' ? subjectId : undefined;
-};
-
-const hasStoredOptOutForSubject = function hasStoredOptOutForSubject(
-	stored: unknown,
-	reassignments: unknown,
-	subjectId: string
-): boolean {
-	if (!Array.isArray(stored) || stored.length === 0) {
-		return false;
-	}
-	const own = resolveRawSubject(reassignments, subjectId);
-	return stored.some((entry) => {
-		const entrySubject = rawOptOutSubjectId(entry);
-		return (
-			entrySubject !== undefined &&
-			resolveRawSubject(reassignments, entrySubject) === own
-		);
-	});
-};
-
 // oxlint-disable-next-line max-lines-per-function -- Save and opt-out delivery share the store, worker and lock state.
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
@@ -395,6 +340,8 @@ export const createSaveOutbox = function createSaveOutbox({
 	let clearVersion = 0;
 	let activeOptOutDrain: Promise<boolean> | null = null;
 	let pendingOptOutDrain = false;
+	// Fallback queued flag for custom stores that do not implement `hasPendingOptOut`.
+	let fallbackQueuedOptOuts = false;
 
 	/** The queue module, loaded once; `undefined` when it cannot load. */
 	const loadWorker = async function loadWorker(): Promise<
@@ -451,6 +398,9 @@ export const createSaveOutbox = function createSaveOutbox({
 	const enqueueOptOut = function enqueueOptOut(
 		act: OptOutAct
 	): Promise<OptOutEnqueueOutcome> {
+		if (!store.hasPendingOptOut) {
+			fallbackQueuedOptOuts = true;
+		}
 		if (worker) {
 			return worker.enqueueOptOut(act);
 		}
@@ -486,6 +436,11 @@ export const createSaveOutbox = function createSaveOutbox({
 	): Promise<void> {
 		if (await hasQueued('optOuts')) {
 			await (await loadWorker())?.discardOptOut(idempotencyKey);
+			if (!store.hasPendingOptOut) {
+				fallbackQueuedOptOuts = await hasQueued('optOuts');
+			}
+		} else {
+			fallbackQueuedOptOuts = false;
 		}
 	};
 
@@ -514,6 +469,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		async function markOptOutsUnsupported(): Promise<void> {
 			optOutsUnsupported = true;
 			pendingOptOutDrain = false;
+			fallbackQueuedOptOuts = false;
 			fillUnsupportedOptOutRights();
 			await store.transact((tx) => {
 				if (tx.read('optOuts') !== undefined) {
@@ -525,6 +481,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	const clear = function clear(): Promise<void> {
 		clearVersion += 1;
 		pendingOptOutDrain = false;
+		fallbackQueuedOptOuts = false;
 		saveActVersions.clear();
 		// At once, so the page can close before the lock is granted: a later
 		// page must not replay the cleared subject's saves or opt-outs. Then
@@ -557,7 +514,9 @@ export const createSaveOutbox = function createSaveOutbox({
 			);
 			activeOptOutDrain = run;
 			try {
-				return await run;
+				const remaining = await run;
+				fallbackQueuedOptOuts = remaining;
+				return remaining;
 			} finally {
 				if (activeOptOutDrain === run) {
 					activeOptOutDrain = null;
@@ -1230,6 +1189,12 @@ export const createSaveOutbox = function createSaveOutbox({
 		clear,
 		getHold: () => held,
 		getOptOutRequestsInFlight: () => optOutRequestsInFlight,
+		hasPendingOptOut: (subjectId) =>
+			optOutRequestsInFlight > 0 ||
+			activeOptOutDrain !== null ||
+			(store.hasPendingOptOut
+				? store.hasPendingOptOut(subjectId)
+				: fallbackQueuedOptOuts),
 		hold(until) {
 			const next = Promise.allSettled([held, until]);
 			held = next;

@@ -381,6 +381,11 @@ export interface HydrationRecords {
 	optOutRightsConfirmed?: boolean;
 	/** Verified external user ID linked to the opt-out record's subject. */
 	optOutLinkedExternalId?: string | null;
+	/**
+	 * Raw server `recordedAt` timestamp from the backend confirmation of this
+	 * browser's device opt-out, or `null` when unconfirmed.
+	 */
+	optOutServerRecordedAt?: number | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/**

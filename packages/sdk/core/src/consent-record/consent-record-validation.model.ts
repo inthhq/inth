@@ -89,7 +89,7 @@ export const ownValue = function ownValue(
 	return Object.hasOwn(value, key) ? value[key] : undefined;
 };
 
-const isValidTimestamp = function isValidTimestamp(
+export const isValidTimestamp = function isValidTimestamp(
 	value: unknown
 ): value is number {
 	return (

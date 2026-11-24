@@ -1278,4 +1278,152 @@ describe('persistence and SSR regressions (set 3)', () => {
 				?.remove();
 		}
 	});
+
+	// cross-tab reconcile picks up newly linked optOutLinkedExternalId and serverRecordedAt without reload
+	test('cross-tab reconciliation picks up a newly linked opt-out externalId and serverRecordedAt', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const subjectId = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
+		const recordId = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
+		const user = { externalId: 'user_tab_link', identityToken: 'tok_tab' };
+		const tab1 = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialUser: user,
+			now: NOW,
+			transport: {
+				identify: (_u, id) =>
+					Promise.resolve({
+						optOut: {
+							heldBy: 'both',
+							method: 'button',
+							recordedAt: NOW + 4000,
+							rights: ['sale', 'share', 'targeted_ads'],
+						},
+						subjectId: id ?? subjectId,
+					}),
+				optOut: (payload) =>
+					Promise.resolve({
+						ok: true,
+						optOut: {
+							heldBy: 'device',
+							method: 'button',
+							recordedAt: NOW - 5000,
+							rights: ['sale', 'share', 'targeted_ads'],
+						},
+						recordId,
+						subjectId: payload.subjectId,
+					}),
+			},
+		});
+		const p1 = createPersistence({ kernel: tab1, now: () => NOW });
+		await flushMacrotasks();
+		await tab1.commands.optOut({ actionAt: NOW - 5000 });
+		await flushMacrotasks();
+		const activeSubjectId = tab1.getSnapshot().subject?.subjectId ?? '';
+		expect(activeSubjectId).toBeTruthy();
+
+		// Tab 2 starts before Tab 1 links the subject and hydrates the unlinked opt-out.
+		const tab2 = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialUser: user,
+			now: NOW,
+		});
+		const p2 = createPersistence({ kernel: tab2, now: () => NOW });
+		try {
+			await flushMacrotasks();
+			p2.reconcile();
+			await flushMacrotasks();
+			expect(tab2.getLinkedExternalId(activeSubjectId)).toBeUndefined();
+			expect(tab2.getOptOutServerRecordedAt()).toBe(NOW - 5000);
+
+			// Tab 1 now verifies the subject link and persists linkedExternalId.
+			await tab1.commands.identify(user);
+			await flushMacrotasks();
+			expect(tab1.getLinkedExternalId(activeSubjectId)).toBe(user.externalId);
+
+			// Tab 2 reconciles storage without a reload and picks up the link.
+			p2.reconcile();
+			await flushMacrotasks();
+			expect(tab2.getLinkedExternalId(activeSubjectId)).toBe(user.externalId);
+		} finally {
+			p2.dispose();
+			tab2.dispose();
+			p1.dispose();
+			tab1.dispose();
+		}
+	});
+
+	// persistence + SSR: serverRecordedAt persists in localStorage and compact cookie and reads back on hydrate and SSR
+	test('persistence and SSR: serverRecordedAt persists in localStorage and opt-out cookie and hydrates back on browser and SSR', async () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const recordId = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
+		const serverRecordedAt = NOW + 6000;
+		const user = { externalId: 'user_srv_time', identityToken: 'tok_srv' };
+		const k1 = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialUser: user,
+			now: NOW,
+			transport: {
+				optOut: (payload) =>
+					Promise.resolve({
+						link: { stored: true, verifiedBy: 'identity_token' },
+						ok: true,
+						optOut: {
+							heldBy: 'both',
+							method: 'button',
+							recordedAt: serverRecordedAt,
+							rights: ['sale', 'share', 'targeted_ads'],
+						},
+						recordId,
+						subjectId: payload.subjectId,
+					}),
+			},
+		});
+		const p1 = createPersistence({ kernel: k1, now: () => NOW });
+		try {
+			await flushMacrotasks();
+			k1.syncUserConsent(
+				makeUserConsent({ checkedAt: NOW + 4000, externalId: user.externalId })
+			);
+			await k1.commands.optOut({ actionAt: NOW });
+			await flushMacrotasks();
+			expect(k1.getOptOutServerRecordedAt()).toBe(serverRecordedAt);
+
+			// Check localStorage and cookie both carry serverRecordedAt
+			const storedBrowser = readStoredRecords(undefined, NOW);
+			expect(storedBrowser.records.optOutServerRecordedAt).toBe(
+				serverRecordedAt
+			);
+			const storedSsr = readStoredRecordsFromCookieHeader(
+				document.cookie,
+				undefined,
+				NOW
+			);
+			expect(storedSsr.optOutServerRecordedAt).toBe(serverRecordedAt);
+
+			// Reload on cookie-only (localStorage cleared) still restores serverRecordedAt
+			window.localStorage.clear();
+			const k2 = createKernel({
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: user,
+				now: NOW,
+			});
+			const p2 = createPersistence({ kernel: k2, now: () => NOW });
+			try {
+				await flushMacrotasks();
+				expect(k2.getOptOutServerRecordedAt()).toBe(serverRecordedAt);
+			} finally {
+				p2.dispose();
+				k2.dispose();
+			}
+		} finally {
+			p1.dispose();
+			k1.dispose();
+		}
+	});
 });

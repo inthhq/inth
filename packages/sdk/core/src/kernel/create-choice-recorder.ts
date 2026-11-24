@@ -429,6 +429,85 @@ const applyVendorGrants = function applyVendorGrants(
  * an unchanged list; a staged draft or nothing usable returns the current
  * value, so a no-input save never renews the time.
  */
+const fullBulkVendorChoice = function fullBulkVendorChoice(
+	snapshot: ConsentSnapshot,
+	allDeclared: readonly string[],
+	actionAt: number,
+	browser: Pick<
+		BrowserConsentRecords,
+		'vendorChoice' | 'vendorDeclared' | 'vendorTimes'
+	>
+): ResolvedVendorSelection {
+	const browserVendorChoice = browser.vendorChoice;
+	if (snapshot.hasAccountLayer) {
+		if (allDeclared.length === 0) {
+			return {
+				decidedVendorIds: [],
+				vendorChoice: browserVendorChoice,
+				vendorDeclared: browser.vendorDeclared,
+				vendorTimes: browser.vendorTimes,
+			};
+		}
+		const declaredSet = new Set(allDeclared);
+		const denied = (browserVendorChoice?.denied ?? []).filter(
+			(id) => !declaredSet.has(id)
+		);
+		const existingTimes = resolveBrowserVendorTimes(browser);
+		const vendorTimes = advanceVendorTimes(
+			existingTimes,
+			denied,
+			browserVendorChoice?.confirmedAt,
+			allDeclared,
+			actionAt
+		);
+		const vendorChoice: VendorChoice =
+			browserVendorChoice &&
+			denied.length === browserVendorChoice.denied.length &&
+			browserVendorChoice.confirmedAt >= actionAt
+				? browserVendorChoice
+				: { confirmedAt: actionAt, denied, version: 1 };
+		return {
+			decidedVendorIds: allDeclared,
+			vendorChoice,
+			vendorDeclared: [
+				...new Set([...denied, ...Object.keys(vendorTimes)]),
+			].sort(),
+			vendorTimes,
+		};
+	}
+	const vendorChoice = bulkClearedVendorChoice(
+		snapshot,
+		actionAt,
+		browserVendorChoice
+	);
+	if (vendorChoice === null) {
+		return {
+			decidedVendorIds: [],
+			vendorChoice: null,
+			vendorDeclared: browser.vendorDeclared,
+			vendorTimes: browser.vendorTimes,
+		};
+	}
+	const existingTimes = resolveBrowserVendorTimes(browser);
+	const liftedBrowserDenials = browserVendorChoice?.denied ?? [];
+	const decidedIds = [
+		...new Set([...allDeclared, ...liftedBrowserDenials]),
+	].sort();
+	const vendorTimes = advanceVendorTimes(
+		existingTimes,
+		[],
+		undefined,
+		decidedIds,
+		actionAt
+	);
+	return {
+		decidedVendorIds: allDeclared,
+		vendorChoice,
+		vendorDeclared: Object.keys(vendorTimes).sort(),
+		vendorTimes,
+	};
+};
+
 const resolveVendorSelection = function resolveVendorSelection(
 	snapshot: ConsentSnapshot,
 	input: SaveInput | undefined,
@@ -455,33 +534,7 @@ const resolveVendorSelection = function resolveVendorSelection(
 	const bulk = input === 'all' || input === 'none';
 	if (bulk) {
 		if (categories === undefined || coversChoiceScope(snapshot, categories)) {
-			const vendorChoice = bulkClearedVendorChoice(
-				snapshot,
-				actionAt,
-				browserVendorChoice
-			);
-			if (vendorChoice === null) {
-				return {
-					decidedVendorIds: [],
-					vendorChoice: null,
-					vendorDeclared: browser.vendorDeclared,
-					vendorTimes: browser.vendorTimes,
-				};
-			}
-			const existingTimes = resolveBrowserVendorTimes(browser);
-			const vendorTimes = advanceVendorTimes(
-				existingTimes,
-				[],
-				undefined,
-				allDeclared,
-				actionAt
-			);
-			return {
-				decidedVendorIds: allDeclared,
-				vendorChoice,
-				vendorDeclared: Object.keys(vendorTimes).sort(),
-				vendorTimes,
-			};
+			return fullBulkVendorChoice(snapshot, allDeclared, actionAt, browser);
 		}
 		return scopedBulkVendorChoice(
 			snapshot,
@@ -909,6 +962,38 @@ const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	return !remaining.some((right) => requestedSet.has(right));
 };
 
+const browserOptOutPatchAfterLift = function browserOptOutPatchAfterLift(
+	browserOptOut: Readonly<OptOutRecord> | null,
+	answerOptOut: OptOutRecord | null | undefined,
+	remaining: readonly OptOutRight[],
+	liftedRights: readonly OptOutRight[]
+): OptOutRecord | null | undefined {
+	if (browserOptOut?.heldBy !== 'device') {
+		return undefined;
+	}
+	const answerLeavesDeviceOptOut =
+		answerOptOut !== null &&
+		answerOptOut !== undefined &&
+		(answerOptOut.heldBy === 'device' || answerOptOut.heldBy === 'both') &&
+		remaining.length > 0;
+	const liftedSet = new Set<string>(liftedRights);
+	const remainingBrowserRights = browserOptOut.rights.filter(
+		(right) => !liftedSet.has(right)
+	);
+	if (remainingBrowserRights.length === 0) {
+		return !answerLeavesDeviceOptOut || browserOptOut.rights.length > 0
+			? null
+			: undefined;
+	}
+	if (remainingBrowserRights.length !== browserOptOut.rights.length) {
+		return {
+			...browserOptOut,
+			rights: remainingBrowserRights,
+		};
+	}
+	return undefined;
+};
+
 const adoptDeviceLiftAnswer = function adoptDeviceLiftAnswer(
 	answerOptOut: OptOutRecord,
 	remaining: readonly OptOutRight[],
@@ -1111,21 +1196,16 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			  })
 			| undefined;
 		// On success, remove the lifted rights from any existing browser device
-		// opt-out (clearing it if no rights remain) before applying the row.
+		// opt-out (clearing it if no rights remain, including one that started
+		// with none when the answer leaves no device opt-out) before applying
+		// the row.
 		const browserOptOut = runtime.getBrowserRecords().optOut;
-		let browserOptOutPatch: OptOutRecord | null | undefined;
-		if (browserOptOut?.heldBy === 'device') {
-			const liftedSet = new Set<string>(liftedRights);
-			const remainingBrowserRights = browserOptOut.rights.filter(
-				(right) => !liftedSet.has(right)
-			);
-			if (remainingBrowserRights.length !== browserOptOut.rights.length) {
-				browserOptOutPatch =
-					remainingBrowserRights.length === 0
-						? null
-						: { ...browserOptOut, rights: remainingBrowserRights };
-			}
-		}
+		let browserOptOutPatch = browserOptOutPatchAfterLift(
+			browserOptOut,
+			answerOptOut,
+			remaining,
+			liftedRights
+		);
 		let adoptDeviceReceipt = false;
 
 		if (hasActiveAccount) {
@@ -1175,13 +1255,14 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		batch(() => {
 			runtime.noteOptOutAct();
 			runtime.bumpAccountSyncGeneration();
-			if (adoptDeviceReceipt) {
+			if (adoptDeviceReceipt && answerOptOut) {
 				const currentReceipt = runtime.getOptOutReceiptData();
 				runtime.setOptOutReceiptData({
 					localAct: currentReceipt.localAct,
 					reference: currentReceipt.reference,
 					rightsConfirmed: true,
 				});
+				runtime.setOptOutServerRecordedAt(answerOptOut.recordedAt);
 			}
 			const patch: SnapshotPatch = { now: at };
 			if (browserOptOutPatch !== undefined) {
@@ -1581,9 +1662,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					reference,
 					rightsConfirmed: false,
 				});
+				runtime.setOptOutServerRecordedAt(null);
 				commit(patch);
 				const committed = getSnapshot();
-				const optOut = committed.optOut as Readonly<OptOutRecord>;
+				const optOut = (runtime.getBrowserRecords().optOut ??
+					committed.optOut) as Readonly<OptOutRecord>;
 				const event: Extract<KernelEvent, { type: 'opt-out:recorded' }> = {
 					actionAt,
 					optOut,
@@ -1849,6 +1932,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 							reference: recordedOptOutReference,
 							rightsConfirmed: false,
 						});
+						runtime.setOptOutServerRecordedAt(null);
 					}
 					commit(
 						patch,
@@ -1891,7 +1975,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					if (recordedOptOut !== null) {
 						emit({
 							actionAt,
-							optOut: committed.optOut as Readonly<OptOutRecord>,
+							optOut: (committedBrowser.optOut ??
+								committed.optOut) as Readonly<OptOutRecord>,
 							snapshot: committed,
 							type: 'opt-out:recorded',
 							uiSource,

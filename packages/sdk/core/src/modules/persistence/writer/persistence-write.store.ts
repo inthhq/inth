@@ -158,7 +158,8 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	now: number,
 	gpcReported = false,
 	receiptData?: Readonly<OptOutReceiptData>,
-	linkedExternalId?: string
+	linkedExternalId?: string,
+	serverRecordedAt?: number | null
 ): boolean {
 	if (typeof document === 'undefined') {
 		return true;
@@ -184,6 +185,9 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	}
 	if (linkedExternalId) {
 		record.linkedExternalId = linkedExternalId;
+	}
+	if (serverRecordedAt !== null && serverRecordedAt !== undefined) {
+		record.serverRecordedAt = serverRecordedAt;
 	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };

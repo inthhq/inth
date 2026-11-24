@@ -424,17 +424,96 @@ const receiptChangedFrom = function receiptChangedFrom(
 
 const confirmedDeviceRightsFromBoth = function confirmedDeviceRightsFromBoth(
 	browserOptOut: Readonly<OptOutRecord>,
-	answerRights: readonly OptOutRight[],
-	accountOptOutRights: readonly OptOutRight[] | undefined
+	answerRights: readonly OptOutRight[]
 ): OptOutRight[] {
 	const answerSet = new Set<OptOutRight>(answerRights);
-	if (browserOptOut.rights.length > 0) {
-		return browserOptOut.rights.filter((right) => answerSet.has(right));
-	}
-	const accountOnly = new Set<OptOutRight>(accountOptOutRights);
-	return OPT_OUT_RIGHTS.filter(
-		(right) => answerSet.has(right) && !accountOnly.has(right)
+	// When this device already recorded explicit rights, keep only the ones the
+	// backend confirmed (never copying rights this device did not request).
+	// When the local record started with `rights: []` (because `POST /v1/consent/opt-outs`
+	// omits `rights` so the backend derives applicable rights from `OPT_OUT_RIGHTS`),
+	// intersect all supported rights with the answer's rights.
+	const requestedSet = new Set<OptOutRight>(
+		browserOptOut.rights.length > 0 ? browserOptOut.rights : OPT_OUT_RIGHTS
 	);
+	return OPT_OUT_RIGHTS.filter(
+		(right) => requestedSet.has(right) && answerSet.has(right)
+	);
+};
+
+const confirmBothOptOutWithAccount = function confirmBothOptOutWithAccount(
+	runtime: KernelRuntime,
+	effectiveBrowserOptOut: Readonly<OptOutRecord>,
+	next: OptOutRecord,
+	fence: OptOutAnswerFence,
+	currentReceipt: Readonly<OptOutReceiptData>,
+	currentServerRecordedAt: number | null
+): boolean {
+	if (fence.fromOptOutRequest === true) {
+		const nextRights = confirmedDeviceRightsFromBoth(
+			effectiveBrowserOptOut,
+			next.rights
+		);
+		const rightsChanged =
+			nextRights.length !== effectiveBrowserOptOut.rights.length ||
+			nextRights.some(
+				(right, index) => right !== effectiveBrowserOptOut.rights[index]
+			);
+		const nextReceipt: OptOutReceiptData = {
+			...currentReceipt,
+			rightsConfirmed: true,
+		};
+		const serverTimeChanged = currentServerRecordedAt !== next.recordedAt;
+		if (!rightsChanged) {
+			if (
+				!receiptChangedFrom(currentReceipt, nextReceipt) &&
+				!serverTimeChanged
+			) {
+				return false;
+			}
+			runtime.batch(() => {
+				runtime.setOptOutReceiptData(nextReceipt);
+				runtime.setOptOutServerRecordedAt(next.recordedAt);
+			});
+			return true;
+		}
+		runtime.batch(() => {
+			runtime.setOptOutReceiptData(nextReceipt);
+			runtime.setOptOutServerRecordedAt(next.recordedAt);
+			runtime.commit({
+				now: runtime.now(),
+				optOut: { ...effectiveBrowserOptOut, rights: nextRights },
+			});
+			const after = runtime.getSnapshot();
+			runtime.emit({
+				optOut: after.optOut,
+				snapshot: after,
+				type: 'opt-out:synced',
+			});
+		});
+		return true;
+	}
+	if (
+		effectiveBrowserOptOut.rights.length > 0 &&
+		effectiveBrowserOptOut.rights.every((right) => next.rights.includes(right))
+	) {
+		const nextReceipt: OptOutReceiptData = {
+			...currentReceipt,
+			rightsConfirmed: true,
+		};
+		const nextServerTime = currentServerRecordedAt ?? next.recordedAt;
+		if (
+			!receiptChangedFrom(currentReceipt, nextReceipt) &&
+			currentServerRecordedAt === nextServerTime
+		) {
+			return false;
+		}
+		runtime.batch(() => {
+			runtime.setOptOutReceiptData(nextReceipt);
+			runtime.setOptOutServerRecordedAt(nextServerTime);
+		});
+		return true;
+	}
+	return false;
 };
 
 const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
@@ -448,70 +527,34 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	// into browser records and never mutate the account layer (`appliedAt` or
 	// `optOut`). When a `'both'` answer confirms this device's own pending
 	// opt-out request, fill the device record with the requested rights
-	// intersected with the answer's rights (never adding pre-existing account
-	// rights). Otherwise, when a `'both'` answer covers every right already on
+	// intersected with the answer's rights (never adding rights the device did
+	// not request) and keep the confirmation's raw server `recordedAt`.
+	// Otherwise, when a `'both'` answer covers every explicit right already on
 	// the browser device record, mark its receipt confirmed without copying.
 	const browserOptOut = runtime.getBrowserRecords().optOut;
 	const effectiveBrowserOptOut =
 		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
 	const currentReceipt = runtime.getOptOutReceiptData();
+	const currentServerRecordedAt = runtime.getOptOutServerRecordedAt();
 	if (next !== null && next.heldBy !== 'device') {
 		if (
 			next.heldBy === 'both' &&
 			effectiveBrowserOptOut !== null &&
-			fence.confirmed !== false &&
-			!currentReceipt.rightsConfirmed
+			fence.confirmed !== false
 		) {
-			if (fence.fromOptOutRequest === true) {
-				const accountRights = runtime.getAccountLayer()?.optOut?.rights;
-				const nextRights = confirmedDeviceRightsFromBoth(
-					effectiveBrowserOptOut,
-					next.rights,
-					accountRights
-				);
-				const rightsChanged =
-					nextRights.length !== effectiveBrowserOptOut.rights.length ||
-					nextRights.some(
-						(right, index) => right !== effectiveBrowserOptOut.rights[index]
-					);
-				const nextReceipt: OptOutReceiptData = {
-					...currentReceipt,
-					rightsConfirmed: true,
-				};
-				if (!rightsChanged) {
-					runtime.setOptOutReceiptData(nextReceipt);
-					return true;
-				}
-				runtime.batch(() => {
-					runtime.setOptOutReceiptData(nextReceipt);
-					runtime.commit({
-						now: runtime.now(),
-						optOut: { ...effectiveBrowserOptOut, rights: nextRights },
-					});
-					const after = runtime.getSnapshot();
-					runtime.emit({
-						optOut: after.optOut,
-						snapshot: after,
-						type: 'opt-out:synced',
-					});
-				});
-				return true;
-			}
-			if (
-				effectiveBrowserOptOut.rights.every((right) =>
-					next.rights.includes(right)
-				)
-			) {
-				runtime.setOptOutReceiptData({
-					...currentReceipt,
-					rightsConfirmed: true,
-				});
-				return true;
-			}
+			return confirmBothOptOutWithAccount(
+				runtime,
+				effectiveBrowserOptOut,
+				next,
+				fence,
+				currentReceipt,
+				currentServerRecordedAt
+			);
 		}
 		return false;
 	}
 	const at = runtime.now();
+	const confirmed = fence.confirmed !== false;
 	const localAct = answersLocalAct(next, effectiveBrowserOptOut, fence);
 	const nextBrowserOptOut =
 		next === null
@@ -525,18 +568,29 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 		effectiveBrowserOptOut,
 		nextBrowserOptOut,
 		currentReceipt,
-		fence.confirmed !== false,
+		confirmed,
 		localAct
 	);
+	const nextServerRecordedAt =
+		nextBrowserOptOut !== null && confirmed
+			? nextBrowserOptOut.recordedAt
+			: null;
 	if (!browserChanged) {
-		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
+		if (
+			!receiptChangedFrom(currentReceipt, nextReceipt) &&
+			currentServerRecordedAt === nextServerRecordedAt
+		) {
 			return false;
 		}
-		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.batch(() => {
+			runtime.setOptOutReceiptData(nextReceipt);
+			runtime.setOptOutServerRecordedAt(nextServerRecordedAt);
+		});
 		return true;
 	}
 	runtime.batch(() => {
 		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.setOptOutServerRecordedAt(nextServerRecordedAt);
 		runtime.commit({ now: at, optOut: nextBrowserOptOut });
 		const after = runtime.getSnapshot();
 		if (!sameOptOutRecord(current.optOut, after.optOut) || browserChanged) {
@@ -614,6 +668,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	}
 	const confirmed = fence.confirmed !== false;
 	const currentReceipt = runtime.getOptOutReceiptData();
+	const currentServerRecordedAt = runtime.getOptOutServerRecordedAt();
 	const nextReceipt = nextSyncedOptOutReceipt(
 		current.optOut,
 		next,
@@ -621,15 +676,24 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		confirmed,
 		localAct
 	);
+	const nextServerRecordedAt =
+		next !== null && confirmed ? next.recordedAt : null;
 	if (sameOptOutRecord(current.optOut, next)) {
-		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
+		if (
+			!receiptChangedFrom(currentReceipt, nextReceipt) &&
+			currentServerRecordedAt === nextServerRecordedAt
+		) {
 			return false;
 		}
-		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.batch(() => {
+			runtime.setOptOutReceiptData(nextReceipt);
+			runtime.setOptOutServerRecordedAt(nextServerRecordedAt);
+		});
 		return true;
 	}
 	runtime.batch(() => {
 		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.setOptOutServerRecordedAt(nextServerRecordedAt);
 		runtime.commit({ now: runtime.now(), optOut: next });
 		const after = runtime.getSnapshot();
 		runtime.emit({

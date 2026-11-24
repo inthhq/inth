@@ -35,6 +35,7 @@ import {
 	checkTimestamp,
 	isNonEmptyString,
 	isPlainRecord,
+	isValidTimestamp,
 	ownKeys,
 	ownValue,
 	validateExplicitChoice,
@@ -145,6 +146,11 @@ export type StoredOptOutRecord = OptOutRecord & {
 	 * to a verified linked subject.
 	 */
 	linkedExternalId?: string;
+	/**
+	 * Raw server `recordedAt` timestamp from the backend confirmation of this
+	 * device's opt-out. Stored in both localStorage and the compact cookie.
+	 */
+	serverRecordedAt?: number;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -1062,6 +1068,7 @@ const OPT_OUT_STORED_KEYS = [
 	'localAct',
 	'rightsConfirmed',
 	'linkedExternalId',
+	'serverRecordedAt',
 ] as const;
 
 const readOptionalOptOutBoolean = function readOptionalOptOutBoolean(
@@ -1089,6 +1096,7 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 	localAct: OptOutLocalAct | undefined;
 	reference: string | undefined;
 	rightsConfirmed: boolean;
+	serverRecordedAt: number | undefined;
 } {
 	const gpcReported = readOptionalOptOutBoolean(input, 'gpcReported', issues);
 	const rightsConfirmed = readOptionalOptOutBoolean(
@@ -1123,12 +1131,22 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-value', path: 'localAct' });
 		}
 	}
+	const rawServerRecordedAt = ownValue(input, 'serverRecordedAt');
+	let serverRecordedAt: number | undefined;
+	if (rawServerRecordedAt !== undefined) {
+		if (isValidTimestamp(rawServerRecordedAt)) {
+			serverRecordedAt = rawServerRecordedAt;
+		} else {
+			issues.push({ code: 'invalid-timestamp', path: 'serverRecordedAt' });
+		}
+	}
 	return {
 		gpcReported,
 		linkedExternalId,
 		localAct,
 		reference,
 		rightsConfirmed,
+		serverRecordedAt,
 	};
 };
 
@@ -1197,10 +1215,13 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	if (meta.linkedExternalId) {
 		record.linkedExternalId = meta.linkedExternalId;
 	}
+	if (meta.serverRecordedAt !== undefined) {
+		record.serverRecordedAt = meta.serverRecordedAt;
+	}
 	return { ok: true, record };
 };
 
-const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h']);
+const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h', 's']);
 
 const checkCompactOptOutField = function checkCompactOptOutField(
 	key: string,
@@ -1281,6 +1302,9 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	}
 	if (fields.get('c') === '1') {
 		candidate.rightsConfirmed = true;
+	}
+	if (fields.has('s')) {
+		candidate.serverRecordedAt = parseCompactInteger(fields.get('s'));
 	}
 	return decodeOptOutRecord(candidate, now);
 };

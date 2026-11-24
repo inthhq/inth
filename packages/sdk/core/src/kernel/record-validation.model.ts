@@ -14,6 +14,7 @@ import {
 	checkTimestamp,
 	isNonEmptyString,
 	isPlainRecord,
+	isValidTimestamp,
 	ownKeys,
 	ownValue,
 	validateExplicitChoice,
@@ -47,6 +48,7 @@ export interface ValidatedRecords {
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
 	optOutLinkedExternalId?: string | null;
+	optOutServerRecordedAt?: number | null;
 	vendorChoice?: VendorChoice | null;
 	vendorDeclared?: readonly string[] | null;
 	vendorTimes?: Readonly<Record<string, number>> | null;
@@ -196,6 +198,19 @@ const validateOptOutMetaFields = function validateOptOutMetaFields(
 			issues.push({
 				code: 'invalid-identifier',
 				path: 'optOutLinkedExternalId',
+			});
+		}
+	}
+	if (input.optOutServerRecordedAt !== undefined) {
+		if (
+			input.optOutServerRecordedAt === null ||
+			isValidTimestamp(input.optOutServerRecordedAt)
+		) {
+			records.optOutServerRecordedAt = input.optOutServerRecordedAt;
+		} else {
+			issues.push({
+				code: 'invalid-timestamp',
+				path: 'optOutServerRecordedAt',
 			});
 		}
 	}

@@ -101,6 +101,11 @@ export interface SaveOutboxStore {
 	 * read; the outbox calls this again inside a transaction after it.
 	 */
 	clear: () => void;
+	/**
+	 * Synchronously inspect whether any opt-out request for `subjectId`
+	 * (or any subject when omitted) is currently queued in storage.
+	 */
+	hasPendingOptOut?: (subjectId?: string | null) => boolean;
 }
 
 /**
@@ -258,6 +263,68 @@ const adoptedAt = (
 
 // c15t's default family: a c15t site on another `storageKey` clears under
 // that key's epoch, which this doesn't read.
+const resolveRawSubject = function resolveRawSubject(
+	reassignments: unknown,
+	id: string
+): string {
+	if (!Array.isArray(reassignments) || reassignments.length === 0) {
+		return id;
+	}
+	const moves = new Map<string, string>();
+	for (const item of reassignments) {
+		if (
+			typeof item === 'object' &&
+			item !== null &&
+			typeof (item as { from?: unknown }).from === 'string' &&
+			typeof (item as { to?: unknown }).to === 'string'
+		) {
+			moves.set((item as { from: string }).from, (item as { to: string }).to);
+		}
+	}
+	let current = id;
+	for (let step = 0; step <= moves.size; step += 1) {
+		const next = moves.get(current);
+		if (next === undefined) {
+			break;
+		}
+		current = next;
+	}
+	return current;
+};
+
+const rawOptOutSubjectId = function rawOptOutSubjectId(
+	entry: unknown
+): string | undefined {
+	if (typeof entry !== 'object' || entry === null) {
+		return undefined;
+	}
+	const { payload } = entry as { payload?: unknown };
+	if (typeof payload !== 'object' || payload === null) {
+		return undefined;
+	}
+	const { subjectId } = payload as { subjectId?: unknown };
+	return typeof subjectId === 'string' ? subjectId : undefined;
+};
+
+/** Whether `stored` holds a queued opt-out entry belonging to `subjectId`. @internal */
+export const hasStoredOptOutForSubject = function hasStoredOptOutForSubject(
+	stored: unknown,
+	reassignments: unknown,
+	subjectId: string
+): boolean {
+	if (!Array.isArray(stored) || stored.length === 0) {
+		return false;
+	}
+	const own = resolveRawSubject(reassignments, subjectId);
+	return stored.some((entry) => {
+		const entrySubject = rawOptOutSubjectId(entry);
+		return (
+			entrySubject !== undefined &&
+			resolveRawSubject(reassignments, entrySubject) === own
+		);
+	});
+};
+
 const C15T_EPOCH_KEY = resolveStorageKeys({
 	storageKey: C15T_STORAGE_KEY,
 }).epoch;
@@ -325,6 +392,39 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 					// Blocked storage: nothing was queued there either.
 				}
 			}
+		},
+		hasPendingOptOut(subjectId) {
+			const storage = environment.localStorage() ?? memory;
+			let raw: string | null = null;
+			try {
+				raw = storage.getItem(SLOT_KEYS.optOuts);
+			} catch {
+				return false;
+			}
+			if (raw === null) {
+				return false;
+			}
+			let parsed: unknown;
+			try {
+				parsed = JSON.parse(raw);
+			} catch {
+				return false;
+			}
+			if (!Array.isArray(parsed) || parsed.length === 0) {
+				return false;
+			}
+			if (!subjectId) {
+				return true;
+			}
+			let reassignments: unknown;
+			try {
+				const rawReassignments = storage.getItem(SLOT_KEYS.reassignments);
+				reassignments =
+					rawReassignments === null ? undefined : JSON.parse(rawReassignments);
+			} catch {
+				reassignments = undefined;
+			}
+			return hasStoredOptOutForSubject(parsed, reassignments, subjectId);
 		},
 		async transact(run) {
 			const storage = environment.localStorage() ?? memory;

@@ -121,6 +121,12 @@ export interface InternalKernel extends ConsentKernel {
 			fromHydration?: boolean
 		) => void
 	) => () => void;
+	/** Raw server `recordedAt` confirming this browser's device opt-out, or `null`. */
+	getOptOutServerRecordedAt: () => number | null;
+	/** Subscribe to changes in the raw server confirmation timestamp. */
+	onOptOutServerRecordedAtChange: (
+		listener: (recordedAt: number | null, fromHydration?: boolean) => void
+	) => () => void;
 	/**
 	 * Number of direct opt-out and lift requests currently in flight.
 	 */

@@ -502,6 +502,13 @@ export const mountPersistence = function mountPersistence(
 				request('optOut');
 			}
 		}),
+		kernel.onOptOutServerRecordedAtChange((_recordedAt, fromHydration) => {
+			if (!fromHydration && kernel.getBrowserRecords().optOut !== null) {
+				state.optOutRecorded = true;
+				state.optOutSynced = true;
+				request('optOut');
+			}
+		}),
 		kernel.onSubjectLinked(() => {
 			if (kernel.getBrowserRecords().optOut !== null) {
 				state.optOutRecorded = true;
@@ -551,6 +558,7 @@ export const mountPersistence = function mountPersistence(
 					optOutLocalAct: receipt.localAct,
 					optOutReference: receipt.reference,
 					optOutRightsConfirmed: receipt.rightsConfirmed,
+					optOutServerRecordedAt: queued.getOptOutServerRecordedAt(),
 					vendorChoice: queuedBrowser.vendorChoice,
 					vendorDeclared: queuedBrowser.vendorDeclared,
 					vendorTimes: queuedBrowser.vendorTimes,
@@ -753,6 +761,9 @@ export const mountPersistence = function mountPersistence(
 		if (records.optOutLinkedExternalId) {
 			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
 		}
+		if (records.optOutServerRecordedAt !== undefined) {
+			patch.optOutServerRecordedAt = records.optOutServerRecordedAt;
+		}
 	};
 
 	/**
@@ -767,6 +778,7 @@ export const mountPersistence = function mountPersistence(
 		patch.optOutLocalAct = receipt.localAct;
 		patch.optOutReference = receipt.reference;
 		patch.optOutRightsConfirmed = receipt.rightsConfirmed;
+		patch.optOutServerRecordedAt = kernel.getOptOutServerRecordedAt();
 	};
 
 	const mergeSeededOptOutMeta = function mergeSeededOptOutMeta(
@@ -804,6 +816,13 @@ export const mountPersistence = function mountPersistence(
 			) !== records.optOutLinkedExternalId
 		) {
 			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
+		}
+		if (
+			records.optOutServerRecordedAt !== undefined &&
+			records.optOutServerRecordedAt !== null &&
+			kernel.getOptOutServerRecordedAt() !== records.optOutServerRecordedAt
+		) {
+			patch.optOutServerRecordedAt = records.optOutServerRecordedAt;
 		}
 	};
 

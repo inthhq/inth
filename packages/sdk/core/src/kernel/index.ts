@@ -129,6 +129,12 @@ export const createKernel = function createKernel(
 						config.initialRecords?.optOutRightsConfirmed === true,
 				});
 	const serverOptOutReceiptData = initialOptOutReceiptData;
+	const initialOptOutServerRecordedAt: number | null =
+		initialState.browserRecords.optOut === null
+			? null
+			: (config.initialRecords?.optOutServerRecordedAt ?? null);
+	const initialOptOutLinkedExternalId: string | null =
+		config.initialRecords?.optOutLinkedExternalId ?? null;
 
 	const sendGpcOptOut = function sendGpcOptOut(
 		snapshot: ConsentSnapshot,
@@ -190,6 +196,7 @@ export const createKernel = function createKernel(
 		initialBrowserRecords: initialState.browserRecords,
 		initialOptOutGpcReported,
 		initialOptOutReceiptData,
+		initialOptOutServerRecordedAt,
 		initialSnapshot,
 		// oxlint-disable-next-line no-use-before-define -- Commits run only after assembly.
 		onDeadlineChange: () => lifecycle.armDeadline(),
@@ -224,6 +231,8 @@ export const createKernel = function createKernel(
 	});
 	const records = createRecordsBoundary({
 		adoptSubject: outbox.adoptSubject,
+		hasPendingOptOut: outbox.hasPendingOptOut,
+		initialLinkedExternalId: initialOptOutLinkedExternalId,
 		runtime,
 		start: lifecycle.start,
 		transport,
@@ -298,6 +307,7 @@ export const createKernel = function createKernel(
 		getLinkedExternalId: records.getLinkedExternalId,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
+		getOptOutServerRecordedAt: runtime.getOptOutServerRecordedAt,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getSavesHold: outbox.getHold,
@@ -313,6 +323,7 @@ export const createKernel = function createKernel(
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
 		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
+		onOptOutServerRecordedAtChange: runtime.onOptOutServerRecordedAtChange,
 		onSubjectLinked: records.onSubjectLinked,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,
