@@ -439,6 +439,19 @@ describe('card:', () => {
 		);
 	});
 
+	test('[BNR-06] a choice skips a Your Privacy Choices the page hides, for the next page control', async () => {
+		await mount();
+		await waitForRoot();
+		// The page hides its footer link with CSS; it stays connected.
+		const link = await vi.waitFor(() => must('privacy-choices-link'));
+		link.style.display = 'none';
+		must('consent-banner-reject-button').click();
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		await vi.waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
+
 	test('[BNR-08] links only the configured policies', async () => {
 		await mount();
 		await waitForRoot();

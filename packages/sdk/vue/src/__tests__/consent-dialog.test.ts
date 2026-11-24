@@ -120,6 +120,43 @@ describe('opening', () => {
 		expect(pageAction().closest('[inert]')).toBeNull();
 	});
 
+	// jsdom lays nothing out, so a control the page hides with CSS is
+	// modelled by a focus() that does not land, as the browser does for
+	// `display: none`.
+	const cannotTakeFocus = (element: HTMLElement) =>
+		vi.spyOn(element, 'focus').mockImplementation(() => undefined);
+	const trigger = () =>
+		h(
+			'button',
+			{ 'data-testid': 'consent-dialog-trigger', type: 'button' },
+			'Privacy settings'
+		);
+
+	test('[FOC-03] an opener the page hides hands focus to a visible trigger, not the body', async () => {
+		await mount({ page: trigger });
+		await openDialog();
+		cannotTakeFocus(link());
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
+
+	test('[FOC-03] an unmounted opener with a hidden link hands focus to a visible trigger', async () => {
+		const current = await mount({ page: trigger });
+		pageAction().focus();
+		current.activeUI.value = 'manager';
+		await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
+		pageAction().remove();
+		cannotTakeFocus(link());
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
+
 	test('[PERM-05][BNR-02] the banner leaves at once when the dialog opens', async () => {
 		await mount({ region: 'eu' });
 		await waitFor(() => expect($('consent-banner-root')).not.toBeNull());

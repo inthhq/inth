@@ -253,6 +253,37 @@ describe('opening', () => {
 		expect(pageAction().closest('[inert]')).toBeNull();
 	});
 
+	test('[FOC-03] an opener the page hides with CSS hands focus to a visible trigger, not the body', async () => {
+		await mount();
+		await openDialog();
+		// The page hides its footer link; it stays connected.
+		must('privacy-choices-link').style.display = 'none';
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
+
+	test('[FOC-03] an unmounted opener with a hidden link hands focus to a visible trigger', async () => {
+		await mount();
+		const opener = document.createElement('button');
+		opener.textContent = 'Removed opener';
+		document.body.append(opener);
+		opener.focus();
+		showConsentSurface(kernel(), 'dialog');
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-title'))
+		);
+		opener.remove();
+		must('privacy-choices-link').style.display = 'none';
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-trigger'))
+		);
+	});
+
 	test('[PERM-05][BNR-02] the banner leaves at once when the dialog opens', async () => {
 		await mount({ region: 'eu' });
 		await waitFor(() => expect($('consent-banner-root')).toBeInTheDocument());
