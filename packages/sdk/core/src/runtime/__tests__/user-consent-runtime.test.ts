@@ -15,6 +15,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { normalizeUserConsent } from '../../kernel/account-layer';
 import { resolveStorageKeys } from '../../libs/storage-keys';
 import { isVendorAllowed } from '../../modules/has';
 import {
@@ -2654,6 +2655,429 @@ describe('runtime regressions (set 6)', () => {
 			);
 		} finally {
 			runtime.dispose();
+		}
+	});
+});
+
+describe('runtime regressions (set 7)', () => {
+	// promise and imperative sign-out never append a script under a cached grant
+	test.each(['promise', 'imperative'] as const)(
+		'%s sign-out never appends a script under the cached grant',
+		async (path) => {
+			const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+			const append = vi.spyOn(document.head, 'appendChild');
+			const user = { externalId: 'U' };
+			const rule = optInRule();
+			const resolution = matchedResolution(rule);
+			const pending = Promise.withResolvers<UserConsent | null>();
+			const documentForU: UserConsent = {
+				categories: {},
+				optOut: null,
+				sync: {
+					checkedAt: NOW - 500,
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: resolution.fingerprints.choice,
+								kind: 'choice-v1' as const,
+							},
+							confirmedAt: NOW - 1000,
+							value: true,
+						},
+					},
+					externalId: user.externalId,
+					optOut: null,
+					vendors: {},
+				},
+			};
+			const src = 'https://cdn.example.test/marketing.js';
+			const runtime = createConsentProviderRuntime(
+				{
+					consentCategories: ['marketing'],
+					mode: testing({ policy: [rule] }),
+					persistence: false,
+					prefetch: {
+						initialPolicyPending: false,
+						initialPolicyResolution: resolution,
+						initialRecords: {
+							accountLayer: normalizeUserConsent(documentForU, NOW),
+						},
+						now: NOW,
+					},
+					scripts: [{ category: 'marketing', id: 'marketing', src }],
+					user,
+					userConsent: pending.promise,
+				},
+				defaultRuntimeModules
+			);
+			const seen: boolean[] = [];
+			const unsubscribe = runtime.kernel.subscribe((s) => {
+				seen.push(s.effectivePermissions.marketing);
+			});
+			const appended = () =>
+				append.mock.calls.some(
+					([node]) => node instanceof HTMLScriptElement && node.src === src
+				);
+			try {
+				runtime.start();
+				expect(runtime.kernel.getSnapshot()).toMatchObject({
+					hasAccountLayer: true,
+					userConsentPending: true,
+				});
+				expect(appended()).toBe(false);
+				if (path === 'promise') {
+					pending.resolve(null);
+					await pending.promise;
+				} else {
+					runtime.syncUserConsent(null);
+				}
+				const final = runtime.kernel.getSnapshot();
+				expect(final.userConsentPending).toBe(false);
+				expect(final.hasAccountLayer).toBeUndefined();
+				expect(final.effectivePermissions.marketing).toBe(false);
+				expect({
+					appended: appended(),
+					consentGranted: seen.includes(true),
+				}).toEqual({
+					appended: false,
+					consentGranted: false,
+				});
+			} finally {
+				unsubscribe();
+				runtime.dispose();
+				append.mockRestore();
+				clock.mockRestore();
+			}
+		}
+	);
+
+	// userConsent Promise resolving to null does not transiently publish old stored account grants
+	test('userConsent Promise resolving to null does not transiently publish old stored account grants', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'user_null_promise' };
+		let resolvePromise!: (value: UserConsent | null) => void;
+		const pending = new Promise<UserConsent | null>((resolve) => {
+			resolvePromise = resolve;
+		});
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				mode: () => ({}),
+				persistence: false,
+				prefetch: {
+					initialPolicyResolution: resolution,
+					initialRecords: {
+						accountLayer: {
+							appliedAt: NOW - 2000,
+							checkedAt: NOW - 2000,
+							choices: {
+								marketing: {
+									basis: {
+										fingerprint: resolution.fingerprints.choice,
+										kind: 'choice-v1',
+									},
+									rawConfirmedAt: NOW - 2000,
+									value: true,
+								},
+							},
+							externalId: user.externalId,
+							optOut: null,
+							skew: 0,
+							vendors: {},
+						},
+						now: NOW,
+					},
+					initialUser: user,
+					now: NOW,
+				},
+				user,
+				userConsent: pending,
+			},
+			defaultRuntimeModules
+		);
+
+		const observed: { pending: boolean; marketing: boolean }[] = [];
+		const unsub = runtime.kernel.subscribe((snap) => {
+			observed.push({
+				marketing: snap.effectivePermissions.marketing,
+				pending: snap.userConsentPending === true,
+			});
+		});
+
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+
+			resolvePromise(null);
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(observed.some((entry) => entry.marketing === true)).toBe(false);
+		} finally {
+			unsub();
+			runtime.dispose();
+		}
+	});
+
+	// imperative syncUserConsent(null) while pending does not transiently publish old stored account grants
+	test('imperative syncUserConsent(null) while pending does not transiently publish old stored account grants', () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'user_null_imp' };
+		const pending = new Promise<UserConsent | null>(() => {
+			// Intentionally pending.
+		});
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				mode: () => ({}),
+				persistence: false,
+				prefetch: {
+					initialPolicyResolution: resolution,
+					initialRecords: {
+						accountLayer: {
+							appliedAt: NOW - 2000,
+							checkedAt: NOW - 2000,
+							choices: {
+								marketing: {
+									basis: {
+										fingerprint: resolution.fingerprints.choice,
+										kind: 'choice-v1',
+									},
+									rawConfirmedAt: NOW - 2000,
+									value: true,
+								},
+							},
+							externalId: user.externalId,
+							optOut: null,
+							skew: 0,
+							vendors: {},
+						},
+						now: NOW,
+					},
+					initialUser: user,
+					now: NOW,
+				},
+				user,
+				userConsent: pending,
+			},
+			defaultRuntimeModules
+		);
+
+		const observed: { pending: boolean; marketing: boolean }[] = [];
+		const unsub = runtime.kernel.subscribe((snap) => {
+			observed.push({
+				marketing: snap.effectivePermissions.marketing,
+				pending: snap.userConsentPending === true,
+			});
+		});
+
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+
+			runtime.syncUserConsent(null);
+
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(observed.some((entry) => entry.marketing === true)).toBe(false);
+		} finally {
+			unsub();
+			runtime.dispose();
+		}
+	});
+
+	// update({ userConsent: null }), identify(null), identify(otherUser), and clearRecords() never transiently publish cached grants
+	test.each([
+		'update-null',
+		'identify-null',
+		'identify-switch',
+		'clear-records',
+	] as const)(
+		'%s while pending never transiently publishes old stored account grants or appends a script',
+		async (trigger) => {
+			const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+			const append = vi.spyOn(document.head, 'appendChild');
+			const user = { externalId: 'U' };
+			const rule = optInRule();
+			const resolution = matchedResolution(rule);
+			const pending = new Promise<UserConsent | null>(() => {
+				// Intentionally pending.
+			});
+			const documentForU: UserConsent = {
+				categories: {},
+				optOut: null,
+				sync: {
+					checkedAt: NOW - 500,
+					choices: {
+						marketing: {
+							basis: {
+								fingerprint: resolution.fingerprints.choice,
+								kind: 'choice-v1' as const,
+							},
+							confirmedAt: NOW - 1000,
+							value: true,
+						},
+					},
+					externalId: user.externalId,
+					optOut: null,
+					vendors: {},
+				},
+			};
+			const src = `https://cdn.example.test/marketing-${trigger}.js`;
+			const baseOptions = {
+				consentCategories: ['marketing'] as 'marketing'[],
+				mode: testing({ policy: [rule] }),
+				persistence: false as const,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					initialRecords: {
+						accountLayer: normalizeUserConsent(documentForU, NOW),
+					},
+					now: NOW,
+				},
+				scripts: [{ category: 'marketing' as const, id: 'marketing', src }],
+				user,
+				userConsent: pending,
+			};
+			const runtime = createConsentProviderRuntime(
+				baseOptions,
+				defaultRuntimeModules
+			);
+			const seen: boolean[] = [];
+			const unsubscribe = runtime.kernel.subscribe((s) => {
+				seen.push(s.effectivePermissions.marketing);
+			});
+			const appended = () =>
+				append.mock.calls.some(
+					([node]) => node instanceof HTMLScriptElement && node.src === src
+				);
+			try {
+				runtime.start();
+				expect(runtime.kernel.getSnapshot()).toMatchObject({
+					hasAccountLayer: true,
+					userConsentPending: true,
+				});
+				if (trigger === 'update-null') {
+					await runtime.update({ ...baseOptions, userConsent: null });
+				} else if (trigger === 'identify-null') {
+					await runtime.identify(null);
+				} else if (trigger === 'identify-switch') {
+					await runtime.identify({ externalId: 'U2' });
+				} else {
+					runtime.clearRecords();
+				}
+				const final = runtime.kernel.getSnapshot();
+				expect(final.userConsentPending).toBe(false);
+				expect(final.hasAccountLayer).toBeUndefined();
+				expect(final.effectivePermissions.marketing).toBe(false);
+				expect({
+					appended: appended(),
+					consentGranted: seen.includes(true),
+				}).toEqual({
+					appended: false,
+					consentGranted: false,
+				});
+			} finally {
+				unsubscribe();
+				runtime.dispose();
+				append.mockRestore();
+				clock.mockRestore();
+			}
+		}
+	);
+
+	test('dispose while pending never transiently publishes old stored account grants or appends a script', () => {
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const append = vi.spyOn(document.head, 'appendChild');
+		const user = { externalId: 'U' };
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const pending = new Promise<UserConsent | null>(() => {
+			// Intentionally pending.
+		});
+		const documentForU: UserConsent = {
+			categories: {},
+			optOut: null,
+			sync: {
+				checkedAt: NOW - 500,
+				choices: {
+					marketing: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1' as const,
+						},
+						confirmedAt: NOW - 1000,
+						value: true,
+					},
+				},
+				externalId: user.externalId,
+				optOut: null,
+				vendors: {},
+			},
+		};
+		const src = 'https://cdn.example.test/marketing-dispose.js';
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					initialRecords: {
+						accountLayer: normalizeUserConsent(documentForU, NOW),
+					},
+					now: NOW,
+				},
+				scripts: [{ category: 'marketing', id: 'marketing', src }],
+				user,
+				userConsent: pending,
+			},
+			defaultRuntimeModules
+		);
+		const seen: boolean[] = [];
+		const unsubscribe = runtime.kernel.subscribe((s) => {
+			seen.push(s.effectivePermissions.marketing);
+		});
+		const appended = () =>
+			append.mock.calls.some(
+				([node]) => node instanceof HTMLScriptElement && node.src === src
+			);
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot()).toMatchObject({
+				hasAccountLayer: true,
+				userConsentPending: true,
+			});
+			runtime.dispose();
+			expect({
+				appended: appended(),
+				consentGranted: seen.includes(true),
+			}).toEqual({
+				appended: false,
+				consentGranted: false,
+			});
+		} finally {
+			unsubscribe();
+			append.mockRestore();
+			clock.mockRestore();
 		}
 	});
 });

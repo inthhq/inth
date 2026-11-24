@@ -237,7 +237,7 @@ export const createUserConsentSyncController =
 				lastPromise = null;
 				lastResolved = null;
 				activePromiseGeneration += 1;
-				clearHold();
+				cancelTimer();
 			},
 
 			onIdentityEpochChanged(options) {

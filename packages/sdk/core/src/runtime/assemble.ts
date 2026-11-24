@@ -218,13 +218,15 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		options.userConsent === undefined
 			? options.prefetch?.initialUserConsent
 			: options.userConsent;
-	const markClearedAndBumpRef: { run?: () => void } = {};
+	const markClearedAndBumpRef: {
+		run?: (epochOptions?: { readonly preservePending?: boolean }) => void;
+	} = {};
 	const userConsentSync = createUserConsentSyncController(
 		kernel,
 		undefined,
 		getIdentityEpoch,
 		() => {
-			markClearedAndBumpRef.run?.();
+			markClearedAndBumpRef.run?.({ preservePending: true });
 		}
 	);
 	const bumpIdentityEpoch = (epochOptions?: {
@@ -234,15 +236,16 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		userConsentSync.onIdentityEpochChanged(epochOptions);
 		return identityEpoch;
 	};
-	const markOptionClearedAndBump = (): void => {
+	const markOptionClearedAndBump = (epochOptions?: {
+		readonly preservePending?: boolean;
+	}): void => {
 		clearedOption = { value: currentOptionConsent() };
-		bumpIdentityEpoch();
+		bumpIdentityEpoch(epochOptions);
 	};
 	markClearedAndBumpRef.run = markOptionClearedAndBump;
-	const stopRecordsClearedWatch = kernel.events.on(
-		'records:cleared',
-		markOptionClearedAndBump
-	);
+	const stopRecordsClearedWatch = kernel.events.on('records:cleared', () => {
+		markOptionClearedAndBump();
+	});
 	let hasStartedOnce = false;
 
 	const stop = function stop(): void {
@@ -268,9 +271,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		dispose() {
 			disposed = true;
 			stopRecordsClearedWatch();
-			bumpIdentityEpoch();
-			userConsentSync.dispose();
 			stop();
+			bumpIdentityEpoch({ preservePending: true });
+			userConsentSync.dispose();
 			kernel.dispose();
 			// No blocker took the hold over, so nothing else ends it, and
 			// nothing checked consent for what it held: those requests fail
@@ -288,14 +291,19 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (!nextUser) {
 				if (prevExternalId !== null) {
-					bumpIdentityEpoch();
+					bumpIdentityEpoch({ preservePending: true });
 				}
 				// Signing out: no one is identified from here on, and an answer
 				// to a request the previous account started no longer applies.
 				kernel.clearIdentity();
+				if (prevExternalId !== null) {
+					// The hold ends only once the account layer has dropped.
+					kernel.setUserWithPending(null, { pending: false });
+				}
 				return;
 			}
 			if (prevExternalId !== nextUser.externalId) {
+				kernel.setUserWithPending(nextUser, { pending: false });
 				bumpIdentityEpoch();
 			}
 			try {
@@ -583,7 +591,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				return;
 			}
 			if (value === null) {
-				markOptionClearedAndBump();
+				markOptionClearedAndBump({ preservePending: true });
 				userConsentSync.apply(null);
 				return;
 			}
