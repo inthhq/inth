@@ -92,6 +92,9 @@ overrides:
   shell-quote: ">=1.9.0"
   typeorm: ">=0.3.26"
   vite@*: "catalog:"
+  # Astro 5 depends on Vite 6 (Rollup) and breaks under Rolldown (e.g. its
+  # server-islands plugin matches single-quoted `'$$server-islands$$'`).
+  "astro@^5>vite": "^6.4.1"
   vitest@*: "catalog:"
 # These tools import typescript without declaring it. pnpm then gives them
 # whichever copy it hoisted, which was TypeScript 7 and has no compiler API.

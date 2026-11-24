@@ -80,6 +80,11 @@ describe('Expo vendor journey range', () => {
 					fixture.dependencies[vendor]
 				);
 			}
+			// Workspace catalog: devDependencies (vite-plus, tsrs) cannot resolve in
+			// a standalone app outside the monorepo.
+			for (const version of Object.values(consumer.devDependencies ?? {})) {
+				expect(String(version)).not.toMatch(/^catalog:/u);
+			}
 			// The E2E host now imports the copy of the bare fixture's vendor code.
 			expect(
 				readFileSync(join(output, 'src/e2e/vendor-journey-app.tsx'), 'utf8')

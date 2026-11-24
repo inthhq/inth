@@ -48,6 +48,7 @@ overrides:
   shell-quote: '>=1.9.0'
   typeorm: '>=0.3.26'
   vite@*: npm:@voidzero-dev/vite-plus-core@8.3.8001
+  astro@^5>vite: ^6.4.1
   vitest@*: 5.1.1
 
 packageExtensionsChecksum: sha256-ik8t9DwuIQGzi5rYwplGaRkxVkoX5AM91ZJ54R85BoY=
@@ -448,13 +449,13 @@ importers:
     devDependencies:
       '@storybook/addon-a11y':
         specifier: 10.4.6
-        version: 10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))
+        version: 10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))
       '@storybook/html-vite':
         specifier: 10.4.6
-        version: 10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)
+        version: 10.4.6(8b8673e6c8ff90573bb219ba2096399d)
       '@storybook/test-runner':
         specifier: ^0.24.4
-        version: 0.24.4(@swc/helpers@0.5.23)(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(debug@4.4.3(supports-color@10.2.2))(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))(supports-color@10.2.2)
+        version: 0.24.4(@swc/helpers@0.5.23)(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(debug@4.4.3(supports-color@10.2.2))(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))(supports-color@10.2.2)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.4
         version: 6.2.4(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(svelte@5.56.8)
@@ -475,10 +476,10 @@ importers:
         version: 6.0.7(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vue@3.5.43(typescript@6.0.3))
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       storybook:
         specifier: 10.4.6
-        version: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+        version: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -487,7 +488,7 @@ importers:
         version: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
       vite-plus:
         specifier: 'catalog:'
-        version: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
 
   apps/storybook-react:
     dependencies:
@@ -753,10 +754,10 @@ importers:
     dependencies:
       '@astrojs/node':
         specifier: ^9.5.0
-        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)
+        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)
       '@astrojs/svelte':
         specifier: ^7.2.0
-        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@inth/astro':
         specifier: workspace:*
         version: link:../../packages/sdk/astro
@@ -771,7 +772,7 @@ importers:
         version: link:../../packages/sdk/svelte
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte:
         specifier: ^5.0.0
         version: 5.56.8
@@ -1803,10 +1804,10 @@ importers:
     dependencies:
       '@astrojs/node':
         specifier: ^9.5.0
-        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)
+        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)
       '@astrojs/svelte':
         specifier: ^7.2.0
-        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@inth/astro':
         specifier: workspace:*
         version: link:../../packages/sdk/astro
@@ -1815,7 +1816,7 @@ importers:
         version: link:../../packages/sdk/integrations
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte:
         specifier: ^5.0.0
         version: 5.57.1
@@ -1831,7 +1832,7 @@ importers:
     dependencies:
       '@astrojs/svelte':
         specifier: ^7.2.0
-        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@inth/astro':
         specifier: workspace:*
         version: link:../../packages/sdk/astro
@@ -1840,7 +1841,7 @@ importers:
         version: link:../../packages/sdk/integrations
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte:
         specifier: ^5.0.0
         version: 5.57.1
@@ -2759,10 +2760,10 @@ importers:
     dependencies:
       '@astrojs/node':
         specifier: ^9.5.0
-        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)
+        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)
       '@astrojs/svelte':
         specifier: ^7.2.0
-        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@inth/astro':
         specifier: workspace:*
         version: link:../../../packages/sdk/astro
@@ -2771,7 +2772,7 @@ importers:
         version: link:../../../packages/sdk/integrations
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte:
         specifier: ^5.0.0
         version: 5.57.1
@@ -3148,10 +3149,10 @@ importers:
     dependencies:
       '@astrojs/node':
         specifier: ^9.5.0
-        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)
+        version: 9.5.5(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)
       '@astrojs/svelte':
         specifier: ^7.2.0
-        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@inth/astro':
         specifier: workspace:*
         version: link:../../../packages/sdk/astro
@@ -3163,7 +3164,7 @@ importers:
         version: link:../../../packages/sdk/sdk
       astro:
         specifier: ^5.16.0
-        version: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte:
         specifier: ^5.0.0
         version: 5.56.8
@@ -3176,7 +3177,7 @@ importers:
         version: 4.4.2(@types/node@25.5.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
       '@astrojs/vue':
         specifier: ^5.1.0
-        version: 5.1.4(@nuxt/kit@4.6.0(fd2a4f7f6f2f4de6ad724480cdd8c857))(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(vue@3.5.43(typescript@6.0.3))(yaml@2.9.0)
+        version: 5.1.4(@nuxt/kit@4.6.0(fd2a4f7f6f2f4de6ad724480cdd8c857))(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(vue@3.5.43(typescript@6.0.3))(yaml@2.9.0)
       '@types/react':
         specifier: 19.2.17
         version: 19.2.17
@@ -26551,6 +26552,46 @@ packages:
       playwright:
         optional: true
 
+  vite@6.4.6:
+    resolution: {integrity: sha512-RtsraAwEG68idOA6iUOoIpOlcSKROnf815aIq9qHTSrDNpLoBrBa12suyfcEd8qn0xwOVQI1Yhm1GbmTjF600A==}
+    engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': ^18.0.0 || ^20.0.0 || >=22.0.0
+      jiti: '>=1.21.0'
+      less: '*'
+      lightningcss: ^1.21.0
+      sass: '*'
+      sass-embedded: '*'
+      stylus: '*'
+      sugarss: '*'
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      lightningcss:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
+        optional: true
+
   vite@8.3.5:
     resolution: {integrity: sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -28765,10 +28806,10 @@ snapshots:
       github-slugger: 2.0.0
       satteri: 0.10.5
 
-  '@astrojs/node@9.5.5(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)':
+  '@astrojs/node@9.5.5(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(supports-color@10.2.2)':
     dependencies:
       '@astrojs/internal-helpers': 0.7.6
-      astro: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+      astro: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       send: 1.2.1(supports-color@10.2.2)
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -28850,10 +28891,10 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@astrojs/svelte@7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)':
+  '@astrojs/svelte@7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)':
     dependencies:
       '@sveltejs/vite-plugin-svelte': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)(svelte@5.56.8)
-      astro: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+      astro: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte: 5.56.8
       svelte2tsx: 0.7.57(svelte@5.56.8)(typescript@6.0.3)
       typescript: 6.0.3
@@ -28881,10 +28922,10 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@astrojs/svelte@7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)':
+  '@astrojs/svelte@7.2.5(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)':
     dependencies:
       '@sveltejs/vite-plugin-svelte': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@7.0.2))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@7.0.2)(vue-tsc@3.3.6(typescript@7.0.2))(yaml@2.9.0))(supports-color@10.2.2)(svelte@5.57.1)
-      astro: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+      astro: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       svelte: 5.57.1
       svelte2tsx: 0.7.57(svelte@5.57.1)(typescript@6.0.3)
       typescript: 6.0.3
@@ -29024,12 +29065,12 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.9.0
 
-  '@astrojs/vue@5.1.4(@nuxt/kit@4.6.0(fd2a4f7f6f2f4de6ad724480cdd8c857))(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(vue@3.5.43(typescript@6.0.3))(yaml@2.9.0)':
+  '@astrojs/vue@5.1.4(@nuxt/kit@4.6.0(fd2a4f7f6f2f4de6ad724480cdd8c857))(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(vue@3.5.43(typescript@6.0.3))(yaml@2.9.0)':
     dependencies:
       '@vitejs/plugin-vue': 5.2.4(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vue@3.5.43(typescript@6.0.3))
       '@vitejs/plugin-vue-jsx': 4.2.0(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(supports-color@10.2.2)(vue@3.5.43(typescript@6.0.3))
       '@vue/compiler-sfc': 3.5.43
-      astro: 5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+      astro: 5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
       vite-plugin-vue-devtools: 7.7.10(@nuxt/kit@4.6.0(fd2a4f7f6f2f4de6ad724480cdd8c857))(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(rollup@4.62.2)(supports-color@10.2.2)(vue@3.5.43(typescript@6.0.3))
       vue: 3.5.43(typescript@6.0.3)
@@ -40216,11 +40257,11 @@ snapshots:
       axe-core: 4.11.1
       storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.1)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.0(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.46.0)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
 
-  '@storybook/addon-a11y@10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))':
+  '@storybook/addon-a11y@10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))':
     dependencies:
       '@storybook/global': 5.0.0
       axe-core: 4.11.1
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
 
   '@storybook/addon-a11y@10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))':
     dependencies:
@@ -40271,23 +40312,23 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@storybook/builder-vite@10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)':
-    dependencies:
-      '@storybook/csf-plugin': 10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
-      ts-dedent: 2.2.0
-      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
-    transitivePeerDependencies:
-      - esbuild
-      - rollup
-      - webpack
-
   '@storybook/builder-vite@10.4.6(644df0c61775ce7731d73bde4dfb21c6)':
     dependencies:
       '@storybook/csf-plugin': 10.4.6(644df0c61775ce7731d73bde4dfb21c6)
       storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       ts-dedent: 2.2.0
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
+    transitivePeerDependencies:
+      - esbuild
+      - rollup
+      - webpack
+
+  '@storybook/builder-vite@10.4.6(8b8673e6c8ff90573bb219ba2096399d)':
+    dependencies:
+      '@storybook/csf-plugin': 10.4.6(8b8673e6c8ff90573bb219ba2096399d)
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      ts-dedent: 2.2.0
+      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
     transitivePeerDependencies:
       - esbuild
       - rollup
@@ -40349,16 +40390,6 @@ snapshots:
       storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.1)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.0(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.46.0)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       ts-dedent: 2.2.0
 
-  '@storybook/csf-plugin@10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)':
-    dependencies:
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
-      unplugin: 2.3.11
-    optionalDependencies:
-      esbuild: 0.27.3
-      rollup: 4.62.2
-      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
-      webpack: 5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
-
   '@storybook/csf-plugin@10.4.6(644df0c61775ce7731d73bde4dfb21c6)':
     dependencies:
       storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
@@ -40367,6 +40398,16 @@ snapshots:
       esbuild: 0.28.2
       rollup: 4.62.2
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
+      webpack: 5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
+
+  '@storybook/csf-plugin@10.4.6(8b8673e6c8ff90573bb219ba2096399d)':
+    dependencies:
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      unplugin: 2.3.11
+    optionalDependencies:
+      esbuild: 0.28.2
+      rollup: 4.62.2
+      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
       webpack: 5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
 
   '@storybook/csf-plugin@10.4.6(e73cff9ecc97cf9663a020457621619b)':
@@ -40381,21 +40422,21 @@ snapshots:
 
   '@storybook/global@5.0.0': {}
 
-  '@storybook/html-vite@10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)':
+  '@storybook/html-vite@10.4.6(8b8673e6c8ff90573bb219ba2096399d)':
     dependencies:
-      '@storybook/builder-vite': 10.4.6(43963b4c13b02ccbe79f9a5d08a57a44)
-      '@storybook/html': 10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      '@storybook/builder-vite': 10.4.6(8b8673e6c8ff90573bb219ba2096399d)
+      '@storybook/html': 10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
     transitivePeerDependencies:
       - esbuild
       - rollup
       - webpack
 
-  '@storybook/html@10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))':
+  '@storybook/html@10.4.6(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))':
     dependencies:
       '@storybook/global': 5.0.0
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       ts-dedent: 2.2.0
 
   '@storybook/icons@2.1.0(react@19.2.7)':
@@ -40508,7 +40549,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  '@storybook/test-runner@0.24.4(@swc/helpers@0.5.23)(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(debug@4.4.3(supports-color@10.2.2))(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))(supports-color@10.2.2)':
+  '@storybook/test-runner@0.24.4(@swc/helpers@0.5.23)(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(debug@4.4.3(supports-color@10.2.2))(storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1))(supports-color@10.2.2)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/generator': 7.29.8
@@ -40530,7 +40571,7 @@ snapshots:
       playwright: 1.63.0
       playwright-core: 1.61.1
       rimraf: 3.0.2
-      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
+      storybook: 10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1)
       uuid: 8.3.2
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -44902,7 +44943,7 @@ snapshots:
 
   astral-regex@1.0.0: {}
 
-  astro@5.18.2(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0):
+  astro@5.18.2(@types/node@25.5.0)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(rollup@4.62.2)(sass-embedded@1.104.1)(sass@1.104.1)(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0):
     dependencies:
       '@astrojs/compiler': 2.13.1
       '@astrojs/internal-helpers': 0.7.6
@@ -44959,8 +45000,8 @@ snapshots:
       unist-util-visit: 5.1.0
       unstorage: 1.17.5(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))
       vfile: 6.0.3
-      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
-      vitefu: 1.1.3(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))
+      vite: 6.4.6(@types/node@25.5.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0)
+      vitefu: 1.1.3(vite@6.4.6(@types/node@25.5.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0))
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.3
@@ -44970,7 +45011,6 @@ snapshots:
     optionalDependencies:
       sharp: 0.34.5
     transitivePeerDependencies:
-      - '@arethetypeswrong/core'
       - '@azure/app-configuration'
       - '@azure/cosmos'
       - '@azure/data-tables'
@@ -44982,21 +45022,17 @@ snapshots:
       - '@netlify/blobs'
       - '@planetscale/database'
       - '@types/node'
-      - '@typescript/native-preview'
       - '@upstash/redis'
       - '@vercel/blob'
       - '@vercel/functions'
       - '@vercel/kv'
-      - '@vitejs/devtools'
-      - '@volar/typescript'
-      - '@vue/language-core'
       - aws4fetch
       - db0
       - idb-keyval
       - ioredis
       - jiti
       - less
-      - publint
+      - lightningcss
       - rollup
       - sass
       - sass-embedded
@@ -45006,10 +45042,7 @@ snapshots:
       - terser
       - tsx
       - typescript
-      - unplugin-unused
-      - unrun
       - uploadthing
-      - vue-tsc
       - yaml
 
   astro@7.3.3(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(db0@0.3.4(@libsql/client@0.8.1))(ioredis@5.11.1(supports-color@10.2.2))(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0):
@@ -51079,25 +51112,6 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.14.0(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)):
-    dependencies:
-      jest-worker: 27.5.1
-      schema-utils: 4.8.3(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0))
-      terser: 5.51.2
-      webpack: 5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
-    optionalDependencies:
-      '@swc/core': 1.15.21(@swc/helpers@0.5.23)
-      clean-css: 5.3.3
-      cssnano: 9.3.2(postcss@8.5.16)
-      csso: 5.0.5
-      esbuild: 0.27.3
-      html-minifier-terser: 6.1.0
-      lightningcss: 1.33.0
-      postcss: 8.5.16
-      sharp: 0.35.4(@types/node@25.5.0)
-      svgo: 4.1.0
-    optional: true
-
   minimizer-webpack-plugin@5.14.0(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)(webpack@5.112.0(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)):
     dependencies:
       jest-worker: 27.5.1
@@ -53822,32 +53836,6 @@ snapshots:
       svelte: 5.20.0
       vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.20.0)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
 
-  oxfmt@0.79.0(svelte@5.56.8)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)):
-    dependencies:
-      tinypool: 2.2.0
-    optionalDependencies:
-      '@oxfmt/binding-android-arm-eabi': 0.79.0
-      '@oxfmt/binding-android-arm64': 0.79.0
-      '@oxfmt/binding-darwin-arm64': 0.79.0
-      '@oxfmt/binding-darwin-x64': 0.79.0
-      '@oxfmt/binding-freebsd-x64': 0.79.0
-      '@oxfmt/binding-linux-arm-gnueabihf': 0.79.0
-      '@oxfmt/binding-linux-arm-musleabihf': 0.79.0
-      '@oxfmt/binding-linux-arm64-gnu': 0.79.0
-      '@oxfmt/binding-linux-arm64-musl': 0.79.0
-      '@oxfmt/binding-linux-ppc64-gnu': 0.79.0
-      '@oxfmt/binding-linux-riscv64-gnu': 0.79.0
-      '@oxfmt/binding-linux-riscv64-musl': 0.79.0
-      '@oxfmt/binding-linux-s390x-gnu': 0.79.0
-      '@oxfmt/binding-linux-x64-gnu': 0.79.0
-      '@oxfmt/binding-linux-x64-musl': 0.79.0
-      '@oxfmt/binding-openharmony-arm64': 0.79.0
-      '@oxfmt/binding-win32-arm64-msvc': 0.79.0
-      '@oxfmt/binding-win32-ia32-msvc': 0.79.0
-      '@oxfmt/binding-win32-x64-msvc': 0.79.0
-      svelte: 5.56.8
-      vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
-
   oxfmt@0.79.0(svelte@5.56.8)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.1)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)):
     dependencies:
       tinypool: 2.2.0
@@ -54306,29 +54294,6 @@ snapshots:
       '@oxlint/binding-win32-ia32-msvc': 1.94.0
       '@oxlint/binding-win32-x64-msvc': 1.94.0
       vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@7.0.2))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@25.0.1(supports-color@10.2.2))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@24.10.1)(typescript@7.0.2))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@7.0.2)(vue-tsc@3.3.6(typescript@7.0.2))(yaml@2.9.0)
-
-  oxlint@1.94.0(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)):
-    optionalDependencies:
-      '@oxlint/binding-android-arm-eabi': 1.94.0
-      '@oxlint/binding-android-arm64': 1.94.0
-      '@oxlint/binding-darwin-arm64': 1.94.0
-      '@oxlint/binding-darwin-x64': 1.94.0
-      '@oxlint/binding-freebsd-x64': 1.94.0
-      '@oxlint/binding-linux-arm-gnueabihf': 1.94.0
-      '@oxlint/binding-linux-arm-musleabihf': 1.94.0
-      '@oxlint/binding-linux-arm64-gnu': 1.94.0
-      '@oxlint/binding-linux-arm64-musl': 1.94.0
-      '@oxlint/binding-linux-ppc64-gnu': 1.94.0
-      '@oxlint/binding-linux-riscv64-gnu': 1.94.0
-      '@oxlint/binding-linux-riscv64-musl': 1.94.0
-      '@oxlint/binding-linux-s390x-gnu': 1.94.0
-      '@oxlint/binding-linux-x64-gnu': 1.94.0
-      '@oxlint/binding-linux-x64-musl': 1.94.0
-      '@oxlint/binding-openharmony-arm64': 1.94.0
-      '@oxlint/binding-win32-arm64-msvc': 1.94.0
-      '@oxlint/binding-win32-ia32-msvc': 1.94.0
-      '@oxlint/binding-win32-x64-msvc': 1.94.0
-      vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
 
   oxlint@1.94.0(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.1)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@25.0.1(supports-color@10.2.2))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)):
     optionalDependencies:
@@ -57121,16 +57086,6 @@ snapshots:
     optionalDependencies:
       webpack: 5.112.0(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
 
-  schema-utils@4.8.3(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)):
-    dependencies:
-      '@types/json-schema': 7.0.15
-      ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
-      ajv-keywords: 5.1.0(ajv@8.20.0)
-    optionalDependencies:
-      webpack: 5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)
-    optional: true
-
   schema-utils@4.8.3(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)):
     dependencies:
       '@types/json-schema': 7.0.15
@@ -57801,7 +57756,7 @@ snapshots:
       - utf-8-validate
       - vitest
 
-  storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1):
+  storybook@10.4.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@testing-library/dom@10.4.2)(@types/react@19.2.17)(prettier@3.9.6)(react@19.2.7)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(vitest@5.1.1):
     dependencies:
       '@storybook/global': 5.0.0
       '@storybook/icons': 2.1.0(react@19.2.7)
@@ -57821,7 +57776,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
       prettier: 3.9.6
-      vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
+      vite-plus: 1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -60149,70 +60104,6 @@ snapshots:
       - vue-tsc
       - yaml
 
-  vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0):
-    dependencies:
-      '@oxc-project/runtime': 0.159.0
-      '@oxc-project/types': 0.159.0
-      '@oxlint/plugins': 1.94.0
-      '@vitest/browser': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
-      '@vitest/browser-preview': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
-      '@vitest/mocker': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
-      '@vitest/pretty-format': 5.1.1
-      '@vitest/snapshot': 5.1.1
-      '@vitest/spy': 5.1.1
-      '@vitest/utils': 5.1.1
-      oxfmt: 0.79.0(svelte@5.56.8)(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))
-      oxlint: 1.94.0(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))
-      tsrs: 7.1.0-beta.tsrs4
-      vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
-      vitest: 5.1.1(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/browser-preview@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1(vitest@5.1.1))(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(happy-dom@20.10.6)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
-    optionalDependencies:
-      '@vitest/browser-playwright': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(vitest@5.1.1)
-      '@voidzero-dev/vite-plus-darwin-arm64': 1.8.0
-      '@voidzero-dev/vite-plus-darwin-x64': 1.8.0
-      '@voidzero-dev/vite-plus-linux-arm64-gnu': 1.8.0
-      '@voidzero-dev/vite-plus-linux-arm64-musl': 1.8.0
-      '@voidzero-dev/vite-plus-linux-x64-gnu': 1.8.0
-      '@voidzero-dev/vite-plus-linux-x64-musl': 1.8.0
-      '@voidzero-dev/vite-plus-win32-arm64-msvc': 1.8.0
-      '@voidzero-dev/vite-plus-win32-x64-msvc': 1.8.0
-      playwright: 1.63.0
-    transitivePeerDependencies:
-      - '@arethetypeswrong/core'
-      - '@astrojs/compiler-rs'
-      - '@edge-runtime/vm'
-      - '@opentelemetry/api'
-      - '@types/node'
-      - '@typescript/native-preview'
-      - '@vitejs/devtools'
-      - '@vitest/coverage-istanbul'
-      - '@vitest/coverage-v8'
-      - '@vitest/ui'
-      - '@volar/typescript'
-      - '@vue/language-core'
-      - bufferutil
-      - esbuild
-      - happy-dom
-      - jiti
-      - jsdom
-      - less
-      - msw
-      - oxlint-tsgolint
-      - publint
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - svelte
-      - terser
-      - tsx
-      - typescript
-      - unplugin-unused
-      - unrun
-      - utf-8-validate
-      - vue-tsc
-      - yaml
-
   vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.1)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@25.0.1(supports-color@10.2.2))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.57.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0):
     dependencies:
       '@oxc-project/runtime': 0.159.0
@@ -60602,9 +60493,9 @@ snapshots:
       '@oxc-project/runtime': 0.159.0
       '@oxc-project/types': 0.159.0
       '@oxlint/plugins': 1.94.0
-      '@vitest/browser': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
-      '@vitest/browser-preview': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
-      '@vitest/mocker': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
+      '@vitest/browser': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
+      '@vitest/browser-preview': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(vitest@5.1.1)
+      '@vitest/mocker': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
       '@vitest/pretty-format': 5.1.1
       '@vitest/snapshot': 5.1.1
       '@vitest/spy': 5.1.1
@@ -60613,9 +60504,9 @@ snapshots:
       oxlint: 1.94.0(vite-plus@1.8.0(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(happy-dom@20.10.6)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(less@4.9.1(supports-color@10.2.2))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(sass-embedded@1.104.1)(sass@1.104.1)(svelte@5.56.8)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))
       tsrs: 7.1.0-beta.tsrs4
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0)'
-      vitest: 5.1.1(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/browser-preview@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1)(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(happy-dom@20.10.6)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
+      vitest: 5.1.1(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(@vitest/browser-playwright@5.1.1)(@vitest/browser-preview@5.1.1)(@vitest/coverage-istanbul@5.1.1)(@vitest/coverage-v8@5.1.1)(@vitest/ui@5.1.1(vitest@5.1.1))(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(happy-dom@20.10.6)(jsdom@29.1.1(@noble/hashes@1.8.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))
     optionalDependencies:
-      '@vitest/browser-playwright': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(vitest@5.1.1)
+      '@vitest/browser-playwright': 5.1.1(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.6)(esbuild@0.27.3)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@6.0.3)(vue-tsc@3.3.6(typescript@6.0.3))(yaml@2.9.0))(msw@2.15.0(@types/node@25.5.0)(typescript@6.0.3))(playwright@1.63.0)(vitest@5.1.1)
       '@voidzero-dev/vite-plus-darwin-arm64': 1.8.0
       '@voidzero-dev/vite-plus-darwin-x64': 1.8.0
       '@voidzero-dev/vite-plus-linux-arm64-gnu': 1.8.0
@@ -61045,6 +60936,26 @@ snapshots:
       - vue-tsc
       - yaml
 
+  vite@6.4.6(@types/node@25.5.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0):
+    dependencies:
+      esbuild: 0.25.12
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
+      postcss: 8.5.16
+      rollup: 4.62.2
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@types/node': 25.5.0
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      less: 4.9.1(supports-color@10.2.2)
+      lightningcss: 1.33.0
+      sass: 1.104.1
+      sass-embedded: 1.104.1
+      terser: 5.51.2
+      tsx: 4.23.0
+      yaml: 2.9.0
+
   vite@8.3.5(@types/node@24.13.3)(esbuild@0.27.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
@@ -61084,6 +60995,10 @@ snapshots:
   vitefu@1.1.3(@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@7.0.2))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@7.0.2)(vue-tsc@3.3.6(typescript@7.0.2))(yaml@2.9.0)):
     optionalDependencies:
       vite: '@voidzero-dev/vite-plus-core@8.3.8001(@types/node@25.5.0)(@volar/typescript@2.4.28(typescript@7.0.2))(@vue/language-core@3.3.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(typescript@7.0.2)(vue-tsc@3.3.6(typescript@7.0.2))(yaml@2.9.0)'
+
+  vitefu@1.1.3(vite@6.4.6(@types/node@25.5.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0)):
+    optionalDependencies:
+      vite: 6.4.6(@types/node@25.5.0)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(terser@5.51.2)(tsx@4.23.0)(yaml@2.9.0)
 
   vitest-browser-react@2.2.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@5.1.1):
     dependencies:
@@ -62136,44 +62051,6 @@ snapshots:
       - sharp
       - svgo
       - uglify-js
-
-  webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0):
-    dependencies:
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      browserslist: 4.29.3
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.27.0
-      es-module-lexer: 2.3.2
-      events: 3.3.0
-      graceful-fs: 4.2.11
-      mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.14.0(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0)(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0))
-      schema-utils: 4.8.3(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.27.3)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0))
-      tapable: 2.3.3
-      watchpack: 2.6.4
-      webpack-sources: 3.7.0
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@napi-rs/image'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - imagemin
-      - lightningcss
-      - postcss
-      - sharp
-      - svgo
-      - uglify-js
-    optional: true
 
   webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0):
     dependencies:
