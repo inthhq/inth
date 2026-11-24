@@ -5,13 +5,12 @@ packages:
 
 ### Breaking: one consent UI, placed by `container`
 
-The stock banner and dialog now always render one consent UI in every framework and in the script tag: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone, and so is the `design` option that used to choose between the two.
+The stock banner and dialog now always render one consent UI in every framework and in the script tag: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone.
 
 **What to change**
 
 | Removed | Use instead |
 | --- | --- |
-| `presentation.design`, `ConsentDesign`, `resolveConsentDesign` | Nothing: there is one design. |
 | `variant="floating"` | `container={{ type: 'card', position: 'start' }}` (the default) or `'end'` |
 | `variant="bar"`, `position="top"` / `"bottom"` | `container={{ type: 'banner', edge: 'top' }}` / `'bottom'` |
 | `variant="widget"` | `container={{ type: 'card', position: 'end' }}` |
@@ -20,12 +19,12 @@ The stock banner and dialog now always render one consent UI in every framework 
 | `primaryButton`, `direction` on `ConsentBanner` | `layout` and the theme's `consentActions` |
 | `presentation.prompt.variant` / `position` / `blocking` | `presentation.prompt.container` / `blockUntilChoice` |
 | `blocking` on `PromptPresentation` and the experiment arm's `prompt` | `blockUntilChoice`, the prompt's one blocking option. The IAB banner reads it too. `presentation.preferences.blocking` stays, for the IAB dialog. |
-| `PromptVariant`, `PromptPosition`, `PROMPT_VARIANT_*`, `positionSource` | `ConsentContainer`, `ConsentPlacement` and the resolved `container` |
-| `containerFromLegacyPrompt`, `LegacyPromptPresentation` | `container` |
-| The `invalid-variant`, `invalid-position` and `legacy-presentation` diagnostics | The container's own diagnostics |
+| `PromptVariant`, `PromptPosition`, `BarPromptPosition`, `FloatingPromptPosition`, `WallPromptPosition`, `WidgetPromptPosition` types from `@inth/sdk-core` and `@inth/sdk/engine` | `ConsentContainer`, `ConsentContainerType`, `BannerEdge`, `CardPosition`, `DrawerSide`, `ConsentEdgeStyle`, `ConsentPlacement` and `ResolvedConsentLayout` |
+| `PROMPT_VARIANT_POSITIONS`, `PROMPT_VARIANT_DEFAULT_POSITION` | `DEFAULT_CONSENT_CONTAINER`, and `@inth/sdk-schema`'s `CONSENT_CONTAINER_TYPES`, `CONSENT_BANNER_EDGES`, `CONSENT_CARD_POSITIONS`, `CONSENT_DRAWER_SIDES` and `CONSENT_EDGE_STYLES` |
+| The `positionSource` field of the resolved prompt | The resolved `container` |
+| `ConsentBannerPosition`, `ConsentManagerMode` types and `DEFAULT_BANNER_POSITION` from `@inth/sdk-schema/config` and `@inth/sdk/schema/config` | `ConsentContainer` and `DEFAULT_CONSENT_CONTAINER` |
+| The `invalid-variant` and `invalid-position` diagnostics | The container's own diagnostics |
 | `hideBranding` on `ConsentDialog` | Nothing: the dialog has no branding tag. |
-| `@inth/sdk/ui/styles/privacy-choices.css` | Delete the import: `@inth/sdk/ui/styles.css`, or your framework's `styles.css` (such as `@inth/react/styles.css`), now holds every rule |
-| `@inth/sdk/ui/styles/privacy-choices.tw3.css` (Tailwind CSS 3) | Delete the import: `@inth/sdk/ui/styles.tw3.css`, or your framework's `styles.tw3.css`, now holds every rule |
 | `components.banner.actions` | `components.banner.footer` (`consentBannerFooter`) and `components.banner.actionGroup` (`consentBannerFooterSubGroup`) |
 | `components.banner.rights`, the `consentBannerRights` theme slot | `components.banner.rightsRow` (`consentBannerRightsRow`) for the rights row Customize opens; the notice's opt-out link is `components.banner.rightLink` (`consentBannerRightLink`) |
 | `components.description.manager` | `components.description.dialog` (`consentDialogDescription`), the dialog's intro |
@@ -64,8 +63,15 @@ The banner's "Consent by" tag is now a neutral credit that reads `--consent-tag-
 | Removed | Use instead |
 | --- | --- |
 | `managerMode`, `bannerPosition`, `ConsentBannerPosition`, `ConsentManagerMode` in the provider config | `presentation.prompt.container` |
-| `ConsentBanner.Root`, `.Card`, `.PolicyActions`, `.AcceptButton` and the other compound parts, `useConsentBannerSurface` | Slots, theme tokens, or the headless hooks |
-| `ConsentDialog.Root`, `.Card`, `.Overlay` and the other compound parts | Slots, theme tokens, or `ConsentWidget` in your own dialog |
+| `ConsentBanner.Root`, `.Card`, `.Header`, `.Title`, `.Description`, `.Footer`, `.FooterSubGroup`, `.Overlay`, `.AcceptButton`, `.RejectButton`, `.CustomizeButton`, `.DismissButton`, `.PolicyActions`, `.Rights` and `.RightLink`, the same parts as named exports (`ConsentBannerRoot` and so on) and as the short exports of `@inth/react/consent-banner` (`Root`, `Card` and so on), and `useConsentBannerSurface` | Slots, theme tokens, or the headless hooks |
+| `ConsentDialog.Root`, `.Content`, `.Header`, `.HeaderTitle`, `.HeaderDescription`, `.Footer`, `.Overlay` and `ConsentCustomizationCard`, as named exports and as the short exports of `@inth/react/consent-dialog` | Slots, theme tokens, or `ConsentWidget` in your own dialog |
+| The `ConsentBannerCompoundComponent` and `ConsentDialogCompoundComponent` types | `ConsentBannerProps` and `ConsentDialogProps`: `ConsentBanner` and `ConsentDialog` are plain components |
+| The `ConsentBannerSurface`, `ConsentBannerPolicyActionsProps` and `ConsentBannerPolicyActionRenderProps` types | `useHeadlessConsentUI()` for your own banner, or `ConsentBannerProps` |
+| The `ConsentBannerRight`, `ConsentBannerRightsProps` and `ConsentBannerRightLinkProps` types | `PrivacyChoicesLink` and `PrivacyChoicesLinkProps`; core's `SurfaceRight`, `RightOption` and `RightsBundle` for your own rights controls |
+| The `PromptVariant` and `PromptPosition` types | `ConsentContainer` and the other layout types above |
+| The `default` exports of `@inth/react/components/consent-banner` and `@inth/react/components/consent-dialog` | The named `ConsentBanner` and `ConsentDialog` exports |
+
+`@inth/nextjs` and `@inth/tanstack-start` re-export the same React names, so the same rows apply to their root and `./react` entries.
 
 **Vue and Nuxt**
 
@@ -74,8 +80,12 @@ The banner's "Consent by" tag is now a neutral credit that reads `--consent-tag-
 | Removed | Use instead |
 | --- | --- |
 | `variant`, `position` and `blocking` props on `ConsentBanner` | `container`, `edgeStyle` and `blockUntilChoice` props |
-| `ConsentDescription` (and `@inth/nuxt/components/consent-description`) | The banner's and dialog's own descriptions, styled through `components.description.banner` and `components.description.dialog` |
+| `ConsentDescription` (and `@inth/vue/runtime/components/consent-description.vue`, `@inth/nuxt/components/consent-description`) | The banner's and dialog's own descriptions, styled through `components.description.banner` and `components.description.dialog` |
 | The `PromptVariant` and `PromptPosition` types | `ConsentContainer`, `ConsentEdgeStyle`, `BannerEdge`, `CardPosition`, `DrawerSide` and `ResolvedConsentLayout`, now exported from `@inth/vue` |
+| The `ConsentBannerPosition` and `ConsentManagerMode` types and `DEFAULT_BANNER_POSITION`, from `@inth/vue`, `@inth/vue/vue-plugin` and `@inth/nuxt` | `ConsentContainer` and `presentation.prompt.container` |
+| `prefetchConsentManager`, `warmConsentManager` and `warmIabConsentDialog` from `@inth/vue/runtime/components/lazy-surfaces` | Nothing: `InthProvider` loads the dialog when it is first shown. |
+
+Files under `@inth/vue/runtime/*` and `@inth/vue/composables/*` were split one per export, so deep imports of the old files (such as `@inth/vue/composables/kernel`) no longer resolve. Import from `@inth/vue` instead.
 
 `trapFocus` in the plugin or module options now applies only to the IAB banner and dialog, as in React. `<ConsentManager>` takes one prop, `disableAnimation`, and hosts the opt-in confirmation while it is mounted. A one-click opt-out opens it on its receipt, unless a standalone `<OptOutConfirmation />` is on the page, which now claims the confirmation as soon as it mounts.
 
@@ -116,9 +126,9 @@ Customize on `<inth-consent-banner>` now opens the choices inside the banner. Ad
 | Removed | Use instead |
 | --- | --- |
 | `presentation.prompt.variant` / `position` / `blocking` in `inth()` | `presentation.prompt.container` / `blockUntilChoice` |
-| `resolvePrivacyChoicesModel`, `privacyChoicesClassNames`, `renderPrivacyChoicesHTML`, `privacyChoicesFirstPaintSheets` from `@inth/astro/server` | `resolvePromptModel`, `promptClassNames`, `renderPromptHTML`, `promptFirstPaintSheets` |
-| `privacyChoicesPresentation`, `usesPrivacyChoices` | `promptContainerType`; every page renders the prompt |
-| The classic `resolvePromptModel`, `promptClassNames` and `PromptAction` | The prompt's model and class names above |
+| The classic `resolvePromptModel` and `promptClassNames` from `@inth/astro/server` | The same names now resolve the one prompt: `resolvePromptModel` returns a `PromptModel`, and `renderPromptHTML`, `promptFirstPaintSheets`, `resolvePromptPresentation` and `promptContainerType` are new |
+| The `PromptAction` type from `@inth/astro/server` | `PromptModel` |
+| `setPromptRendererLoaderForTest` from `@inth/astro/client` | `setIABPromptRendererLoaderForTest`, for the IAB banner; the consent prompt has no client renderer to replace |
 | `design` on the dialog adapter's mount and preload context | Nothing: there is one dialog |
 | `data-variant` on the IAB banner root | Nothing: it floats at `data-position="bottom-left"`, as React's does |
 
