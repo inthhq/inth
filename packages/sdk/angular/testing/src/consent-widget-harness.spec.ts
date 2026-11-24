@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConsentManager } from '@inth/angular';
 import { ConsentWidget } from '@inth/angular/consent-widget';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { ALL_CATEGORIES } from '../../src/__tests__/test-local';
 import {

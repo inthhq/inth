@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@c15t/react": "2.2.1",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "catalog:",
     "c15t": "2.2.1",
     "esbuild": "0.27.0",
     "react": "19.2.0",

@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Matches the native sources.
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { parseArguments } from "../../src/arguments.ts";
 import { helpCommands } from "../../src/help.ts";
@@ -47,7 +47,9 @@ describe("inth c15t codemods arguments", () => {
   it("reads codemods as a project name when it follows --project", () => {
     expect(
       parseArguments(["c15t", "--project", "codemods", "prompt"])
-    ).toMatchObject({ setup: { action: "prompt", project: "codemods" } });
+    ).toMatchObject({
+      setup: { action: "prompt", project: "codemods" },
+    });
   });
 
   it("rejects options codemods does not take", () => {

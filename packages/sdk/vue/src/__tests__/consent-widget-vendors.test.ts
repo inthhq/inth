@@ -23,7 +23,7 @@ import preferenceItemStyles from '@inth/sdk/ui/styles/components/preference-item
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import type { ComponentPublicInstance } from 'vue';
 
 import ConsentWidget from '../runtime/components/preferences.vue';

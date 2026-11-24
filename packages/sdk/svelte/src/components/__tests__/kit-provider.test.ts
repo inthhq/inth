@@ -3,7 +3,14 @@
  * transport, or takes one through `mode`.
  */
 import { render } from '@testing-library/svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import InthProvider from '../../lib/kit/inth-provider.svelte';

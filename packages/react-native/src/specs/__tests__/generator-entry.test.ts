@@ -22,7 +22,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vite-plus/test';
 
 const PACKAGE_ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { consentManifest } from '@inth/tanstack-start/build';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
 /**
  * `INTH_BENCH_ROOT_PROVIDER=1` selects the root-mounted provider variant at
@@ -31,11 +31,11 @@ export default defineConfig({
 	// `consentManifest()` as CookieBench's TanStack Start fixture and the
 	// quickstart add it, so browser bundles get what the documented setup
 	// gives them. The backend URL is relative, so the build fetches nothing.
-	plugins: [
+	plugins: lazyPlugins(() => [
 		consentManifest({ projectUrl: '/api/bench-consent' }),
 		tanstackStart(),
 		viteReact(),
-	],
+	]),
 	resolve: {
 		alias: [
 			{

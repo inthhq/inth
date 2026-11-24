@@ -7,7 +7,7 @@
  * hands the helper at runtime.
  */
 
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	createConsentStateHandler,

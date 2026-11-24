@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	V1_DOCUMENT_TYPE_PATTERN,

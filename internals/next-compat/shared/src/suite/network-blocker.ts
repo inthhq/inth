@@ -1,6 +1,13 @@
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext } from 'playwright';
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	inject,
+	it,
+} from 'vite-plus/test';
 
 import type { CompatProbeState } from '../probe';
 import './provided-context';

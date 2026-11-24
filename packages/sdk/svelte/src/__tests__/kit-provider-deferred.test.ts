@@ -13,7 +13,7 @@ import {
 	expect,
 	test,
 	vi,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import KitProviderFixture from './fixtures/kit-provider-fixture.svelte';
 import { policyFixture } from './policy-fixture';

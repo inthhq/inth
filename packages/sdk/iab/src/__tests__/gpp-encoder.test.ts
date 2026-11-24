@@ -4,7 +4,7 @@
  */
 
 import { GppModel } from '@iabgpp/cmpapi';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
 import type { GPPFieldValues } from '../gpp/encoder';

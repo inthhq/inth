@@ -3,7 +3,14 @@
  */
 import { policyRulePresets } from '@inth/sdk-schema/types';
 import type { PolicyRule } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { ConsentExperiment } from '../../libs/experiment';
@@ -101,7 +108,10 @@ describe('runtime experiments', () => {
 		expect(shown[0]).toMatchObject({ experiment: assignment });
 		expect(
 			JSON.parse(localStorage.getItem(EXPERIMENT_STORAGE_KEY) as string)
-		).toEqual({ arm: assignment?.arm, id: 'banner-shape' });
+		).toEqual({
+			arm: assignment?.arm,
+			id: 'banner-shape',
+		});
 		first.runtime.dispose();
 
 		// Force the other arm so stickiness, not luck, is tested.
@@ -243,7 +253,10 @@ describe('runtime experiments', () => {
 		);
 		expect(
 			JSON.parse(localStorage.getItem(EXPERIMENT_STORAGE_KEY) as string)
-		).toEqual({ arm: 'bar', id: 'banner-shape' });
+		).toEqual({
+			arm: 'bar',
+			id: 'banner-shape',
+		});
 		runtime.dispose();
 	});
 

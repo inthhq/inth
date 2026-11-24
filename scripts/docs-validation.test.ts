@@ -7,7 +7,7 @@ import { convertMdxToMarkdown } from 'leadtype/convert';
 import { lintDocs } from 'leadtype/lint';
 import { resolveDocsNavigation } from 'leadtype/llm';
 import { defaultRemarkPlugins, remarkInclude } from 'leadtype/remark';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import docsConfig from '../packages/sdk/docs/docs.config';
 import scriptsPackage from '../packages/sdk/integrations/package.json';

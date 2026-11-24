@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { validatePolicyI18nConfig } from './policy-i18n-validation';
 import { policyRulePresets } from './policy-rule-presets';

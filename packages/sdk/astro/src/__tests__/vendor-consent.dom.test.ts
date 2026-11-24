@@ -6,7 +6,7 @@
  */
 
 import type { Vendor } from '@inth/sdk/engine';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { activateGatedScripts } from '../browser/inline-scripts';
 import { boot } from '../client';

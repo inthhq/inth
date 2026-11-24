@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { V3UIConfigContext } from '~/ui-config-context';

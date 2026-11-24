@@ -5,7 +5,7 @@
 import { createConsentKernel } from '@inth/sdk-core';
 import type { TCData, TCFConsentData } from '@inth/sdk-core';
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createIAB } from '../index';
 import { createCMPApi } from '../tcf/cmp-api';
@@ -285,7 +285,10 @@ describe('@inth/sdk/iab TCF 2.4 encoding rules', () => {
 		const tcString = await generateTCString(
 			createMockTCFConsent(),
 			createMockGVL(),
-			{ cmpId: 28, isServiceSpecific: false }
+			{
+				cmpId: 28,
+				isServiceSpecific: false,
+			}
 		);
 
 		expect((await decodeTCString(tcString)).isServiceSpecific).toBe(true);

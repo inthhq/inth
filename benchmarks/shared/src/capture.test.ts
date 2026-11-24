@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
 
 const temporary: string[] = [];
 afterEach(() => {

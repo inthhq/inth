@@ -34,10 +34,7 @@ const coloredLine = (text: string, code: string): void => {
     process.stderr.write("\u001B[0m");
   }
 };
-const choiceLabel = (
-  choice: Organization,
-  organizationMode: boolean
-): string =>
+const choiceLabel = (choice: Organization, organizationMode: boolean): string =>
   organizationMode ? organizationLabel(choice) : terminalText(choice.name);
 const render = (
   organizations: Organization[],

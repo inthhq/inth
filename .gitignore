@@ -124,3 +124,4 @@ __screenshots__/
 
 # Scratch copies from packages/cli/scripts/scaffold-build-checks.ts.
 /examples/.scaffold-check-*/
+.vitest/

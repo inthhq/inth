@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 
 import { parse } from 'postcss';
 import type { AtRule, ChildNode, Container, Declaration } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { DIALOG_COMPONENTS } from '../../../scripts/stylesheet-parts';
 

@@ -4,7 +4,7 @@
  * number when the bench prints one, and a reason rather than a zero when it does not.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { loadBudgets } from '../budgets';
 import { parseKotlinBench } from '../measure/native';

@@ -15,7 +15,7 @@ import type { EarlyInitMode, ProviderTransportFactory } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { StrictMode, useEffect } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { useSnapshot } from '../index';
@@ -122,12 +122,14 @@ test('sends /init during render, before mount effects, once under StrictMode', a
 	// Out before any child rendered, so before every mount effect.
 	expect(atRender[0]).toBe(1);
 	expect(atMount[0]).toBe(1);
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	expect(initCalls()).toHaveLength(1);
 
 	// The mounted kernel takes that response instead of asking again.
 	respond[0]?.('early');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('early');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('early');
 	expect(initCalls()).toHaveLength(1);
 	await view.unmount();
 });
@@ -152,7 +154,7 @@ test('a mode each render builds again sends one request, during render', async (
 	expect(atRender[0]).toBe(1);
 	expect(initCalls()).toHaveLength(1);
 	respond[0]?.('early');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('early');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('early');
 	expect(initCalls()).toHaveLength(1);
 	await view.unmount();
 });
@@ -228,7 +230,9 @@ test('an unmount before the answer leaves nothing for the next provider', async 
 	);
 	expect(initCalls()).toHaveLength(2);
 	respond[1]?.('fresh');
-	await expect.element(second.getByTestId('policy')).toHaveTextContent('fresh');
+	await expect
+		.element(second.getByTestId('policy'))
+		.toMatchTextContent('fresh');
 	expect(onError).not.toHaveBeenCalled();
 	await second.unmount();
 });

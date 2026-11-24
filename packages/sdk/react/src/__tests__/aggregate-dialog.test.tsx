@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentBanner } from '../components/prompt';

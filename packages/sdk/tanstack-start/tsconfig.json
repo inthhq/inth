@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"moduleResolution": "bundler",
-		"types": ["@vitest/browser/matchers"],
+		"types": ["vite-plus/test/matchers"],
 		"paths": {
 			"@inth/react": ["../react/dist-types/index.d.ts"],
 			"@inth/react/*": ["../react/dist-types/*"],

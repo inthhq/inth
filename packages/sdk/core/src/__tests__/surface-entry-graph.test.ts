@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, normalize, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 

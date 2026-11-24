@@ -1,5 +1,5 @@
 import type { Script } from '@inth/sdk/engine';
-import { expectTypeOf, test } from 'vitest';
+import { expectTypeOf, test } from 'vite-plus/test';
 
 import { insiderTag } from '../vendors/email-and-sms/insider';
 import type { InsiderTagOptions } from '../vendors/email-and-sms/insider';

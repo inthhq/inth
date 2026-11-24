@@ -6,7 +6,7 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import BannerFixture from './fixtures/banner-fixture.svelte';

@@ -6,7 +6,14 @@
  * must never keep an older, more permissive copy in force, and must never
  * carry identity from before a clear into records written after it.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
@@ -313,7 +320,9 @@ describe('consent envelope ties between the copies', () => {
 		withDroppedCookieWrites(() => {
 			writeStoredConsentEnvelope(
 				envelope('sub_new', { marketing: at(false, T - 1000) }),
-				{ now: T }
+				{
+					now: T,
+				}
 			);
 		});
 

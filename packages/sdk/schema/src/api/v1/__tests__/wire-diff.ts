@@ -59,9 +59,8 @@ type NullDiff<A, B, Path extends string, Depth extends unknown[]> = [
 		? Diff<Exclude<A, null>, Exclude<B, null>, Path, Depth>
 		: `${Path}: nullable in SDK only` | Diff<Exclude<A, null>, B, Path, Depth>
 	: [null] extends [B]
-		?
-				| `${Path}: nullable in document only`
-				| Diff<A, Exclude<B, null>, Path, Depth>
+		? | `${Path}: nullable in document only`
+			| Diff<A, Exclude<B, null>, Path, Depth>
 		: Diff<A, B, Path, Depth>;
 
 type OptionalKeys<T> = {
@@ -158,19 +157,11 @@ type ObjectDiff<A, B, Path extends string, Depth extends unknown[]> =
 	IsRecord<A> extends true
 		? IsRecord<B> extends true
 			? Diff<A[string & keyof A], B[string & keyof B], `${Path}.*`, Depth>
-			:
-					| `${Path}: record of ${ValueName<A[string & keyof A]>} in SDK only`
-					| KnownAgainstRecord<
-							Known<B>,
-							A[string & keyof A],
-							Path,
-							Depth,
-							false
-					  >
+			: | `${Path}: record of ${ValueName<A[string & keyof A]>} in SDK only`
+				| KnownAgainstRecord<Known<B>, A[string & keyof A], Path, Depth, false>
 		: IsRecord<B> extends true
-			?
-					| `${Path}: record of ${ValueName<B[string & keyof B]>} in document only`
-					| KnownAgainstRecord<Known<A>, B[string & keyof B], Path, Depth, true>
+			? | `${Path}: record of ${ValueName<B[string & keyof B]>} in document only`
+				| KnownAgainstRecord<Known<A>, B[string & keyof B], Path, Depth, true>
 			: KnownDiff<Known<A>, Known<B>, Path, Depth>;
 
 type Diff<

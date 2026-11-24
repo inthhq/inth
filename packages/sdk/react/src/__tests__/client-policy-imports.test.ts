@@ -8,7 +8,7 @@
  * bundle. Offline mode resolves in the browser on purpose and server helpers
  * never reach a browser, so both are left out of the scan.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
 const rawSources = import.meta.glob(

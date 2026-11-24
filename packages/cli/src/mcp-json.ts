@@ -198,7 +198,7 @@ export class JsonDocument {
     }
     const siblings = this.nodes.filter((item) => item.parent === node.parent);
     const position = siblings.findIndex((item) => item.start === node.start);
-    const previous = position > 0 ? siblings[position - 1] : undefined;
+    const previous = siblings[position - 1];
     const comma =
       node.commaAfter >= 0 ? node.commaAfter : (previous?.commaAfter ?? -1);
     if (comma >= node.end) {

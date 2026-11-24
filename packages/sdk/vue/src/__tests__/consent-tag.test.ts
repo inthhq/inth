@@ -6,7 +6,7 @@
  */
 import type { InitOutput } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { computed, createSSRApp, ref } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 

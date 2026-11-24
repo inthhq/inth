@@ -5,7 +5,7 @@ import {
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
 import type { PolicyResolution } from '@inth/sdk/schema/types';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h, nextTick, shallowRef } from 'vue';
 
 import { consentConfigKey } from '../runtime/composables/config';
@@ -78,7 +78,10 @@ test('built-in assignment holds the banner until the arm is picked, then stores 
 		expect(context.snapshot.value.activeUI).toBe('banner');
 		expect(
 			JSON.parse(localStorage.getItem(EXPERIMENT_STORAGE_KEY) ?? 'null')
-		).toEqual({ arm: assignment?.arm, id: 'banner-shape' });
+		).toEqual({
+			arm: assignment?.arm,
+			id: 'banner-shape',
+		});
 	} finally {
 		dispose();
 	}
@@ -269,7 +272,9 @@ test('arms are validated against the theme the app renders with', async () => {
 		// The experiment controller loads as its own chunk.
 		await vi.waitFor(
 			() => expect(context.snapshot.value.experimentPending).toBe(false),
-			{ timeout: 5000 }
+			{
+				timeout: 5000,
+			}
 		);
 		// Accepted: an arm (control or quiet) is assigned and nothing is
 		// reported. A rejected experiment assigns none.

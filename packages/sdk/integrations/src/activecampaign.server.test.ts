@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { activeCampaignTracking } from './vendors/email-and-sms/activecampaign';
 

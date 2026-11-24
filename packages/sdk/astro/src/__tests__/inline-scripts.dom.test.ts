@@ -1,5 +1,5 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	ACTIVATED_ATTRIBUTE,

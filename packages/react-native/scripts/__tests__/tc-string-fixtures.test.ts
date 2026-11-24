@@ -21,7 +21,7 @@ import {
 	TCString,
 } from '@iabtechlabtcf/core';
 import type { VendorList } from '@iabtechlabtcf/core';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	buildTcStringFixtures,

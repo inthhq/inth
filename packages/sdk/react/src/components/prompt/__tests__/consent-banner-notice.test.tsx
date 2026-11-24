@@ -1,7 +1,7 @@
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import type { ComponentProps } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
@@ -103,7 +103,7 @@ describe('ConsentBanner notice prompt', () => {
 		await waitForBanner();
 
 		expect(query('consent-banner-title')).toHaveTextContent('Privacy notice');
-		expect(query('consent-banner-description')).toHaveTextContent(
+		expect(query('consent-banner-description')).toMatchTextContent(
 			'You can opt out or manage your preferences at any time.'
 		);
 		expect(query('consent-banner-card')?.getAttribute('aria-label')).toBe(

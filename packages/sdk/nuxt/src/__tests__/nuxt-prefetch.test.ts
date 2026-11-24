@@ -6,7 +6,7 @@
  */
 import { join } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	breakEntryImportCycles,
@@ -239,8 +239,8 @@ describe('preloadBrowserResolver', () => {
 		const resolver = inth('core/dist/transports/manifest-browser.js');
 		const entry = 'node_modules/nuxt/dist/app/entry.js';
 		const manifest: Record<string, ClientManifestChunk> = {
-			[resolver]: { isDynamicEntry: true, src: resolver },
 			[entry]: { dynamicImports: [resolver], isEntry: true, src: entry },
+			[resolver]: { isDynamicEntry: true, src: resolver },
 		};
 		preloadBrowserResolver(manifest, '/app', isConsentFile);
 

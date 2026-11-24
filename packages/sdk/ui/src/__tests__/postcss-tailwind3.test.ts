@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { AcceptedPlugin } from 'postcss';
 import postcss, { parse } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import tailwind3Plugin, { isInthUiStylesheetPath } from '../postcss-tailwind3';
 import * as pluginModule from '../postcss-tailwind3';
@@ -129,7 +129,9 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 		// plugin unwraps Inth's layers and leaves the app's own alone.
 		const app = parse(
 			'@tailwind components;\n@layer components { .app-card { color: red; } }',
-			{ from: '/app/src/index.css' }
+			{
+				from: '/app/src/index.css',
+			}
 		);
 		const inlined = parse(layeredCss, {
 			from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
@@ -192,7 +194,9 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 		// Tailwind 3 adopts them as its own components layer and purges them.
 		const root = parse(
 			'@tailwind components;\n@layer components { .app-card { color: red; } }',
-			{ from: '/app/src/app.css' }
+			{
+				from: '/app/src/app.css',
+			}
 		);
 		root.prepend(
 			parse(layeredCss, {

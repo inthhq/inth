@@ -5,10 +5,10 @@
 	"description": "Consumer fixture: observes consent through the packed public exports of inth, the way an external integration would.",
 	"type": "module",
 	"scripts": {
-		"fmt": "oxfmt -c ../../oxfmt.sdk.config.ts --write .",
+		"fmt": "vp fmt -c ../../oxfmt.sdk.config.ts --write .",
 		"install:packed": "bun scripts/install-packed.ts",
-		"lint": "oxlint -c ../../oxlint.sdk.config.ts .",
-		"test": "bun scripts/install-packed.ts && tsc --noEmit && vitest run"
+		"lint": "vp lint -c ../../oxlint.sdk.config.ts .",
+		"test": "bun scripts/install-packed.ts && tsrs --noEmit && vp test run"
 	},
 	"dependencies": {
 		"@inth/nextjs": "workspace:*",
@@ -21,14 +21,13 @@
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",
-		"@vitest/coverage-istanbul": "4.1.10",
+		"@vitest/coverage-istanbul": "catalog:",
 		"jsdom": "^25.0.0",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
 		"react": "19.2.7",
 		"react-dom": "19.2.7",
-		"typescript": "6.0.3",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
+		"tsrs": "catalog:",
+		"vite": "catalog:",
+		"vite-plus": "catalog:",
+		"vitest": "catalog:"
 	}
 }

@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 import { createPlan, fullPlan, readWorkspaces } from "./plan.ts";
 
@@ -90,7 +90,11 @@ describe("routing", () => {
     });
     expect(
       selected(["packages/android/inth-core/src/main/kotlin/Kernel.kt"])
-    ).toEqual({ ...none, android: true, sdk: true });
+    ).toEqual({
+      ...none,
+      android: true,
+      sdk: true,
+    });
   });
 
   test("React Native changes run the React Native job", () => {
@@ -101,15 +105,31 @@ describe("routing", () => {
     });
     expect(
       selected(["packages/react-native/ios/InthReactNative/Bridge/Pump.swift"])
-    ).toEqual({ ...none, reactNative: true, sdk: true, swift: true });
+    ).toEqual({
+      ...none,
+      reactNative: true,
+      sdk: true,
+      swift: true,
+    });
     expect(
       selected(["packages/react-native/android/inth-react-native/build.gradle"])
-    ).toEqual({ ...none, android: true, reactNative: true, sdk: true });
+    ).toEqual({
+      ...none,
+      android: true,
+      reactNative: true,
+      sdk: true,
+    });
   });
 
   test("React Native Codegen specs run both native builds", () => {
     expect(selected(["packages/react-native/src/specs/NativeInth.ts"])).toEqual(
-      { ...none, android: true, reactNative: true, sdk: true, swift: true }
+      {
+        ...none,
+        android: true,
+        reactNative: true,
+        sdk: true,
+        swift: true,
+      }
     );
   });
 
@@ -150,7 +170,12 @@ describe("routing", () => {
   test("mixed changes select the union", () => {
     expect(
       selected(["packages/cli/src/index.ts", "packages/sdk/vue/src/index.ts"])
-    ).toEqual({ ...none, cli: true, sdk: true, sdkTests: true });
+    ).toEqual({
+      ...none,
+      cli: true,
+      sdk: true,
+      sdkTests: true,
+    });
   });
 });
 
@@ -214,30 +239,30 @@ describe("release plans", () => {
   });
 });
 
-describe("browser groups", () => {
-  const kinds = (files: string[]) =>
-    Object.fromEntries(
-      createPlan(files, workspaces).browser.map((group) => [
-        group.kind,
-        group.targets,
-      ])
-    );
+const browserGroupKinds = (files: string[]) =>
+  Object.fromEntries(
+    createPlan(files, workspaces).browser.map((group) => [
+      group.kind,
+      group.targets,
+    ])
+  );
 
+describe("browser groups", () => {
   test("an Angular change runs its own fixtures and parity", () => {
-    const groups = kinds(["packages/sdk/angular/src/index.ts"]);
+    const groups = browserGroupKinds(["packages/sdk/angular/src/index.ts"]);
     expect(groups.examples).toBe("angular");
     expect(groups.parity).toBe("react,svelte,vue,astro,angular");
   });
 
   test("a Vue change runs the fixtures built on Vue, and not React's", () => {
-    const groups = kinds(["packages/sdk/vue/src/index.ts"]);
+    const groups = browserGroupKinds(["packages/sdk/vue/src/index.ts"]);
     expect(groups.examples?.split(",")).toContain("nuxt");
     expect(groups.examples?.split(",")).toContain("astro");
     expect(groups.examples?.split(",")).not.toContain("react");
   });
 
   test("the acceptance harness runs every example", () => {
-    const groups = kinds([
+    const groups = browserGroupKinds([
       "internals/fixtures/acceptance/src/starters.test.ts",
     ]);
     expect(groups.examples?.split(",")).toHaveLength(19);
@@ -245,7 +270,7 @@ describe("browser groups", () => {
   });
 
   test("a CLI change runs no browser group", () => {
-    expect(kinds(["packages/cli/src/index.ts"])).toEqual({});
+    expect(browserGroupKinds(["packages/cli/src/index.ts"])).toEqual({});
   });
 
   test("a full run includes every group", () => {

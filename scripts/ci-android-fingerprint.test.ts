@@ -9,7 +9,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 const script = new URL('./ci-android-fingerprint.py', import.meta.url).pathname;
 const workflow = new URL(

@@ -1,4 +1,4 @@
-import { defineRule } from "@oxlint/plugins";
+import { defineRule } from "vite-plus/lint/plugins";
 
 import {
 	classifyUnsafeDictionaryValue,
@@ -14,7 +14,7 @@ import {
 	functionParameterTypeAnnotation,
 } from "../shared/function-parameters.ts";
 
-import type { ESTree, Scope, SourceCode, Variable } from "@oxlint/plugins";
+import type { ESTree, Scope, SourceCode, Variable } from "vite-plus/lint/plugins";
 
 type FunctionExpression = ESTree.ArrowFunctionExpression | ESTree.Function;
 
@@ -134,16 +134,12 @@ function variableTypeAnnotation(
 		return null;
 	}
 	const parameter = definition.node.params.find(
-		(candidate) =>
-			functionParameterBindingName(candidate, sourceCode) === variable.name,
+		(candidate) => functionParameterBindingName(candidate, sourceCode) === variable.name,
 	);
 	return parameter === undefined ? null : (functionParameterTypeAnnotation(parameter) ?? null);
 }
 
-function hasInformativeType(
-	type: ESTree.TSType,
-	environment: TypeEnvironment,
-): boolean {
+function hasInformativeType(type: ESTree.TSType, environment: TypeEnvironment): boolean {
 	return classifyUnsafeDictionaryValue(type, environment) === null;
 }
 
@@ -193,12 +189,7 @@ function hasKnownCallArgumentEvidence(
 		return false;
 	}
 	visitedVariables.add(variable);
-	return hasKnownCallArgumentEvidence(
-		sourceCode,
-		declarator.init,
-		environment,
-		visitedVariables,
-	);
+	return hasKnownCallArgumentEvidence(sourceCode, declarator.init, environment, visitedVariables);
 }
 
 function typePredicateSubjectIndex(
@@ -211,8 +202,7 @@ function typePredicateSubjectIndex(
 	}
 	const predicateParameterName = predicate.parameterName.name;
 	const index = owner.params.findIndex(
-		(parameter) =>
-			functionParameterBindingName(parameter, sourceCode) === predicateParameterName,
+		(parameter) => functionParameterBindingName(parameter, sourceCode) === predicateParameterName,
 	);
 	return index === -1 ? null : index;
 }
@@ -292,10 +282,7 @@ export const noKnownValueWideningRule = defineRule({
 			subject: string,
 		) => {
 			if (destination === null) return;
-			if (
-				isDictionaryAccumulatorTarget(destination) &&
-				isEmptyObjectExpression(expression)
-			) {
+			if (isDictionaryAccumulatorTarget(destination) && isEmptyObjectExpression(expression)) {
 				return;
 			}
 			if (!hasKnownEvidence(context.sourceCode, expression)) return;
@@ -311,10 +298,7 @@ export const noKnownValueWideningRule = defineRule({
 
 		return {
 			Program(node) {
-				environment = createTypeEnvironment(
-					node,
-					context.sourceCode.visitorKeys,
-				);
+				environment = createTypeEnvironment(node, context.sourceCode.visitorKeys);
 			},
 			VariableDeclarator(node) {
 				if (node.init === null || node.id.type !== "Identifier") return;
@@ -360,7 +344,11 @@ export const noKnownValueWideningRule = defineRule({
 				if (parameterIndex === null) return;
 				const parameter = owner.params[parameterIndex];
 				const argument = node.arguments[parameterIndex];
-				if (parameter === undefined || argument === undefined || argument.type === "SpreadElement") {
+				if (
+					parameter === undefined ||
+					argument === undefined ||
+					argument.type === "SpreadElement"
+				) {
 					return;
 				}
 				const parameterAnnotation = functionParameterTypeAnnotation(parameter);
@@ -371,13 +359,7 @@ export const noKnownValueWideningRule = defineRule({
 				) {
 					return;
 				}
-				if (
-					!hasKnownCallArgumentEvidence(
-						context.sourceCode,
-						argument,
-						environment,
-					)
-				) {
+				if (!hasKnownCallArgumentEvidence(context.sourceCode, argument, environment)) {
 					return;
 				}
 				context.report({

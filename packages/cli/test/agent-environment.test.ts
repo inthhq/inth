@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { agentEnvironment } from "../src/agent-environment.ts";
 import { parseAgentDiscovery, checkAgentClaim } from "../src/agent-protocol.ts";

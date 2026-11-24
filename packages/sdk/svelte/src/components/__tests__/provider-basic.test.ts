@@ -1,7 +1,14 @@
 import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@inth/conformance';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
 import ProviderOnlyFixture from '../../__tests__/fixtures/provider-only-fixture.svelte';

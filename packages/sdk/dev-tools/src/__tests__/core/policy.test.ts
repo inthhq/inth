@@ -1,7 +1,7 @@
 import { createConsentKernel } from '@inth/sdk-core';
 import { createPersistence } from '@inth/sdk-core/modules/persistence';
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 import { createDevTools } from '../../index';
 import { policyResolution } from '../helpers/kernel';

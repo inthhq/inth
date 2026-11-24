@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	applySurfaceParams,
@@ -32,11 +32,18 @@ describe('prompt surface params', () => {
 		});
 		expect(
 			parseSurfaceParams(new URLSearchParams('experiment=1&arm=bar'))
-		).toEqual({ ...EMPTY_SURFACE, arm: 'bar', experiment: true });
+		).toEqual({
+			...EMPTY_SURFACE,
+			arm: 'bar',
+			experiment: true,
+		});
 		// An unknown arm is dropped; an arm without the experiment is ignored.
 		expect(
 			parseSurfaceParams(new URLSearchParams('experiment=1&arm=wall'))
-		).toEqual({ ...EMPTY_SURFACE, experiment: true });
+		).toEqual({
+			...EMPTY_SURFACE,
+			experiment: true,
+		});
 		expect(parseSurfaceParams(new URLSearchParams('arm=bar'))).toEqual(
 			EMPTY_SURFACE
 		);
@@ -91,16 +98,28 @@ describe('prompt surface params', () => {
 		// because some variant accepts it and the resolver validates the pair.
 		expect(
 			parseSurfaceParams(new URLSearchParams('variant=sheet&position=center'))
-		).toEqual({ ...EMPTY_SURFACE, position: 'center' });
+		).toEqual({
+			...EMPTY_SURFACE,
+			position: 'center',
+		});
 		expect(
 			parseSurfaceParams(new URLSearchParams('variant=bar&position=middle'))
-		).toEqual({ ...EMPTY_SURFACE, variant: 'bar' });
+		).toEqual({
+			...EMPTY_SURFACE,
+			variant: 'bar',
+		});
 		expect(
 			parseSurfaceParams(new URLSearchParams('variant=widget&position=top'))
-		).toEqual({ ...EMPTY_SURFACE, variant: 'widget' });
+		).toEqual({
+			...EMPTY_SURFACE,
+			variant: 'widget',
+		});
 		expect(
 			parseSurfaceParams(new URLSearchParams('position=bottom-center'))
-		).toEqual({ ...EMPTY_SURFACE, position: 'bottom-center' });
+		).toEqual({
+			...EMPTY_SURFACE,
+			position: 'bottom-center',
+		});
 		expect(parseSurfaceParams(new URLSearchParams('blocking=true'))).toEqual(
 			EMPTY_SURFACE
 		);

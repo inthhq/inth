@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { textWidth } from "../src/display.ts";
 import { mcpClientName } from "../src/mcp-clients.ts";

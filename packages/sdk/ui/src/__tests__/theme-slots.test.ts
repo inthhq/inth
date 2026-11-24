@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import bannerStyles from '@inth/sdk-ui/styles/components/consent-banner';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, test } from 'vite-plus/test';
 
 import type { ComponentSlots, Theme } from '../theme/types';
 

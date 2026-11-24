@@ -3,6 +3,7 @@ import {
 	mkdir,
 	mkdtemp,
 	readFile,
+	realpath,
 	rm,
 	stat,
 	utimes,
@@ -14,7 +15,7 @@ import { join, resolve } from 'node:path';
 import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { build, resolveConfig } from 'vite';
 import type { Rollup } from 'vite';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	CONSENT_CHUNK_GROUP,
@@ -37,7 +38,7 @@ const MANIFEST_FIXTURE = {
 
 const directories: string[] = [];
 const createRoot = async () => {
-	const root = await mkdtemp(join(tmpdir(), 'inth-manifest-'));
+	const root = await realpath(await mkdtemp(join(tmpdir(), 'inth-manifest-')));
 	directories.push(root);
 	return root;
 };
@@ -134,7 +135,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			consentManifest({ fetch: options.fetch }),
 			"export { projectUrl } from '@inth/sdk/generated';\n"
 		);
-		expect(withoutURL).toContain('const projectUrl = void 0;');
+		expect(withoutURL).toMatch(/\b(?:const|var) projectUrl = void 0;/u);
 	});
 
 	test('a build that reads the snapshot bundles an undefined snapshot when the fetch fails', async () => {
@@ -1087,17 +1088,20 @@ describe('build-time manifest policy', () => {
 		const root = await createRoot();
 		const options = { ...optionsFor(root), ...overrides };
 		const logger = createLogger();
-		const result = await writeManifestCacheModule(
-			options,
-			{ ...defaultsFor(root, command), ...extra },
-			logger
-		).then(
-			async (files) => ({
+		let result: { error: Error | undefined; source: string | undefined };
+		try {
+			const files = await writeManifestCacheModule(
+				options,
+				{ ...defaultsFor(root, command), ...extra },
+				logger
+			);
+			result = {
 				error: undefined,
 				source: await readFile(files.server, 'utf8'),
-			}),
-			(error: unknown) => ({ error: error as Error, source: undefined })
-		);
+			};
+		} catch (error) {
+			result = { error: error as Error, source: undefined };
+		}
 		return { ...result, logger, options, root };
 	};
 	const refused = () =>

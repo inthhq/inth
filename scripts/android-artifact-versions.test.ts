@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 test('the packed bridge requests the produced native artifact version by default', () => {
 	const producer = readFileSync(

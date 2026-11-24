@@ -1,6 +1,6 @@
 import { css as dialogCSS } from '@inth/sdk/ui/styles/sheets/dialog';
 import { css as firstPaintCSS } from '@inth/sdk/ui/styles/sheets/first-paint';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { injectSurfaceStyles, nonceEarlyTapScript } from '../surface-styles';
 

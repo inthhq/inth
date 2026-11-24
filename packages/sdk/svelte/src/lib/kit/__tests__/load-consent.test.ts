@@ -11,7 +11,14 @@ import {
  * SvelteKit's `building` flag.
  */
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { testing } from '../../testing';
 import { inthHandle } from '../handle';
@@ -92,7 +99,10 @@ describe('loadConsent', () => {
 			const platform = { waitUntil: vi.fn() };
 			const event = await withHandle(
 				createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
-				{ projectUrl: BACKEND, snapshot: MANIFEST_FIXTURE }
+				{
+					projectUrl: BACKEND,
+					snapshot: MANIFEST_FIXTURE,
+				}
 			);
 			if (hasPlatformHook) {
 				(event as { platform?: unknown }).platform = { context: platform };
@@ -164,7 +174,10 @@ describe('loadConsent', () => {
 		);
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
-			{ mode: manifest(), projectUrl: BACKEND }
+			{
+				mode: manifest(),
+				projectUrl: BACKEND,
+			}
 		);
 		const { consent } = await loadConsent(event, {
 			fetch,
@@ -193,7 +206,10 @@ describe('loadConsent', () => {
 	test('keeps the handle cookie name when a per-call input overrides', async () => {
 		const event = await withHandle(
 			createEvent({ headers: { cookie: CUSTOM_COOKIE } }),
-			{ cookieName: 'my-consent', mode: testing() }
+			{
+				cookieName: 'my-consent',
+				mode: testing(),
+			}
 		);
 		const { consent } = await loadConsent(event, { country: 'DE' });
 		expect(consent.prefetch.initialRecords?.choice).not.toBeNull();
@@ -226,7 +242,9 @@ describe('loadConsent', () => {
 		const fetch = answer();
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
-			{ mode: testing() }
+			{
+				mode: testing(),
+			}
 		);
 		const { consent } = await loadConsent(event, { fetch });
 		expect(consent.prefetch.initialPolicyResolution).toBeUndefined();

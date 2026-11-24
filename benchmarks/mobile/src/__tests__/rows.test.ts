@@ -3,7 +3,7 @@
  * formatting rather than the measurement.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { makeRow } from '../rows';
 import type { MobileBudget, MobileSurface, MobileUnit } from '../types';

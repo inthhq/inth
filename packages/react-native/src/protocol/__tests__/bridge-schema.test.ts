@@ -11,7 +11,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	createFakeNativeModule,
@@ -175,11 +175,15 @@ describe('describeBridgePayloadDrift', () => {
 	test('accepts every snapshot the kernel fixtures pin', () => {
 		const index = JSON.parse(
 			readFileSync(resolve(PROTOCOL_DIR, 'index.json'), 'utf8')
-		) as { fixtures: { file: string }[] };
+		) as {
+			fixtures: { file: string }[];
+		};
 		const snapshots = index.fixtures.flatMap(({ file }) => {
 			const { expected } = JSON.parse(
 				readFileSync(resolve(PROTOCOL_DIR, file), 'utf8')
-			) as { expected: Record<string, unknown> };
+			) as {
+				expected: Record<string, unknown>;
+			};
 			return ['snapshot', 'snapshotAfter', 'snapshotBefore']
 				.filter((when) => typeof expected[when] === 'object' && expected[when])
 				.map((when) => ({

@@ -3,7 +3,7 @@
  */
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {

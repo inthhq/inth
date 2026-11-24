@@ -1,6 +1,4 @@
-import { defineRule } from "@oxlint/plugins";
-
-import type { ESTree } from "@oxlint/plugins";
+import { defineRule, type ESTree } from "vite-plus/lint/plugins";
 
 import {
 	createTypeAliasEnvironment,
@@ -36,10 +34,7 @@ export const noUnknownTypeAliasesRule = defineRule({
 
 		return {
 			Program(node) {
-				environment = createTypeAliasEnvironment(
-					node,
-					context.sourceCode.visitorKeys,
-				);
+				environment = createTypeAliasEnvironment(node, context.sourceCode.visitorKeys);
 			},
 			TSTypeAliasDeclaration(node) {
 				if (!resolvesToUnknown(node.typeAnnotation)) return;

@@ -5,7 +5,7 @@
  * `import()` instead.
  */
 import { renderToString } from 'react-dom/server';
-import { afterAll, expect, test, vi } from 'vitest';
+import { afterAll, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

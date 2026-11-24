@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/svelte';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/legal-links-fixture.svelte';

@@ -219,11 +219,11 @@ export const buildIABPrompt = function buildIABPrompt(
 	const root = element(
 		'div',
 		{
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			class: model.classes.root,
 			'data-blocking': model.blocking ? 'true' : undefined,
 			'data-position': model.position,
 			'data-testid': 'iab-consent-banner-root',
-			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,

@@ -3,7 +3,7 @@ import {
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';

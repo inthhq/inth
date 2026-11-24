@@ -2,7 +2,7 @@
  * `createLazyIABFactory` — the deferred `createIAB` every framework passes
  * to the runtime so `@inth/sdk/iab` stays out of non-IAB bundles.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createLazyIABFactory } from '../lazy-iab';
 import type { ConsentRuntimeIABHandle } from '../types';

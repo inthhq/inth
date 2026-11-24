@@ -1,6 +1,6 @@
 import { createHash, webcrypto } from 'node:crypto';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	createDeterministicFingerprintSync,
@@ -145,7 +145,10 @@ describe('canonical matcher migration', () => {
 		(countryCode, regionCode, id) => {
 			expect(
 				resolvePolicyRules({ countryCode, regionCode, rules })
-			).toMatchObject({ policyId: id, status: 'matched' });
+			).toMatchObject({
+				policyId: id,
+				status: 'matched',
+			});
 		}
 	);
 	it('uses the first overlapping match and reports the overlap', () => {
@@ -184,6 +187,9 @@ describe('canonical matcher migration', () => {
 		).toMatchObject({ reason: 'insufficient-inputs', status: 'failed' });
 		expect(
 			resolvePolicyRules({ countryCode: 'BR', regionCode: null, rules: scoped })
-		).toEqual({ policy: null, status: 'no-match' });
+		).toEqual({
+			policy: null,
+			status: 'no-match',
+		});
 	});
 });

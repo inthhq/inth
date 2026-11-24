@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 
 import { build } from 'esbuild';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 

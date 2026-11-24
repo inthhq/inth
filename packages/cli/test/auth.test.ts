@@ -1,6 +1,6 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { Auth } from "../experiments/node/auth.ts";
 import { API_ORIGIN, DISCOVERY_URL } from "../experiments/node/protocol.ts";
@@ -366,6 +366,8 @@ it("still requires a refresh token when completing login", async () => {
   ]);
   await expect(
     new Auth(f.http, f.store).login({ show: async () => {} })
-  ).rejects.toMatchObject({ code: "invalid_response" });
+  ).rejects.toMatchObject({
+    code: "invalid_response",
+  });
   expect(f.store.value).toBeNull();
 });

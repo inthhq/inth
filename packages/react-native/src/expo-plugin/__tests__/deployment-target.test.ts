@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { IOSConfig } from 'expo/config-plugins';
 import type { XcodeProject } from 'expo/config-plugins';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { applyParamsOnConfig } from '../with-inth';
 import {
@@ -50,7 +50,10 @@ describe('Expo iOS deployment target', () => {
 			applyToFixture(PROPS),
 			'ios',
 			'podfileProperties',
-			{ 'expo.jsEngine': 'hermes', 'ios.deploymentTarget': '15.1' }
+			{
+				'expo.jsEngine': 'hermes',
+				'ios.deploymentTarget': '15.1',
+			}
 		);
 		expect(result.modResults).toStrictEqual({
 			'expo.jsEngine': 'hermes',
@@ -77,7 +80,9 @@ describe('Expo iOS deployment target', () => {
 				applyToFixture(PROPS),
 				'ios',
 				'podfileProperties',
-				{ 'ios.deploymentTarget': target }
+				{
+					'ios.deploymentTarget': target,
+				}
 			);
 			expect(result.modResults['ios.deploymentTarget']).toBe(target);
 		}

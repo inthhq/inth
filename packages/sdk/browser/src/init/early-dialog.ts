@@ -139,8 +139,15 @@ export const openEarlyDialog = function openEarlyDialog(
 					}
 				}, 0);
 			};
-			// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-			void engine.ready().then(release, release);
+			void (async () => {
+				try {
+					await engine.ready();
+				} catch {
+					// Release even if engine initialization rejects.
+				} finally {
+					release();
+				}
+			})();
 			return {
 				destroy: () => surface.destroy(),
 				sync(next) {

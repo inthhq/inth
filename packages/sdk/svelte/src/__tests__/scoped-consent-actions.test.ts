@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerState } from '../lib/context.svelte';
 import { draftReady } from './draft-ready';
@@ -394,7 +394,10 @@ describe('displayed consent actions', () => {
 	test.each(
 		(['all', 'none'] as const).flatMap((action) =>
 			(['regional', 'all-categories', 'necessary-only'] as const).map(
-				(scope) => ({ action, scope })
+				(scope) => ({
+					action,
+					scope,
+				})
 			)
 		)
 	)(

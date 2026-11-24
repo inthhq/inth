@@ -10,7 +10,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import ConsentWidget from '../runtime/components/preferences.vue';
 import { consentConfigKey } from '../runtime/composables/config';

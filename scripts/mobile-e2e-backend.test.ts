@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { it, expect } from 'vitest';
+import { it, expect } from 'vite-plus/test';
 
 // The platform header both cores send, named by transport/cases.json.
 const PLATFORM = { 'x-inth-platform': 'rn->0.0.0' };

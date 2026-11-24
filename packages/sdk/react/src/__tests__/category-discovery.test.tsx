@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialog } from '../components/panel';

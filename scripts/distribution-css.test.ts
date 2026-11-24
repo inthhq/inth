@@ -8,7 +8,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import { generateDistributionCss } from '../packages/sdk/shared/generate-distribution-css';
 

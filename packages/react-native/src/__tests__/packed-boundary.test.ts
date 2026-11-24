@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import {
 	isForbiddenModule,
@@ -101,7 +101,10 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		execFileSync(
 			'pnpm',
 			['pack', '--config.ignore-scripts=true', '--out', archive],
-			{ cwd: packageDir, stdio: 'pipe' }
+			{
+				cwd: packageDir,
+				stdio: 'pipe',
+			}
 		);
 		const development = JSON.parse(
 			readFileSync(join(packageDir, 'package.json'), 'utf8')
@@ -311,12 +314,17 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			execFileSync(
 				resolve(packageDir, 'node_modules/.bin/tsc'),
 				['-p', directory],
-				{ cwd: directory, stdio: 'pipe' }
+				{
+					cwd: directory,
+					stdio: 'pipe',
+				}
 			);
 		} catch (error) {
 			throw new Error(
 				`Packed consumer type-check failed: ${objectOutput(error)}`,
-				{ cause: error }
+				{
+					cause: error,
+				}
 			);
 		}
 	} finally {
@@ -359,7 +367,10 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 		execFileSync(
 			'pnpm',
 			['pack', '--config.ignore-scripts=true', '--out', archive],
-			{ cwd: packageDir, stdio: 'pipe' }
+			{
+				cwd: packageDir,
+				stdio: 'pipe',
+			}
 		);
 		const archiveFiles = execFileSync('tar', ['-tzf', archive], {
 			encoding: 'utf8',

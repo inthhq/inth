@@ -1,6 +1,6 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { ApiClient } from "../experiments/node/api.ts";
 import {

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { buildVitePlugins, resolveOptions } from '../integration';
 import {

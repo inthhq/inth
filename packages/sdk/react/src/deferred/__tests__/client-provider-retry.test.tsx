@@ -4,7 +4,7 @@
  */
 import { Component } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';

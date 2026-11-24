@@ -16,7 +16,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vite-plus/test";
 
 const script = fileURLToPath(new URL("../../../install.sh", import.meta.url));
 const roots: string[] = [];
@@ -218,7 +218,10 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
     const sourced = spawnSync(
       "sh",
       ["-c", '. "$HOME/.profile"; printf %s "$PATH"'],
-      { encoding: "utf-8", env: { HOME: home, PATH: "/usr/bin:/bin" } }
+      {
+        encoding: "utf-8",
+        env: { HOME: home, PATH: "/usr/bin:/bin" },
+      }
     );
     expect(sourced.stdout.split(":")[0]).toBe(installDir);
   });

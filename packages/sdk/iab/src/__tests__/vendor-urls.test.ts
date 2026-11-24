@@ -1,5 +1,5 @@
 import type { GlobalVendorList } from '@inth/sdk-core';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { resolveIABSafeUrl, resolveIABVendorUrls } from '../headless';
 import { completeGVL } from './fixtures/gvl-sample';

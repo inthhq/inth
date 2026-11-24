@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { remark } from 'remark';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test } from 'vite-plus/test';
 
 import remarkLintCanonicalIntegrations, {
 	createCanonicalIntegrationCheck,

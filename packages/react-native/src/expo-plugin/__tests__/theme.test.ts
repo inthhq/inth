@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createConsentTheme } from '../../components/theme/create-consent-theme';
 import type { ConsentThemeOptions } from '../../components/theme/create-consent-theme';
@@ -236,7 +236,9 @@ describe('theme prop', () => {
 	it('registers no theme write without the prop', async () => {
 		const applied = await runInfoPlist(
 			applyToFixture({ projectUrl: BACKEND }),
-			{ 'com.inth.consent.primary': '#111111' }
+			{
+				'com.inth.consent.primary': '#111111',
+			}
 		);
 		expect(
 			(applied.modResults as Record<string, unknown>)[

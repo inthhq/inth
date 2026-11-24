@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { browserInstallations } from './install-browsers';
 

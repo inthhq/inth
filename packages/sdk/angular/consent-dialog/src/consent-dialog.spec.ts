@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { ConsentDialogTrigger } from '../../consent-dialog-trigger/src/consent-dialog-trigger';
 import { ConsentWidget } from '../../consent-widget/src/consent-widget';

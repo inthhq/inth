@@ -12,7 +12,7 @@ import { translations } from '@inth/sdk/translations/en';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { mount } from '@vue/test-utils';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import ConsentDescription from '../runtime/components/description.vue';
 import { consentConfigKey } from '../runtime/composables/config';

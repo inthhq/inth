@@ -11,7 +11,7 @@ import type { Vendor } from '@inth/sdk/engine';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';

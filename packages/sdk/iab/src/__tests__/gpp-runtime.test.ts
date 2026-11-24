@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { createConsentRuntime } from '@inth/sdk-core/runtime';
 import { testing } from '@inth/sdk-core/testing';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import type { GPPPingData } from '../gpp';
 

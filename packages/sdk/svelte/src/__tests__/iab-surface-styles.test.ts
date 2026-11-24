@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { css as iabDialogCSS } from '@inth/sdk/ui/styles/sheets/iab-dialog';
 import { css as iabFirstPaintCSS } from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import { render, waitFor } from '@testing-library/svelte';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 import '@inth/sdk/iab';
 
 import Fixture from './fixtures/iab-surface-styles.svelte';

@@ -1,5 +1,5 @@
 import { POLICY_CHOICE } from '@inth/conformance/fixtures/policy-scenarios';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { createPolicySession } from './policy-driver';
 

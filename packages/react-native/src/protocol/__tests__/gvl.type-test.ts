@@ -23,7 +23,7 @@ import type {
 	GlobalVendorList as KernelGlobalVendorList,
 	KernelIABState,
 } from '@inth/sdk/engine';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import type { GlobalVendorList, GVLVendor, NativeIABState } from '../index';
 import type { ConsentSnapshot } from '../snapshot';

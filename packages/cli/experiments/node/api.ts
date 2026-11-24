@@ -20,6 +20,7 @@ import type {
   Organization,
   OrganizationResponse,
 } from "../../src/organizations.ts";
+import { jsonValueSchema } from "./http.ts";
 import type { HttpClient } from "./http.ts";
 import { meSchema, userInfoSchema } from "./identity.ts";
 
@@ -110,7 +111,7 @@ export class ApiClient {
     if (response.status === 204) {
       return "";
     }
-    const value = await this.http.json(response, z.json());
+    const value = await this.http.json(response, jsonValueSchema);
     return JSON.stringify(value, null, 2);
   }
   async putImage(
@@ -154,7 +155,11 @@ export class ApiClient {
       token = await auth.accessToken(token);
       response = await send(token);
     }
-    return JSON.stringify(await this.http.json(response, z.json()), null, 2);
+    return JSON.stringify(
+      await this.http.json(response, jsonValueSchema),
+      null,
+      2
+    );
   }
   async uploadChat(body: string, organizationId?: string): Promise<string> {
     if (this.key) {
@@ -173,7 +178,7 @@ export class ApiClient {
       true,
       300_000
     );
-    return JSON.stringify(await this.http.json(response, z.json()));
+    return JSON.stringify(await this.http.json(response, jsonValueSchema));
   }
   async download(
     path: string,

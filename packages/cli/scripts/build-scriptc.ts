@@ -48,7 +48,7 @@ const run = (command: string, args: string[]): string => {
 await mkdir(output, { recursive: true });
 await mkdir(binaries, { recursive: true });
 run(process.execPath, [
-  require.resolve("typescript/bin/tsc"),
+  path.join(path.dirname(require.resolve("tsrs/package.json")), "bin/tsrs"),
   "-p",
   "tsconfig.native.json",
 ]);

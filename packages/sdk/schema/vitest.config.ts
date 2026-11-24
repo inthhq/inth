@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { baseConfig } from '@inth/vitest-config/base';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

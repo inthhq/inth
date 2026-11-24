@@ -6,7 +6,7 @@ import type { ProviderTransportFactory } from '@inth/sdk/engine';
 import type { GPPPingData } from '@inth/sdk/iab/gpp';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { policyRulePresets } from '@inth/sdk/schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentGPP } from '../gpp';

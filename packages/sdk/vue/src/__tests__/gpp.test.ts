@@ -3,7 +3,7 @@
  * `@inth/sdk/iab/gpp` when the app mounts, and removes it on unmount.
  */
 import { createConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, beforeAll, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h } from 'vue';
 
 import { testing } from '../testing';

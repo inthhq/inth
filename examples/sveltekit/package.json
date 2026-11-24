@@ -3,10 +3,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "vite build",
+		"build": "vp build",
 		"check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"dev": "vite dev",
-		"start": "vite preview"
+		"dev": "vp dev",
+		"start": "vp preview"
 	},
 	"dependencies": {
 		"@inth/integrations": "workspace:*",
@@ -19,6 +19,7 @@
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.7.6",
 		"typescript": "6.0.3",
-		"vite": "^8.3.1"
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

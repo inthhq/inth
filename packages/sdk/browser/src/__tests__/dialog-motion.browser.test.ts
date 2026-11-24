@@ -6,7 +6,7 @@
  * `data-disable-animation` is present.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import type { ConsentClient } from '../types';
 import { init } from './fixtures/factory-init';

@@ -41,7 +41,7 @@ import {
 } from '@inth/sdk/schema/types';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vite-plus/test';
 
 import { whenIABReady } from '../lib/iab-loader';
 import { testing } from '../lib/testing';

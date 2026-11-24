@@ -5,7 +5,7 @@
  */
 import type { ComponentSlots } from '@inth/sdk/ui/theme';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/theme-slots-fixture.svelte';

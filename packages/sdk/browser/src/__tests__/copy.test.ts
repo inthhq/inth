@@ -1,5 +1,5 @@
 import type { ConsentSnapshot } from '@inth/sdk-core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { resolveCopy } from '../ui/copy';
 

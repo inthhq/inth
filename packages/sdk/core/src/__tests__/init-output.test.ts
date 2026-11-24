@@ -3,7 +3,7 @@
  * server helper and transport uses (shared-logic audit #4).
  */
 import { enTranslations } from '@inth/sdk-translations';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { buildInitialSnapshot } from '../kernel/snapshot';
 import {

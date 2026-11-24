@@ -1,5 +1,5 @@
 import type { Script } from '@inth/sdk/engine';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { expectSkippedScript } from './__tests__/helpers';
 import { adrollPixel } from './vendors/ads-and-pixels/adroll';

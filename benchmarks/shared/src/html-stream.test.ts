@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	analyzeServerHtmlStream,

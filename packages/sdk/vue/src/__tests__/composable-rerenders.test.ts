@@ -14,7 +14,7 @@ import {
 } from '@inth/sdk/schema/types';
 import { translations as enTranslations } from '@inth/sdk/translations/en';
 import { flushPromises, mount } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { defineComponent, h, onUpdated } from 'vue';
 import type { Ref } from 'vue';
 

@@ -4,7 +4,7 @@
  * Mirrors: packages/sdk/react/src/hooks/__tests__/use-scroll-lock.test.tsx
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { scrollLock } from '../../lib/actions/scroll-lock';
 

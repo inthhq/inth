@@ -37,7 +37,7 @@ import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';

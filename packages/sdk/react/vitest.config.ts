@@ -2,8 +2,8 @@ import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 

@@ -5,7 +5,14 @@
  * Persistence module wiring for vendor denials: a recorded toggle writes
  * the sibling record, hydration reads it back, and `clear()` removes it.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,

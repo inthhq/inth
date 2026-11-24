@@ -1,6 +1,6 @@
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { mount, unmount } from 'svelte';
-import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
+import { afterEach, expect, onTestFinished, test, vi } from 'vite-plus/test';
 
 import { testing } from '../lib/testing';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';

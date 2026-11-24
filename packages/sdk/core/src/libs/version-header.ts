@@ -13,6 +13,6 @@ import {
 import { version } from '../version';
 
 export const inthProtocolHeaders: Readonly<Record<string, string>> = {
-	'x-inth-version': version,
 	[POLICY_CONTRACT_HEADER]: String(POLICY_CONTRACT_VERSION),
+	'x-inth-version': version,
 };

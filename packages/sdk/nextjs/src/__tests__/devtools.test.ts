@@ -4,7 +4,7 @@ import {
 	DevTools as ReactDevTools,
 	inthDevtools as reactInthDevtools,
 } from '@inth/react/devtools';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	InthDevTools,

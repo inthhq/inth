@@ -9,9 +9,9 @@
  */
 import type { Vendor } from '@inth/sdk/engine';
 import { useEffect } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
@@ -79,7 +79,12 @@ const Probe = () => {
 const readProbe = () =>
 	JSON.parse(
 		document.querySelector('[data-testid="probe"]')?.textContent ?? '{}'
-	) as { ads: boolean; denied: string[]; marketing: boolean; meta: boolean };
+	) as {
+		ads: boolean;
+		denied: string[];
+		marketing: boolean;
+		meta: boolean;
+	};
 
 /** Expand a category so its vendor cards render. */
 const openVendors = async (category: string) => {
@@ -125,14 +130,14 @@ describe('consent widget vendor rows', () => {
 		const trigger = page.getByTestId(
 			'consent-widget-vendor-trigger-marketing-meta-pixel'
 		);
-		await expect.element(trigger).toHaveTextContent('Meta Pixel');
+		await expect.element(trigger).toMatchTextContent('Meta Pixel');
 		// The name carries a test id so the switch's `aria-describedby` target
 		// is addressable in every framework's parity snapshot.
 		await expect
 			.element(
 				page.getByTestId('consent-widget-vendor-name-marketing-meta-pixel')
 			)
-			.toHaveTextContent('Meta Pixel');
+			.toMatchTextContent('Meta Pixel');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 		const content = page.getByTestId(
 			'consent-widget-vendor-content-marketing-meta-pixel'
@@ -142,8 +147,8 @@ describe('consent widget vendor rows', () => {
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 		await expect
 			.element(content)
-			.toHaveTextContent('Ad conversion measurement.');
-		await expect.element(content).toHaveTextContent('Privacy policy');
+			.toMatchTextContent('Ad conversion measurement.');
+		await expect.element(content).toMatchTextContent('Privacy policy');
 		// The measurement vendor lives under its own category, not this one.
 		await openVendors('measurement');
 		const marketingList = document.querySelector(
@@ -221,7 +226,7 @@ describe('consent widget vendor rows', () => {
 			.click();
 		await expect
 			.element(details)
-			.toHaveTextContent('Ad conversion measurement.');
+			.toMatchTextContent('Ad conversion measurement.');
 
 		// Opening another category closes marketing; its rows, and the open
 		// vendor card, stay mounted for the close transition.
@@ -230,7 +235,7 @@ describe('consent widget vendor rows', () => {
 		await expect.element(card).toBeInTheDocument();
 		await expect
 			.element(details)
-			.toHaveTextContent('Ad conversion measurement.');
+			.toMatchTextContent('Ad conversion measurement.');
 	});
 
 	test('vendor cards sit inset the same on both sides of the category row', async () => {
@@ -312,7 +317,7 @@ describe('consent widget vendor rows', () => {
 			.element(
 				page.getByTestId('consent-widget-vendor-item-marketing-fixed-vendor')
 			)
-			.toHaveTextContent('Fixed Vendor');
+			.toMatchTextContent('Fixed Vendor');
 		expect(
 			document.querySelector(
 				'[data-testid="consent-widget-vendor-switch-marketing-fixed-vendor"]'
@@ -428,7 +433,7 @@ describe('vendor switches are opt-in', () => {
 		await openVendors('measurement');
 		await expect
 			.element(page.getByTestId('consent-widget-vendor-list-measurement'))
-			.toHaveTextContent('PostHog');
+			.toMatchTextContent('PostHog');
 	});
 
 	test('a saved helper denial remains editable without changing category choices', async () => {

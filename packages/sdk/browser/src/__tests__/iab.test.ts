@@ -1,7 +1,7 @@
 import type { ProviderTransportFactory } from '@inth/sdk-core';
 import { getIABControls } from '@inth/sdk-core';
 import { clearGVLCache } from '@inth/sdk-iab';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { testing } from '../testing';

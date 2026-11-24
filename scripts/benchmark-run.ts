@@ -86,9 +86,13 @@ const iterations = iterationsPerRound(totalIterations, rounds);
 const env = {
 	...process.env,
 	BENCHMARK_BASE_SHA: baseSha,
-	BENCH_ITERATIONS: iterations,
-	BENCH_WARMUP_ITERATIONS: '3',
 	[BENCH_BACKEND_LATENCY_ENV]: `${backendLatencyMs}`,
+	BENCH_ITERATIONS: iterations,
+	// Both arms measure this shard's share, and the comparison expects only it.
+	// Set from the plan even when empty, so a stray variable cannot shrink a run.
+	[BENCH_ONLY_ENV]: only.join(','),
+	[BENCH_SKIP_ENV]: skip.join(','),
+	BENCH_WARMUP_ITERATIONS: '3',
 	INTH_BENCH_ITERATIONS: iterations,
 	INTH_BENCH_WARMUP_ITERATIONS: '3',
 	// Microsecond operations need enough iterations per process for JIT
@@ -96,10 +100,6 @@ const env = {
 	// sit close to absolute allowances. Every round runs the full count.
 	INTH_CORE_BENCH_ITERATIONS: '5000',
 	INTH_CORE_BENCH_WARMUP_ITERATIONS: '1000',
-	// Both arms measure this shard's share, and the comparison expects only it.
-	// Set from the plan even when empty, so a stray variable cannot shrink a run.
-	[BENCH_ONLY_ENV]: only.join(','),
-	[BENCH_SKIP_ENV]: skip.join(','),
 };
 // A gate target whose bench the base revision does not have (a framework
 // new on the head) cannot be measured there. The overlay leaves its bench

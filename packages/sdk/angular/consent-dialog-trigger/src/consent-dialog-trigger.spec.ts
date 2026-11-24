@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';

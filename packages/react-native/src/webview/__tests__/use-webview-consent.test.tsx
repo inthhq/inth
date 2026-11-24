@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 
 import type { ReactNode } from 'react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	buildSnapshot,
@@ -62,7 +62,9 @@ test('the generated scripts are the protocol files', () => {
 test('origins normalize like every other platform', () => {
 	const { cases } = JSON.parse(
 		readFileSync(protocol('origins.json'), 'utf8')
-	) as { cases: { input: string; origin: string | null }[] };
+	) as {
+		cases: { input: string; origin: string | null }[];
+	};
 	expect(cases.length).toBeGreaterThan(20);
 	for (const { input, origin } of cases) {
 		expect(normalizeWebViewOrigin(input), input).toBe(origin);
@@ -185,7 +187,10 @@ const openPage = (origin: string) => {
 	const state = () =>
 		JSON.parse(
 			run('JSON.stringify(window.__inthNativeConsent.getState())') as string
-		) as { ready: boolean; permissions: Record<string, boolean> };
+		) as {
+			ready: boolean;
+			permissions: Record<string, boolean>;
+		};
 	return { run, state };
 };
 

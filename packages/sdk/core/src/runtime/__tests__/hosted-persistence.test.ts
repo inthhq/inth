@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 import { translations } from '@inth/sdk-translations/en';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

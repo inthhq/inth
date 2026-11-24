@@ -2,8 +2,8 @@ import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 
@@ -258,6 +258,26 @@ export default mergeConfig(
 				},
 				{
 					extends: true,
+					plugins: [
+						{
+							// `handledRequestFor()` tries `import('@tanstack/react-start/server')`
+							// inside a try/catch; outside a Start server build its `#tanstack-*`
+							// virtuals fail Vite's transform and trigger Vitest 5's browser error
+							// overlay. Stub it in browser tests so the catch fallback runs cleanly.
+							enforce: 'pre',
+							load(id) {
+								if (id === '\0tanstack-start-server-browser-stub') {
+									return "export function getRequest() { throw new Error('outside Start request'); }";
+								}
+							},
+							name: 'tanstack-start-server-browser-stub',
+							resolveId(id) {
+								if (id === '@tanstack/react-start/server') {
+									return '\0tanstack-start-server-browser-stub';
+								}
+							},
+						},
+					],
 					test: {
 						browser: {
 							enabled: true,

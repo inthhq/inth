@@ -1,7 +1,7 @@
 import { EXPERIMENT_STORAGE_KEY } from '@inth/sdk/engine';
 import type { ConsentExperiment, ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerState } from '../lib/context.svelte';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
@@ -64,7 +64,10 @@ test('built-in assignment lands in the snapshot on mount and is stored', async (
 		await vi.waitFor(() =>
 			expect(
 				JSON.parse(localStorage.getItem(EXPERIMENT_STORAGE_KEY) ?? 'null')
-			).toEqual({ arm, id: 'banner-shape' })
+			).toEqual({
+				arm,
+				id: 'banner-shape',
+			})
 		);
 	} finally {
 		unmount();

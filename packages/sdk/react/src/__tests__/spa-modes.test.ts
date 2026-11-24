@@ -7,7 +7,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * passed in. A provider with only `projectUrl` uses the hosted backend.
  */
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { manifest } from '../modes';

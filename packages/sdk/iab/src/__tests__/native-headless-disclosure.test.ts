@@ -25,7 +25,7 @@ import { resolve } from 'node:path';
 
 import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
 import { resolveIABBannerSummary } from '@inth/sdk-core';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { applyPublisherRestrictionsToGVL } from '../headless';
 import { additionalConsentFor } from '../tcf/additional-consent';
@@ -87,7 +87,10 @@ const NONE: Choices = {
 // Accept all fixture so both pin the same list.
 const vendorList = JSON.parse(
 	readFileSync(resolve(IAB, VENDOR_LIST), 'utf8')
-) as { gvl: GlobalVendorList; adTechProviders: Provider[] };
+) as {
+	gvl: GlobalVendorList;
+	adTechProviders: Provider[];
+};
 const { gvl, adTechProviders } = vendorList;
 
 const now = 1_758_100_000_000;

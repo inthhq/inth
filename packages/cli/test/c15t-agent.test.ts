@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 import { createAgentSetupPlan } from "../src/native/c15t-agent.ts";
 import { createInthAgentSetupPlan } from "../vendor/inth-setup/frontend/agent/inth.ts";

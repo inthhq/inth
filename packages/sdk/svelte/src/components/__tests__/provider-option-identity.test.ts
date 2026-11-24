@@ -11,7 +11,7 @@
 import type { KernelTransport } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

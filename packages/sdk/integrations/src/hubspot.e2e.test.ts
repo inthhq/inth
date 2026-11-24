@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {

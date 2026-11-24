@@ -4,7 +4,7 @@
  * quietly returns `not-measured` forever. These cases hold the mapping.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { MOBILE_AXES } from '../axes';
 import { loadBudgets } from '../budgets';

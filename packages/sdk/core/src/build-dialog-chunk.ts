@@ -49,7 +49,7 @@ const ENGINE_BANNER =
  * loaders counts as loaded with the page.
  */
 const ON_DEMAND =
-	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:preferences|iab-panel)[\\/]index\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/]preference-draft\.js)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:(?:preferences|iab-panel|panel-trigger)[\\/]index|panel-trigger[\\/]atoms[\\/]toolbar)\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/]preference-draft\.js)$/u;
 
 /** Stylesheets, and the style blocks of Vue and Svelte components. */
 const STYLE_MODULE =

@@ -1,6 +1,6 @@
 import type { ConsentPresentation, KernelConfig } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { transportMode } from './fixtures/transport-mode';
 import Fixture from './fixtures/variant-banner-fixture.svelte';

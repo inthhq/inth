@@ -4,7 +4,7 @@ import type {
 	BrowserContextOptions,
 	Page,
 } from 'playwright';
-import { expect } from 'vitest';
+import { expect } from 'vite-plus/test';
 
 export interface Requests {
 	posthog: number;

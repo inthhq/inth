@@ -1,5 +1,5 @@
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { resolveIABBannerSummary } from '../libs/iab-banner-summary';
 import {

@@ -7,7 +7,14 @@
 
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	clearAllScripts,

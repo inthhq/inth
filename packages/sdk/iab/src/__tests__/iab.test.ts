@@ -1,6 +1,6 @@
 import type { GlobalVendorList } from '@inth/sdk-core';
 import { createConsentKernel } from '@inth/sdk-core';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createIAB, iab as createIABConfig } from '../index';
 import { setMockGVL } from '../tcf/fetch-gvl';

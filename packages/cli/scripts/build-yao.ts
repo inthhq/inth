@@ -83,7 +83,11 @@ const manifest = packageSchema.parse(
 
 const compile = spawnSync(
   process.execPath,
-  [require.resolve("typescript/bin/tsc"), "-p", "tsconfig.build.json"],
+  [
+    path.join(path.dirname(require.resolve("tsrs/package.json")), "bin/tsrs"),
+    "-p",
+    "tsconfig.build.json",
+  ],
   { cwd: root, stdio: "inherit" }
 );
 if (compile.status !== 0) {

@@ -6,7 +6,7 @@
  * Its own file, because the script loader registration is page-wide.
  */
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, beforeAll, expect, it } from 'vitest';
+import { afterEach, beforeAll, expect, it } from 'vite-plus/test';
 
 import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';

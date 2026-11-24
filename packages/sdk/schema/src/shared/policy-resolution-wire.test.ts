@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { resolvePolicyRules } from './policy-resolution';
 import { readPolicyResolutionWire } from './policy-resolution-wire';

@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 
 import { GppModel } from '@iabgpp/cmpapi';
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
 import type { EncodedGPPSection, GPPFieldValues } from '../gpp/encoder';

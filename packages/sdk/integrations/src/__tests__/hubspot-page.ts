@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vite-plus/test';
 
 /** Give each test its own page, including the retained HubSpot installation. */
 export const isolateHubSpotPage = () => {

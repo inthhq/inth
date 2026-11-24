@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	isInitRequest,
@@ -145,7 +145,11 @@ describe('toBenchmarkResult', () => {
 		);
 		expect(
 			result.metrics.find((metric) => metric.name === 'bannerVisibleMs')
-		).toMatchObject({ median: 20, samples: [10, 20, 30], unit: 'ms' });
+		).toMatchObject({
+			median: 20,
+			samples: [10, 20, 30],
+			unit: 'ms',
+		});
 	});
 
 	it('leaves unmeasured metrics out so their budgets cannot pass on zero', () => {

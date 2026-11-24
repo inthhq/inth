@@ -10,7 +10,14 @@ import type {
 	BrowserContextOptions,
 	Page,
 } from 'playwright';
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+} from 'vite-plus/test';
 
 import {
 	acceptButton,

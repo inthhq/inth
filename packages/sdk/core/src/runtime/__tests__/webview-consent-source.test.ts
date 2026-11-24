@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createOfflineTransport } from '../../transports/offline';
@@ -58,7 +58,9 @@ const openWindow = (origin = ORIGIN) => {
 	const page = runInContext('globalThis', context) as Record<
 		string,
 		unknown
-	> & { eval: (code: string) => unknown };
+	> & {
+		eval: (code: string) => unknown;
+	};
 	page.eval = (code: string) => runInContext(code, context);
 	vi.stubGlobal('window', page);
 	return page;

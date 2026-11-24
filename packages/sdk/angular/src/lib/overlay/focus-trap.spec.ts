@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import { FocusTrap } from './focus-trap';
 

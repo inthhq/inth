@@ -1,7 +1,7 @@
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h, ref } from 'vue';
 
 import { inth } from '../index';

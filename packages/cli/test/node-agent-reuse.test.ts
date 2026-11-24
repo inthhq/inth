@@ -1,6 +1,6 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";

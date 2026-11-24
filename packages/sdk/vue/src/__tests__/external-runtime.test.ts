@@ -2,7 +2,7 @@ import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h, inject } from 'vue';
 
 import { createIAB } from '../../../iab/src';

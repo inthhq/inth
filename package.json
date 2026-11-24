@@ -8,12 +8,12 @@
     "dev": "turbo run dev --filter=@inth/cli --filter='@inth/cli-*'",
     "dev:link": "pnpm --filter @inth/cli dev:link",
     "dev:unlink": "pnpm --filter @inth/cli dev:unlink",
-    "format": "ultracite fix . --disable-nested-config",
-    "lint": "ultracite check . --disable-nested-config",
-    "lint:fix": "ultracite fix . --disable-nested-config",
+    "format": "vp fmt",
+    "lint": "vp check",
+    "lint:fix": "vp check --fix",
     "test": "turbo run test --filter=@inth/cli --filter='@inth/cli-*'",
-    "test:unit": "vitest run",
-    "test:watch": "vitest",
+    "test:unit": "vp test run",
+    "test:watch": "vp test",
     "tegami": "node packages/cli/scripts/tegami.ts",
     "typecheck": "turbo run typecheck --filter=@inth/cli --filter='@inth/cli-*'",
     "docs:lint": "leadtype lint --error-unknown --max-warnings 0",
@@ -25,7 +25,7 @@
     "sdk:dev": "turbo run dev --filter=@inth/playground",
     "sdk:fmt": "pnpm --dir scripts run fmt:repo",
     "sdk:fmt:check": "pnpm --dir scripts run fmt:check",
-    "sdk:lint": "pnpm sdk:turbo:all lint && pnpm sdk:lint:repo && pnpm --dir scripts run lint:testids",
+    "sdk:lint": "pnpm sdk:lint:repo && pnpm --dir scripts run lint:testids",
     "sdk:test": "turbo run test --filter='./packages/sdk/*' --filter=./packages/react-native",
     "sdk:test:all": "pnpm sdk:turbo:all test",
     "sdk:turbo:all": "turbo run --filter='./packages/sdk/*' --filter=./packages/react-native --filter='./apps/*' --filter='./benchmarks/**' --filter='./internals/**' --filter='./examples/*' --filter=./scripts",
@@ -40,17 +40,16 @@
     "sdk:compat:styles:build": "turbo run build --filter=@inth/css-layer-preview --filter=@inth/tw3-css-test --filter=@inth/tw4-css-test --filter=@inth/no-tw-css-test --filter=@inth/tailwind-matrix-v3 --filter=@inth/tailwind-matrix-v4",
     "sdk:lint:repo": "pnpm --dir scripts run lint:repo",
     "sdk:pack": "node tools/ci/sdk-pack.ts",
-    "tegami:sdk": "node tools/ci/sdk-release.ts"
+    "tegami:sdk": "node tools/ci/sdk-release.ts",
+    "prepare": "node -e \"process.exit(process.env.CI ? 0 : 1)\" || vp config"
   },
   "devDependencies": {
-    "@oxlint/plugins": "1.81.0",
     "leadtype": "0.4.3",
-    "oxfmt": "0.66.0",
-    "oxlint": "1.81.0",
     "tegami": "1.3.4",
+    "tsrs": "catalog:",
     "turbo": "2.10.12",
     "ultracite": "7.10.8",
-    "vitest": "5.0.0"
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": "24.x"

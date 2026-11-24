@@ -322,7 +322,8 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 							:root-attrs="footerAttrs"
 							:group-attrs="
 								config.components?.['iab-banner']?.actionGroup as
-									object | undefined
+									| object
+									| undefined
 							"
 							@action="onAction"
 						/>

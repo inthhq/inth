@@ -8,7 +8,14 @@ import * as sentry10 from 'sentry-browser-v10';
 import * as sentry10Min from 'sentry-browser-v10-min';
 import * as sentry11 from 'sentry-browser-v11';
 import * as sentry11Min from 'sentry-browser-v11-min';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
 import { sentry } from './vendors/analytics/sentry';

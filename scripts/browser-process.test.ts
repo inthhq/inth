@@ -1,7 +1,7 @@
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 
-import { expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vite-plus/test';
 
 import {
 	runCommand,

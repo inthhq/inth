@@ -23,7 +23,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	assertAndroidSdkFloor,
@@ -185,7 +185,10 @@ describe.each(TEMPLATES)('the Expo %s template', (template) => {
 		);
 		expect(
 			gradleStatements(source).find((entry) => entry.text === MIN_SDK_LINE)
-		).toStrictEqual({ block: 'android/defaultConfig', text: MIN_SDK_LINE });
+		).toStrictEqual({
+			block: 'android/defaultConfig',
+			text: MIN_SDK_LINE,
+		});
 	});
 
 	it('fails on a compact block appended to the template', async () => {

@@ -3,9 +3,9 @@
  * runtime: an integration init lists loads from the registry's URL, and the
  * browser runs it only when its bytes match the hash.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
+import { commands } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { commands } from 'vitest/browser';
 
 import { InthProvider } from '../index';
 import {

@@ -1,7 +1,7 @@
 import { consentManifest } from '@inth/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
-	plugins: [consentManifest(), sveltekit()],
+	plugins: lazyPlugins(() => [consentManifest(), sveltekit()]),
 });

@@ -1,6 +1,6 @@
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import type { ConsentManagerOptions } from '../lib/types';

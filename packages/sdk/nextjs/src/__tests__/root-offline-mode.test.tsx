@@ -9,7 +9,7 @@
  * that nothing loaded, the second that offline init loads it.
  */
 import { useActiveUI, useModel } from '@inth/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../root';
@@ -48,7 +48,7 @@ describe('InthProvider offline mode', () => {
 
 		await expect
 			.element(getByTestId('policy'))
-			.toHaveTextContent('opt-in/banner');
+			.toMatchTextContent('opt-in/banner');
 		expect(offlineModule.loads).toBe(0);
 	});
 
@@ -65,7 +65,7 @@ describe('InthProvider offline mode', () => {
 
 		await expect
 			.element(getByTestId('policy'))
-			.toHaveTextContent('opt-in/banner');
+			.toMatchTextContent('opt-in/banner');
 		expect(offlineModule.loads).toBe(1);
 	});
 });

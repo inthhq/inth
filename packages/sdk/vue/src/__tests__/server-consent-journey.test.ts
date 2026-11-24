@@ -2,7 +2,7 @@
  * The consent journey a Nuxt server render starts. The browser runtime is
  * always `'page'`, so the render reports `'page'` too.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { resolveNuxtConsent } from '../runtime/server-consent';
 

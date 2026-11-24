@@ -20,7 +20,7 @@ import { bases, frameworks, sourceFolderByBase } from '../src/items';
 
 const appDir = path.resolve(import.meta.dirname, '..');
 const checkDir = path.join(appDir, 'dist/framework-check');
-const tsc = path.join(appDir, 'node_modules/.bin/tsc');
+const tsrs = path.join(appDir, 'node_modules/.bin/tsrs');
 
 rmSync(checkDir, { force: true, recursive: true });
 
@@ -66,7 +66,7 @@ for (const framework of frameworks.filter((name) => name !== 'react')) {
 			})
 		);
 
-		const result = spawnSync(tsc, ['-p', path.join(outDir, 'tsconfig.json')], {
+		const result = spawnSync(tsrs, ['-p', path.join(outDir, 'tsconfig.json')], {
 			stdio: 'inherit',
 		});
 		if (result.status !== 0) {

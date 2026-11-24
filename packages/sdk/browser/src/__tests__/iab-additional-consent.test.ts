@@ -1,6 +1,6 @@
 import { clearGVLCache } from '@inth/sdk-iab';
 import { iabDisplayTestId } from '@inth/sdk-iab/headless';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentClient } from '../types';

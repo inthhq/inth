@@ -13,7 +13,7 @@ import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { disabledPolicyResolution } from '../policy';
 

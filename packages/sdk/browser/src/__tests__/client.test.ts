@@ -4,7 +4,7 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createScriptTagConsentClient } from '../script-tag-client';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';

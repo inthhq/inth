@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentGate, Frame } from '~/components/consent-gate';
@@ -99,7 +99,7 @@ describe('ConsentGate default placeholder', () => {
 			expect(button).toBeInTheDocument();
 			// The category title comes from the translation bundle, not the
 			// raw category key.
-			expect(placeholder).toHaveTextContent('Marketing');
+			expect(placeholder).toMatchTextContent('Marketing');
 			expect(
 				container.querySelector('[data-testid="gate-content"]')
 			).toBeNull();

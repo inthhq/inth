@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	DEFER_ATTRIBUTE,

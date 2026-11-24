@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createDemoScripts } from '../internals/fixtures/sveltekit-demo/src/lib/consent-manager/demo-scripts';
 

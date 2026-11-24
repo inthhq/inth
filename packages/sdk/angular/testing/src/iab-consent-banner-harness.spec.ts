@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConsentManager } from '@inth/angular';
 import { IABConsentBanner, IABConsentDialog } from '@inth/angular/iab';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	bootHarnessTest,

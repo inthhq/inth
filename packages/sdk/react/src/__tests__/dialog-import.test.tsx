@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentDialog } from '~/aggregate-components';
@@ -35,7 +35,9 @@ test('warming the dialog loads the chunk the deferred root opens early', async (
 	warmDialogChunk();
 	await vi.waitFor(
 		() => expect(moduleRequested(EARLY_DIALOG_MODULE)).toBe(true),
-		{ timeout: 5000 }
+		{
+			timeout: 5000,
+		}
 	);
 	await screen.unmount();
 });

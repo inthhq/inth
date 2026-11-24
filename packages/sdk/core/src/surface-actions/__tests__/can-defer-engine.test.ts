@@ -3,7 +3,7 @@
  * The one rule every deferred root reads to decide whether the engine may
  * load after the page for a visitor the banner asks.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	matchedResolution,

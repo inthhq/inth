@@ -1,5 +1,5 @@
 /* eslint-disable require-await -- In-memory adapters implement asynchronous storage and HTTP contracts. */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { AgentAuth } from "../src/agent-auth.ts";
 import { agentEnvironment } from "../src/agent-environment.ts";

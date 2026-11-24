@@ -13,7 +13,14 @@
  * - updateScripts swaps config and unloads removed scripts
  * - dispose removes elements and disconnects subscription
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,
@@ -1074,8 +1081,8 @@ describe('script-loader: dispose', () => {
 				{
 					callbackOnly: true,
 					category: 'necessary',
-					id: 'stop',
 					[hookName]: () => loader.dispose(),
+					id: 'stop',
 					onDispose: cleanup,
 				},
 				{

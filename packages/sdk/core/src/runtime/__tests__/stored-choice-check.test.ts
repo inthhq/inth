@@ -5,7 +5,7 @@
  * returning visitor's scripts without the engine: set only when the
  * browser holds nothing newer than what the server read.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

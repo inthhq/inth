@@ -3,7 +3,7 @@ import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 it("explains how to build a missing development executable", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "inth-launcher-"));

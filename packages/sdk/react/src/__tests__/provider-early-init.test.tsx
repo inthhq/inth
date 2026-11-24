@@ -23,7 +23,7 @@ import { hosted } from '@inth/sdk/transports';
 import { StrictMode, Suspense, act, useContext, useEffect } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
@@ -120,12 +120,14 @@ test('sends /init once, before its children render, under StrictMode', async () 
 	// The provider renders before its children, so the request was out
 	// before any child rendered, let alone mounted.
 	expect(seen[0]).toBe(1);
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	expect(initCalls()).toHaveLength(1);
 
 	// The mounted kernel's init takes that response.
 	requests[0]?.respond('early');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('early');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('early');
 	expect(initCalls()).toHaveLength(1);
 	await view.unmount();
 });
@@ -159,7 +161,7 @@ test('the early /init and the save it leads to carry one journey', async () => {
 	});
 
 	requests[0]?.respond('early');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('early');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('early');
 	// The mounted kernel took the early response instead of asking again.
 	expect(initCalls()).toHaveLength(1);
 
@@ -267,9 +269,11 @@ test('a render that suspends before its first commit and its retry share one req
 	expect(initCalls()).toHaveLength(1);
 
 	resume();
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	requests[0]?.respond('shared');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('shared');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('shared');
 	expect(initCalls()).toHaveLength(1);
 });
 
@@ -311,10 +315,12 @@ test('a hosted() mode created inline shares one request across StrictMode and a 
 	expect(initCalls()).toHaveLength(1);
 
 	resume();
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	expect(initCalls()).toHaveLength(1);
 	requests[0]?.respond('shared');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('shared');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('shared');
 	expect(initCalls()).toHaveLength(1);
 	await view.unmount();
 });
@@ -356,7 +362,9 @@ test('a retry after the shared hosted() options changed sends its own request', 
 	shared.projectUrl = 'https://other.example/api/inth';
 	shared.headers['accept-language'] = 'fr';
 	resume();
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	await vi.waitFor(() => expect(initCalls()).toHaveLength(2));
 	expect(String(initCalls()[0]?.[0])).toContain('consent.example');
 	expect(requests[0]?.headers['accept-language']).toBe('de');
@@ -365,7 +373,7 @@ test('a retry after the shared hosted() options changed sends its own request', 
 
 	requests[0]?.respond('stale');
 	requests[1]?.respond('fresh');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('fresh');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('fresh');
 	await view.unmount();
 });
 
@@ -759,9 +767,11 @@ test('a retry with other overrides asks again rather than use the first answer',
 	await new Promise((resolve) => {
 		setTimeout(resolve, 50);
 	});
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
+	await expect
+		.element(view.getByTestId('policy'))
+		.toMatchTextContent('pending');
 	requests[1]?.respond('for-fr');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('for-fr');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('for-fr');
 });
 
 test('a retry that turns the journey on asks again, and its save matches that request', async () => {
@@ -808,7 +818,7 @@ test('a retry that turns the journey on asks again, and its save matches that re
 	expect(asked?.scope).toBe('page');
 	requests[0]?.respond('without');
 	requests[1]?.respond('with');
-	await expect.element(view.getByTestId('policy')).toHaveTextContent('with');
+	await expect.element(view.getByTestId('policy')).toMatchTextContent('with');
 
 	const saving = (kernel as ConsentKernel | null)?.commands.save('all');
 	await vi.waitFor(() => expect(requests).toHaveLength(3));

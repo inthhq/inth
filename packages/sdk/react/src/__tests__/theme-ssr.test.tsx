@@ -3,8 +3,15 @@ import { defaultDarkColors, defaultTheme } from '@inth/sdk/ui/theme';
 import { act } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, assert, beforeEach, expect, test, vi } from 'vitest';
-import { cdp } from 'vitest/browser';
+import {
+	afterEach,
+	assert,
+	beforeEach,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { cdp } from 'vite-plus/test/browser';
 
 import { ConsentBanner } from '../components/prompt';
 import { InthProvider, ConsentTheme } from '../index';

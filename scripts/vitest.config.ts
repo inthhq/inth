@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { transformWithOxc } from 'vite';
-import { defineConfig } from 'vitest/config';
+import { transformWithOxc, defineConfig } from 'vite-plus';
 
 import { sdkSource } from './sdk-sources';
 

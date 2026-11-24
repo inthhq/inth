@@ -6,7 +6,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { mount, unmount } from 'svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';

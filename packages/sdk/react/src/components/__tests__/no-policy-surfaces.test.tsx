@@ -1,6 +1,6 @@
 import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';

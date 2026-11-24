@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
-import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vite-plus/test';
 
 const require = createRequire(import.meta.url);
 const port = process.env.INTH_EXAMPLE_TEST_PORT ?? '43128';

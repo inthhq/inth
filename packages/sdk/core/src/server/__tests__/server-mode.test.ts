@@ -1,5 +1,5 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { hosted, manifest } from '../../modes';
 import {
@@ -127,7 +127,9 @@ describe('resolveServerMode: manifest()', () => {
 
 	test('the browser gets the mode without snapshot or source', () => {
 		expect(resolve({ mode: manifest({ snapshot: OWN }) }).browser.mode).toEqual(
-			{ type: 'manifest' }
+			{
+				type: 'manifest',
+			}
 		);
 		expect(
 			resolve({ mode: manifest({ geoUrl: '/geo', source: 'runtime' }) }).browser
@@ -183,7 +185,10 @@ describe('resolveServerMode: checks', () => {
 		expect(resolve({ mode }).browser.mode).toHaveProperty('snapshot', OWN);
 		expect(
 			resolve({ mode, snapshotShipsSeparately: true }).browser.mode
-		).toEqual({ resolve: 'browser', type: 'manifest' });
+		).toEqual({
+			resolve: 'browser',
+			type: 'manifest',
+		});
 	});
 
 	test('browserTransports leaves a transport without mode data to the browser', () => {

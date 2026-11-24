@@ -5,7 +5,7 @@
  * a red test rather than as a table that quietly lost rows.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { parseKotlinBench, parseSwiftBench } from '../measure/native';
 

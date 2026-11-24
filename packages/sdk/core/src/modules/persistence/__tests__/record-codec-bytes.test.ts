@@ -12,7 +12,7 @@
  * than assume it. Fingerprints use 64-character SHA-256 hex, matching
  * `@inth/sdk/schema` policy fingerprints.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import type { ChoiceBasis } from '../../../consent-record/types';

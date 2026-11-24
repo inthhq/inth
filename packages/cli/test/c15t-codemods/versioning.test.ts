@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 // eslint-disable-next-line unicorn/import-style -- Matches the native sources.
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import {
   detectInstalledC15tVersion,

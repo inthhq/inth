@@ -15,9 +15,8 @@ import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { playwright } from '@vitest/browser-playwright';
-import { transformWithEsbuild } from 'vite';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { transformWithEsbuild, defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 

@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { docsOriginForVersion } from './docs-origin';
 import {

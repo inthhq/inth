@@ -9,7 +9,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test } from 'vite-plus/test';
 
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';

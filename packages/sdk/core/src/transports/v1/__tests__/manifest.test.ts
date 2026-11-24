@@ -4,7 +4,7 @@
  */
 import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { InthApiError } from '../error';
 import { createV1ManifestTransport } from '../manifest';

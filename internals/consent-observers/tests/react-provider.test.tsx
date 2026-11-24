@@ -6,7 +6,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { act, Component, StrictMode, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { observeConsent } from '../src/observer';
 import {

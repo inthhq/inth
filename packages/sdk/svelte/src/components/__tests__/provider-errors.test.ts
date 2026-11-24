@@ -1,5 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';

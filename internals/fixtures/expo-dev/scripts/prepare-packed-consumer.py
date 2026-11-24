@@ -63,6 +63,16 @@ host.write_text(source.replace("'../../../react-native-bare/src/", "'../../react
 manifest = output / 'package.json'
 config = json.loads(manifest.read_text())
 config['dependencies']['@inth/react-native'] = 'file:vendor/inth-react-native.tgz'
+# Workspace-only tooling (`vite-plus`, `tsrs`) uses pnpm catalog: entries that
+# cannot resolve in a standalone app outside the monorepo.
+for section in ('dependencies', 'devDependencies'):
+    entries = config.get(section)
+    if isinstance(entries, dict):
+        config[section] = {
+            name: version
+            for name, version in entries.items()
+            if not (isinstance(version, str) and version.startswith('catalog:'))
+        }
 config['packageManager'] = 'bun@1.3.11'
 if cell is not None:
     config['dependencies'].update({'expo': cell['expo'], 'react': cell['react'], 'react-native': cell['reactNative'],

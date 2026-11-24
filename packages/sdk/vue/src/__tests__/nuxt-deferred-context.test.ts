@@ -16,8 +16,8 @@ import type { CompleteCommitInput } from '@inth/sdk/surface-actions/early-commit
 import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
 import { translations } from '@inth/sdk/translations/en';
 import { mount } from '@vue/test-utils';
-import { afterEach, describe, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';

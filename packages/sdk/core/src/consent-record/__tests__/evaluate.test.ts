@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { evaluateConsentRecord } from '../evaluate';
 import { normalizeLegacyConsentRecord } from '../normalize';
@@ -854,7 +854,10 @@ describe('evaluateConsentRecord: displayed choice scope', () => {
 		expect(expired.nextDeadline).toBe(NOW + DAY);
 		expect(
 			evaluateConsentRecord({ ...input, now: NOW + DAY }).promptRequirement
-		).toEqual({ kind: 'choice', reason: 'expired' });
+		).toEqual({
+			kind: 'choice',
+			reason: 'expired',
+		});
 	});
 
 	it('does not schedule irrelevant hidden opt-out grant expiry', () => {
@@ -921,7 +924,10 @@ describe('evaluateConsentRecord: empty choice scope', () => {
 		expect(
 			evaluateConsentRecord({ ...input, now: NOW - 1000 + DAY })
 				.promptRequirement
-		).toEqual({ kind: 'choice', reason: 'expired' });
+		).toEqual({
+			kind: 'choice',
+			reason: 'expired',
+		});
 	});
 
 	it('asks again when the policy changes', () => {

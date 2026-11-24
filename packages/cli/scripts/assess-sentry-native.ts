@@ -93,7 +93,7 @@ await writeFile(
   })
 );
 run(process.execPath, [
-  require.resolve("typescript/bin/tsc"),
+  path.join(path.dirname(require.resolve("tsrs/package.json")), "bin/tsrs"),
   "-p",
   path.join(experiment, "tsconfig.json"),
 ]);

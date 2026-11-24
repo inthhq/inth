@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { BANNER_SHEETS } from '../../src/lib/core/consent-styles';
 import { DIALOG_SHEETS } from './dialog-sheets';

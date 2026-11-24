@@ -8,7 +8,7 @@ import {
 	defaultRuntimeModules,
 	streamPrefetch,
 } from '@inth/sdk/runtime';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
 import { readRecorded } from '../streamed-surface';

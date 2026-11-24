@@ -1,5 +1,5 @@
 import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk-schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { CONSENT_CATEGORIES } from '../../consent-record/types';
 import {

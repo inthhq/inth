@@ -5,7 +5,7 @@
  * @vitest-environment jsdom
  */
 import { mount } from '@vue/test-utils';
-import { afterAll, expect, test, vi } from 'vitest';
+import { afterAll, expect, test, vi } from 'vite-plus/test';
 import { defineComponent, nextTick } from 'vue';
 import type { ComputedRef } from 'vue';
 

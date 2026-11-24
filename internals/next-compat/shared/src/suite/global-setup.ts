@@ -7,7 +7,7 @@ import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import type { TestProject } from 'vitest/node';
+import type { TestProject } from 'vite-plus/test/node';
 
 import { startFixtureServer } from '../fixture/standalone';
 import type { FixtureServer } from '../fixture/standalone';

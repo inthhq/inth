@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { applyAndroidManifest } from '../android';
 import { ANDROID_IAB_META_KEYS, IOS_IAB_PLIST_KEYS } from '../constants';

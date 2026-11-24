@@ -1,7 +1,7 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { mount } from '@vue/test-utils';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h, nextTick, provide, ref } from 'vue';
 import type { PropType, VNode } from 'vue';
 

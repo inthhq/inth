@@ -4,7 +4,7 @@
  */
 
 import { createConsentClient } from '@inth/react-native';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { ensureReactGlobalForDist } from '../support/ensure-react-global';
 import { installBenchNativeModule } from '../support/fake-native';

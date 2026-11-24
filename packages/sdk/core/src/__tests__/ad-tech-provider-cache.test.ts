@@ -4,7 +4,7 @@
  * list endpoint gives up after the request deadline.
  */
 import { AD_TECH_PROVIDER_FETCH_TIMEOUT_MS } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	clearAdTechProviderCache,

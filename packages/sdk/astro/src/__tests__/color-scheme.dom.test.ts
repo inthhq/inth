@@ -7,7 +7,14 @@
  * media-query listener.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';

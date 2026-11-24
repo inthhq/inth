@@ -14,7 +14,7 @@ import { CONSENT_CHUNK_GROUP } from '@inth/sdk/build';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { build } from 'vite';
 import type { Rollup } from 'vite';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { consentManifest } from '../vite';
 

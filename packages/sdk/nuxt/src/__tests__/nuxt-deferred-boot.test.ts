@@ -9,7 +9,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { canDeferEngine } from '../../../core/src/surface-actions/defer-engine';
 import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';

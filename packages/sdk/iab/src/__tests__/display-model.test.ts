@@ -1,6 +1,6 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import type { GlobalVendorList } from '@inth/sdk-core';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	IAB_BANNER_MAX_DISPLAY_ITEMS,

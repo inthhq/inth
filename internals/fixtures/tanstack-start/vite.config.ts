@@ -2,8 +2,8 @@ import { fileURLToPath } from 'node:url';
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
-import type { Plugin } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
+import type { Plugin } from 'vite-plus';
 
 import { regionPreviewHeaders } from './scripts/region-preview.mjs';
 
@@ -75,13 +75,13 @@ export default defineConfig(() =>
 	({
 		// Only the default `VITE_` prefix reaches `import.meta.env`. Server-only
 		// `INTH_*` secrets stay in `process.env` and never enter a bundle.
-		plugins: [
+		plugins: lazyPlugins(() => [
 			regionPreview(),
 			rootVariant(),
 			tanstackStart(
 				rendering === 'static' ? { prerender: { enabled: true } } : {}
 			),
 			viteReact(),
-		],
+		]),
 	})
 );

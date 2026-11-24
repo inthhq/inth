@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 const runner = new URL('./ci-android-instrument.py', import.meta.url).pathname;
 

@@ -3,13 +3,13 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"bench": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import tsx micro/*.bench.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../.benchmarks/head/micro node --import tsx micro/*.bench.ts",
-		"bench:has": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import tsx micro/has-condition.bench.ts",
-		"bench:nightly": "BENCH_OUTPUT_DIR=../.benchmarks/nightly/micro node --import tsx micro/*.bench.ts",
-		"bench:script-loader": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import tsx micro/script-loader.bench.ts",
-		"bench:store": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import tsx micro/store.bench.ts",
-		"bench:translations": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import tsx micro/translations.bench.ts"
+		"bench": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import vite-plus/register micro/*.bench.ts",
+		"bench:ci": "BENCH_OUTPUT_DIR=../.benchmarks/head/micro node --import vite-plus/register micro/*.bench.ts",
+		"bench:has": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import vite-plus/register micro/has-condition.bench.ts",
+		"bench:nightly": "BENCH_OUTPUT_DIR=../.benchmarks/nightly/micro node --import vite-plus/register micro/*.bench.ts",
+		"bench:script-loader": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import vite-plus/register micro/script-loader.bench.ts",
+		"bench:store": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import vite-plus/register micro/store.bench.ts",
+		"bench:translations": "BENCH_OUTPUT_DIR=../.benchmarks/current/micro node --import vite-plus/register micro/translations.bench.ts"
 	},
 	"dependencies": {
 		"@inth/benchmarking": "workspace:*",
@@ -20,7 +20,7 @@
 	"devDependencies": {
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
-		"playwright": "1.61.1",
+		"playwright": "catalog:",
 		"react": "19.2.7",
 		"tsx": "4.23.0",
 		"typescript": "6.0.3"

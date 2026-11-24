@@ -7,7 +7,7 @@
  * held the first paint of a page with a banner from about 450 ms to
  * 1,070 ms.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ClientManifestChunk } from '../prefetch';
 import {

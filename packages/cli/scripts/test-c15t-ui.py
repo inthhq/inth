@@ -37,7 +37,6 @@ def run(conflict=False, cancel=False):
         child = subprocess.Popen(
             [sys.argv[1], "c15t", "--organization", "org_acme", "--skip-install"],
             cwd=directory, stdin=slave, stdout=slave, stderr=slave,
-            # No coding agents on PATH, so the setup prompt is recommended first.
             env=dict(os.environ, PATH="/usr/bin:/bin", TERM="xterm-256color",
                      NO_COLOR="1", INTH_TELEMETRY_DISABLED="1",
                      INTH_TEST_C15T_INTERACTIVE="1"),
@@ -46,8 +45,7 @@ def run(conflict=False, cancel=False):
         try:
             read_until(master, child, output, b'Create a new project named "site"')
             os.write(master, b"\r")
-            read_until(master, child, output, b"How do you want to set up c15t")
-            os.write(master, b"\x1b[B\r")
+            # --skip-install implies scaffold, so no setup picker appears.
             if not conflict:
                 # Files are confirmed, and the region chosen, before creation.
                 read_until(master, child, output, b"Write these files?")

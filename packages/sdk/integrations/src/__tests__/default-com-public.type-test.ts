@@ -3,7 +3,7 @@ import type {
 	DefaultComSchedulerEventMap,
 	DefaultComSubmitFormResult,
 } from '@inth/integrations/default-com';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 // The package's check-types command compiles this consumer without executing it.
 declare const target: HTMLElement;

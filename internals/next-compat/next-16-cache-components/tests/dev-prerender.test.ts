@@ -6,7 +6,14 @@ import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { afterAll, beforeAll, describe, expect, inject, test } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	inject,
+	test,
+} from 'vite-plus/test';
 
 const HOST = '127.0.0.1';
 const PRERENDER_ERROR =

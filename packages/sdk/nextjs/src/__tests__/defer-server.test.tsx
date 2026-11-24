@@ -3,7 +3,7 @@
  * banner's HTML is what paints at first contentful paint.
  */
 import { renderToReadableStream } from 'react-dom/server';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { DEFER_CAPTURE_SCRIPT, deferConsent } from '../defer';
 

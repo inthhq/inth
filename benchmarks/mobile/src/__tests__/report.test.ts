@@ -4,7 +4,7 @@
  * or an empty run that looks green.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { buildCheck, diffRows, formatValue, verdict } from '../report';
 import { makeRow } from '../rows';

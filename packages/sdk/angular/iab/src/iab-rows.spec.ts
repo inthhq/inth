@@ -20,7 +20,7 @@ import {
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
 import { resolveIABCopy } from '@inth/sdk/surface-state';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';

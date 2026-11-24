@@ -4,7 +4,7 @@
  *
  * @vitest-environment jsdom
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { hosted } from '../modes';
 import { createConsentRuntime } from '../runtime';
@@ -140,7 +140,10 @@ describe('testing()', () => {
 	test('carries its policy as data, so a config can serialize it', () => {
 		expect(
 			JSON.parse(JSON.stringify(testing({ policy: NOTICE_RULE })))
-		).toEqual({ policy: NOTICE_RULE, type: 'testing' });
+		).toEqual({
+			policy: NOTICE_RULE,
+			type: 'testing',
+		});
 	});
 
 	test('throws when the transport is built in a production build', () => {

@@ -59,12 +59,6 @@ const config: StorybookConfig = {
 	stories: ['../src/**/*.stories.ts'],
 	viteFinal: (configLocal) =>
 		mergeConfig(configLocal, {
-			// Vite 8 minifies CSS with Lightning CSS, which rewrites the tokens'
-			// `hsl()` colors as hex. Chromium then resolves the `color-mix()`
-			// rules built on them to slightly different values than the other
-			// Storybooks (Vite 7) serve, and the parity runner compares
-			// computed colors exactly.
-			build: { cssMinify: false },
 			plugins: [scriptConditionsOnly()],
 			resolve: {
 				alias: [

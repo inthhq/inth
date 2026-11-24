@@ -814,7 +814,7 @@ export const runInitScript = function runInitScript(
 			answered = true;
 		};
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-		void pending.then(markAnswered, markAnswered);
+		void pending.catch(() => undefined).then(markAnswered);
 		// A returning visitor: `inth.records.js`, the record reader, loads at
 		// once. The choice they stored, evaluated against the policy the last
 		// `/v1/consent/init` sent, starts its scripts as soon as it has run, unless

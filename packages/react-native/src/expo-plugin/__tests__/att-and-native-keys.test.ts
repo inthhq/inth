@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { applyParamsOnConfig } from '../with-inth';
 import {

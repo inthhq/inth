@@ -1,5 +1,5 @@
 import { createConsentKernel } from '@inth/sdk/engine';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { registerDevToolsBridge } from '../runtime/devtools/bridge';
 import { DEVTOOLS_BRIDGE_KEY } from '../runtime/devtools/constants';
@@ -142,7 +142,9 @@ describe('Nuxt DevTools tab bridge', () => {
 		const unregister = registerDevToolsBridge(window, { kernel });
 		const bridge = (window as unknown as Record<string, unknown>)[
 			DEVTOOLS_BRIDGE_KEY
-		] as { mount: (container: HTMLElement) => { element: HTMLElement | null } };
+		] as {
+			mount: (container: HTMLElement) => { element: HTMLElement | null };
+		};
 		const container = document.createElement('div');
 		document.body.append(container);
 		bridge.mount(container);
@@ -168,7 +170,9 @@ describe('Nuxt DevTools tab bridge', () => {
 		cleanups.push(registerDevToolsBridge(window, { kernel }));
 		const bridge = (window as unknown as Record<string, unknown>)[
 			DEVTOOLS_BRIDGE_KEY
-		] as { mount: (container: HTMLElement) => unknown };
+		] as {
+			mount: (container: HTMLElement) => unknown;
+		};
 		const frame = document.createElement('iframe');
 		document.body.append(frame);
 		const stale = frame.contentDocument?.body;

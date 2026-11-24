@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDevTools } from '~/devtools';

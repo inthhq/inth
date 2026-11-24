@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import matrix from './mobile-compatibility.json';
 
@@ -79,6 +79,11 @@ describe('Expo vendor journey range', () => {
 				expect(consumer.dependencies[vendor]).toBe(
 					fixture.dependencies[vendor]
 				);
+			}
+			// Workspace catalog: devDependencies (vite-plus, tsrs) cannot resolve in
+			// a standalone app outside the monorepo.
+			for (const version of Object.values(consumer.devDependencies ?? {})) {
+				expect(String(version)).not.toMatch(/^catalog:/u);
 			}
 			// The E2E host now imports the copy of the bare fixture's vendor code.
 			expect(

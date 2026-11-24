@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import { saveResourceDownload } from "../src/resource-download.ts";
@@ -19,44 +19,49 @@ interface FileIdentityFault {
   cancel?: () => void;
 }
 
-const fault = vi.hoisted<FileIdentityFault>(() => ({
-  ids: new Map<string, bigint>(),
-  input: "",
-  output: "",
-  replacement: "",
-}));
+const { fault, statWithIdentity } = vi.hoisted(() => {
+  const state: FileIdentityFault = {
+    ids: new Map<string, bigint>(),
+    input: "",
+    output: "",
+    replacement: "",
+  };
+  return {
+    fault: state,
+    statWithIdentity: (info: fs.Stats | fs.BigIntStats, bigint: boolean) => {
+      if (info.isFile()) {
+        const key = `${info.dev}:${info.ino}`;
+        let identity = state.ids.get(key);
+        if (identity === undefined) {
+          identity = 9_007_199_254_740_992n + BigInt(state.ids.size);
+          state.ids.set(key, identity);
+        }
+        Object.defineProperty(info, "ino", {
+          value: bigint ? identity : Number(identity),
+        });
+        for (const name of ["mtimeMs", "ctimeMs"] as const) {
+          Object.defineProperty(info, name, {
+            value: bigint ? 0n : 0,
+          });
+        }
+      }
+      return info;
+    },
+  };
+});
 
 // eslint-disable-next-line anti-slop/no-module-mocking -- Simulate distinct 64-bit file IDs with identical numeric Stats while exercising real files, opens, reads and writes.
 vi.mock("node:fs", async (importOriginal) => {
   const actual = await importOriginal<typeof fs>();
-  const stat = (info: fs.Stats | fs.BigIntStats, bigint: boolean) => {
-    if (info.isFile()) {
-      const key = `${info.dev}:${info.ino}`;
-      let identity = fault.ids.get(key);
-      if (identity === undefined) {
-        identity = 9_007_199_254_740_992n + BigInt(fault.ids.size);
-        fault.ids.set(key, identity);
-      }
-      Object.defineProperty(info, "ino", {
-        value: bigint ? identity : Number(identity),
-      });
-      for (const name of ["mtimeMs", "ctimeMs"] as const) {
-        Object.defineProperty(info, name, {
-          value: bigint ? 0n : 0,
-        });
-      }
-    }
-    return info;
-  };
   return {
     ...actual,
     fstatSync: new Proxy(actual.fstatSync, {
       apply: (target, _receiver, args) =>
-        stat(target(args[0], args[1]), args[1]?.bigint === true),
+        statWithIdentity(target(args[0], args[1]), args[1]?.bigint === true),
     }),
     lstatSync: new Proxy(actual.lstatSync, {
       apply: (target, _receiver, args) =>
-        stat(target(args[0], args[1]), args[1]?.bigint === true),
+        statWithIdentity(target(args[0], args[1]), args[1]?.bigint === true),
     }),
     openSync: (file: fs.PathLike, flags: fs.OpenMode, mode?: fs.Mode) => {
       if (file === fault.input) {
@@ -68,7 +73,7 @@ vi.mock("node:fs", async (importOriginal) => {
     },
     statSync: new Proxy(actual.statSync, {
       apply: (target, _receiver, args) =>
-        stat(target(args[0], args[1]), args[1]?.bigint === true),
+        statWithIdentity(target(args[0], args[1]), args[1]?.bigint === true),
     }),
     writeSync: new Proxy(actual.writeSync, {
       apply(target, _receiver, args) {

@@ -1,6 +1,6 @@
 import type { ConsentMode } from '@inth/sdk/modes';
 import { createServerFn } from '@tanstack/react-start';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import { createConsentStateHandler, resolveConsent } from '../server';
 import type { ConsentState, ResolveConsentOptions } from '../server';

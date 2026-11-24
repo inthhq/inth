@@ -4,7 +4,7 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
  * The `hosted()` transport factory and the data factories from
  * `@inth/sdk/modes`.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import type { SavePayload } from '../index';
 import * as modes from '../modes';
@@ -165,10 +165,12 @@ describe('hosted()', () => {
 				...options,
 			})(context);
 			// No init has resolved a decision: an asserting transport refuses.
-			return await transport.save?.(payload).then(
-				() => 'saved',
-				() => 'refused'
-			);
+			try {
+				await transport.save?.(payload);
+				return 'saved';
+			} catch {
+				return 'refused';
+			}
 		};
 
 		expect(await save({})).toBe('saved');

@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { subjectChoiceWireSchema } from './choice-wire';
 import { subjectCookieBannerInputSchema } from './post';

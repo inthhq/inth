@@ -14,8 +14,8 @@ import {
 	useState,
 	useSyncExternalStore,
 } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import {
 	EARLY_TAP_STYLE_ID,
@@ -539,7 +539,9 @@ test('a reject tapped before hydration is replayed through the commit path', asy
 	expect(streamed.doc.querySelector('main')?.dataset.activeUi).toBe('none');
 	expect(
 		JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
-	).toMatchObject({ marketing: { value: false } });
+	).toMatchObject({
+		marketing: { value: false },
+	});
 	expect(ran('page')).toBe(0);
 
 	await act(() => {
@@ -705,7 +707,9 @@ test('customize hides the banner and opens the dialog without the engine; its sa
 	await vi.waitFor(() => {
 		expect(
 			JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
-		).toMatchObject({ marketing: { value: false } });
+		).toMatchObject({
+			marketing: { value: false },
+		});
 	});
 	expect(transportSave).not.toHaveBeenCalled();
 
@@ -884,7 +888,9 @@ test("a reject takes effect in the tap's task and starts nothing", async () => {
 	await vi.waitFor(() => {
 		expect(
 			JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
-		).toMatchObject({ marketing: { value: false } });
+		).toMatchObject({
+			marketing: { value: false },
+		});
 	});
 	await act(() => {
 		engine.release();
@@ -1266,7 +1272,9 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	// Heard from the engine alone, which ends on the recorded choice.
 	expect(
 		onPermissionsChanged.mock.lastCall?.[0].snapshot.effectivePermissions
-	).toMatchObject({ marketing: true });
+	).toMatchObject({
+		marketing: true,
+	});
 	expect(main?.dataset.marketing).toBe('true');
 	expect(streamed.doc.querySelector(BANNER)).toBeNull();
 	expect(hydrated.recoverableErrors).toEqual([]);

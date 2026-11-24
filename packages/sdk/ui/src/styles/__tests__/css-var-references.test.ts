@@ -16,7 +16,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const SRC_DIR = join(__dirname, '..');
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');

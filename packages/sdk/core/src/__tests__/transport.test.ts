@@ -2,7 +2,7 @@
  * The kernel's `commands.init`, `commands.save` and `commands.identify`
  * against a stub transport.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { InitResponse, KernelConfig, KernelTransport } from '../index';
 import { createKernel } from '../kernel';

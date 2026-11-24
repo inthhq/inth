@@ -7,7 +7,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import { translations } from '@inth/sdk-translations/en';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createGlobal } from '../global';
 import { autoInit, installGlobal } from '../global-base';

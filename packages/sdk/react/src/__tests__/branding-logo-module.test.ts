@@ -4,7 +4,7 @@
  * next to the logos ships with them even when only the dialog trigger uses
  * it. The trigger icons live in their own module, imported by the trigger.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
 const rawSources = import.meta.glob(

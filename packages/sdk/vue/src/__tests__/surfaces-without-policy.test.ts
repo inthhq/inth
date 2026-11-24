@@ -6,7 +6,7 @@ import {
 } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import type { ComponentPublicInstance } from 'vue';
 import { defineComponent, h } from 'vue';
 

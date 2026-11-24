@@ -3,9 +3,9 @@
  * so a purpose row counts and lists them with its vendors.
  */
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 

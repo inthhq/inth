@@ -3,7 +3,7 @@ import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { createRef } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToReadableStream } from 'react-dom/server';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
@@ -104,7 +104,9 @@ test('the IAB banner loads none of the dialog until Customize opens it', async (
 	// full browser suite is compiling modules with coverage.
 	await vi.waitFor(
 		() => expect(byTestId('iab-consent-dialog-card')).not.toBeNull(),
-		{ timeout: 5000 }
+		{
+			timeout: 5000,
+		}
 	);
 	expect(dialogModuleLoaded()).toBe(true);
 	await screen.unmount();

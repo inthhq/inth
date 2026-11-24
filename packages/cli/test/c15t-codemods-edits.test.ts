@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { SyntaxKind } from "../src/native/c15t-codemods/syntax/index.ts";
 import { parseSourceFile } from "../src/native/c15t-codemods/syntax/parser.ts";

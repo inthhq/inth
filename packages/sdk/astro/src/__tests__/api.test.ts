@@ -8,7 +8,7 @@ import {
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';

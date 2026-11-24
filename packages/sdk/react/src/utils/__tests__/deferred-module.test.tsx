@@ -2,7 +2,7 @@ import { Component, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToReadableStream } from 'react-dom/server';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { createDeferredModule } from '../deferred-module';
 

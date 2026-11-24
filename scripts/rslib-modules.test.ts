@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { BuildResult, RslibConfig, RsbuildPlugin } from '@rslib/core';
 import { createRslib } from '@rslib/core';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import coreConfig from '../packages/sdk/core/rslib.config';
 import schemaConfig from '../packages/sdk/schema/rslib.config';

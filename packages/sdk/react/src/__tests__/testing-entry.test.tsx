@@ -3,7 +3,7 @@
  * and the choice work with no backend, and the location override picks the
  * policy.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentBanner, InthProvider, useConsent } from '../index';
@@ -38,7 +38,7 @@ test('shows the opt-in banner for an EEA country and records the choice without 
 
 	await expect
 		.element(screen.getByTestId('marketing'))
-		.toHaveTextContent('true');
+		.toMatchTextContent('true');
 	expect(fetchSpy).not.toHaveBeenCalled();
 });
 
@@ -58,7 +58,7 @@ test('shows no banner for a country without a privacy rule', async () => {
 
 	await expect
 		.element(screen.getByTestId('marketing'))
-		.toHaveTextContent('true');
+		.toMatchTextContent('true');
 	await expect
 		.element(screen.getByTestId('consent-banner-root'))
 		.not.toBeInTheDocument();

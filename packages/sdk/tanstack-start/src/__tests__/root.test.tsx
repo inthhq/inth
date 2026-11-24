@@ -16,7 +16,7 @@ import {
 	useVendorAllowed,
 } from '@inth/react';
 import { ConsentGPP } from '@inth/react/gpp';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 // The provider imports this module the first time clearOnRevocation is set.
 // Vite compiles it on that first request, which can outlast the test's 1 s
@@ -46,7 +46,7 @@ describe('InthProvider: state is honored', () => {
 			</InthProvider>
 		);
 
-		await expect.element(getByTestId('status')).toHaveTextContent('true');
+		await expect.element(getByTestId('status')).toMatchTextContent('true');
 	});
 
 	test('initial overrides from state reach useOverrides', async () => {
@@ -71,7 +71,7 @@ describe('InthProvider: state is honored', () => {
 			</InthProvider>
 		);
 
-		await expect.element(getByTestId('country')).toHaveTextContent('DE/de');
+		await expect.element(getByTestId('country')).toMatchTextContent('DE/de');
 	});
 });
 
@@ -103,8 +103,8 @@ describe('InthProvider: kernel is per-mount', () => {
 			</>
 		);
 
-		await expect.element(getByTestId('first')).toHaveTextContent('true');
-		await expect.element(getByTestId('second')).toHaveTextContent('false');
+		await expect.element(getByTestId('first')).toMatchTextContent('true');
+		await expect.element(getByTestId('second')).toMatchTextContent('false');
 	});
 });
 
@@ -252,7 +252,7 @@ test('forwards vendors so the preference center lists them and gates their scrip
 	);
 	await expect
 		.element(getByTestId('probe'))
-		.toHaveTextContent('{"allowed":true,"ids":["meta-pixel"]}');
+		.toMatchTextContent('{"allowed":true,"ids":["meta-pixel"]}');
 });
 
 test('ConsentGPP mounts __gpp inside InthProvider, and unmount removes it', async () => {

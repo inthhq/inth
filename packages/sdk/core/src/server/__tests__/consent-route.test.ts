@@ -15,7 +15,14 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
@@ -1493,7 +1500,9 @@ describe('proxy', () => {
 		// A session report comes from a server only; a browser cannot send one.
 		const report = await handle(
 			request('/api/inth/v1/consent/sessions', { method: 'POST' }),
-			{ path: 'v1/consent/sessions' }
+			{
+				path: 'v1/consent/sessions',
+			}
 		);
 		expect(report.status).toBe(404);
 		const other = await handle(
@@ -1509,7 +1518,9 @@ describe('proxy', () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: { paths: ['status'] } })(
 			request('/api/inth/status'),
-			{ route: 'proxy' }
+			{
+				route: 'proxy',
+			}
 		);
 		expect(calledURLs(fetch)).toEqual([`${BACKEND}/status`]);
 	});

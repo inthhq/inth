@@ -5,7 +5,7 @@
  * overlapping act() work behind that starves a trailing render of its
  * effects.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider, ConsentTheme } from '../index';

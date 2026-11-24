@@ -2,7 +2,7 @@ import { deferInitGvl } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
-import { expect, onTestFinished, test, vi } from 'vitest';
+import { expect, onTestFinished, test, vi } from 'vite-plus/test';
 // The IAB components load this package lazily before they fetch the vendor
 // list. Importing it here makes Vite transform it while it collects this file.
 // Otherwise the first test transforms it inside `vi.waitFor`'s one-second

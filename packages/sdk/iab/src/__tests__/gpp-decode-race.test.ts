@@ -5,7 +5,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk-schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import type { GPPEventData, GPPPingData } from '../gpp';
 import { createGPPRuntime } from '../gpp/create-gpp';

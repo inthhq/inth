@@ -7,13 +7,15 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 const PACKAGE_ROOT = resolve(import.meta.dirname, '../..');
 
 const manifest = JSON.parse(
 	readFileSync(resolve(PACKAGE_ROOT, 'package.json'), 'utf8')
-) as { exports: Record<string, unknown> };
+) as {
+	exports: Record<string, unknown>;
+};
 
 const stylesheetTargets = Object.values(manifest.exports).filter(
 	(target): target is string =>

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	createCallbackInfo,
@@ -304,7 +304,10 @@ describe('posthog', () => {
 				queuedInitOptions(
 					posthog({ features: { [feature]: true }, id: 'phc_on' })
 				)
-			).toEqual({ ...base, ...whenOn });
+			).toEqual({
+				...base,
+				...whenOn,
+			});
 		});
 
 		it('leaves the init options unchanged when no switch is set', () => {

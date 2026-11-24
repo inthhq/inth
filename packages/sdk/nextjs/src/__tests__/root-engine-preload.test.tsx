@@ -7,7 +7,7 @@
  * page's code sends a request.
  */
 import { renderToReadableStream } from 'react-dom/server';
-import { beforeAll, expect, test } from 'vitest';
+import { beforeAll, expect, test } from 'vite-plus/test';
 
 import {
 	choiceRecords,

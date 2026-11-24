@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';

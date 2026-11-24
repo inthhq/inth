@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import type { PingData } from '@inth/sdk-core';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { createCMPApi } from '../tcf/cmp-api';
 import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults';

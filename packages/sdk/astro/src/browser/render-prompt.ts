@@ -265,13 +265,13 @@ export const buildPrompt = function buildPrompt(
 	const root = element(
 		'div',
 		{
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			class: model.classes.root,
 			'data-blocking': model.blocking ? 'true' : undefined,
 			'data-model': model.model,
 			'data-position': model.position,
 			'data-prompt': model.prompt,
 			'data-testid': 'consent-banner-root',
-			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,

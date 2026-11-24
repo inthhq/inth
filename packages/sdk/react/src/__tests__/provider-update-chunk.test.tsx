@@ -4,7 +4,7 @@
  * it holds the same values, the rerender should load nothing. Its own file,
  * because a module loads once per test file.
  */
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../provider';

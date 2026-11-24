@@ -5,7 +5,7 @@
  * a consent client.
  */
 
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { reportBridgeDrift } from '../client';
 

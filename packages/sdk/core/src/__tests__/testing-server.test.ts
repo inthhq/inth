@@ -5,7 +5,7 @@
  *
  * @vitest-environment node
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { testing } from '../testing';
 

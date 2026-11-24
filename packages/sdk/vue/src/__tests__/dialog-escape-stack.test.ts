@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { defineComponent, h, nextTick, ref } from 'vue';
 import type { Ref } from 'vue';
 

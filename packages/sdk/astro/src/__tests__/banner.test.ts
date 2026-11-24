@@ -2,7 +2,7 @@ import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { promptClassNames } from '../banner/class-names';
 import { resolvePromptModel } from '../banner/prompt-model';
@@ -417,7 +417,9 @@ describe('<ConsentBanner />', () => {
 
 		const german = await render(
 			await buildLocals(options, { 'accept-language': 'de' }),
-			{ legalLinks: ['privacyPolicy'] }
+			{
+				legalLinks: ['privacyPolicy'],
+			}
 		);
 		expect(german).toContain('>Datenschutzerklärung</a>');
 	});

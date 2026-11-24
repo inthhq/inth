@@ -3,7 +3,7 @@
  * rendering no banner. A visitor who sees the banner keeps its chunks at
  * their priority.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	QUIET_BANNER_CONTEXT_KEY,

@@ -29,7 +29,7 @@ import { dirname, join } from 'node:path';
 
 import { IOSConfig } from 'expo/config-plugins';
 import type { ExportedConfig, XcodeProject } from 'expo/config-plugins';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { resolveParams } from '../params';
 import {

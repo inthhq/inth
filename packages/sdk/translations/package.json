@@ -310,13 +310,13 @@
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"check-types": "tsc --noEmit",
+		"check-types": "tsrs --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
 		"generate:i18n": "lingo.dev i18n",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
-		"test": "vitest run",
-		"test:watch": "vitest"
+		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+		"test": "vp test run",
+		"test:watch": "vp test"
 	},
 	"devDependencies": {
 		"@inth/typescript-config": "workspace:*",
@@ -324,16 +324,15 @@
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
-		"@vitest/browser": "4.1.10",
-		"@vitest/coverage-istanbul": "4.1.10",
+		"@vitest/coverage-istanbul": "catalog:",
 		"jsdom": "25.0.1",
 		"lingo.dev": "^0.137.8",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
 		"react": "19.2.7",
+		"tsrs": "catalog:",
 		"typescript": "7.0.2",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
+		"vite": "catalog:",
+		"vite-plus": "catalog:",
+		"vitest": "catalog:"
 	},
 	"browserslist": [
 		">0.2%",

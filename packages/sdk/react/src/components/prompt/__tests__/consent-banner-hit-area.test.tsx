@@ -6,7 +6,7 @@
  * the banner does not catch lands on it.
  */
 import type { ComponentProps, ReactNode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';

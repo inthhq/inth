@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialogTrigger } from '../../../consent-dialog-trigger/src/consent-dialog-trigger';
 import { ConsentDialogPanel } from '../../../consent-dialog/src/consent-dialog-panel';

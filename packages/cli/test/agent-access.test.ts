@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
@@ -108,7 +108,9 @@ describe("agent access requests", () => {
       vi.stubGlobal("fetch", fetcher);
       await expect(
         run([...args, "--auth", "agent", "--json"], signal())
-      ).rejects.toMatchObject({ code: "usage_error" });
+      ).rejects.toMatchObject({
+        code: "usage_error",
+      });
       expect(access).not.toHaveBeenCalled();
       expect(fetcher).not.toHaveBeenCalled();
     }
@@ -121,7 +123,9 @@ describe("agent access requests", () => {
       vi.stubGlobal("fetch", fetcher);
       await expect(
         run([...example.args, "--json"], signal())
-      ).rejects.toMatchObject({ code: "usage_error" });
+      ).rejects.toMatchObject({
+        code: "usage_error",
+      });
       expect(fetcher).not.toHaveBeenCalled();
     }
   );
@@ -226,7 +230,9 @@ describe("approvals, downloads, and readable help", () => {
     expect(select).toHaveBeenCalledTimes(1);
     await expect(
       approveResource(options, { interactive: false, select })
-    ).rejects.toMatchObject({ code: "interaction_required" });
+    ).rejects.toMatchObject({
+      code: "interaction_required",
+    });
     select.mockResolvedValue("cancel");
     await expect(approveResource(options, ui)).rejects.toMatchObject({
       code: "cancelled",

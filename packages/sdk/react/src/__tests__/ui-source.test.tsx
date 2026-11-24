@@ -1,7 +1,7 @@
 import type { SavePayload } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { ConsentWidget } from '../components/preferences';
 import { InthProvider } from '../provider';

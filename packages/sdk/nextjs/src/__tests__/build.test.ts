@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { withConsentManifest } from '../build';
 import { defineConsentConfig } from '../config';
@@ -195,7 +195,9 @@ describe('Next.js build-time manifest', () => {
 			await writeFile(join(root, file), 'export default {};\n');
 			const config = await withConsentManifest({}, optionsFor())(
 				'phase-development-server',
-				{ defaultConfig: {} }
+				{
+					defaultConfig: {},
+				}
 			);
 
 			expect(config.turbopack?.resolveAlias?.['@inth/nextjs/user-config']).toBe(
@@ -217,7 +219,9 @@ describe('Next.js build-time manifest', () => {
 		await createRoot();
 		const config = await withConsentManifest({}, optionsFor())(
 			'phase-production-build',
-			{ defaultConfig: {} }
+			{
+				defaultConfig: {},
+			}
 		);
 
 		expect(config.turbopack?.resolveAlias).not.toHaveProperty(
@@ -320,7 +324,9 @@ describe('Next.js build-time manifest', () => {
 		const build = (options: Parameters<typeof withConsentManifest>[1]) =>
 			withConsentManifest({ env: { OTHER: '1' } }, options)(
 				'phase-production-build',
-				{ defaultConfig: {} }
+				{
+					defaultConfig: {},
+				}
 			);
 
 		test('alone becomes NEXT_PUBLIC_INTH_PROJECT_URL for the build, the config and the bundles', async () => {
@@ -449,7 +455,9 @@ describe('Next.js build-time manifest', () => {
 				.mockImplementation(() => undefined);
 			const config = await withConsentManifest({}, options)(
 				'phase-production-build',
-				{ defaultConfig: {} }
+				{
+					defaultConfig: {},
+				}
 			);
 			expect(options.fetch).not.toHaveBeenCalled();
 			expect(await readServerModule(root)).toContain(

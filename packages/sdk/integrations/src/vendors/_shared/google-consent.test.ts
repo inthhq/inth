@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
