@@ -926,7 +926,8 @@ export type InthConsent = Readonly<
 
 /**
  * Full consent check document returned by `consents.check()`, including
- * effective `categories`, effective `optOut`, and the `sync` snapshot
+ * effective `categories`, effective `optOut`, and the `sync` snapshot passed to
+ * a browser provider as `userConsent`
  */
 export type UserConsent = Schemas['ConsentCheckResponse'];
 
@@ -935,7 +936,8 @@ export interface CheckConsentParams {
 	readonly externalId: string;
 	/**
 	 * A site's host name, or an app's application or bundle id, to count only
-	 * the answers given there. Leave it out to count every property
+	 * the answers given there. Leave it out to count every property, including
+	 * when passing the result as `userConsent` for cross-domain sync
 	 */
 	readonly property?: string;
 }
@@ -950,7 +952,9 @@ class Consents {
 	/**
 	 * What a user consents to now, across every device linked to them. Per
 	 * category the answer they confirmed last stands, so a refusal on their
-	 * phone takes back a grant made earlier on their laptop
+	 * phone takes back a grant made earlier on their laptop. Omit `property`
+	 * when passing the returned document to a browser provider as `userConsent`
+	 * for cross-domain sync
 	 *
 	 * @example
 	 * const { data, error } = await inth.consents.check({ externalId: user.id });
