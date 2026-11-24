@@ -1,5 +1,10 @@
-import { POLICY_CHOICE } from '@inth/conformance/fixtures/policy-scenarios';
-import { expect, it } from 'vitest';
+import type { TestDriver } from '@inth/conformance/driver';
+import {
+	POLICY_CHOICE,
+	POLICY_SCENARIOS,
+} from '@inth/conformance/fixtures/policy-scenarios';
+import { executePolicyScenario } from '@inth/conformance/suite';
+import { describe, expect, it } from 'vitest';
 
 import { createPolicySession } from './policy-driver';
 
@@ -90,4 +95,104 @@ it('uses a newly mounted provider after repeated reloads', async () => {
 	} finally {
 		await session.dispose();
 	}
+});
+
+/**
+ * The notice scenario presses Done in the dialog. A broken Done must fail
+ * it: the header Close is not allowed to stand in.
+ */
+describe('a broken Done fails the notice scenario', () => {
+	const DONE = '[data-testid="consent-dialog-done"]';
+	const found = POLICY_SCENARIOS.find(
+		(candidate) => candidate.id === 'gpc-legacy-anonymous-grant'
+	);
+	if (!found) {
+		throw new Error('Missing the gpc-legacy-anonymous-grant scenario');
+	}
+	const scenario = found;
+	const unused = () =>
+		Promise.reject(new Error('Not used by policy scenarios'));
+	/** The real driver, with `breakDone` applied around each save-current. */
+	const brokenDriver = (breakDone: () => () => void): TestDriver => ({
+		createPolicySession: async (setup) => {
+			const session = await createPolicySession(setup);
+			return {
+				...session,
+				async execute(operation) {
+					if (operation.kind !== 'save-current') {
+						await session.execute(operation);
+						return;
+					}
+					const restore = breakDone();
+					try {
+						await session.execute(operation);
+					} finally {
+						restore();
+					}
+				},
+			};
+		},
+		framework: 'react',
+		getStore: () => {
+			throw new Error('Not used by policy scenarios');
+		},
+		mount: unused,
+		serverRender: unused,
+	});
+	const api = { describe, expect, test: it };
+
+	it('uses Done, so the scenario passes with it working', async () => {
+		expect(scenario.steps.map((step) => step.operation)).toContainEqual({
+			close: 'done',
+			kind: 'save-current',
+		});
+		await executePolicyScenario(
+			brokenDriver(() => () => undefined),
+			api,
+			scenario
+		);
+	});
+
+	it('fails when Done is missing or disabled, though Close still works', async () => {
+		const run = executePolicyScenario(
+			brokenDriver(() => {
+				const disable = () => {
+					for (const done of document.querySelectorAll<HTMLButtonElement>(
+						DONE
+					)) {
+						done.disabled = true;
+					}
+				};
+				disable();
+				const observer = new MutationObserver(disable);
+				observer.observe(document.body, { childList: true, subtree: true });
+				return () => observer.disconnect();
+			}),
+			api,
+			scenario
+		);
+		await expect(run).rejects.toThrow(/save-current/u);
+		await expect(run).rejects.toHaveProperty(
+			'cause.message',
+			expect.stringContaining('consent-dialog-done')
+		);
+	});
+
+	it('fails when Done does nothing', async () => {
+		const run = executePolicyScenario(
+			brokenDriver(() => {
+				const swallow = (event: MouseEvent) => {
+					if ((event.target as Element | null)?.closest?.(DONE)) {
+						event.stopImmediatePropagation();
+						event.preventDefault();
+					}
+				};
+				window.addEventListener('click', swallow, true);
+				return () => window.removeEventListener('click', swallow, true);
+			}),
+			api,
+			scenario
+		);
+		await expect(run).rejects.toThrow(/save-current/u);
+	});
 });

@@ -609,11 +609,11 @@ export const createFrameworkPolicyDriver = ({
 		// Save stays disabled until a switch changes (EU-03), and the notice
 		// regime has no Save: its rows and switches record as they change, and
 		// Done closes without recording anything (LAW-04). The visitor's control
-		// is an enabled Save, or else Done or Close, and the scenario asserts what
-		// pressing it did. Only with no prompt owed does the engine first save
-		// what the switches show, as the kernel contract does; closing that
-		// dialog answers nothing either way.
-		const saveCurrentInDialog = async () => {
+		// is an enabled Save, or else the Done or Close the scenario names, and
+		// the scenario asserts what pressing it did. With no prompt owed, the
+		// dialog has only Close: it answers nothing, as the kernel contract
+		// says.
+		const saveCurrentInDialog = async (close: 'done' | 'close') => {
 			await vi.waitFor(
 				() => {
 					if (!document.querySelector('[data-testid="consent-dialog-root"]')) {
@@ -630,29 +630,17 @@ export const createFrameworkPolicyDriver = ({
 			if (save && !save.disabled) {
 				save.click();
 			} else {
-				const snapshot = kernel.getSnapshot();
-				if (snapshot.promptRequirement.kind === 'none') {
-					// What the switches show: each category's current permission,
-					// with a live signal's restrictions applied.
-					const shown = Object.fromEntries(
-						snapshot.policyRule.scope
-							.filter((category) => category !== 'necessary')
-							.map((category) => [
-								category,
-								snapshot.effectivePermissions[category] === true,
-							])
-					);
-					await kernel.commands.save(shown, { uiSource: 'dialog' });
-				}
-				const close = document.querySelector<HTMLButtonElement>(
-					'[data-testid="consent-dialog-done"]:not(:disabled), [data-testid="consent-dialog-close"]:not(:disabled)'
+				const testId =
+					close === 'done' ? 'consent-dialog-done' : 'consent-dialog-close';
+				const control = document.querySelector<HTMLButtonElement>(
+					`[data-testid="${testId}"]:not(:disabled)`
 				);
-				if (!close) {
+				if (!control) {
 					throw new Error(
-						'Required rendered control missing: an enabled Save, Done or Close'
+						`Required rendered control missing: an enabled Save or ${testId}`
 					);
 				}
-				close.click();
+				control.click();
 			}
 			await settle();
 		};
@@ -751,7 +739,7 @@ export const createFrameworkPolicyDriver = ({
 						if (kernel.getSnapshot().activeUI !== 'dialog') {
 							await openPreferencesFromTrigger();
 						}
-						await saveCurrentInDialog();
+						await saveCurrentInDialog(operation.close);
 						break;
 					case 'dismiss-notice':
 						await click('consent-banner-dismiss-button');

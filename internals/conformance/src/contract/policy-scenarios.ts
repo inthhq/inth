@@ -137,7 +137,14 @@ export type PolicyOperation =
 	/** Dispose the provider and mount a fresh instance against the existing bytes. */
 	| { kind: 'reload' }
 	| { kind: 'save'; values: Partial<Record<PolicyCategory, boolean>> }
-	| { kind: 'accept' | 'reject' | 'save-current' | 'dismiss-notice' | 'clear' }
+	| { kind: 'accept' | 'reject' | 'dismiss-notice' | 'clear' }
+	/**
+	 * Press the dialog's Save when it is enabled. Otherwise press `close`,
+	 * the footer's Done or the header's Close, which record nothing
+	 * (LAW-04). The step fails when that control is missing or disabled,
+	 * so the header Close never stands in for a missing Done.
+	 */
+	| { kind: 'save-current'; close: 'done' | 'close' }
 	| { kind: 'set-gpc'; active: boolean }
 	| { kind: 'advance-time'; now: number }
 	| { kind: 'apply-policy'; policy: ScenarioPolicy | null }
