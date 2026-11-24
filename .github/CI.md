@@ -30,7 +30,7 @@ The React Native compatibility matrix packs `@inth/react-native` and installs it
 
 A web SDK change never runs the mobile jobs, even when it reaches `@inth/react-native` through `@inth/sdk/engine` or `@inth/sdk/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
 
-The six CLI jobs are required checks on `main` under their exact names. They always run. When a change has no CLI work, each one prints a line and reports success, so a required check never waits forever.
+The six CLI jobs are required checks on `main` under their exact names. They always run. When a change has no CLI work, each one prints a line and reports success, so a required check never waits forever. On pull requests, the **Native CLI** jobs also hash CLI-only inputs (`tools/ci/cli-cache-key.ts`: `packages/cli/**`, `npm/**`, `docs/**`, `patches/**`, `.node-version`, and `@inth/cli` / `@scriptc/*` entries in `pnpm-lock.yaml`) and restore the verified `packages/cli/artifacts/*.tgz` from the Actions cache when nothing in the CLI changed; `main` pushes, releases (`workflow_call`), and manual runs always build fresh.
 
 **CI result** runs last, every time. It passes only when **Select checks** passed and every other job passed or was not selected. Requiring **CI result** alone in the `main` ruleset covers all products, and lets the CLI jobs drop their always-run steps later.
 
