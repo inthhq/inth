@@ -502,7 +502,7 @@ export const mountPersistence = function mountPersistence(
 				request('optOut');
 			}
 		}),
-		kernel.onOptOutServerRecordedAtChange((_recordedAt, fromHydration) => {
+		kernel.onOptOutServerWrittenAtChange((_writtenAt, fromHydration) => {
 			if (!fromHydration && kernel.getBrowserRecords().optOut !== null) {
 				state.optOutRecorded = true;
 				state.optOutSynced = true;
@@ -558,7 +558,7 @@ export const mountPersistence = function mountPersistence(
 					optOutLocalAct: receipt.localAct,
 					optOutReference: receipt.reference,
 					optOutRightsConfirmed: receipt.rightsConfirmed,
-					optOutServerRecordedAt: queued.getOptOutServerRecordedAt(),
+					optOutServerWrittenAt: queued.getOptOutServerWrittenAt(),
 					vendorChoice: queuedBrowser.vendorChoice,
 					vendorDeclared: queuedBrowser.vendorDeclared,
 					vendorTimes: queuedBrowser.vendorTimes,
@@ -761,8 +761,8 @@ export const mountPersistence = function mountPersistence(
 		if (records.optOutLinkedExternalId) {
 			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
 		}
-		if (records.optOutServerRecordedAt !== undefined) {
-			patch.optOutServerRecordedAt = records.optOutServerRecordedAt;
+		if (records.optOutServerWrittenAt !== undefined) {
+			patch.optOutServerWrittenAt = records.optOutServerWrittenAt;
 		}
 	};
 
@@ -778,7 +778,7 @@ export const mountPersistence = function mountPersistence(
 		patch.optOutLocalAct = receipt.localAct;
 		patch.optOutReference = receipt.reference;
 		patch.optOutRightsConfirmed = receipt.rightsConfirmed;
-		patch.optOutServerRecordedAt = kernel.getOptOutServerRecordedAt();
+		patch.optOutServerWrittenAt = kernel.getOptOutServerWrittenAt();
 	};
 
 	const mergeSeededOptOutMeta = function mergeSeededOptOutMeta(
@@ -818,11 +818,11 @@ export const mountPersistence = function mountPersistence(
 			patch.optOutLinkedExternalId = records.optOutLinkedExternalId;
 		}
 		if (
-			records.optOutServerRecordedAt !== undefined &&
-			records.optOutServerRecordedAt !== null &&
-			kernel.getOptOutServerRecordedAt() !== records.optOutServerRecordedAt
+			records.optOutServerWrittenAt !== undefined &&
+			records.optOutServerWrittenAt !== null &&
+			kernel.getOptOutServerWrittenAt() !== records.optOutServerWrittenAt
 		) {
-			patch.optOutServerRecordedAt = records.optOutServerRecordedAt;
+			patch.optOutServerWrittenAt = records.optOutServerWrittenAt;
 		}
 	};
 

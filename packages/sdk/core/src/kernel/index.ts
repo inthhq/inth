@@ -95,6 +95,21 @@ export interface KernelSeams {
  *
  * @internal
  */
+const resolveInitialOptOutServerWrittenAt =
+	function resolveInitialOptOutServerWrittenAt(
+		hasOptOut: boolean,
+		initialRecords: KernelConfig['initialRecords']
+	): number | null {
+		if (!hasOptOut || !initialRecords) {
+			return null;
+		}
+		return (
+			initialRecords.optOutServerWrittenAt ??
+			initialRecords.optOut?.device?.writtenAt ??
+			null
+		);
+	};
+
 export const createKernel = function createKernel(
 	config: KernelConfig = {},
 	seams: KernelSeams = {}
@@ -129,10 +144,10 @@ export const createKernel = function createKernel(
 						config.initialRecords?.optOutRightsConfirmed === true,
 				});
 	const serverOptOutReceiptData = initialOptOutReceiptData;
-	const initialOptOutServerRecordedAt: number | null =
-		initialState.browserRecords.optOut === null
-			? null
-			: (config.initialRecords?.optOutServerRecordedAt ?? null);
+	const initialOptOutServerWrittenAt = resolveInitialOptOutServerWrittenAt(
+		initialState.browserRecords.optOut !== null,
+		config.initialRecords
+	);
 	const initialOptOutLinkedExternalId: string | null =
 		config.initialRecords?.optOutLinkedExternalId ?? null;
 
@@ -196,7 +211,7 @@ export const createKernel = function createKernel(
 		initialBrowserRecords: initialState.browserRecords,
 		initialOptOutGpcReported,
 		initialOptOutReceiptData,
-		initialOptOutServerRecordedAt,
+		initialOptOutServerWrittenAt,
 		initialSnapshot,
 		// oxlint-disable-next-line no-use-before-define -- Commits run only after assembly.
 		onDeadlineChange: () => lifecycle.armDeadline(),
@@ -307,7 +322,7 @@ export const createKernel = function createKernel(
 		getLinkedExternalId: records.getLinkedExternalId,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
-		getOptOutServerRecordedAt: runtime.getOptOutServerRecordedAt,
+		getOptOutServerWrittenAt: runtime.getOptOutServerWrittenAt,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getSavesHold: outbox.getHold,
@@ -323,7 +338,7 @@ export const createKernel = function createKernel(
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
 		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
-		onOptOutServerRecordedAtChange: runtime.onOptOutServerRecordedAtChange,
+		onOptOutServerWrittenAtChange: runtime.onOptOutServerWrittenAtChange,
 		onSubjectLinked: records.onSubjectLinked,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,

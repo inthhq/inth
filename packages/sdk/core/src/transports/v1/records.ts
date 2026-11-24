@@ -11,17 +11,14 @@ import {
 	OPT_OUT_RIGHTS,
 	V1_UUID_PATTERN,
 } from '@inth/sdk-schema/types';
-import type {
-	OptOutRecord,
-	OptOutRight,
-	V1ConsentRecordLink,
-} from '@inth/sdk-schema/types';
+import type { OptOutRight, V1ConsentRecordLink } from '@inth/sdk-schema/types';
 
 import type {
 	KernelTransport,
 	KernelUser,
 	LiftOptOutPayload,
 	LiftOptOutTransportResult,
+	OptOutAnswer,
 	OptOutPayload,
 	OptOutTransportResult,
 	SavePayload,
@@ -30,6 +27,7 @@ import type {
 import {
 	isPlainRecord,
 	ownValue,
+	validateOptOutAnswer,
 	validateOptOutRecord,
 } from '../../consent-record/consent-record-validation.model';
 import { buildDecisionAssertion } from '../decision-inputs.model';
@@ -115,7 +113,7 @@ export interface V1RecordTransport extends KernelTransport {
 	identify: (
 		user: KernelUser,
 		subjectId: string | null
-	) => Promise<{ subjectId: string; optOut?: OptOutRecord } | undefined>;
+	) => Promise<{ subjectId: string; optOut?: OptOutAnswer } | undefined>;
 }
 
 /**
@@ -141,27 +139,9 @@ const utf8ByteLength = function utf8ByteLength(value: string): number {
 
 const OPT_OUT_RIGHT_SET: ReadonlySet<string> = new Set(OPT_OUT_RIGHTS);
 
-/**
- * Parse a backend opt-out answer, ignoring unknown rights (such as
- * `limit_sensitive`) that the SDK does not yet enforce. Returns:
- * - `undefined` when absent or structurally invalid
- * - `null` when structurally valid with only unsupported rights remaining
- * - `OptOutRecord` when at least one supported right remains.
- */
-const readOptOutWithUnsupported = function readOptOutWithUnsupported(
-	value: unknown
-): OptOutRecord | null | undefined {
-	if (value === undefined || value === null) {
-		return undefined;
-	}
-	const validated = validateOptOutRecord(value);
-	if (validated.ok) {
-		return validated.record.rights.length > 0 ? validated.record : undefined;
-	}
-	if (!isPlainRecord(value)) {
-		return undefined;
-	}
-	const rawRights = ownValue(value, 'rights');
+const filterSupportedWireRights = function filterSupportedWireRights(
+	rawRights: unknown
+): OptOutRight[] | undefined {
 	if (
 		!Array.isArray(rawRights) ||
 		rawRights.length === 0 ||
@@ -175,8 +155,48 @@ const readOptOutWithUnsupported = function readOptOutWithUnsupported(
 			seen.add(entry as OptOutRight);
 		}
 	}
-	const filtered = OPT_OUT_RIGHTS.filter((right) => seen.has(right));
-	const revalidated = validateOptOutRecord({ ...value, rights: filtered });
+	return OPT_OUT_RIGHTS.filter((right) => seen.has(right));
+};
+
+/**
+ * Parse a backend opt-out answer, ignoring unknown rights (such as
+ * `limit_sensitive`) that the SDK does not yet enforce. Returns:
+ * - `undefined` when absent or structurally invalid
+ * - `null` when structurally valid with only unsupported rights remaining
+ * - `OptOutAnswer` when at least one supported right remains.
+ */
+const readOptOutWithUnsupported = function readOptOutWithUnsupported(
+	value: unknown
+): OptOutAnswer | null | undefined {
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+	const validated = validateOptOutAnswer(value);
+	if (validated.ok) {
+		return validated.record.rights.length > 0 ? validated.record : undefined;
+	}
+	if (!isPlainRecord(value)) {
+		return undefined;
+	}
+	const filtered = filterSupportedWireRights(ownValue(value, 'rights'));
+	if (filtered === undefined) {
+		return undefined;
+	}
+	const candidate: Record<string, unknown> = { ...value, rights: filtered };
+	const rawDevice = ownValue(value, 'device');
+	if (rawDevice !== undefined) {
+		if (!isPlainRecord(rawDevice)) {
+			return undefined;
+		}
+		const filteredDevice = filterSupportedWireRights(
+			ownValue(rawDevice, 'rights')
+		);
+		if (filteredDevice === undefined) {
+			return undefined;
+		}
+		candidate.device = { ...rawDevice, rights: filteredDevice };
+	}
+	const revalidated = validateOptOutAnswer(candidate);
 	if (!revalidated.ok) {
 		return undefined;
 	}
@@ -185,7 +205,7 @@ const readOptOutWithUnsupported = function readOptOutWithUnsupported(
 
 const readOptOut = function readOptOut(
 	value: unknown
-): OptOutRecord | undefined {
+): OptOutAnswer | undefined {
 	const parsed = readOptOutWithUnsupported(value);
 	return parsed ?? undefined;
 };

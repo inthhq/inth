@@ -141,7 +141,7 @@ const kernelOptOutRecord = function kernelOptOutRecord(
 		localAct: _localAct,
 		reference: _reference,
 		rightsConfirmed: _rightsConfirmed,
-		serverRecordedAt: _serverRecordedAt,
+		serverWrittenAt: _serverWrittenAt,
 		subject: _subject,
 		version: _version,
 		...optOut
@@ -219,8 +219,8 @@ const attachOptOutMeta = function attachOptOutMeta(
 	if (optOutRecord.linkedExternalId) {
 		records.optOutLinkedExternalId = optOutRecord.linkedExternalId;
 	}
-	if (optOutRecord.serverRecordedAt !== undefined) {
-		records.optOutServerRecordedAt = optOutRecord.serverRecordedAt;
+	if (optOutRecord.serverWrittenAt !== undefined) {
+		records.optOutServerWrittenAt = optOutRecord.serverWrittenAt;
 	}
 };
 
@@ -421,7 +421,7 @@ const readRecords = function readRecords(
 		delete stored.records.optOutLocalAct;
 		delete stored.records.optOutRightsConfirmed;
 		delete stored.records.optOutLinkedExternalId;
-		delete stored.records.optOutServerRecordedAt;
+		delete stored.records.optOutServerWrittenAt;
 	}
 	return stored;
 };

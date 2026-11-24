@@ -10,6 +10,7 @@
 
 import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 
+import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -365,7 +366,9 @@ export const buildInitialKernelState = function buildInitialKernelState(
 	const user = config.initialUser ? { ...config.initialUser } : null;
 
 	const browserChoice = records?.choice ?? null;
-	const browserOptOut = records?.optOut ?? null;
+	const browserOptOut = records?.optOut
+		? stripOptOutDevice(records.optOut)
+		: null;
 	const browserVendorChoice = records?.vendorChoice ?? null;
 	const browserVendorDeclared = records?.vendorDeclared ?? null;
 	const browserVendorTimes = records?.vendorTimes ?? null;

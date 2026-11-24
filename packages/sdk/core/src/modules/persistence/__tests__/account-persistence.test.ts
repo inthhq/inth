@@ -1279,8 +1279,8 @@ describe('persistence and SSR regressions (set 3)', () => {
 		}
 	});
 
-	// cross-tab reconcile picks up newly linked optOutLinkedExternalId and serverRecordedAt without reload
-	test('cross-tab reconciliation picks up a newly linked opt-out externalId and serverRecordedAt', async () => {
+	// cross-tab reconcile picks up newly linked optOutLinkedExternalId and serverWrittenAt without reload
+	test('cross-tab reconciliation picks up a newly linked opt-out externalId and serverWrittenAt', async () => {
 		const rule = optOutRule({ prompt: 'choice' });
 		const resolution = matchedResolution(rule);
 		const subjectId = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
@@ -1295,6 +1295,10 @@ describe('persistence and SSR regressions (set 3)', () => {
 				identify: (_u, id) =>
 					Promise.resolve({
 						optOut: {
+							device: {
+								rights: ['sale', 'share', 'targeted_ads'],
+								writtenAt: NOW + 4000,
+							},
 							heldBy: 'both',
 							method: 'button',
 							recordedAt: NOW + 4000,
@@ -1306,6 +1310,10 @@ describe('persistence and SSR regressions (set 3)', () => {
 					Promise.resolve({
 						ok: true,
 						optOut: {
+							device: {
+								rights: ['sale', 'share', 'targeted_ads'],
+								writtenAt: NOW - 5000,
+							},
 							heldBy: 'device',
 							method: 'button',
 							recordedAt: NOW - 5000,
@@ -1336,7 +1344,7 @@ describe('persistence and SSR regressions (set 3)', () => {
 			p2.reconcile();
 			await flushMacrotasks();
 			expect(tab2.getLinkedExternalId(activeSubjectId)).toBeUndefined();
-			expect(tab2.getOptOutServerRecordedAt()).toBe(NOW - 5000);
+			expect(tab2.getOptOutServerWrittenAt()).toBe(NOW - 5000);
 
 			// Tab 1 now verifies the subject link and persists linkedExternalId.
 			await tab1.commands.identify(user);
@@ -1355,12 +1363,12 @@ describe('persistence and SSR regressions (set 3)', () => {
 		}
 	});
 
-	// persistence + SSR: serverRecordedAt persists in localStorage and compact cookie and reads back on hydrate and SSR
-	test('persistence and SSR: serverRecordedAt persists in localStorage and opt-out cookie and hydrates back on browser and SSR', async () => {
+	// persistence + SSR: serverWrittenAt persists in localStorage and compact cookie and reads back on hydrate and SSR
+	test('persistence and SSR: serverWrittenAt persists in localStorage and opt-out cookie and hydrates back on browser and SSR', async () => {
 		const rule = optOutRule({ prompt: 'choice' });
 		const resolution = matchedResolution(rule);
 		const recordId = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
-		const serverRecordedAt = NOW + 6000;
+		const serverWrittenAt = NOW + 6000;
 		const user = { externalId: 'user_srv_time', identityToken: 'tok_srv' };
 		const k1 = createKernel({
 			consentCategories: ['marketing'],
@@ -1373,9 +1381,13 @@ describe('persistence and SSR regressions (set 3)', () => {
 						link: { stored: true, verifiedBy: 'identity_token' },
 						ok: true,
 						optOut: {
+							device: {
+								rights: ['sale', 'share', 'targeted_ads'],
+								writtenAt: serverWrittenAt,
+							},
 							heldBy: 'both',
 							method: 'button',
-							recordedAt: serverRecordedAt,
+							recordedAt: NOW,
 							rights: ['sale', 'share', 'targeted_ads'],
 						},
 						recordId,
@@ -1391,21 +1403,19 @@ describe('persistence and SSR regressions (set 3)', () => {
 			);
 			await k1.commands.optOut({ actionAt: NOW });
 			await flushMacrotasks();
-			expect(k1.getOptOutServerRecordedAt()).toBe(serverRecordedAt);
+			expect(k1.getOptOutServerWrittenAt()).toBe(serverWrittenAt);
 
-			// Check localStorage and cookie both carry serverRecordedAt
+			// Check localStorage and cookie both carry serverWrittenAt
 			const storedBrowser = readStoredRecords(undefined, NOW);
-			expect(storedBrowser.records.optOutServerRecordedAt).toBe(
-				serverRecordedAt
-			);
+			expect(storedBrowser.records.optOutServerWrittenAt).toBe(serverWrittenAt);
 			const storedSsr = readStoredRecordsFromCookieHeader(
 				document.cookie,
 				undefined,
 				NOW
 			);
-			expect(storedSsr.optOutServerRecordedAt).toBe(serverRecordedAt);
+			expect(storedSsr.optOutServerWrittenAt).toBe(serverWrittenAt);
 
-			// Reload on cookie-only (localStorage cleared) still restores serverRecordedAt
+			// Reload on cookie-only (localStorage cleared) still restores serverWrittenAt
 			window.localStorage.clear();
 			const k2 = createKernel({
 				consentCategories: ['marketing'],
@@ -1416,7 +1426,7 @@ describe('persistence and SSR regressions (set 3)', () => {
 			const p2 = createPersistence({ kernel: k2, now: () => NOW });
 			try {
 				await flushMacrotasks();
-				expect(k2.getOptOutServerRecordedAt()).toBe(serverRecordedAt);
+				expect(k2.getOptOutServerWrittenAt()).toBe(serverWrittenAt);
 			} finally {
 				p2.dispose();
 				k2.dispose();

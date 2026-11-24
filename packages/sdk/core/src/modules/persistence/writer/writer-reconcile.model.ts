@@ -370,7 +370,7 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 			stored.optOut ? (stored.optOutLocalAct ?? null) : null,
 			stored.optOut ? stored.optOutRightsConfirmed === true : false,
 			stored.optOut ? (stored.optOutLinkedExternalId ?? null) : null,
-			stored.optOut ? (stored.optOutServerRecordedAt ?? null) : null,
+			stored.optOut ? (stored.optOutServerWrittenAt ?? null) : null,
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
@@ -840,7 +840,7 @@ const copyOptOutMeta = function copyOptOutMeta(
 	records.optOutLocalAct = stored.optOutLocalAct ?? null;
 	records.optOutRightsConfirmed = stored.optOutRightsConfirmed === true;
 	records.optOutLinkedExternalId = stored.optOutLinkedExternalId ?? null;
-	records.optOutServerRecordedAt = stored.optOutServerRecordedAt ?? null;
+	records.optOutServerWrittenAt = stored.optOutServerWrittenAt ?? null;
 };
 
 const reconcileOptOutRecord = function reconcileOptOutRecord(

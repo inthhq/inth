@@ -150,7 +150,7 @@ export type StoredOptOutRecord = OptOutRecord & {
 	 * Raw server `recordedAt` timestamp from the backend confirmation of this
 	 * device's opt-out. Stored in both localStorage and the compact cookie.
 	 */
-	serverRecordedAt?: number;
+	serverWrittenAt?: number;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -1068,7 +1068,7 @@ const OPT_OUT_STORED_KEYS = [
 	'localAct',
 	'rightsConfirmed',
 	'linkedExternalId',
-	'serverRecordedAt',
+	'serverWrittenAt',
 ] as const;
 
 const readOptionalOptOutBoolean = function readOptionalOptOutBoolean(
@@ -1096,7 +1096,7 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 	localAct: OptOutLocalAct | undefined;
 	reference: string | undefined;
 	rightsConfirmed: boolean;
-	serverRecordedAt: number | undefined;
+	serverWrittenAt: number | undefined;
 } {
 	const gpcReported = readOptionalOptOutBoolean(input, 'gpcReported', issues);
 	const rightsConfirmed = readOptionalOptOutBoolean(
@@ -1131,13 +1131,13 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-value', path: 'localAct' });
 		}
 	}
-	const rawServerRecordedAt = ownValue(input, 'serverRecordedAt');
-	let serverRecordedAt: number | undefined;
-	if (rawServerRecordedAt !== undefined) {
-		if (isValidTimestamp(rawServerRecordedAt)) {
-			serverRecordedAt = rawServerRecordedAt;
+	const rawServerWrittenAt = ownValue(input, 'serverWrittenAt');
+	let serverWrittenAt: number | undefined;
+	if (rawServerWrittenAt !== undefined) {
+		if (isValidTimestamp(rawServerWrittenAt)) {
+			serverWrittenAt = rawServerWrittenAt;
 		} else {
-			issues.push({ code: 'invalid-timestamp', path: 'serverRecordedAt' });
+			issues.push({ code: 'invalid-timestamp', path: 'serverWrittenAt' });
 		}
 	}
 	return {
@@ -1146,7 +1146,7 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 		localAct,
 		reference,
 		rightsConfirmed,
-		serverRecordedAt,
+		serverWrittenAt,
 	};
 };
 
@@ -1215,8 +1215,8 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	if (meta.linkedExternalId) {
 		record.linkedExternalId = meta.linkedExternalId;
 	}
-	if (meta.serverRecordedAt !== undefined) {
-		record.serverRecordedAt = meta.serverRecordedAt;
+	if (meta.serverWrittenAt !== undefined) {
+		record.serverWrittenAt = meta.serverWrittenAt;
 	}
 	return { ok: true, record };
 };
@@ -1304,7 +1304,7 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 		candidate.rightsConfirmed = true;
 	}
 	if (fields.has('s')) {
-		candidate.serverRecordedAt = parseCompactInteger(fields.get('s'));
+		candidate.serverWrittenAt = parseCompactInteger(fields.get('s'));
 	}
 	return decodeOptOutRecord(candidate, now);
 };

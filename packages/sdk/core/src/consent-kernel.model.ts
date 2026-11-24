@@ -5,6 +5,7 @@ import type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutDeviceRow,
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
@@ -57,6 +58,7 @@ export type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutDeviceRow,
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
@@ -352,12 +354,29 @@ export interface VendorChoice {
  * `now` before anything is applied; an invalid input rejects the whole
  * call.
  */
+/**
+ * Effective opt-out answer returned by a transport or init response.
+ * Carries the optional `device` row on `/v1` answers; the kernel strips
+ * `device` before storing an {@link OptOutRecord} on the snapshot.
+ */
+export type OptOutAnswer = OptOutRecord & {
+	device?: OptOutDeviceRow;
+};
+
+/**
+ * Hydration records applied to a kernel at construction or via `hydrate()`.
+ *
+ * Semantics per key: omitted preserves the current value, an explicit
+ * `null` (or empty array) clears it. Every record is validated against
+ * `now` before anything is applied; an invalid input rejects the whole
+ * call.
+ */
 export interface HydrationRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
 	/** Durable opt-out record. `null` clears it. */
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	/**
 	 * Whether this browser has already handed a GPC opt-out request to the save
 	 * outbox for the hydrated opt-out record. Omitted or `false` means not yet
@@ -382,10 +401,10 @@ export interface HydrationRecords {
 	/** Verified external user ID linked to the opt-out record's subject. */
 	optOutLinkedExternalId?: string | null;
 	/**
-	 * Raw server `recordedAt` timestamp from the backend confirmation of this
-	 * browser's device opt-out, or `null` when unconfirmed.
+	 * Raw server `device.writtenAt` timestamp from the last backend answer
+	 * carrying this browser's device opt-out row, or `null` when absent.
 	 */
-	optOutServerRecordedAt?: number | null;
+	optOutServerWrittenAt?: number | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/**
@@ -858,7 +877,7 @@ export interface OptOutTransportResult {
 	/** Verified subject link confirmation returned by the backend, when present. */
 	link?: { readonly stored?: boolean; readonly verifiedBy?: string };
 	/** Authoritative effective opt-out returned by the backend, when valid. */
-	optOut?: OptOutRecord;
+	optOut?: OptOutAnswer;
 	/** `true` when the backend answered 404 (does not store opt-outs). */
 	unsupported?: boolean;
 }
@@ -871,7 +890,7 @@ export interface LiftOptOutTransportResult {
 	 * Authoritative remaining opt-out returned by the backend, or `null` when
 	 * lifted completely. Omitted when the response carried no valid opt-out info.
 	 */
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	/** `true` when the backend answered 404 (does not store opt-outs). */
 	unsupported?: boolean;
 }
@@ -911,7 +930,7 @@ export interface KernelTransport {
 		user: KernelUser,
 		subjectId: string | null
 		// oxlint-disable-next-line no-invalid-void-type -- A transport with nothing to report returns `Promise<void>`.
-	) => Promise<{ subjectId?: string; optOut?: OptOutRecord } | void>;
+	) => Promise<{ subjectId?: string; optOut?: OptOutAnswer } | void>;
 	/**
 	 * Load the server-side record of a subject as validated receipts. The
 	 * kernel calls it after `identify` succeeds and applies the result through
@@ -1119,7 +1138,7 @@ export interface SaveResult {
 	/** Categories this save confirmed. Empty when nothing was recorded. */
 	confirmed?: readonly OptionalConsentCategory[];
 	/** Authoritative effective opt-out returned by the backend, when valid. */
-	optOut?: OptOutRecord;
+	optOut?: OptOutAnswer;
 	issues?: RecordIssue[];
 }
 

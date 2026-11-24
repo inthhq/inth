@@ -20,13 +20,14 @@
  * development: the save already reported its first failure.
  */
 
-import type { CONSENT_MODELS, OptOutRecord } from '@inth/sdk-schema/types';
+import type { CONSENT_MODELS } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSubject,
 	KernelTransport,
 	KernelUser,
 	LiftOptOutPayload,
+	OptOutAnswer,
 	OptOutPayload,
 	SavePayload,
 } from '../../consent-kernel.model';
@@ -1322,7 +1323,7 @@ export const createQueueWorker = function createQueueWorker({
 		let rejected: string | undefined;
 		let failure: unknown;
 		let canonical: string | undefined;
-		let answeredOptOut: OptOutRecord | undefined;
+		let answeredOptOut: OptOutAnswer | undefined;
 		const actVersion = getSaveActVersion(key) ?? runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
 		const identity = runtime.getIdentityVersion();
@@ -1519,7 +1520,7 @@ export const createQueueWorker = function createQueueWorker({
 		owned: () => boolean,
 		context: {
 			readonly actVersion: number;
-			readonly answeredOptOut: OptOutRecord | null | undefined;
+			readonly answeredOptOut: OptOutAnswer | null | undefined;
 			readonly generation: number;
 			readonly identity: number;
 			readonly isLast: boolean;
@@ -1552,7 +1553,6 @@ export const createQueueWorker = function createQueueWorker({
 				actVersion: context.actVersion,
 				allowClear: entry.kind === 'lift',
 				externalId: entry.payload.user?.externalId ?? null,
-				fromOptOutRequest: entry.kind === 'record',
 				generation: context.generation,
 				identity: context.identity,
 				ownAct: entry.kind === 'record',
@@ -1590,7 +1590,7 @@ export const createQueueWorker = function createQueueWorker({
 		let outcome: ReplayOutcome = 'retry';
 		let failure: unknown;
 		let canonical: string | undefined;
-		let answeredOptOut: OptOutRecord | null | undefined;
+		let answeredOptOut: OptOutAnswer | null | undefined;
 		let linkStored = false;
 		const actVersion = runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();

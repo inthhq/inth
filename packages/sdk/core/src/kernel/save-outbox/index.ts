@@ -50,12 +50,12 @@
  */
 
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
-import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSnapshot,
 	KernelTransport,
 	LiftOptOutPayload,
+	OptOutAnswer,
 	OptOutPayload,
 	SavePayload,
 	SaveResult,
@@ -138,7 +138,7 @@ export interface OptOutActionContext {
 /** Outcome of a queued account opt-out lift. */
 export interface AccountLiftOutcome {
 	ok: boolean;
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	subjectId?: string;
 	unsupported?: boolean;
 }
@@ -991,7 +991,6 @@ export const createSaveOutbox = function createSaveOutbox({
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
 						externalId: act.payload.user?.externalId ?? null,
-						fromOptOutRequest: act.kind === 'record',
 						generation: context.generation,
 						identity: context.identity,
 						ownAct: act.kind === 'record',

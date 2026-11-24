@@ -9,7 +9,11 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import type { HydrationRecords, VendorChoice } from '../consent-kernel.model';
+import type {
+	HydrationRecords,
+	OptOutAnswer,
+	VendorChoice,
+} from '../consent-kernel.model';
 import {
 	checkTimestamp,
 	isNonEmptyString,
@@ -19,7 +23,7 @@ import {
 	ownValue,
 	validateExplicitChoice,
 	validateNoticeDismissal,
-	validateOptOutRecord,
+	validateOptOutAnswer,
 } from '../consent-record/consent-record-validation.model';
 import type { RecordIssue } from '../consent-record/consent-record-validation.model';
 import {
@@ -42,13 +46,13 @@ export interface ValidatedRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	optOutGpcReported?: boolean;
 	optOutReference?: string | null;
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
 	optOutLinkedExternalId?: string | null;
-	optOutServerRecordedAt?: number | null;
+	optOutServerWrittenAt?: number | null;
 	vendorChoice?: VendorChoice | null;
 	vendorDeclared?: readonly string[] | null;
 	vendorTimes?: Readonly<Record<string, number>> | null;
@@ -201,16 +205,16 @@ const validateOptOutMetaFields = function validateOptOutMetaFields(
 			});
 		}
 	}
-	if (input.optOutServerRecordedAt !== undefined) {
+	if (input.optOutServerWrittenAt !== undefined) {
 		if (
-			input.optOutServerRecordedAt === null ||
-			isValidTimestamp(input.optOutServerRecordedAt)
+			input.optOutServerWrittenAt === null ||
+			isValidTimestamp(input.optOutServerWrittenAt)
 		) {
-			records.optOutServerRecordedAt = input.optOutServerRecordedAt;
+			records.optOutServerWrittenAt = input.optOutServerWrittenAt;
 		} else {
 			issues.push({
 				code: 'invalid-timestamp',
-				path: 'optOutServerRecordedAt',
+				path: 'optOutServerWrittenAt',
 			});
 		}
 	}
@@ -351,7 +355,7 @@ export const validateHydrationRecords = function validateHydrationRecords(
 		if (input.optOut === null) {
 			records.optOut = null;
 		} else {
-			const result = validateOptOutRecord(input.optOut, now);
+			const result = validateOptOutAnswer(input.optOut, now);
 			if (result.ok === true) {
 				records.optOut = result.record;
 			} else {

@@ -24,7 +24,7 @@
  *   `init()` re-arms everything; `hydrate()` re-arms the timer only.
  */
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
-import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
@@ -35,8 +35,9 @@ import type {
 	InitResult,
 	KernelConfig,
 	KernelIABState,
-	KernelTransport,
 	KernelTranslations,
+	KernelTransport,
+	OptOutAnswer,
 } from '../consent-kernel.model';
 import type { RecordIssue } from '../consent-record/consent-record-validation.model';
 import { ownScriptRegistry } from '../libs/freeze-data.model';
@@ -236,7 +237,7 @@ const foldInitResponse = function foldInitResponse(
 	browser?: BrowserConsentRecords,
 	activeAccount?: AccountConsentLayer | null
 ): {
-	incomingServerOptOut: OptOutRecord | null;
+	incomingServerOptOut: OptOutAnswer | null;
 	nextAccount?: AccountConsentLayer;
 	patch: SnapshotPatch;
 	recordIssues: RecordIssue[] | null;
@@ -359,7 +360,7 @@ const foldInitResponse = function foldInitResponse(
 	}
 
 	let recordIssues: RecordIssue[] | null = null;
-	let incomingServerOptOut: OptOutRecord | null = null;
+	let incomingServerOptOut: OptOutAnswer | null = null;
 	let nextAccount: AccountConsentLayer | undefined;
 	if (response.records) {
 		const validated = validateHydrationRecords(response.records, now);

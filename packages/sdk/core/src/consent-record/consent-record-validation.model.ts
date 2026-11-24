@@ -15,6 +15,7 @@ import {
 	OPT_OUT_RIGHTS,
 } from '@inth/sdk-schema/types';
 import type {
+	OptOutDeviceRow,
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
@@ -295,6 +296,8 @@ const OPT_OUT_KEYS = [
 	'heldBy',
 	'categories',
 ] as const;
+const OPT_OUT_ANSWER_KEYS = [...OPT_OUT_KEYS, 'device'] as const;
+const OPT_OUT_DEVICE_KEYS = ['rights', 'writtenAt'] as const;
 const OPT_OUT_METHOD_SET: ReadonlySet<string> = new Set(OPT_OUT_METHODS);
 const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
 
@@ -324,6 +327,43 @@ const readNameList = function readNameList<Name extends string>(
 	return allowed.filter((name) => seen.has(name));
 };
 
+const readOptOutDeviceRow = function readOptOutDeviceRow(
+	raw: unknown,
+	issues: RecordIssue[]
+): OptOutDeviceRow | undefined {
+	if (raw === undefined) {
+		return undefined;
+	}
+	if (!isPlainRecord(raw)) {
+		issues.push({ code: 'not-an-object', path: 'device' });
+		return undefined;
+	}
+	for (const key of ownKeys(raw)) {
+		if (
+			!OPT_OUT_DEVICE_KEYS.includes(key as (typeof OPT_OUT_DEVICE_KEYS)[number])
+		) {
+			issues.push({ code: 'unknown-key', path: `device.${key}` });
+		}
+	}
+	const rights = readNameList(
+		ownValue(raw, 'rights'),
+		'device.rights',
+		OPT_OUT_RIGHTS,
+		issues
+	);
+	const writtenAt = ownValue(raw, 'writtenAt');
+	if (!isValidTimestamp(writtenAt)) {
+		issues.push({ code: 'invalid-timestamp', path: 'device.writtenAt' });
+	}
+	if (issues.length > 0) {
+		return undefined;
+	}
+	return {
+		rights,
+		writtenAt: writtenAt as number,
+	};
+};
+
 /**
  * Validates a durable opt-out record. Rejects unknown keys, duplicate or
  * unknown rights or categories, unknown methods or holders, and non-integer
@@ -335,16 +375,19 @@ const readNameList = function readNameList<Name extends string>(
  * kept: unlike a missing one, which marks a record made before the field
  * existed, it withholds nothing of its own.
  */
-export const validateOptOutRecord = function validateOptOutRecord(
+const validateOptOutFields = function validateOptOutFields(
 	input: unknown,
-	_now?: number
-): ValidationResult<OptOutRecord> {
+	allowDevice: boolean
+): ValidationResult<OptOutRecord & { device?: OptOutDeviceRow }> {
 	if (!isPlainRecord(input)) {
 		return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
 	}
 	const issues: RecordIssue[] = [];
+	const allowedKeys: readonly string[] = allowDevice
+		? OPT_OUT_ANSWER_KEYS
+		: OPT_OUT_KEYS;
 	for (const key of ownKeys(input)) {
-		if (!OPT_OUT_KEYS.includes(key as (typeof OPT_OUT_KEYS)[number])) {
+		if (!allowedKeys.includes(key)) {
 			issues.push({ code: 'unknown-key', path: key });
 		}
 	}
@@ -376,10 +419,13 @@ export const validateOptOutRecord = function validateOptOutRecord(
 					OPTIONAL_CONSENT_CATEGORIES,
 					issues
 				);
+	const device = allowDevice
+		? readOptOutDeviceRow(ownValue(input, 'device'), issues)
+		: undefined;
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
-	const record: OptOutRecord = {
+	const record: OptOutRecord & { device?: OptOutDeviceRow } = {
 		heldBy: heldBy as OptOutHolder,
 		method: method as OptOutMethod,
 		recordedAt: recordedAt as number,
@@ -388,5 +434,44 @@ export const validateOptOutRecord = function validateOptOutRecord(
 	if (categories !== undefined) {
 		record.categories = categories;
 	}
+	if (device !== undefined) {
+		record.device = device;
+	}
 	return { ok: true, record };
+};
+
+export const validateOptOutRecord = function validateOptOutRecord(
+	input: unknown,
+	_now?: number
+): ValidationResult<OptOutRecord> {
+	return validateOptOutFields(input, false);
+};
+
+/**
+ * Strip the wire-only `device` row before storing an opt-out on the snapshot.
+ */
+export const stripOptOutDevice = function stripOptOutDevice(
+	record: OptOutRecord & { device?: OptOutDeviceRow }
+): OptOutRecord {
+	const stripped: OptOutRecord = {
+		heldBy: record.heldBy,
+		method: record.method,
+		recordedAt: record.recordedAt,
+		rights: [...record.rights],
+	};
+	if (record.categories !== undefined) {
+		stripped.categories = [...record.categories];
+	}
+	return stripped;
+};
+
+/**
+ * Validates an effective opt-out answer from a transport or init response,
+ * accepting the optional `/v1` `device` row (`{ rights, writtenAt }`).
+ */
+export const validateOptOutAnswer = function validateOptOutAnswer(
+	input: unknown,
+	_now?: number
+): ValidationResult<OptOutRecord & { device?: OptOutDeviceRow }> {
+	return validateOptOutFields(input, true);
 };

@@ -180,16 +180,16 @@ export interface KernelRuntime {
 			fromHydration?: boolean
 		) => void
 	) => () => void;
-	/** Raw server `recordedAt` timestamp confirming this browser's device opt-out, or `null`. */
-	getOptOutServerRecordedAt: () => number | null;
-	/** Update the raw server confirmation timestamp. `fromHydration` suppresses persistence write-back. */
-	setOptOutServerRecordedAt: (
-		recordedAt: number | null,
+	/** Raw server `device.writtenAt` timestamp from the last backend answer carrying this device's opt-out row, or `null`. */
+	getOptOutServerWrittenAt: () => number | null;
+	/** Update the raw server write timestamp. `fromHydration` suppresses persistence write-back. */
+	setOptOutServerWrittenAt: (
+		writtenAt: number | null,
 		fromHydration?: boolean
 	) => void;
-	/** Subscribe to changes in the raw server confirmation timestamp. */
-	onOptOutServerRecordedAtChange: (
-		listener: (recordedAt: number | null, fromHydration?: boolean) => void
+	/** Subscribe to changes in the raw server write timestamp. */
+	onOptOutServerWrittenAtChange: (
+		listener: (writtenAt: number | null, fromHydration?: boolean) => void
 	) => () => void;
 	/** Reconcile the GPC report mark and trigger a held-record report when due. */
 	syncGpcSignal: (actionAt?: number) => void;
@@ -223,8 +223,8 @@ export interface RuntimeOptions {
 	initialOptOutGpcReported?: boolean;
 	/** Initial local opt-out receipt data hydrated from stored records. */
 	initialOptOutReceiptData?: Readonly<OptOutReceiptData>;
-	/** Initial raw server `recordedAt` confirming the hydrated device opt-out. */
-	initialOptOutServerRecordedAt?: number | null;
+	/** Initial raw server `device.writtenAt` for the hydrated device opt-out. */
+	initialOptOutServerWrittenAt?: number | null;
 	emit: (event: KernelEvent) => void;
 	/** Shared with the event bus so snapshots and events keep one order. */
 	dispatcher: Dispatcher;
@@ -282,13 +282,13 @@ export const createRuntime = function createRuntime(
 				fromHydration: boolean;
 		  }>
 		| undefined;
-	let optOutServerRecordedAt: number | null =
+	let optOutServerWrittenAt: number | null =
 		browserRecords.optOut === null
 			? null
-			: (options.initialOptOutServerRecordedAt ?? null);
-	let optOutServerRecordedAtListeners:
+			: (options.initialOptOutServerWrittenAt ?? null);
+	let optOutServerWrittenAtListeners:
 		| ListenerSet<{
-				recordedAt: number | null;
+				writtenAt: number | null;
 				fromHydration: boolean;
 		  }>
 		| undefined;
@@ -377,20 +377,20 @@ export const createRuntime = function createRuntime(
 		}
 	};
 
-	const setOptOutServerRecordedAt = function setOptOutServerRecordedAt(
-		recordedAt: number | null,
+	const setOptOutServerWrittenAt = function setOptOutServerWrittenAt(
+		writtenAt: number | null,
 		fromHydration = false
 	): void {
-		if (optOutServerRecordedAt === recordedAt) {
+		if (optOutServerWrittenAt === writtenAt) {
 			return;
 		}
-		optOutServerRecordedAt = recordedAt;
-		if (optOutServerRecordedAtListeners) {
+		optOutServerWrittenAt = writtenAt;
+		if (optOutServerWrittenAtListeners) {
 			dispatcher.batch(() => {
-				if (optOutServerRecordedAtListeners) {
-					dispatcher.deliver(optOutServerRecordedAtListeners, {
+				if (optOutServerWrittenAtListeners) {
+					dispatcher.deliver(optOutServerWrittenAtListeners, {
 						fromHydration,
-						recordedAt,
+						writtenAt,
 					});
 				}
 			});
@@ -912,12 +912,12 @@ export const createRuntime = function createRuntime(
 				reference: createIdempotencyKey(),
 				rightsConfirmed: false,
 			});
-			setOptOutServerRecordedAt(null, true);
+			setOptOutServerWrittenAt(null, true);
 			publish(current, adopted, shown, recordedBrowserOptOut ?? adopted.optOut);
 		} else {
 			if (browserRecords.optOut === null) {
 				setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
-				setOptOutServerRecordedAt(null, true);
+				setOptOutServerWrittenAt(null, true);
 			}
 			publish(current, adopted, shown, null, emitOptOutSynced);
 			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
@@ -934,7 +934,7 @@ export const createRuntime = function createRuntime(
 			return;
 		}
 		setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
-		setOptOutServerRecordedAt(null, true);
+		setOptOutServerWrittenAt(null, true);
 		emit({
 			optOut: snapshot.optOut,
 			snapshot,
@@ -1145,7 +1145,7 @@ export const createRuntime = function createRuntime(
 		getOptOutActVersion: () => optOutActVersion,
 		getOptOutGpcReportEpoch: () => gpcReportEpoch,
 		getOptOutReceiptData: () => optOutReceiptData,
-		getOptOutServerRecordedAt: () => optOutServerRecordedAt,
+		getOptOutServerWrittenAt: () => optOutServerWrittenAt,
 		getSnapshot,
 		invalidateRecords: () => {
 			generation += 1;
@@ -1177,18 +1177,18 @@ export const createRuntime = function createRuntime(
 				listener(data, fromHydration);
 			});
 		},
-		onOptOutServerRecordedAtChange(listener) {
-			optOutServerRecordedAtListeners ??= createListenerSet();
-			return optOutServerRecordedAtListeners.add(
-				({ recordedAt, fromHydration }) => {
-					listener(recordedAt, fromHydration);
+		onOptOutServerWrittenAtChange(listener) {
+			optOutServerWrittenAtListeners ??= createListenerSet();
+			return optOutServerWrittenAtListeners.add(
+				({ writtenAt, fromHydration }) => {
+					listener(writtenAt, fromHydration);
 				}
 			);
 		},
 		setExperiment,
 		setOptOutGpcReported,
 		setOptOutReceiptData,
-		setOptOutServerRecordedAt,
+		setOptOutServerWrittenAt,
 		subscribe(listener) {
 			listeners ??= createListenerSet();
 			return listeners.add(listener);

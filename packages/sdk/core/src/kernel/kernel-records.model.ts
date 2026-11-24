@@ -19,12 +19,18 @@
  */
 import type { OptOutRecord, UserConsent } from '@inth/sdk-schema/types';
 
+import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	HydrationResult,
 	KernelTransport,
 	KernelUser,
+	OptOutAnswer,
 } from '../consent-kernel.model';
 import { isProductionBuild } from '../libs/is-production';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
@@ -81,6 +87,49 @@ const foldServerAccountLayer = function foldServerAccountLayer(
 	return applyLiftFloorToIncoming(activeAccount, records.accountLayer);
 };
 
+const foldServerOptOut = function foldServerOptOut(
+	browserOptOut: BrowserConsentRecords['optOut'],
+	incoming: OptOutAnswer | null,
+	activeAccount: AccountConsentLayer | null
+): OptOutRecord | null | undefined {
+	if (activeAccount === null) {
+		const stripped = incoming === null ? null : stripOptOutDevice(incoming);
+		return mergeNewestOptOut(browserOptOut, stripped);
+	}
+	if (
+		incoming === null ||
+		incoming.heldBy === 'person' ||
+		incoming.device === undefined ||
+		incoming.device.rights.length === 0
+	) {
+		return undefined;
+	}
+	// While an account layer for the current `externalId` is active,
+	// only an answer carrying `device` updates the browser device record
+	// (using `device.rights`, never copying person rights).
+	const browserDeviceOptOut =
+		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
+	const incomingDevice: OptOutRecord = {
+		heldBy: 'device',
+		method: incoming.method,
+		recordedAt: incoming.recordedAt,
+		rights: [...incoming.device.rights],
+	};
+	if (
+		browserDeviceOptOut !== null &&
+		incomingDevice.recordedAt < browserDeviceOptOut.recordedAt
+	) {
+		return undefined;
+	}
+	return carryOptOutCategories(
+		incomingDevice,
+		browserDeviceOptOut,
+		browserDeviceOptOut !== null &&
+			(incomingDevice.heldBy === 'device' ||
+				answersHeldOptOut(incomingDevice, browserDeviceOptOut))
+	);
+};
+
 export const foldServerRecords = function foldServerRecords(
 	current: ConsentSnapshot,
 	records: ValidatedRecords,
@@ -110,15 +159,13 @@ export const foldServerRecords = function foldServerRecords(
 			: current.subject;
 	}
 	if (records.optOut !== undefined) {
-		if (activeAccount === null) {
-			patch.optOut = mergeNewestOptOut(browser.optOut, records.optOut);
-		} else if (records.optOut !== null && records.optOut.heldBy === 'device') {
-			// While an account layer for the current `externalId` is active,
-			// server opt-out answers with `heldBy` `'person'` or `'both'`
-			// never write to browser records or mutate the account layer.
-			const browserDeviceOptOut =
-				browser.optOut?.heldBy === 'person' ? null : browser.optOut;
-			patch.optOut = mergeNewestOptOut(browserDeviceOptOut, records.optOut);
+		const foldedOptOut = foldServerOptOut(
+			browser.optOut,
+			records.optOut,
+			activeAccount
+		);
+		if (foldedOptOut !== undefined) {
+			patch.optOut = foldedOptOut;
 		}
 	}
 	if (records.vendorChoice !== undefined) {
@@ -129,6 +176,64 @@ export const foldServerRecords = function foldServerRecords(
 	}
 	const nextAccount = foldServerAccountLayer(current, records, activeAccount);
 	return nextAccount === undefined ? { patch } : { nextAccount, patch };
+};
+
+const syncDeviceServerOptOutReceipt = function syncDeviceServerOptOutReceipt(
+	runtime: KernelRuntime,
+	beforeOptOut: Readonly<OptOutRecord> | null,
+	incomingOptOut: OptOutAnswer,
+	foldedOptOut: OptOutRecord | null | undefined,
+	fromHydration: boolean
+): void {
+	const incomingDevice = incomingOptOut.device;
+	if (incomingDevice === undefined) {
+		return;
+	}
+	const confirmed = incomingDevice.rights.length > 0;
+	const deviceAnswer: OptOutRecord = {
+		heldBy: 'device',
+		method: incomingOptOut.method,
+		recordedAt: incomingOptOut.recordedAt,
+		rights: [...incomingDevice.rights],
+	};
+	const matchesExistingDevice =
+		beforeOptOut !== null &&
+		beforeOptOut.heldBy !== 'person' &&
+		(sameOptOutAnswer(beforeOptOut, incomingOptOut) ||
+			sameOptOutAnswer(beforeOptOut, deviceAnswer) ||
+			incomingOptOut.heldBy === 'both' ||
+			incomingOptOut.heldBy === 'device');
+	if (matchesExistingDevice) {
+		if (!confirmed) {
+			return;
+		}
+		const current = runtime.getOptOutReceiptData();
+		if (!current.rightsConfirmed) {
+			runtime.setOptOutReceiptData(
+				{
+					localAct: current.localAct,
+					reference: current.reference,
+					rightsConfirmed: true,
+				},
+				fromHydration
+			);
+		}
+		runtime.setOptOutServerWrittenAt(incomingDevice.writtenAt, fromHydration);
+		return;
+	}
+	if (
+		sameOptOutAnswer(foldedOptOut, incomingOptOut) ||
+		sameOptOutAnswer(foldedOptOut, deviceAnswer)
+	) {
+		runtime.setOptOutReceiptData(
+			{ localAct: null, reference: null, rightsConfirmed: confirmed },
+			fromHydration
+		);
+		runtime.setOptOutServerWrittenAt(
+			confirmed ? incomingDevice.writtenAt : null,
+			fromHydration
+		);
+	}
 };
 
 /**
@@ -144,25 +249,38 @@ export const syncAdoptedServerOptOutReceipt =
 	function syncAdoptedServerOptOutReceipt(
 		runtime: KernelRuntime,
 		beforeOptOut: Readonly<OptOutRecord> | null,
-		incomingOptOut: OptOutRecord | null | undefined,
+		incomingOptOut: OptOutAnswer | null | undefined,
 		foldedOptOut: OptOutRecord | null | undefined,
 		fromHydration = false
 	): void {
 		if (!incomingOptOut) {
 			return;
 		}
-		const rightsConfirmed = incomingOptOut.rights.length > 0;
-		const coversBrowserDevice =
-			beforeOptOut !== null &&
-			beforeOptOut.heldBy === 'device' &&
-			incomingOptOut.heldBy === 'both' &&
-			beforeOptOut.rights.length > 0 &&
-			beforeOptOut.rights.every((right) =>
-				incomingOptOut.rights.includes(right)
+		if (incomingOptOut.device !== undefined) {
+			syncDeviceServerOptOutReceipt(
+				runtime,
+				beforeOptOut,
+				incomingOptOut,
+				foldedOptOut,
+				fromHydration
 			);
+			return;
+		}
+		const currentSnapshot = runtime.getSnapshot();
+		const activeAccount = runtime.getAccountLayer();
+		// Older backend without `device`: never confirm under an active account
+		// layer and never store a `serverWrittenAt`.
+		if (
+			activeAccount !== null &&
+			currentSnapshot.user !== null &&
+			activeAccount.externalId === currentSnapshot.user.externalId
+		) {
+			return;
+		}
+		const rightsConfirmed = incomingOptOut.rights.length > 0;
 		if (
 			beforeOptOut !== null &&
-			(sameOptOutAnswer(beforeOptOut, incomingOptOut) || coversBrowserDevice)
+			sameOptOutAnswer(beforeOptOut, incomingOptOut)
 		) {
 			if (!rightsConfirmed) {
 				return;
@@ -178,12 +296,6 @@ export const syncAdoptedServerOptOutReceipt =
 					fromHydration
 				);
 			}
-			if (runtime.getOptOutServerRecordedAt() === null) {
-				runtime.setOptOutServerRecordedAt(
-					incomingOptOut.recordedAt,
-					fromHydration
-				);
-			}
 			return;
 		}
 		if (sameOptOutAnswer(foldedOptOut, incomingOptOut)) {
@@ -191,10 +303,7 @@ export const syncAdoptedServerOptOutReceipt =
 				{ localAct: null, reference: null, rightsConfirmed },
 				fromHydration
 			);
-			runtime.setOptOutServerRecordedAt(
-				rightsConfirmed ? incomingOptOut.recordedAt : null,
-				fromHydration
-			);
+			runtime.setOptOutServerWrittenAt(null, fromHydration);
 		}
 	};
 
@@ -372,28 +481,32 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		);
 	};
 
-	const applyHydratedOptOutServerRecordedAt =
-		function applyHydratedOptOutServerRecordedAt(
+	const applyHydratedOptOutServerWrittenAt =
+		function applyHydratedOptOutServerWrittenAt(
 			before: ConsentSnapshot,
 			hydrated: ValidatedRecords
 		): void {
 			if (hydrated.optOut === null) {
-				runtime.setOptOutServerRecordedAt(null, true);
+				runtime.setOptOutServerWrittenAt(null, true);
 				return;
 			}
-			if (hydrated.optOutServerRecordedAt !== undefined) {
+			const hydratedWrittenAt =
+				hydrated.optOutServerWrittenAt === undefined
+					? hydrated.optOut?.device?.writtenAt
+					: hydrated.optOutServerWrittenAt;
+			if (hydratedWrittenAt !== undefined) {
 				const hasOptOut =
 					hydrated.optOut === undefined
 						? before.optOut !== null
 						: hydrated.optOut !== null;
-				runtime.setOptOutServerRecordedAt(
-					hasOptOut ? hydrated.optOutServerRecordedAt : null,
+				runtime.setOptOutServerWrittenAt(
+					hasOptOut ? hydratedWrittenAt : null,
 					true
 				);
 				return;
 			}
 			if (hydrated.optOut !== undefined) {
-				runtime.setOptOutServerRecordedAt(null, true);
+				runtime.setOptOutServerWrittenAt(null, true);
 			}
 		};
 
@@ -410,17 +523,22 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		const {
 			accountLayer: incomingAccountLayer,
 			choice,
+			optOut: validatedOptOut,
 			optOutGpcReported: _gpcMark,
 			optOutLinkedExternalId,
 			optOutLocalAct: _localAct,
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
-			optOutServerRecordedAt: _serverRecordedAt,
+			optOutServerWrittenAt: _serverWrittenAt,
 			vendorDeclared,
 			vendorTimes,
 			...rest
 		} = validated;
 		const patch: SnapshotPatch = { ...rest, now: at };
+		if (validatedOptOut !== undefined) {
+			patch.optOut =
+				validatedOptOut === null ? null : stripOptOutDevice(validatedOptOut);
+		}
 		if (choice !== undefined) {
 			patch.explicitChoice = choice;
 		}
@@ -474,7 +592,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			{ ...before, optOut: browserBefore.optOut },
 			validated
 		);
-		applyHydratedOptOutServerRecordedAt(
+		applyHydratedOptOutServerWrittenAt(
 			{ ...before, optOut: browserBefore.optOut },
 			validated
 		);
@@ -694,6 +812,14 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	};
 
 	/**
+	 * Safety margin (in ms) added to `device.writtenAt` before a null `/check`
+	 * document may drop the browser's device opt-out. Covers the write
+	 * transaction's duration and clock differences between API servers and the
+	 * database.
+	 */
+	const DEVICE_OPT_OUT_DROP_MARGIN_MS = 2000;
+
+	/**
 	 * Whether applying `rawDoc` / `normalized` should drop this browser's own
 	 * device opt-out because a verified remote lift on another domain cleared
 	 * both the person opt-out and this linked device's opt-out.
@@ -709,7 +835,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		const browserOptOut = runtime.getBrowserRecords().optOut;
 		if (
 			!browserOptOut ||
-			browserOptOut.heldBy !== 'device' ||
+			browserOptOut.heldBy === 'person' ||
 			browserOptOut.method === 'gpc'
 		) {
 			return false;
@@ -718,10 +844,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (!subjectId || verifiedLinks.get(subjectId) !== normalized.externalId) {
 			return false;
 		}
-		const serverRecordedAt = runtime.getOptOutServerRecordedAt();
+		const serverWrittenAt = runtime.getOptOutServerWrittenAt();
 		if (
-			serverRecordedAt === null ||
-			!(serverRecordedAt < normalized.checkedAt)
+			serverWrittenAt === null ||
+			!(serverWrittenAt + DEVICE_OPT_OUT_DROP_MARGIN_MS < normalized.checkedAt)
 		) {
 			return false;
 		}
@@ -792,7 +918,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		runtime.batch(() => {
 			if (dropDeviceOptOut) {
 				runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
-				runtime.setOptOutServerRecordedAt(null);
+				runtime.setOptOutServerWrittenAt(null);
 			}
 			changed = commit(patch, {
 				accountLayer: normalized,
@@ -994,7 +1120,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			runtime.batch(() => {
 				if (dropDeviceOptOut) {
 					runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA);
-					runtime.setOptOutServerRecordedAt(null);
+					runtime.setOptOutServerWrittenAt(null);
 				}
 				commit(patch, commitOptions);
 				const after = getSnapshot();
