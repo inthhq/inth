@@ -257,7 +257,9 @@ describe('TanStack Start client chunks', () => {
 		// 21,846 with the rest of that work. The early commit, the deferral
 		// checks and the plain scripts that wait for an account layer, and
 		// the stand-in kernel's queued `syncUserConsent`: 160 bytes (22,006
-		// measured).
+		// measured). The deferred root and the early script start also wait
+		// when the app passes `userConsent`: 9 bytes (22,015 measured).
+		// Account storage keys and codecs load with the engine.
 		expect(brotli).toBeLessThanOrEqual(22_050);
 	}, 60_000);
 
