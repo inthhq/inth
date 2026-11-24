@@ -47,14 +47,16 @@ const gzip = (text: string): number => gzipSync(text, { level: 9 }).length;
  * / 4,980 (as `privacy-choices-dialog`, 4,451 / 4,992), `widget` 4,916 /
  * 5,473 and `parts` 1,666 / 1,905. Raise only for rules the UI needs to
  * paint. `dialog` grew by about 185 / 200 for the rules that fit the
- * vendor table and long labels on a 320px screen.
+ * vendor table and long labels on a 320px screen. The forced-colours
+ * rules for the switches, the selected option and the dialog's edge cost
+ * `dialog` about 105 and `styles.css` about 145 brotli bytes.
  */
 const BUDGETS = {
-	dialog: { brotli: 4700, gzip: 5250, sheet: 'dialog' },
+	dialog: { brotli: 4850, gzip: 5450, sheet: 'dialog' },
 	'first-paint': { brotli: 9700, gzip: 10950, sheet: 'first-paint' },
 	parts: { brotli: 1700, gzip: 1950, sheet: 'parts' },
-	'styles.css': { brotli: 17600, file: 'styles.css', gzip: 20500 },
-	'styles.tw3.css': { brotli: 17500, file: 'styles.tw3.css', gzip: 20350 },
+	'styles.css': { brotli: 17800, file: 'styles.css', gzip: 20800 },
+	'styles.tw3.css': { brotli: 17700, file: 'styles.tw3.css', gzip: 20650 },
 	widget: { brotli: 5050, gzip: 5600, sheet: 'widget' },
 } as const;
 

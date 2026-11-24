@@ -101,7 +101,9 @@
 	}
 
 	.button:not(:global(.headless)):focus-visible {
-		outline: none;
+		/* Forced colours drop the shadow ring and paint this instead. */
+		outline: 2px solid transparent;
+		outline-offset: 2px;
 		box-shadow: var(--button-shadow-primary-focus);
 	}
 
@@ -732,7 +734,9 @@
 	.button:not(
 			:global(.headless)
 		)[data-variant][data-mode]:focus-visible:hover:not(:disabled) {
-		outline: none;
+		/* Forced colours drop the shadow ring and paint this instead. */
+		outline: 2px solid transparent;
+		outline-offset: 2px;
 		box-shadow: var(--button-shadow-primary-focus);
 	}
 

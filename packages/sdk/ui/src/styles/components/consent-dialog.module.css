@@ -1457,4 +1457,49 @@
 			opacity: 1;
 		}
 	}
+
+	/* Forced colours (Windows High Contrast) drop backgrounds and shadows,
+	   which is all the switch, the selected option and the card's edge
+	   are drawn with. System colours draw them instead. */
+	@media (forced-colors: active) {
+		.card,
+		.confirm {
+			outline: 1px solid CanvasText;
+			outline-offset: -1px;
+		}
+
+		.switch {
+			forced-color-adjust: none;
+			background: ButtonFace;
+			box-shadow: inset 0 0 0 1px ButtonText;
+		}
+
+		.switch::after {
+			background: ButtonText;
+			box-shadow: none;
+		}
+
+		.switch[aria-checked='true'] {
+			background: Highlight;
+			box-shadow: none;
+		}
+
+		.switch[aria-checked='true']::after {
+			background: HighlightText;
+		}
+
+		.switch:focus-visible {
+			outline-color: Highlight;
+		}
+
+		.segmented {
+			outline: 1px solid ButtonText;
+			outline-offset: -1px;
+		}
+
+		.segmentedThumb {
+			outline: 2px solid Highlight;
+			outline-offset: -2px;
+		}
+	}
 }
