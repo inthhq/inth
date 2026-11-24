@@ -315,12 +315,14 @@ export const createStandInKernel = function createStandInKernel(
 				listeners.delete(listener);
 			};
 		},
-		syncUserConsent(value) {
+		// Written like `set`'s calls, so the first load compresses the two together.
+		syncUserConsent(...args) {
+			const call = (kernel: ConsentKernel) => kernel.syncUserConsent(...args);
 			if (engine) {
-				return engine.syncUserConsent(value);
+				return call(engine);
 			}
-			queued.push((attached) => attached.syncUserConsent(value));
-			pending.push({ args: [value], name: 'syncUserConsent' });
+			queued.push(call);
+			pending.push({ args, name: 'syncUserConsent' });
 			options.requestEngine();
 			return false;
 		},
