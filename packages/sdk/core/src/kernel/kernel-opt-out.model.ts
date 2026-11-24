@@ -343,6 +343,21 @@ export const sameAccount = function sameAccount(
 };
 
 /**
+ * Replacing or clearing the user ends the previous account's
+ * `identify()`, as `clearIdentity()` does: an answer to it no longer
+ * applies. A new token or properties for the same account changes nothing.
+ */
+export const fenceReplacedUser = function fenceReplacedUser(
+	runtime: Pick<KernelRuntime, 'noteIdentify'>,
+	current: Readonly<KernelUser> | null,
+	next: Readonly<KernelUser> | null
+): void {
+	if (current !== null && !sameAccount(current, next)) {
+		runtime.noteIdentify();
+	}
+};
+
+/**
  * Whether an answer to a request made for `account` at identification
  * generation `identity` still belongs to whoever is identified now: no
  * `identify()` or sign-out happened since, and `account` is the current

@@ -48,6 +48,7 @@ import {
 	answerOwnedBy,
 	applySyncedOptOut,
 	browserOptOutFromAnswer,
+	fenceReplacedUser,
 	sameOptOutAnswer,
 	sameOptOutRecord,
 } from './kernel-opt-out.model';
@@ -921,6 +922,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				typeof options === 'boolean' ? { pending: options } : options;
 			const sameUser =
 				(before.user?.externalId ?? null) === (nextUser?.externalId ?? null);
+			fenceReplacedUser(runtime, before.user, nextUser);
 			const patch: SnapshotPatch = { now: at, user: nextUser };
 			let commitOptions: RuntimeCommitOptions | undefined;
 

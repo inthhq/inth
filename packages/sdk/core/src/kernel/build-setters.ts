@@ -29,6 +29,7 @@ import {
 } from '../libs/vendors';
 import type { KernelRuntime } from './create-runtime';
 import { normalizeExternalPermissions } from './external-permissions.model';
+import { fenceReplacedUser } from './kernel-opt-out.model';
 import {
 	copyIABAuthority,
 	DEFAULT_IAB,
@@ -131,6 +132,22 @@ const mergeVendors = function mergeVendors(
 /**
  * Build the `kernel.set.*` object given the kernel runtime.
  */
+const sameProperties = (
+	left: KernelUser['properties'],
+	right: KernelUser['properties']
+): boolean => {
+	const leftKeys = Object.keys(left ?? {});
+	return (
+		leftKeys.length === Object.keys(right ?? {}).length &&
+		leftKeys.every(
+			(key) =>
+				right !== undefined &&
+				Object.hasOwn(right, key) &&
+				right[key] === left?.[key]
+		)
+	);
+};
+
 export const buildSetters = function buildSetters(
 	runtime: KernelRuntime,
 	config: KernelConfig
@@ -255,10 +272,12 @@ export const buildSetters = function buildSetters(
 				current.externalId === nextUser.externalId &&
 				current.identityToken === nextUser.identityToken &&
 				current.identityProvider === nextUser.identityProvider &&
-				current.externalIdType === nextUser.externalIdType
+				current.externalIdType === nextUser.externalIdType &&
+				sameProperties(current.properties, nextUser.properties)
 			) {
 				return;
 			}
+			fenceReplacedUser(runtime, current, nextUser);
 			commit({
 				now: runtime.now(),
 				user: nextUser ? { ...nextUser } : null,
