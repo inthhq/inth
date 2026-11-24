@@ -29,16 +29,16 @@ import { resolveAccountStorageKeys } from '../../modules/persistence/account-key
 import {
 	encodeOptOutRecordCompact,
 	encodeVendorChoiceCompact,
-} from '../../modules/persistence/writer/encode';
-import { resolveRequestConsent } from '../../server/request-consent';
+} from '../../modules/persistence/writer/record-encode.model';
+import { resolveRequestConsent } from '../../server/request-consent.api';
 import { testing } from '../../testing';
+import type { RuntimePrefetch } from '../consent-runtime.model';
+import { createRuntimeKernel } from '../create-runtime-kernel';
+import { streamPrefetchWith } from '../create-streamed-mode';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
-import { createRuntimeKernel } from '../runtime-kernel';
 import { serverScriptStart } from '../script-server-start';
-import { streamPrefetchWith } from '../stream-mode';
+import { streamPrefetch } from '../stream-prefetch';
 import { resolveStreamedInit } from '../streamed-init';
-import { streamPrefetch } from '../streamed-prefetch';
-import type { RuntimePrefetch } from '../types';
 
 const clearBrowserStorage = () => {
 	window.localStorage.clear();

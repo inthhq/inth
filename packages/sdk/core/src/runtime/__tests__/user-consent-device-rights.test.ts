@@ -13,7 +13,7 @@ import {
 	NOW,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import type { OptOutAnswer } from '../../types';
+import type { OptOutAnswer } from '../../consent-kernel.model';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
 
 const SUBJECT_UUID = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';

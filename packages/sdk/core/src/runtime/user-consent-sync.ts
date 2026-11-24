@@ -8,7 +8,7 @@
 
 import type { UserConsent } from '@inth/sdk-schema/types';
 
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 
 /** Accepted values for the `userConsent` runtime/provider option. */
 export type UserConsentOption =

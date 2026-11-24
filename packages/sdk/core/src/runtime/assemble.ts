@@ -1,4 +1,3 @@
-import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
 /**
  * The consent runtime: a kernel plus every opt-in module, wired, with a
  * lifecycle hosts drive and do not re-derive.
@@ -16,6 +15,7 @@ import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
  */
 import type { UserConsent } from '@inth/sdk-schema/types';
 
+import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
 import { displayedCategories } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { clearKernelRecords } from '../kernel/clear-records.model';
