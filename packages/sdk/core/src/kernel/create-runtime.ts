@@ -94,6 +94,14 @@ export interface KernelRuntime {
 	/** Bump the records generation. Only the records boundary calls this. */
 	invalidateRecords: () => void;
 	/**
+	 * Identification generation. Bumped by every `identify()`, so a request
+	 * started for one account can tell that the site identified someone
+	 * else, or the same account again, on the same browser subject.
+	 */
+	getIdentityVersion: () => number;
+	/** Record an `identify()` and return the new identification generation. */
+	noteIdentify: () => number;
+	/**
 	 * Monotonic counter of local opt-out acts (`opt-out:recorded`,
 	 * `opt-out:lifted`). An answer from a request started before a newer local
 	 * act must not overwrite that act.
@@ -204,6 +212,7 @@ export const createRuntime = function createRuntime(
 	} | null = null;
 	let generation = 0;
 	let optOutActVersion = 0;
+	let identityVersion = 0;
 	let listeners: ListenerSet<ConsentSnapshot> | undefined;
 	/**
 	 * The arm the visitor runs whenever the policy accepts it.
@@ -628,6 +637,7 @@ export const createRuntime = function createRuntime(
 		commit,
 		emit,
 		getGeneration: () => generation,
+		getIdentityVersion: () => identityVersion,
 		getOptOutActVersion: () => optOutActVersion,
 		getOptOutGpcReportEpoch: () => gpcReportEpoch,
 		getOptOutReceiptData: () => optOutReceiptData,
@@ -637,6 +647,10 @@ export const createRuntime = function createRuntime(
 		},
 		isOptOutGpcReported: () => gpcReported,
 		markLive,
+		noteIdentify: () => {
+			identityVersion += 1;
+			return identityVersion;
+		},
 		noteOptOutAct: () => {
 			optOutActVersion += 1;
 			return optOutActVersion;
