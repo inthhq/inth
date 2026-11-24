@@ -1126,6 +1126,46 @@ describe('council fixes', () => {
 		await waitFor(() => expect(document.activeElement).toBe(choices));
 	});
 
+	// jsdom lays nothing out, so a control the page hides with CSS is
+	// modelled by a focus() that does not land, as the browser does for
+	// `display: none`.
+	const cannotTakeFocus = (element: HTMLElement) =>
+		vi.spyOn(element, 'focus').mockImplementation(() => undefined);
+	/** The site's own `[inthConsentDialogLink]`, the last return target. */
+	const siteLink = () => {
+		const button = document.createElement('button');
+		button.dataset.testid = 'consent-dialog-link';
+		document.body.append(button);
+		return button;
+	};
+
+	test('[FOC-03] an opener the page hides hands focus to a visible link, not the body', async () => {
+		await mount();
+		await openDialog();
+		const fallback = siteLink();
+		cannotTakeFocus(link());
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(fallback));
+	});
+
+	test('[FOC-03] an unmounted opener with a hidden link hands focus to a visible link', async () => {
+		const { consent } = await mount();
+		const fallback = siteLink();
+		const opener = document.createElement('button');
+		document.body.append(opener);
+		opener.focus();
+		consent.setActiveUI('dialog');
+		await waitFor(() =>
+			expect(document.activeElement).toBe(must('consent-dialog-title'))
+		);
+		opener.remove();
+		cannotTakeFocus(link());
+		must('consent-dialog-done').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(fallback));
+	});
+
 	test('[NEST-03] only the top layer is exposed: covered and folded parts carry a real inert', async () => {
 		await mount({ phone: true });
 		await openDialog();

@@ -46,6 +46,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	restoreFocus,
 } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
@@ -111,13 +112,7 @@ const RETURN_TARGETS = [
 
 /** Move focus to "Your Privacy Choices", or leave it where it is. */
 const focusReturnTarget = function focusReturnTarget(): void {
-	for (const selector of RETURN_TARGETS) {
-		const target = document.querySelector<HTMLElement>(selector);
-		if (target) {
-			target.focus({ preventScroll: true });
-			return;
-		}
-	}
+	restoreFocus({ fallbacks: RETURN_TARGETS });
 };
 
 type Phase = 'hidden' | 'shown' | 'leaving';

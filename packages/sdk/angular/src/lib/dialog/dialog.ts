@@ -49,6 +49,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	restoreFocus,
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
@@ -853,16 +854,10 @@ export class ConsentDialogBody {
 						if (kernel.getSnapshot().activeUI === 'banner') {
 							focusReturningBanner();
 						}
-						if (target instanceof HTMLElement && target.isConnected) {
-							return target;
-						}
-						for (const selector of RETURN_TARGETS) {
-							const fallback = document.querySelector<HTMLElement>(selector);
-							if (fallback) {
-								return fallback;
-							}
-						}
-						return null;
+						// The page is released by now, so an opener that cannot take
+						// focus is skipped: one that unmounted while the dialog was
+						// open, such as the floating trigger, or one the page hides.
+						return restoreFocus({ fallbacks: RETURN_TARGETS, opener: target });
 					},
 				});
 				onCleanup(() => {

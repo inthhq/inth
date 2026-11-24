@@ -32,6 +32,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	restoreFocus,
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
@@ -468,17 +469,6 @@ const focusReturningBanner = function focusReturningBanner(): void {
 	requestAnimationFrame(attempt);
 };
 
-/** The first page control that can take focus back from the dialog. */
-const findReturnTarget = function findReturnTarget(): HTMLElement | null {
-	for (const selector of RETURN_TARGETS) {
-		const target = document.querySelector<HTMLElement>(selector);
-		if (target) {
-			return target;
-		}
-	}
-	return null;
-};
-
 /**
  * Focus a return target once it renders again. The floating trigger hides
  * while the dialog is open and comes back in the same commit that closes
@@ -493,9 +483,7 @@ const focusReturnTargetOnceRendered =
 			if (active && active !== document.body) {
 				return;
 			}
-			const target = findReturnTarget();
-			if (target) {
-				target.focus({ preventScroll: true });
+			if (restoreFocus({ fallbacks: RETURN_TARGETS })) {
 				return;
 			}
 			frames += 1;
@@ -713,20 +701,17 @@ const DialogContent = ({
 				if (bannerReturns) {
 					focusReturningBanner();
 				}
-				// An opener that unmounted while the dialog was open, such as
-				// the floating trigger, left focus on the body.
-				if (
-					target instanceof HTMLElement &&
-					target.isConnected &&
-					target !== target.ownerDocument.body
-				) {
-					return target;
-				}
-				const fallback = findReturnTarget();
-				if (!(fallback || bannerReturns)) {
+				// The page is released by now, so an opener that cannot take
+				// focus is skipped: one that unmounted while the dialog was
+				// open, such as the floating trigger, or one the page hides.
+				const returned = restoreFocus({
+					fallbacks: RETURN_TARGETS,
+					opener: target,
+				});
+				if (!(returned || bannerReturns)) {
 					focusReturnTargetOnceRendered();
 				}
-				return fallback;
+				return returned;
 			},
 		});
 		return () => {

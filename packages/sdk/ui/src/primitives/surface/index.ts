@@ -21,3 +21,4 @@ export * from './reveal-disclosure';
 export * from './scroll-reveal.model';
 export * from './attach-theme-switch-guard';
 export * from './attach-top-layer-trap';
+export * from './restore-focus';

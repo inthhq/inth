@@ -40,13 +40,7 @@
 
 	/** Move focus to "Your Privacy Choices", or leave it where it is. */
 	const focusReturnTarget = function focusReturnTarget(): void {
-		for (const selector of RETURN_TARGETS) {
-			const target = document.querySelector<HTMLElement>(selector);
-			if (target) {
-				target.focus({ preventScroll: true });
-				return;
-			}
-		}
+		restoreFocus({ fallbacks: RETURN_TARGETS });
 	};
 
 	/** Exits are 160ms; the controllers add their own slack. */
@@ -87,6 +81,7 @@
 		attachPageBlock,
 		attachScrollFades,
 		attachTopLayerTrap,
+		restoreFocus,
 	} from '@inth/sdk/ui/primitives/surface';
 	import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 	import barStyles from '@inth/sdk/ui/styles/components/consent-banner';
