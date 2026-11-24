@@ -926,7 +926,11 @@ export const resolveSaleRightCopy = function resolveSaleRightCopy(
 		model: string;
 		selected: 'protect' | 'allow';
 		source: 'default' | 'user' | 'gpc';
-		/** A live Global Privacy Control signal holds the refusal. */
+		/**
+		 * Something holds the refusal, so "Allow" is unavailable: a live
+		 * Global Privacy Control signal when `source` is `'gpc'`, otherwise
+		 * the visitor's account, for a visitor who is not signed in.
+		 */
 		locked: boolean;
 		/** The `optOut` link title, the statutory phrase for an opt-out row. */
 		optOutLinkLabel?: string;
@@ -947,7 +951,12 @@ export const resolveSaleRightCopy = function resolveSaleRightCopy(
 		});
 	let description: string;
 	if (input.locked) {
-		description = resolveGpcNote(translations, input);
+		// Only a live signal gets the signal's note. An account's opt-out
+		// says so, and that signing in is how to change it.
+		description =
+			input.source === 'gpc'
+				? resolveGpcNote(translations, input)
+				: resolveOptOutCopy(translations).lockedByAccount;
 	} else if (input.selected === 'allow') {
 		description = sentence(copy.saleAllowed, { rights: phrases.ask });
 	} else if (input.source === 'default') {

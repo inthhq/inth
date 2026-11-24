@@ -337,6 +337,7 @@ export {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
+	confirmSaleRightThen,
 	copySurfaceReference,
 	getSurfaceSession,
 	initialSurfaceSession,
@@ -357,6 +358,7 @@ export {
 export type {
 	BannerCommitAction,
 	BannerCommitOptions,
+	ConfirmSaleRightOptions,
 	BannerCommitOutcome,
 	BannerCommitPlan,
 	BannerCommitSnapshot,

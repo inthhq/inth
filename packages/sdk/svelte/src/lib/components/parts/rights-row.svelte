@@ -42,7 +42,7 @@
 	 * Renders nothing when the policy has no category that decides sale.
 	 */
 	import {
-		confirmSaleRight,
+		confirmSaleRightThen,
 		pressSaleRight,
 		resolveSaleRight,
 	} from '@inth/sdk/engine';
@@ -212,9 +212,9 @@
 	};
 
 	const confirmAllow = function confirmAllow() {
-		if (confirmSaleRight(consent.kernel, { uiSource })) {
-			recorded('allow');
-		}
+		confirmSaleRightThen(consent.kernel, { translations, uiSource }, () =>
+			recorded('allow')
+		);
 	};
 </script>
 

@@ -19,7 +19,7 @@ import {
 	viewChild,
 } from '@angular/core';
 import {
-	confirmSaleRight,
+	confirmSaleRightThen,
 	pressSaleRight,
 	resolveSaleRight,
 } from '@inth/sdk/engine';
@@ -420,10 +420,10 @@ export class SaleRightsRow {
 
 	/** @internal */
 	protected confirmAllow(): void {
-		if (
-			confirmSaleRight(this.#consent.kernel(), { uiSource: this.uiSource() })
-		) {
-			this.#recorded('allow');
-		}
+		confirmSaleRightThen(
+			this.#consent.kernel(),
+			{ translations: this.#consent.copy(), uiSource: this.uiSource() },
+			() => this.#recorded('allow')
+		);
 	}
 }

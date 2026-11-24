@@ -32,7 +32,7 @@ import { consentButton } from './consent-button';
 import { cx, el } from './el';
 import type { PartRef } from './el';
 import {
-	confirmSaleRight,
+	confirmSaleRightThen,
 	getOptOutReceiptData,
 	pressSaleRight,
 } from './engine';
@@ -266,11 +266,11 @@ export const createSaleRightsRow =
 										'data-testid': `${prefix}-confirm-allow`,
 										on: {
 											click: () => {
-												if (
-													confirmSaleRight(kernel, { uiSource: props.uiSource })
-												) {
-													recorded('allow');
-												}
+												confirmSaleRightThen(
+													kernel,
+													{ translations: t, uiSource: props.uiSource },
+													() => recorded('allow')
+												);
 											},
 										},
 									},

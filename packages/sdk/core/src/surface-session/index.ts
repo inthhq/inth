@@ -11,10 +11,12 @@ export {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
+	confirmSaleRightThen,
 	pressSaleRight,
 } from './surface-commands.model';
 export type {
 	BannerCommitOptions,
+	ConfirmSaleRightOptions,
 	BannerCommitOutcome,
 	RightCommandOptions,
 	RightPressResult,
