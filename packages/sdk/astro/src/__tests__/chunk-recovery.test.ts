@@ -7,6 +7,10 @@
  * build shows it: the chunks are the bundler's, and other chunks import
  * them by their plain URL. The fixture's page is prerendered, so no
  * early-tap script holds the tap.
+ *
+ * The page must not reload itself to get past that: a reload throws away
+ * what the visitor typed into the host page. The banner shows again, no
+ * choice is recorded, and the next page load fetches the chunk again.
  */
 import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -148,79 +152,137 @@ const gets = (pattern: RegExp): number =>
 		(entry) => entry.startsWith('GET ') && pattern.test(entry.slice(4))
 	).length;
 
+/** The page's consent client, as the banner left it. */
+const consent = (page: Page) =>
+	page.evaluate(() => {
+		const client = (
+			window as unknown as {
+				__inthAstro?: {
+					getConsent: () => {
+						activeUI: string;
+						effectivePermissions: Record<string, boolean>;
+						explicitChoice: unknown;
+					};
+				};
+			}
+		).__inthAstro;
+		const snapshot = client?.getConsent();
+		return {
+			activeUI: snapshot?.activeUI,
+			chosen: Boolean(snapshot?.explicitChoice),
+			marketing: snapshot?.effectivePermissions.marketing,
+		};
+	});
+
 /**
- * Open the page, tap Accept, and tap it again while the banner still
- * shows. Resolves the page once both taps are done.
+ * Open the page, type a draft into a field on it, tap Accept, and tap it
+ * again once the banner shows again. Resolves the page once the second
+ * tap's retry failed.
  */
-const acceptTwice = async function acceptTwice(): Promise<Page> {
+const acceptTwice = async function acceptTwice(
+	prepare?: (page: Page) => Promise<void>
+): Promise<Page> {
 	const page = await (browser as Browser).newPage();
+	let warned = 0;
+	page.on('console', (message) => {
+		if (/consent (?:engine|banner) failed to load/u.test(message.text())) {
+			warned += 1;
+		}
+	});
+	await prepare?.(page);
 	await page.goto(site.url);
+	// A host page's form, with a draft the visitor has not sent.
+	await page.evaluate(() => {
+		const field = document.createElement('textarea');
+		field.id = 'draft';
+		document.body.append(field);
+	});
+	await page.fill('#draft', 'unsaved draft');
 	const accept = page.getByTestId('consent-banner-accept-button');
 	await accept.click();
-	await page.waitForTimeout(1500);
-	if (await accept.isVisible()) {
-		await accept.click();
-	}
+	await expect.poll(() => warned, { timeout: 10_000 }).toBeGreaterThan(0);
+	await expect.poll(() => accept.isVisible(), { timeout: 10_000 }).toBe(true);
+	await page.waitForTimeout(500);
+	const before = warned;
+	await accept.click();
+	// The tap retried the load, which Chromium failed again at once.
+	await expect.poll(() => warned, { timeout: 10_000 }).toBeGreaterThan(before);
+	await page.waitForTimeout(500);
 	return page;
 };
 
+/**
+ * The page is the one the visitor typed into, with the banner back, no
+ * choice recorded and every gate closed.
+ */
+const leftInPlace = async function leftInPlace(page: Page): Promise<void> {
+	expect(site.requests.filter((entry) => entry === 'GET /')).toHaveLength(1);
+	expect(await page.inputValue('#draft')).toBe('unsaved draft');
+	expect(
+		await page.getByTestId('consent-banner-accept-button').isVisible()
+	).toBe(true);
+	expect(await marketing(page)).toBe('');
+	expect(await consent(page)).toEqual({
+		activeUI: 'banner',
+		chosen: false,
+		marketing: false,
+	});
+	expect(
+		await page.evaluate(() =>
+			Object.keys(sessionStorage).filter((key) => key.startsWith('inth:'))
+		)
+	).toEqual([]);
+};
+
 describe('a consent chunk that fails to download once', () => {
-	it('records the Accept tap after the engine chunk answered 503', async () => {
+	it('leaves the page in place after the engine chunk answered 503, and records a tap after the next load', async () => {
 		site.reset();
 		site.failNext(ENGINE);
 		const page = await acceptTwice();
+		await leftInPlace(page);
+		// Chromium sent no request for the retry.
+		expect(gets(ENGINE)).toBe(1);
+
+		// The next page load fetches the chunk again.
+		await page.reload();
+		await page.getByTestId('consent-banner-accept-button').click();
 		await expect.poll(() => marketing(page), { timeout: 10_000 }).toBe('1');
-		expect(gets(ENGINE)).toBeGreaterThanOrEqual(2);
-		expect(
-			await page.getByTestId('consent-banner-accept-button').isVisible()
-		).toBe(false);
 		await page.close();
 	}, 60_000);
 
-	it('records the Accept tap after the engine chunk failed offline', async () => {
+	it('leaves the page in place after the engine chunk failed offline', async () => {
 		site.reset();
-		const page = await (browser as Browser).newPage();
 		let dropped = false;
-		await page.route(ENGINE, async (route) => {
-			if (!dropped) {
-				dropped = true;
-				await route.abort('internetdisconnected');
-				return;
-			}
-			await route.continue();
+		const page = await acceptTwice(async (opened) => {
+			await opened.route(ENGINE, async (route) => {
+				if (!dropped) {
+					dropped = true;
+					await route.abort('internetdisconnected');
+					return;
+				}
+				await route.continue();
+			});
 		});
-		await page.goto(site.url);
-		const accept = page.getByTestId('consent-banner-accept-button');
-		await accept.click();
-		await page.waitForTimeout(1500);
-		if (await accept.isVisible()) {
-			await accept.click();
-		}
-		await expect.poll(() => marketing(page), { timeout: 10_000 }).toBe('1');
 		expect(dropped).toBe(true);
-		expect(gets(ENGINE)).toBeGreaterThanOrEqual(1);
+		await leftInPlace(page);
 		await page.close();
 	}, 60_000);
 
-	it('records the Accept tap after the prompt chunk answered 503', async () => {
+	it('leaves the page in place after the prompt chunk answered 503', async () => {
 		site.reset();
 		site.failNext(PROMPT);
 		const page = await acceptTwice();
-		await expect.poll(() => marketing(page), { timeout: 10_000 }).toBe('1');
-		expect(gets(PROMPT)).toBeGreaterThanOrEqual(2);
+		await leftInPlace(page);
+		expect(gets(PROMPT)).toBe(1);
 		await page.close();
 	}, 60_000);
 
-	it('does not reload the page while the engine chunk keeps failing', async () => {
+	it('leaves the page in place while the engine chunk keeps failing', async () => {
 		site.reset();
 		site.failNext(ENGINE, 100);
 		const page = await acceptTwice();
-		await page.waitForTimeout(1500);
-		expect(site.requests.filter((entry) => entry === 'GET /')).toHaveLength(1);
-		expect(await marketing(page)).toBe('');
-		expect(
-			await page.getByTestId('consent-banner-accept-button').isVisible()
-		).toBe(true);
+		await leftInPlace(page);
+		expect(gets(ENGINE)).toBe(1);
 		await page.close();
 	}, 60_000);
 });
