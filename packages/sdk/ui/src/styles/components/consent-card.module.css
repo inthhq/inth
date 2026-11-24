@@ -75,6 +75,7 @@
 		--_consent-enter-duration: calc(var(--inth-duration-slow) * 1.1);
 		inset: 0;
 		display: grid;
+		grid-template-rows: minmax(0, 1fr);
 		place-items: center;
 		padding: var(--consent-card-offset, var(--inth-space-lg));
 	}
@@ -84,6 +85,8 @@
 			--consent-card-width,
 			min(var(--consent-banner-wall-max-width, 480px), 100%)
 		);
+		/* Room for the tag, which hangs above the card. */
+		max-height: calc(100% - 2.25rem);
 		animation-name: consent-card-zoom-in;
 	}
 

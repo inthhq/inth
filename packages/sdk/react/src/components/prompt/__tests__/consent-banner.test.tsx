@@ -1271,3 +1271,57 @@ describe('[BNR-06] a tap before hydration', () => {
 		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	});
 });
+
+describe('short viewports:', () => {
+	const CONTAINERS = [
+		['card', { type: 'card' }],
+		['centred card', { position: 'center', type: 'card' }],
+		['banner', { edge: 'bottom', type: 'banner' }],
+		['bottom drawer', { side: 'bottom', type: 'drawer' }],
+		['top drawer', { side: 'top', type: 'drawer' }],
+	] as const;
+	// A phone on its side, and 1280x720 at 200% zoom (WCAG 1.4.10).
+	const SIZES = [
+		[844, 390],
+		[640, 360],
+	] as const;
+	const cases = CONTAINERS.flatMap(([name, container]) =>
+		SIZES.map(([width, height]) => ({ container, height, name, width }))
+	);
+
+	test.each(cases)(
+		'the expanded $name stays inside a $width x $height viewport, and its title can be reached',
+		async ({ container, height, width }) => {
+			await page.viewport(width, height);
+			await mount({ container });
+			await waitForRoot();
+			must('consent-banner-customize-button').click();
+			await waitForPanel();
+			await vi.waitFor(() =>
+				expect(must('consent-banner-expand-panel')).toHaveAttribute(
+					'data-open',
+					'true'
+				)
+			);
+			// The panel's height is a transition: measure it fully open.
+			await new Promise((resolve) => {
+				requestAnimationFrame(resolve);
+			});
+			finishAnimations();
+			const card = must('consent-banner-card');
+			const rect = card.getBoundingClientRect();
+			// Open, the card is taller than its collapsed head and footer.
+			expect(box('consent-banner-body').height).toBeGreaterThan(50);
+			expect(rect.top).toBeGreaterThanOrEqual(0);
+			expect(rect.bottom).toBeLessThanOrEqual(window.innerHeight);
+			// Where the card is too short for its head, choices and footer,
+			// it scrolls, so the title is still within reach.
+			card.scrollTop = 0;
+			expect(box('consent-banner-title').top).toBeGreaterThanOrEqual(0);
+			card.scrollTop = card.scrollHeight;
+			expect(box('consent-banner-footer').bottom).toBeLessThanOrEqual(
+				window.innerHeight
+			);
+		}
+	);
+});

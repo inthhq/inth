@@ -19,6 +19,8 @@
  *
  *   --consent-expand-group-radius        (--inth-radius-container)
  *   --consent-expand-group-border-color  (--inth-border-strong)
+ *   --consent-expand-min-height          (6rem; the least height the
+ *                                        choices keep on a short screen)
  */
 
 @property --inth-fade-top {
@@ -36,12 +38,21 @@
 @layer components {
 	.panel {
 		display: grid;
+		/* Lets the card take height from the choices on a short screen.
+		   The floor an open panel keeps moves with the rows: set at once,
+		   it would open the panel that tall before the rows began. */
+		min-height: 0;
 		grid-template-rows: 0fr;
-		transition: grid-template-rows var(--inth-duration-slow)
-			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
+		transition:
+			grid-template-rows var(--inth-duration-slow)
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1)),
+			min-height var(--inth-duration-slow)
+				var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.panel[data-open='true'] {
+		/* The least height the choices keep before the card scrolls. */
+		min-height: var(--consent-expand-min-height, 6rem);
 		grid-template-rows: 1fr;
 	}
 

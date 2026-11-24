@@ -71,6 +71,10 @@
 		display: flex;
 		flex-direction: column;
 		box-sizing: border-box;
+		/* Never taller than the viewport: on a short screen the choices
+		   shrink first, then the card scrolls (WCAG 1.4.10). */
+		max-height: 100vh;
+		max-height: 100dvh;
 		pointer-events: none;
 		font-family: var(--consent-banner-font-family, var(--inth-font-family));
 		line-height: var(
@@ -181,6 +185,7 @@
 		display: flex;
 		flex-direction: column;
 		width: 100%;
+		min-height: 0;
 		pointer-events: auto;
 		animation: consent-surface-rise
 			var(
@@ -201,7 +206,11 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
-		overflow: hidden;
+		/* Scrolls only when the head, the least the choices need and the
+		   footer are together taller than the viewport. */
+		overflow: hidden auto;
+		overscroll-behavior: contain;
+		scrollbar-width: thin;
 		background: var(
 			--consent-surface-background,
 			var(--_consent-bg, var(--inth-surface))
@@ -231,6 +240,7 @@
 
 	.head {
 		display: flex;
+		flex: none;
 		flex-direction: column;
 		gap: var(--inth-space-sm);
 		padding: var(--_consent-pad, var(--inth-space-lg));
@@ -267,6 +277,7 @@
 
 	.footer {
 		display: flex;
+		flex: none;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--inth-space-sm);
