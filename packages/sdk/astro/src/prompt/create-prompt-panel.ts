@@ -409,16 +409,24 @@ export const createPromptPanel = function createPromptPanel(
 		checked: boolean,
 		attrs: Record<string, string | undefined>,
 		small = false
-	): VElement =>
-		h('button', {
+	): VElement => {
+		// The `toggle` theme slot, as the `ConsentWidget` switch takes it.
+		const slot = resolveSlotBinding(
+			theme,
+			'toggle',
+			noStyle ? '' : (choices.switch ?? '')
+		);
+		return h('button', {
 			...attrs,
 			'aria-checked': bool(checked),
-			class: cls(choices.switch),
+			class: slot.class || undefined,
 			'data-size': small ? 'small' : undefined,
 			'data-state': checked ? 'checked' : 'unchecked',
 			role: 'switch',
+			style: slot.style,
 			type: 'button',
 		});
+	};
 
 	/** A category's vendors as a boxed table (CAT-09). */
 	const renderVendorTable = (

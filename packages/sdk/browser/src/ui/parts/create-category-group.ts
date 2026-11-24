@@ -210,6 +210,7 @@ const vendorTable = function vendorTable(
 								noStyle,
 								onChange: (next) => params.onToggle(vendor, next),
 								size: 'small',
+								slot: env.ctx.slot,
 							})
 						: null
 				)
@@ -531,6 +532,7 @@ export const createCategoryGroup =
 									checked,
 									noStyle,
 									onChange: (next) => toggleCategory(name, listed, next),
+									slot: env.ctx.slot,
 								})
 					);
 					row.onclick = (event) => {

@@ -2,18 +2,22 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	inject,
 	input,
 	output,
 } from '@angular/core';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
+import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
+import { slotPart } from './part-class-names.model';
 
 /**
  * A choice switch: a `role="switch"` button the row names with
  * `aria-labelledby` and describes with `aria-describedby` (SR-06). Never
  * `disabled` for a vendor (CAT-03); a category that cannot change shows
- * "Always on" instead of a switch.
+ * "Always on" instead of a switch. Takes the `toggle` theme slot, as the
+ * `ConsentWidget` switch does.
  *
  * @internal
  */
@@ -22,9 +26,10 @@ import { resolveNoStyle } from '../core/no-style-scope';
 	host: {
 		'(click)': 'checkedChange.emit(!checked())',
 		'[attr.aria-checked]': 'checked() ? "true" : "false"',
-		'[attr.class]': 'className()',
+		'[attr.class]': 'part().className',
 		'[attr.data-size]': 'size() === "small" ? "small" : null',
 		'[attr.data-state]': 'checked() ? "checked" : "unchecked"',
+		'[attr.style]': 'part().style',
 		role: 'switch',
 		type: 'button',
 	},
@@ -41,9 +46,10 @@ export class ChoiceSwitch {
 	readonly checkedChange = output<boolean>();
 
 	readonly #noStyle = resolveNoStyle(this.noStyle);
+	readonly #theme = inject(ConsentTheme);
 
 	/** @internal */
-	protected readonly className = computed(() =>
-		this.#noStyle() ? null : styles.switch || null
+	protected readonly part = computed(() =>
+		slotPart('toggle', this.#theme.theme(), this.#noStyle(), styles.switch)
 	);
 }
