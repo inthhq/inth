@@ -1325,3 +1325,87 @@ describe('short viewports:', () => {
 		}
 	);
 });
+
+describe('narrow viewports:', () => {
+	test("the prompt's own confirmation lets its two buttons wrap, as the dialog's does", async () => {
+		// A side Drawer shows the sale row without Customize; on a phone it
+		// would fold to a bottom Drawer.
+		await mount({
+			container: { side: 'start', type: 'drawer' },
+			region: 'us-opt-in',
+		});
+		await waitForRoot();
+		await waitForPanel();
+		(
+			await vi.waitFor(() =>
+				must<HTMLButtonElement>('consent-banner-right-option-sale-allow')
+			)
+		).click();
+		await vi.waitFor(() =>
+			expect(document.activeElement).toBe($('consent-banner-confirm-cancel'))
+		);
+		const confirm = box('consent-banner-confirm');
+		for (const id of [
+			'consent-banner-confirm-cancel',
+			'consent-banner-confirm-allow',
+		]) {
+			expect(getComputedStyle(must(id)).whiteSpace).toBe('normal');
+			expect(box(id).right).toBeLessThanOrEqual(confirm.right);
+		}
+	});
+
+	test('a long label wraps inside a wide Banner, and no action leaves the card', async () => {
+		await page.viewport(768, 600);
+		await mount({
+			bannerProps: {
+				customizeButtonText: 'Manage my privacy choices for this site '.repeat(
+					4
+				),
+			},
+			container: { edge: 'bottom', type: 'banner' },
+		});
+		await waitForRoot();
+		const card = box('consent-banner-card');
+		const buttons = [
+			...must('consent-banner-card').querySelectorAll('button'),
+		].filter((button) => button.getBoundingClientRect().width > 0);
+		expect(buttons).toHaveLength(3);
+		for (const button of buttons) {
+			const rect = button.getBoundingClientRect();
+			expect(rect.left).toBeGreaterThanOrEqual(card.left);
+			expect(rect.right).toBeLessThanOrEqual(card.right);
+			expect(button.scrollWidth).toBeLessThanOrEqual(button.clientWidth + 1);
+		}
+		// The description keeps room beside them.
+		expect(box('consent-banner-description').width).toBeGreaterThan(150);
+	});
+
+	test.each([
+		['eu', 3],
+		['us-opt-in', 3],
+	] as const)(
+		'every %s Banner action is inside the card at 320px wide',
+		async (region, count) => {
+			await page.viewport(320, 568);
+			await mount({ container: { edge: 'bottom', type: 'banner' }, region });
+			await waitForRoot();
+			const card = box('consent-banner-card');
+			const buttons = [
+				...must('consent-banner-card').querySelectorAll('button'),
+			].filter((button) => button.getBoundingClientRect().width > 0);
+			expect(buttons).toHaveLength(count);
+			for (const button of buttons) {
+				const rect = button.getBoundingClientRect();
+				expect(rect.left).toBeGreaterThanOrEqual(card.left);
+				expect(rect.right).toBeLessThanOrEqual(card.right);
+				expect(button.scrollWidth).toBeLessThanOrEqual(button.clientWidth + 1);
+			}
+			// Reject and Accept stay the same size (EU-01).
+			const [first, second] = buttons;
+			expect(first?.getBoundingClientRect().width).toBeCloseTo(
+				second?.getBoundingClientRect().width ?? 0,
+				0
+			);
+		}
+	);
+});

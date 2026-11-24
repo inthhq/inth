@@ -71,11 +71,24 @@
 		text-underline-offset: 2px;
 	}
 
+	/* The actions never take the whole row: past this share their labels
+	   wrap, so a long one is not pushed past the card's edge. */
 	.actions {
 		display: flex;
 		flex: none;
 		align-items: center;
 		gap: var(--inth-space-sm);
+		max-width: 65%;
+	}
+
+	/* A label wraps before it is cut off: a long translation, or a narrow
+	   screen. The stock button keeps its label on one line. */
+	.root .row .actions > :not(.actionGroup),
+	.root .row .actions > .actionGroup > * {
+		min-width: 0;
+		overflow-wrap: anywhere;
+		text-wrap: balance;
+		white-space: normal;
 	}
 
 	/* Buttons sit in the row or in a group; the group is not a button.
@@ -229,6 +242,7 @@
 			display: grid;
 			grid-auto-columns: 1fr;
 			grid-auto-flow: column;
+			max-width: none;
 		}
 
 		.root .actions > .actionGroup {
@@ -248,6 +262,23 @@
 		.root .actions > :not(.actionGroup),
 		.root .actions > .actionGroup > * {
 			min-height: 40px;
+		}
+	}
+
+	/* Too narrow for three labels on one row (a 320px phone, or 400%
+	   zoom): Reject and Accept share a row and Customize takes the next,
+	   as in the card's phone footer. */
+	@container (max-width: 360px) {
+		.actions {
+			display: flex;
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.root .actions > .actionGroup,
+		.root .actions > .actionGroup:has(> :nth-child(3)),
+		.root .actions > .actionGroup:has(> :nth-child(4)) {
+			grid-template-columns: none;
 		}
 	}
 

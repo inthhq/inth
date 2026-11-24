@@ -305,6 +305,17 @@
 		gap: var(--inth-space-sm);
 	}
 
+	/* A label wraps before it is cut off: a long translation, or a narrow
+	   screen. The stock button keeps its label on one line. Each selector
+	   outweighs it, so the order the two sheets load in does not matter. */
+	.root .footer > button,
+	.root .footer .actionGroup > * {
+		min-width: 0;
+		overflow-wrap: anywhere;
+		text-wrap: balance;
+		white-space: normal;
+	}
+
 	/* "Do not sell or share my data" on the notice: a link-style action,
 	   never a filled button, in the text-on-surface blue (VIS-02). */
 	.rightLink {
