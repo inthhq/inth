@@ -16,6 +16,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { normalizeUserConsent } from '../../kernel/account-layer';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import { resolveStorageKeys } from '../../libs/storage-keys';
 import { isVendorAllowed } from '../../modules/has';
 import {
@@ -32,13 +33,17 @@ import {
 } from '../../modules/persistence/writer/record-encode.model';
 import { resolveRequestConsent } from '../../server/request-consent.api';
 import { testing } from '../../testing';
-import type { RuntimePrefetch } from '../consent-runtime.model';
+import type { ConsentRuntime, RuntimePrefetch } from '../consent-runtime.model';
 import { createRuntimeKernel } from '../create-runtime-kernel';
 import { streamPrefetchWith } from '../create-streamed-mode';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
 import { serverScriptStart } from '../script-server-start';
 import { streamPrefetch } from '../stream-prefetch';
 import { resolveStreamedInit } from '../streamed-init';
+
+/** The runtime's kernel, with the internal reads of its two layers. */
+const internalKernel = (runtime: Pick<ConsentRuntime, 'kernel'>) =>
+	runtime.kernel as InternalKernel;
 
 const clearBrowserStorage = () => {
 	window.localStorage.clear();
@@ -370,13 +375,13 @@ describe('runtime userConsent Promise hold, timeout, and fencing', () => {
 			{
 				category: 'marketing' as const,
 				id: 'ads',
-				serverStart: () => ({ prelude: 'window.__ads = 1;' }),
+				serverStart: () => ({ code: 'window.__ads = 1;' }),
 				src: 'https://cdn.example.test/ads.js',
 			},
 		];
 
 		const withoutPromise = serverScriptStart({
-			consentCategories: ['marketing'],
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -390,7 +395,7 @@ describe('runtime userConsent Promise hold, timeout, and fencing', () => {
 		expect(withoutPromise).toBeDefined();
 
 		const withPromise = serverScriptStart({
-			consentCategories: ['marketing'],
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -442,7 +447,7 @@ describe('SSR folding via resolveRequestConsent', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { headers: new Headers() },
 			user: { externalId: 'user_a' },
 			userConsent: doc,
@@ -517,7 +522,7 @@ describe('SSR folding via resolveRequestConsent', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie, headers: new Headers() },
 			user: { externalId: 'user_a' },
 		});
@@ -541,7 +546,7 @@ describe('SSR folding via resolveRequestConsent', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie, headers: new Headers() },
 			user: { externalId: 'user_b' },
 		});
@@ -571,7 +576,7 @@ describe('runtime regressions (set 1)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				persistence: false,
 				prefetch: {
@@ -630,7 +635,7 @@ describe('runtime regressions (set 1)', () => {
 		const first = Promise.withResolvers<UserConsent | null>();
 		const second = Promise.withResolvers<UserConsent | null>();
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
 			prefetch: {
@@ -665,7 +670,7 @@ describe('runtime regressions (set 1)', () => {
 		const fp = resolution.fingerprints.choice;
 		const deferred = Promise.withResolvers<UserConsent | null>();
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
 			prefetch: {
@@ -714,7 +719,7 @@ describe('runtime regressions (set 1)', () => {
 		const resolution = matchedResolution(rule);
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				persistence: false,
 				prefetch: {
@@ -740,7 +745,7 @@ describe('runtime regressions (set 1)', () => {
 		const resolution = matchedResolution(rule);
 		const fp = resolution.fingerprints.choice;
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
 			prefetch: {
@@ -841,7 +846,7 @@ describe('runtime regressions (set 1)', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { headers: new Headers() },
 			userConsent: null,
 		});
@@ -849,7 +854,7 @@ describe('runtime regressions (set 1)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				prefetch: state,
 			},
@@ -869,7 +874,7 @@ describe('runtime regressions (set 1)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				prefetch: prefetchDeferred.promise,
 			},
@@ -928,7 +933,7 @@ describe('runtime regressions (set 2)', () => {
 			externalId: 'user_a',
 		});
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
 			prefetch: {
@@ -992,7 +997,7 @@ describe('runtime regressions (set 2)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				prefetch: prefetchDeferred.promise,
 			},
@@ -1043,7 +1048,7 @@ describe('runtime regressions (set 2)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				prefetch: prefetchDeferred.promise,
 			},
@@ -1117,7 +1122,7 @@ describe('runtime regressions (set 2)', () => {
 
 		const deferred = Promise.withResolvers<UserConsent | null>();
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -1180,7 +1185,7 @@ describe('runtime regressions (set 3)', () => {
 			externalId: 'user_a',
 		});
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
 			prefetch: {
@@ -1249,7 +1254,7 @@ describe('runtime regressions (set 3)', () => {
 		const prefetch = Promise.withResolvers<RuntimePrefetch>();
 		const mode = testing({ policy: [rule] });
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode,
 			prefetch: prefetch.promise,
 		};
@@ -1299,7 +1304,7 @@ describe('runtime regressions (set 3)', () => {
 		const mode = testing({ policy: [rule] });
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode,
 				prefetch: prefetch.promise,
 			},
@@ -1361,7 +1366,7 @@ describe('runtime regressions (set 3)', () => {
 		const user = { externalId: 'user_a' };
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				persistence: false,
 				prefetch: {
@@ -1420,10 +1425,11 @@ describe('runtime regressions (set 3)', () => {
 		const pendingConsent = Promise.withResolvers<UserConsent | null>();
 		const consentSource = {
 			getPermissions: () => ({ marketing: true }),
+			openPreferences: () => undefined,
 			subscribe: () => () => undefined,
 		};
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			consentSource,
 			mode: testing({ policy: [rule] }),
 			persistence: false as const,
@@ -1455,7 +1461,7 @@ describe('runtime regressions (set 4)', () => {
 	const runtimeFixture = (rule = optInRule()) => {
 		const resolution = matchedResolution(rule);
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -1548,7 +1554,7 @@ describe('runtime regressions (set 4)', () => {
 			},
 		});
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: Object.assign(
 				() => ({
 					identify: (_u: unknown, id: string | null) =>
@@ -1756,7 +1762,7 @@ describe('runtime regressions (set 5): identity epoch', () => {
 	const r1Fixture = (rule = optInRule()) => {
 		const resolution = matchedResolution(rule);
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -1831,7 +1837,7 @@ describe('runtime regressions (set 5): identity epoch', () => {
 			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('a');
 			await runtime.update({
 				...base,
-				consentCategories: ['marketing', 'measurement'],
+				consentCategories: ['marketing' as const, 'measurement' as const],
 			});
 			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('a');
 		} finally {
@@ -2107,7 +2113,7 @@ describe('runtime regressions (set 5): identity epoch', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie: document.cookie, headers: new Headers() },
 			user: { externalId: 'a' },
 		});
@@ -2225,7 +2231,7 @@ describe('runtime regressions (set 6)', () => {
 	const r3Fixture = (rule = optInRule()) => {
 		const resolution = matchedResolution(rule);
 		const base = {
-			consentCategories: ['marketing'] as const,
+			consentCategories: ['marketing' as const],
 			mode: testing({ policy: [rule] }),
 			prefetch: {
 				initialPolicyPending: false,
@@ -2349,7 +2355,7 @@ describe('runtime regressions (set 6)', () => {
 			pending.resolve(config);
 			runtime.streamed?.adopt(config);
 			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
-			expect(runtime.kernel.getAccountLayer()).toBeNull();
+			expect(internalKernel(runtime).getAccountLayer()).toBeNull();
 		} finally {
 			runtime.dispose();
 		}
@@ -2447,7 +2453,14 @@ describe('runtime regressions (set 6)', () => {
 					externalId: 'a',
 					vendors: { x: { confirmedAt: NOW - 4000, value: false } },
 				}),
-				vendors: [{ category: 'marketing', id: 'x' }],
+				vendors: [
+					{
+						category: 'marketing',
+						id: 'x',
+						name: 'X',
+						privacyPolicyUrl: 'https://x.example/privacy',
+					},
+				],
 			},
 			defaultRuntimeModules
 		);
@@ -2460,7 +2473,7 @@ describe('runtime regressions (set 6)', () => {
 				version: 1,
 			})}; path=/`;
 			runtime.reconcileStorage();
-			const browser = runtime.kernel.getBrowserRecords();
+			const browser = internalKernel(runtime).getBrowserRecords();
 			expect(browser.vendorChoice?.confirmedAt).toBe(NOW);
 			expect({
 				allowed: isVendorAllowed(runtime.kernel.getSnapshot(), 'x'),
@@ -2479,7 +2492,7 @@ describe('runtime regressions (set 6)', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
-					kind: 'testing' as const,
+					kind: 'custom' as const,
 				}),
 				persistence: false,
 				prefetch: pending.promise,
@@ -2541,7 +2554,7 @@ describe('runtime regressions (set 6)', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
-					kind: 'testing' as const,
+					kind: 'custom' as const,
 				}),
 				persistence: false,
 				prefetch: pending.promise,
@@ -2584,7 +2597,7 @@ describe('runtime regressions (set 6)', () => {
 
 			expect(runtime.kernel.getSnapshot().policyPending).toBe(false);
 			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
-			expect(runtime.kernel.getAccountLayer()).toBeNull();
+			expect(internalKernel(runtime).getAccountLayer()).toBeNull();
 			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
 				true
 			);
@@ -2601,7 +2614,7 @@ describe('runtime regressions (set 6)', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
-					kind: 'testing' as const,
+					kind: 'custom' as const,
 				}),
 				persistence: false,
 				prefetch: pending.promise,
@@ -2613,7 +2626,7 @@ describe('runtime regressions (set 6)', () => {
 			runtime.start();
 			await runtime.update({
 				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
-					kind: 'testing' as const,
+					kind: 'custom' as const,
 				}),
 				persistence: false,
 				prefetch: pending.promise,
@@ -2652,7 +2665,7 @@ describe('runtime regressions (set 6)', () => {
 
 			expect(runtime.kernel.getSnapshot().policyPending).toBe(false);
 			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
-			expect(runtime.kernel.getAccountLayer()).toBeNull();
+			expect(internalKernel(runtime).getAccountLayer()).toBeNull();
 			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
 				true
 			);
@@ -2696,7 +2709,7 @@ describe('runtime regressions (set 7)', () => {
 			const src = 'https://cdn.example.test/marketing.js';
 			const runtime = createConsentProviderRuntime(
 				{
-					consentCategories: ['marketing'],
+					consentCategories: ['marketing' as const],
 					mode: testing({ policy: [rule] }),
 					persistence: false,
 					prefetch: {
@@ -2766,8 +2779,8 @@ describe('runtime regressions (set 7)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing', 'measurement'],
-				mode: () => ({}),
+				consentCategories: ['marketing' as const, 'measurement' as const],
+				mode: Object.assign(() => ({}), { kind: 'custom' as const }),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: resolution,
@@ -2842,8 +2855,8 @@ describe('runtime regressions (set 7)', () => {
 
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing', 'measurement'],
-				mode: () => ({}),
+				consentCategories: ['marketing' as const, 'measurement' as const],
+				mode: Object.assign(() => ({}), { kind: 'custom' as const }),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: resolution,
@@ -2980,7 +2993,7 @@ describe('runtime regressions (set 7)', () => {
 				if (trigger === 'update-null') {
 					await runtime.update({ ...baseOptions, userConsent: null });
 				} else if (trigger === 'identify-null') {
-					await runtime.identify(null);
+					await runtime.identify(undefined);
 				} else if (trigger === 'identify-switch') {
 					await runtime.identify({ externalId: 'U2' });
 				} else {
@@ -3038,7 +3051,7 @@ describe('runtime regressions (set 7)', () => {
 		const src = 'https://cdn.example.test/marketing-dispose.js';
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				persistence: false,
 				prefetch: {
@@ -3096,7 +3109,7 @@ describe('runtime regressions (set 7)', () => {
 		});
 		const runtime = createConsentProviderRuntime(
 			{
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				persistence: false,
 				prefetch: {
@@ -3177,7 +3190,7 @@ describe('server render with an account opt-in', () => {
 		)}`;
 		const bootKernel = (prefetch: RuntimePrefetch) =>
 			createRuntimeKernel({
-				consentCategories: ['marketing'],
+				consentCategories: ['marketing' as const],
 				mode: testing({ policy: [rule] }),
 				prefetch,
 			});
@@ -3186,7 +3199,7 @@ describe('server render with an account opt-in', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie: deviceCookie, headers: new Headers() },
 			user: { externalId: 'user_a' },
 			userConsent: makeUserConsent({ externalId: 'user_a', optIn }),
@@ -3217,7 +3230,7 @@ describe('server render with an account opt-in', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie, headers: new Headers() },
 			user: { externalId: 'user_a' },
 		});
@@ -3230,7 +3243,7 @@ describe('server render with an account opt-in', () => {
 			adapter: '@inth/test',
 			mode: 'offline',
 			now: NOW,
-			offline: { policy: [rule] },
+			offline: { policyRules: [rule] },
 			request: { cookie, headers: new Headers() },
 		});
 		const signedOutKernel = bootKernel(signedOut);

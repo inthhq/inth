@@ -14,7 +14,13 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import type { OptOutAnswer } from '../../consent-kernel.model';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
+import type { ConsentRuntime } from '../consent-runtime.model';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
+
+/** The runtime's kernel, with the internal reads of its browser records. */
+const internalKernel = (runtime: Pick<ConsentRuntime, 'kernel'>) =>
+	runtime.kernel as InternalKernel;
 
 const SUBJECT_UUID = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
 
@@ -95,7 +101,7 @@ describe('device opt-out rights from a link answer during a pending userConsent'
 			await vi.waitFor(() =>
 				expect(runtime.kernel.getSnapshot().hasAccountLayer).toBe(true)
 			);
-			await runtime.identify(null);
+			await runtime.identify(undefined);
 			expect(runtime.kernel.getSnapshot().optOut?.rights).toEqual([
 				'sale',
 				'share',
@@ -164,13 +170,12 @@ describe('device opt-out rights from a link answer during a pending userConsent'
 			await consent.promise;
 			await flushMacrotasks();
 
-			runtime.update({ user: null, userConsent: null });
+			runtime.update({ user: undefined, userConsent: null });
 			await flushMacrotasks();
 
-			expect(runtime.kernel.getBrowserRecords().optOut?.rights).toEqual([
-				'sale',
-				'share',
-			]);
+			expect(
+				internalKernel(runtime).getBrowserRecords().optOut?.rights
+			).toEqual(['sale', 'share']);
 			expect(runtime.kernel.getSnapshot().optOut?.rights).toEqual([
 				'sale',
 				'share',
