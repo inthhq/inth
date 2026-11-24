@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * Every IAB Europe non-web CMP form check that the native SDKs can test must
@@ -163,7 +163,10 @@ describe(CHECKS_FILE, () => {
 		expect(
 			missing,
 			`Add a test with a "// TCF-CHECK: <id>" comment for:\n${report}`
-		).toEqual({ kotlin: [], swift: [] });
+		).toEqual({
+			kotlin: [],
+			swift: [],
+		});
 	});
 
 	it('has no TCF-CHECK marker for an unknown check', () => {

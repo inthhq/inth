@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { createConsentKernel } from '@inth/sdk-core';
 import type { PingData } from '@inth/sdk-core';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import { createIAB } from '../index';
 import { completeGVL } from './fixtures/gvl-sample';

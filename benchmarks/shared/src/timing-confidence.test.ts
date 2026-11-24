@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { browserBudgets } from './budgets';
 import { evaluateBudget } from './reporting';

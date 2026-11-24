@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 import { nativeTarget } from "../scripts/native-target.ts";
 import { stateDirectory } from "../src/platform.ts";

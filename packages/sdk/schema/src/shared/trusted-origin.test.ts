@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { getAppScheme } from './app-scheme';
 import { isOriginTrusted } from './trusted-origin';

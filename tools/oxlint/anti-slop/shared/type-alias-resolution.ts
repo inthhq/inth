@@ -1,4 +1,4 @@
-import type { ESTree } from "@oxlint/plugins";
+import type { ESTree } from "vite-plus/lint/plugins";
 
 import { lexicalTypeParameterNames } from "./lexical-type-parameters.ts";
 
@@ -33,10 +33,7 @@ const environmentsByProgram = new WeakMap<ESTree.Program, TypeAliasEnvironment>(
 
 function isNode(value: unknown): value is ESTree.Node {
 	return (
-		typeof value === "object" &&
-		value !== null &&
-		"type" in value &&
-		typeof value.type === "string"
+		typeof value === "object" && value !== null && "type" in value && typeof value.type === "string"
 	);
 }
 
@@ -224,11 +221,7 @@ export function resolvedTypeMatches(
 			if (name !== null) {
 				const substitution = substitutions.get(name);
 				if (substitution !== undefined && !current.typeArguments?.params.length) {
-					return evaluate(
-						substitution.type,
-						substitution.substitutions,
-						resolvingAliases,
-					);
+					return evaluate(substitution.type, substitution.substitutions, resolvingAliases);
 				}
 				const alias = visibleTypeAlias(name, current, environment);
 				if (alias !== null && !resolvingAliases.has(alias)) {
@@ -241,9 +234,7 @@ export function resolvedTypeMatches(
 				}
 			}
 		}
-		return matcher(current, (child) =>
-			evaluate(child, substitutions, resolvingAliases),
-		);
+		return matcher(current, (child) => evaluate(child, substitutions, resolvingAliases));
 	};
 
 	return evaluate(type, new Map(), new Set());

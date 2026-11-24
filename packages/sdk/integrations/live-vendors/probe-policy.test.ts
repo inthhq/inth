@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { assertsRuntime, digestBody } from './probe-policy';
 import { liveVendorProbeConfigs } from './vendors';

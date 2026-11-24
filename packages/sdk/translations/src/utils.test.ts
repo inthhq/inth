@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { baseTranslations as bundledTranslations } from './translations';
 import type { I18nConfig, TranslationConfig, Translations } from './types';
@@ -590,7 +590,9 @@ describe('migrateLegacyTranslationKeys', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		expect(
 			migrateLegacyTranslationKeys({ frame: { title: 'Blocked' } })
-		).toEqual({ consentGate: { title: 'Blocked' } });
+		).toEqual({
+			consentGate: { title: 'Blocked' },
+		});
 		warn.mockRestore();
 	});
 

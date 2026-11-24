@@ -7,7 +7,7 @@
 import type { AllConsentNames, ConsentKernel } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/consent-gate-fixture.svelte';

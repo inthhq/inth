@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { startFixtureServer } from '../../../../internals/next-compat/shared/src/fixture/standalone';
 import { startExampleFixture } from './fixture';

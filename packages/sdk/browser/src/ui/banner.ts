@@ -191,11 +191,11 @@ export const createBanner = function createBanner(
 			h(
 				'div',
 				{
+					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 					class: noStyle ? '' : styles.root,
 					'data-blocking': String(actions.blocking),
 					'data-position': position,
 					'data-testid': 'consent-banner-root',
-					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 					'data-variant': actions.variant,
 					dir: copy.dir,
 					lang: copy.language,

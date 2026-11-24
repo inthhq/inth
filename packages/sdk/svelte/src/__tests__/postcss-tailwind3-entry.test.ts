@@ -1,5 +1,5 @@
 import * as expected from '@inth/sdk/ui/postcss-tailwind3';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import manifest from '../../package.json';
 import * as entry from '../lib/postcss-tailwind3';

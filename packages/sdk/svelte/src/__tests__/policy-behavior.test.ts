@@ -5,7 +5,7 @@ import {
 } from '@inth/sdk/modules/persistence';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import { draftReady } from './draft-ready';

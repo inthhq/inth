@@ -1,5 +1,5 @@
 import { createConsentKernel } from '@inth/sdk/engine';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { createEventDispatcher } from '../events';
 import { matomoAnalytics } from '../vendors/analytics/matomo-analytics';

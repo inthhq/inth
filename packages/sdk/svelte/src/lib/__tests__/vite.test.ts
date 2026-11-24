@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/module-preload';
 import { consentManifest, resolveChunkHrefs } from '../vite';

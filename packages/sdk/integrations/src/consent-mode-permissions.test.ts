@@ -2,7 +2,7 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { createOfflineTransport } from '@inth/sdk/transports';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { gtag } from './vendors/analytics/google-tag';
 

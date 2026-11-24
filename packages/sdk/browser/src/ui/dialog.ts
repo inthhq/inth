@@ -64,6 +64,7 @@ export const createDialog = function createDialog(
 			h(
 				'div',
 				{
+					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 					'aria-describedby': 'consent-dialog-description',
 					'aria-labelledby': 'consent-dialog-title',
 					'aria-modal': resolveConsentPresentation({
@@ -76,7 +77,6 @@ export const createDialog = function createDialog(
 					class: noStyle ? '' : styles.container,
 					'data-state': 'open',
 					'data-testid': 'consent-dialog-root',
-					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 					dir: copy.dir,
 					lang: copy.language,
 					onkeydown: onKeyDown as EventListener,

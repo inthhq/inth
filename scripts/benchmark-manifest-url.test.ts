@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { getBenchManifestUrl } from '../benchmarks/tanstack-start-browser-bench/src/bench/manifest-url';
 

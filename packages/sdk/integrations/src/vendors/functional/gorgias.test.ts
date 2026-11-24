@@ -3,7 +3,7 @@
  */
 
 import type { Script } from '@inth/sdk/engine';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	createCallbackInfo,

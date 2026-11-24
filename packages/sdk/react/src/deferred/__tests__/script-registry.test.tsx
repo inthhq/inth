@@ -3,9 +3,9 @@
  * a browser build of `@inth/react` exports, reaches the engine it loads.
  * Its own file: the provider loads its engine once per page.
  */
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
+import { commands } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { commands } from 'vitest/browser';
 
 import {
 	integrationScript,

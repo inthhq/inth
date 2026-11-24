@@ -6,10 +6,12 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { jsonValueSchema } from "../experiments/node/http.ts";
+
 const responseSchema = z.discriminatedUnion("ok", [
   z
     .object({
-      data: z.json(),
+      data: jsonValueSchema,
       ok: z.literal(true),
       schemaVersion: z.literal(2),
     })

@@ -3,7 +3,7 @@
  * init script) and `inth.hosted.js` (the engine), against a test backend
  * (`fixtures/init-script-server.ts`).
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 type PageWindow = Window & {
 	__heard: string[];
@@ -513,7 +513,9 @@ describe('inth.commit.js and inth.records.js', () => {
 		expect(first.localStorage.getItem('inth')).toBeNull();
 		const marker = JSON.parse(
 			first.localStorage.getItem('inth-pending-tap') ?? 'null'
-		) as { c: string } | null;
+		) as {
+			c: string;
+		} | null;
 		expect(marker?.c).toBe('all');
 		// The visitor leaves: nothing was stored or sent.
 		frames.pop()?.remove();

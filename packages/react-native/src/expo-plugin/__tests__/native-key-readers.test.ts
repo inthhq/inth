@@ -25,7 +25,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
 import {

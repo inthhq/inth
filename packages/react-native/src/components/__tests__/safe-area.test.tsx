@@ -11,7 +11,7 @@
 
 import type { ReactElement } from 'react';
 import { useState } from 'react';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	createFakeNativeModule,

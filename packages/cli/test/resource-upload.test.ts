@@ -15,7 +15,7 @@ import type { IncomingHttpHeaders, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
@@ -295,7 +295,9 @@ describe("chat upload recovery", () => {
     });
     await expect(
       run(args("chat", await file()), signal())
-    ).rejects.toMatchObject({ code: "upload_outcome_unknown" });
+    ).rejects.toMatchObject({
+      code: "upload_outcome_unknown",
+    });
     await run(
       [
         "chat",
@@ -325,7 +327,9 @@ describe("chat upload recovery", () => {
     vi.stubGlobal("fetch", fetcher);
     await expect(
       run(args("chat", await file()), signal())
-    ).rejects.toMatchObject({ code: "authentication_required" });
+    ).rejects.toMatchObject({
+      code: "authentication_required",
+    });
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -337,7 +341,10 @@ describe("chat upload recovery", () => {
     );
     await expect(
       run(args("chat", await file()), signal())
-    ).rejects.toMatchObject({ apiCode: "INSUFFICIENT_SCOPE", status: 403 });
+    ).rejects.toMatchObject({
+      apiCode: "INSUFFICIENT_SCOPE",
+      status: 403,
+    });
     expect(requests.map((request) => request.method)).toEqual(["POST"]);
   });
 });
@@ -718,7 +725,9 @@ describe("Support upload workflow", () => {
     });
     await expect(
       run(args("support", await file()), signal())
-    ).rejects.toMatchObject({ code: "invalid_response" });
+    ).rejects.toMatchObject({
+      code: "invalid_response",
+    });
     expect(requests.map((request) => request.method)).toEqual(["POST"]);
     expect(output.stderr.mock.calls.flat().join(" ")).toContain(
       "Support attachment ID: sat_123"
@@ -840,7 +849,9 @@ describe("upload command validation and discovery", () => {
       vi.stubGlobal("fetch", fetcher);
       await expect(
         run([...input, "--auth", "agent", "--json"], signal())
-      ).rejects.toMatchObject({ code: "usage_error" });
+      ).rejects.toMatchObject({
+        code: "usage_error",
+      });
       expect(selected.access).not.toHaveBeenCalled();
       expect(fetcher).not.toHaveBeenCalled();
     }

@@ -18,6 +18,9 @@ export const systemClock = (signal: AbortSignal): Clock => ({
 });
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
+export const jsonValueSchema: z.ZodType<z.util.JSONType> =
+  z.custom<z.util.JSONType>((entry) => z.json().safeParse(entry).success);
+
 const oauthErrorSchema = z.union([
   z.object({ error: z.string() }).transform((value) => value.error),
   z

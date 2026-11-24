@@ -1,7 +1,7 @@
 import { defaultTranslationConfig } from '@inth/sdk/engine';
 import type { ComponentProps, ReactElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
@@ -263,7 +263,9 @@ describe('BrandingTag', () => {
 				surface="banner"
 				hideBranding
 			/>,
-			{ branding: 'inth' }
+			{
+				branding: 'inth',
+			}
 		);
 
 		await vi.waitFor(() => {

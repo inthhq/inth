@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	buildSnapshot,
@@ -228,7 +228,9 @@ describe('ConsentPrompt', () => {
 	test('stays hidden while the policy is pending', () => {
 		const tree = mount(
 			<ConsentPrompt fallback={<Dialog />}>{() => <Banner />}</ConsentPrompt>,
-			{ snapshot: buildSnapshot({ policyPending: true }) }
+			{
+				snapshot: buildSnapshot({ policyPending: true }),
+			}
 		);
 
 		expect(tree.text()).toBe('dialog');

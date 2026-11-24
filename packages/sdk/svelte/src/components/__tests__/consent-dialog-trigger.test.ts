@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import FullFlowFixture from '../../__tests__/fixtures/full-flow-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';

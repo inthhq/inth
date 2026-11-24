@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { formatDocsCode, formatMdxFences } from './docs-code-format';
 import { formatDocsFiles } from './format-docs-code';

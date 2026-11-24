@@ -3,7 +3,7 @@
  * engine's import added, and the server's inline script preloads them on a
  * later visit of the same build only.
  */
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { ENGINE_CHUNKS_KEY, learnEngineChunks } from '../engine-preload';
 import { enginePreloadScript } from '../engine-preload-script';

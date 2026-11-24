@@ -6,7 +6,7 @@
  * way two tabs of one site share them.
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	explicitChoice,

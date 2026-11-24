@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
 import vue from '@vitejs/plugin-vue';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 

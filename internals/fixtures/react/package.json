@@ -3,10 +3,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "vite build",
-		"check-types": "tsc --noEmit",
-		"dev": "vite --host 127.0.0.1",
-		"start": "vite preview --host 127.0.0.1"
+		"build": "vp build",
+		"check-types": "tsrs --noEmit",
+		"dev": "vp dev --host 127.0.0.1",
+		"start": "vp preview --host 127.0.0.1"
 	},
 	"dependencies": {
 		"@inth/integrations": "workspace:*",
@@ -20,7 +20,8 @@
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",
 		"@vitejs/plugin-react": "6.0.3",
-		"typescript": "6.0.3",
-		"vite": "8.1.3"
+		"tsrs": "catalog:",
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

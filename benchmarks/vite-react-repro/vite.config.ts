@@ -1,13 +1,13 @@
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
 	build: {
 		sourcemap: true,
 		target: 'es2022',
 	},
-	plugins: [
+	plugins: lazyPlugins(() => [
 		react(),
 		visualizer({
 			brotliSize: true,
@@ -25,5 +25,5 @@ export default defineConfig({
 			gzipSize: true,
 			template: 'raw-data',
 		}),
-	],
+	]),
 });

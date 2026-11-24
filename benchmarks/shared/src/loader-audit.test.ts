@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	normalizeResourceName,
@@ -54,7 +54,10 @@ describe('loader audit artifacts', () => {
 		});
 		expect(
 			summarizeDialogSamples([{ ...sample, resources: [] }])
-		).toMatchObject({ downloadToMount: null, downloadsComplete: null });
+		).toMatchObject({
+			downloadToMount: null,
+			downloadsComplete: null,
+		});
 		expect(() => summarizeDialogSamples([])).toThrow('empty samples');
 	});
 });

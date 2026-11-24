@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { grantedServerStart } from '../../__tests__/helpers';
 import { adrollPixel } from './adroll';

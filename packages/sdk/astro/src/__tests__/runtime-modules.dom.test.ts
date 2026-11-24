@@ -6,7 +6,14 @@
  */
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { scriptLoaderOnDemand } from '@inth/sdk/runtime/on-demand-factories';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';

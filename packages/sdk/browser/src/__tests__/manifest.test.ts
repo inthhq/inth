@@ -5,7 +5,7 @@ import {
 	policyRulePresets,
 	resolveInitFromManifest,
 } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { mountGPP } from '../gpp';
 import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';

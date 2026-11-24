@@ -1,6 +1,6 @@
 import type { ConsentPresentation } from '@inth/sdk/engine';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/dialog-fixture.svelte';

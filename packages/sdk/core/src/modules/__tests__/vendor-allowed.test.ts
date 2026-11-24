@@ -4,7 +4,7 @@
  * declared vendor follows its denial and its category; an id nothing
  * declares reads as not allowed, so a typo never looks like consent.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

@@ -10,10 +10,10 @@
 	"scripts": {
 		"bench:banner-visibility": "bun run ./scripts/run-banner-visibility-bench.ts",
 		"bench:script-count": "bun run ./scripts/run-script-count-bench.ts",
-		"build": "vite build",
+		"build": "vp build",
 		"check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"dev": "vite dev",
-		"preview": "vite preview"
+		"dev": "vp dev",
+		"preview": "vp preview"
 	},
 	"dependencies": {
 		"@inth/integrations": "workspace:*",
@@ -28,11 +28,12 @@
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "25.5.0",
-		"playwright": "1.61.1",
+		"playwright": "catalog:",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.7.6",
 		"tailwindcss": "^4.0.0",
 		"typescript": "6.0.3",
-		"vite": "^8.3.1"
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

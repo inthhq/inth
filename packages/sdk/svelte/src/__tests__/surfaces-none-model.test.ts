@@ -1,7 +1,7 @@
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import Fixture from './fixtures/surfaces-fixture.svelte';

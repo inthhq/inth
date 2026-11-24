@@ -11,7 +11,14 @@
 
 import { createOfflineTransport, offline } from '@inth/sdk/transports';
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { flushPromises, renderTree } from '../../__tests__/helpers/fake-native';
 import { ConsentBanner } from '../../components';
@@ -529,7 +536,10 @@ describe('dryRun on web', () => {
 			Promise.resolve(
 				new Response(
 					JSON.stringify(String(url).includes('/init') ? init : {}),
-					{ headers: { 'content-type': 'application/json' }, status: 200 }
+					{
+						headers: { 'content-type': 'application/json' },
+						status: 200,
+					}
 				)
 			)
 		);

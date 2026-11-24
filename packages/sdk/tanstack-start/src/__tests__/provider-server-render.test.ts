@@ -7,7 +7,7 @@
 import { InthProvider } from '@inth/react/provider';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 test('a server render of a hosted provider sends no /v1/consent/init', () => {
 	const fetch = vi.fn();

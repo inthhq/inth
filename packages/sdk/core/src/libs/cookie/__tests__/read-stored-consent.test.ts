@@ -3,7 +3,14 @@
  * no legacy-key migration, no cookie/localStorage mirroring, and no
  * deletion of v1.x records. See c15t/c15t#1025.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { setCookie } from '..';
 import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';

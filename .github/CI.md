@@ -68,5 +68,6 @@ Tegami publishes the SDK line with npm trusted publishing. [.tegami/sdk/README.m
 | npm trusted publisher for the React Native package | npm settings | `release-react-native.yml` | Not wired yet |
 | Maven Central user token and a GPG signing key and password | Secrets | `release-android.yml` | Not wired yet |
 | `POSTHOG_E2E_PROJECT_KEY` | Depot CI secret | `.depot/workflows/android-posthog-live.yml` | The job prints a notice and skips |
+| `TURBO_TOKEN`, `TURBO_TEAM` | Repository secret and variable | `ci.yml` Turbo jobs (`check`, `sdk-*`, `react-native*`) | Falls back to the per-job `.turbo/cache` Actions cache |
 
 No CI job needs Apple signing. The Swift job builds and tests SwiftPM targets only.

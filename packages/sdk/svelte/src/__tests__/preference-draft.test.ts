@@ -6,7 +6,7 @@
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerState } from '../lib/context.svelte';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';

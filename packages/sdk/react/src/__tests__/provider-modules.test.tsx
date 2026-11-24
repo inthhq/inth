@@ -1,7 +1,7 @@
 import type { ClearOnRevocationConfig, ConsentKernel } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import { useContext, useEffect } from 'react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';

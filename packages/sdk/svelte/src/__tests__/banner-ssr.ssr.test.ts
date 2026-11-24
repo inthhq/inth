@@ -12,7 +12,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import { testing } from '../lib/testing';

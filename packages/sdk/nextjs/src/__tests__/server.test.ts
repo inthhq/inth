@@ -13,7 +13,14 @@ import { hosted } from '@inth/sdk/modes';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { defineConsentConfig } from '../config';

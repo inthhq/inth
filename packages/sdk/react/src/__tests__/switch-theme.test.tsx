@@ -5,7 +5,7 @@
  * blue.
  */
 import '@inth/sdk/ui/styles.css';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { Root as Switch } from '../components/shared/ui/switch/switch';

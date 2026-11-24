@@ -5,7 +5,7 @@
  * the client root.
  */
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { InthProvider as EngineProvider } from '../../provider';
@@ -45,7 +45,9 @@ test('renders the stock banner, and its accept records the choice, under the eng
 		// can outlast the default second.
 		await vi.waitFor(
 			() => expect(document.querySelector(ACCEPT)).not.toBeNull(),
-			{ timeout: 5000 }
+			{
+				timeout: 5000,
+			}
 		);
 		document.querySelector<HTMLButtonElement>(ACCEPT)?.click();
 		await vi.waitFor(() => expect(document.querySelector(ACCEPT)).toBeNull());

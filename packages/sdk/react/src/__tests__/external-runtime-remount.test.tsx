@@ -1,6 +1,6 @@
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { InthProvider } from '../provider';
 import { testing } from '../testing';
@@ -27,7 +27,9 @@ test('retains an external-runtime child and its draft after the IAB bridge loads
 		);
 		await vi.waitFor(
 			() => expect(container.querySelector('input')).not.toBeNull(),
-			{ interval: 5 }
+			{
+				interval: 5,
+			}
 		);
 		const input = container.querySelector('input');
 		if (!input) {

@@ -4,7 +4,7 @@
 
 import { TCString } from '@iabtechlabtcf/core';
 import type { TCData } from '@inth/sdk-core';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { clearStoredTCString, createCMPApi } from '../tcf/cmp-api';
 import {

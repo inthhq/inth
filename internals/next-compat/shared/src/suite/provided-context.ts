@@ -1,3 +1,5 @@
+import 'vitest';
+
 declare module 'vitest' {
 	export interface ProvidedContext {
 		compatBaseURL: string;
@@ -9,5 +11,3 @@ declare module 'vitest' {
 		compatProjectUrl?: string;
 	}
 }
-
-export {};

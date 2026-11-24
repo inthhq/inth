@@ -6,7 +6,7 @@
  * vendor elements, never two, and the vendor last told the same consent.
  */
 import type { PolicyRule } from '@inth/sdk-schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

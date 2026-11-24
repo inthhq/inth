@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const COMPONENT_STYLE_MODULES = [
 	'accordion',
@@ -298,7 +298,10 @@ describe('package exports: node condition serves class maps without CSS imports'
 		const result = spawnSync(
 			nodeBinary,
 			['--input-type=module', '-e', script],
-			{ cwd: PACKAGE_ROOT, encoding: 'utf-8' }
+			{
+				cwd: PACKAGE_ROOT,
+				encoding: 'utf-8',
+			}
 		);
 
 		expect(result.error).toBeUndefined();

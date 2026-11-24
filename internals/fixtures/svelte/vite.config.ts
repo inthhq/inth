@@ -1,4 +1,4 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
-export default defineConfig({ plugins: [svelte()] });
+export default defineConfig({ plugins: lazyPlugins(() => [svelte()]) });

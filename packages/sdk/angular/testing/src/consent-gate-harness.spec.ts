@@ -6,7 +6,7 @@ import {
 	ConsentGate,
 	ConsentGatePlaceholder,
 } from '@inth/angular/consent-gate';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	bootHarnessTest,

@@ -4,7 +4,7 @@
  * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
 import { createManifestCache } from '@inth/sdk/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentRoute } from '../api';
 import { rememberConsentInputs } from '../libs/request-inputs';

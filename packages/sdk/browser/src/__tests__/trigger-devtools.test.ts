@@ -3,7 +3,7 @@
  * DevTools launcher and docks the panel, so one control sits in the corner.
  */
 import type { DevToolsInstance } from '@inth/sdk-dev-tools';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { mountDevTools } from '../devtools';
 import type { GlobalApiBase } from '../global-base';

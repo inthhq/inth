@@ -1,6 +1,6 @@
 import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
 import { mount } from '@vue/test-utils';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h, inject, nextTick } from 'vue';
 
 import PanelTrigger from '../runtime/components/panel-trigger.vue';

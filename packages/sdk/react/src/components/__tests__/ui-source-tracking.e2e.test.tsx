@@ -1,7 +1,7 @@
 import { readStoredRecords } from '@inth/sdk/modules/persistence';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import {
 	ComponentFixtureProvider as InthProvider,

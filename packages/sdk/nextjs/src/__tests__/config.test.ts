@@ -4,7 +4,7 @@ import { hosted, manifest } from '@inth/sdk/modes';
  * checks run where Next.js first evaluates the config, on the server, so
  * these run in Node.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { defineConsentConfig } from '../config';
 import { resolveConsentSource } from '../consent-source';

@@ -5,7 +5,14 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 import { translations } from '@inth/sdk-translations/en';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,
@@ -321,7 +328,10 @@ describe('replayEarlyConsentTaps', () => {
 			await runtime.reinit();
 			expect(
 				runtime.kernel.getSnapshot().explicitChoice?.categories.marketing
-			).toMatchObject({ confirmedAt: tapAt, value: granted });
+			).toMatchObject({
+				confirmedAt: tapAt,
+				value: granted,
+			});
 			stop();
 		}
 	);

@@ -1,7 +1,7 @@
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentManagerOptions } from '../lib/types';

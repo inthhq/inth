@@ -11,7 +11,7 @@ import {
 	expect,
 	it,
 	vi,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import {
 	createCallbackInfo,

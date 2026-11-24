@@ -1,4 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { lazyPlugins } from 'vite-plus';
 
 /**
  * `consentManifest()` lets `inthHandle` preload the on-demand script loader
@@ -38,5 +39,5 @@ const loadInthPlugins = async function loadInthPlugins(): Promise<unknown[]> {
  * fail on a config Vite itself accepts.
  */
 export default {
-	plugins: [sveltekit(), ...(await loadInthPlugins())],
+	plugins: lazyPlugins(async () => [sveltekit(), ...(await loadInthPlugins())]),
 };

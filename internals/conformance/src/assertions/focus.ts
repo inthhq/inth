@@ -143,27 +143,25 @@ export const assertReverseTabOrder = async function assertReverseTabOrder(
 	root: ParentNode,
 	orderedTestIds: readonly string[]
 ): Promise<void> {
-	{
-		let i = orderedTestIds.length - 2;
-		const runSequentialLoop2 =
-			async function runSequentialLoop2(): Promise<void> {
-				if (!(i >= 0)) {
-					return;
-				}
-				await userEvent.tab({ shift: true });
-				const expected = root.querySelector(
-					`[data-testid="${orderedTestIds[i]}"]`
-				);
-				expect(
-					document.activeElement,
-					`shift-tab stop ${i} should be [data-testid="${orderedTestIds[i]}"]`
-				).toBe(expected);
+	let i = orderedTestIds.length - 2;
+	const runSequentialLoop2 =
+		async function runSequentialLoop2(): Promise<void> {
+			if (!(i >= 0)) {
+				return;
+			}
+			await userEvent.tab({ shift: true });
+			const expected = root.querySelector(
+				`[data-testid="${orderedTestIds[i]}"]`
+			);
+			expect(
+				document.activeElement,
+				`shift-tab stop ${i} should be [data-testid="${orderedTestIds[i]}"]`
+			).toBe(expected);
 
-				i -= 1;
-				await runSequentialLoop2();
-			};
-		await runSequentialLoop2();
-	}
+			i -= 1;
+			await runSequentialLoop2();
+		};
+	await runSequentialLoop2();
 };
 
 /**

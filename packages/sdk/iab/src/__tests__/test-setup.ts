@@ -11,7 +11,7 @@ import type {
 	GVLStack,
 	GVLVendor,
 } from '@inth/sdk-schema/types';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 export const createMockPurpose = function createMockPurpose(
 	id: number,

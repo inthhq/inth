@@ -5,7 +5,7 @@ import {
 } from '@inth/sdk/runtime';
 import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 import { pendingBootSnapshot } from '@inth/sdk/surface-state';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { testLocal } from '../../../__tests__/test-local';
 import type { InthResolvedOptions } from '../options';

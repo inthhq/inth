@@ -1,6 +1,13 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	beforeEach,
+	afterEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';

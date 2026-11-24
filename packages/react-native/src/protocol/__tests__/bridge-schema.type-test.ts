@@ -12,7 +12,7 @@
  * keys are missing, extra or disagree.
  */
 
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import type {
 	ConsentPresenterOutcome,

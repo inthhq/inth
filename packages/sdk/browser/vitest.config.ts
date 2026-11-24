@@ -3,8 +3,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { baseConfig } from '@inth/vitest-config/base';
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { serveInitScriptFixture } from './src/__tests__/fixtures/init-script-server';
 

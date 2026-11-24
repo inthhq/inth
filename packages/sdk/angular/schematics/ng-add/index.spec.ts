@@ -10,7 +10,7 @@ import { SchematicTestRunner } from '@angular-devkit/schematics/testing';
 import type { UnitTestTree } from '@angular-devkit/schematics/testing';
 import { lastValueFrom } from 'rxjs';
 import ts from 'typescript';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { lastValue, ngAdd } from './index';
 import type { NgAddOptions } from './index';
@@ -30,7 +30,9 @@ const runner = new SchematicTestRunner(
 
 const schema = JSON.parse(
 	readFileSync(join(__dirname, 'schema.json'), 'utf8')
-) as { properties: Record<string, { default?: unknown }> };
+) as {
+	properties: Record<string, { default?: unknown }>;
+};
 
 /** The defaults `schema.json` declares, as the Angular CLI applies them. */
 const schemaDefaults: NgAddOptions = Object.fromEntries(

@@ -1,4 +1,4 @@
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import { createConsentManifestPolicyPack } from './consent-manifest';
 import { createMaterialPolicyFingerprintSync } from './policy-fingerprint';

@@ -5,7 +5,7 @@
  * from there. Storage and locks are injected; the last test runs the default store against the
  * test window's localStorage.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { ConsentSaveRejectedError, createConsentKernel } from '../../index';
 import type { KernelConfig, SavePayload, SaveResult } from '../../types';

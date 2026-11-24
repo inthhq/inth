@@ -5,7 +5,7 @@
  * built by hand with the fields it had in 3.1.0, such as a typed mock, still
  * type-checks, and a read always sets the subject metadata.
  */
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, test } from 'vite-plus/test';
 
 import { readStoredRecords } from '../index';
 import type { StoredRecords } from '../index';

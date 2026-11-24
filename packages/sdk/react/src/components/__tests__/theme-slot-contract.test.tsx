@@ -1,5 +1,5 @@
 import { CONSENT_COMPONENT_SLOT_KEYS } from '@inth/sdk/schema/config';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 // Raw source text of every v3 component/primitive module, inlined by Vite so
 // the scan also works in browser-mode vitest (no node:fs available there).

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 
 import { ApiClient } from "../experiments/node/api.ts";
 import { HttpClient } from "../experiments/node/http.ts";

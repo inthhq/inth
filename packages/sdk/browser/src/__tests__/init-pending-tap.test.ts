@@ -5,7 +5,7 @@
  */
 import type { ConsentSnapshot } from '@inth/sdk-core';
 import { enTranslations } from '@inth/sdk-translations';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { hasBannerCopy, resolveCopy } from '../init/copy';
 import {

@@ -8,8 +8,8 @@ import type {
  * commit chunk cannot finish a choice the stand-in already shows: the
  * engine records it, once, and announces it once.
  */
-import { afterEach, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import type { RootBoot } from '../lib/deferred/boot';

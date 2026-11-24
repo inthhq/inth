@@ -4,7 +4,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import type { InitOutput, PolicyResolution } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	initOutputToKernelConfig,

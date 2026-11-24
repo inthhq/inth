@@ -1,5 +1,5 @@
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import { expect, onTestFinished, test, vi } from 'vitest';
+import { expect, onTestFinished, test, vi } from 'vite-plus/test';
 
 import { createVueConsentKernelContext } from './test-kernel';
 

@@ -4,7 +4,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import gateStyles from '@inth/sdk/ui/styles/components/consent-gate';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 import type { Component, ComponentPublicInstance, VNode } from 'vue';
 import { h } from 'vue';
 

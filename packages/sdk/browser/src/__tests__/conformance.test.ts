@@ -11,7 +11,7 @@ import {
 } from '@inth/conformance/suite';
 import type { SuiteApi } from '@inth/conformance/suite';
 import type { ConsentPresentation, GlobalVendorList } from '@inth/sdk-core';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentClient } from '../types';
 import { init, initIAB } from './fixtures/factory-init';

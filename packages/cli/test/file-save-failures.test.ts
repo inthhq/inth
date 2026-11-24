@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import { saveBillingApproval } from "../src/billing-approval.ts";
@@ -11,27 +11,32 @@ import { saveResourceDownload } from "../src/resource-download.ts";
 import { UploadReceipt } from "../src/upload-receipt.ts";
 import { billingQuote, writeUuid } from "./fixtures/agent-access-v2-writes.ts";
 
-const fault = vi.hoisted(() => ({
-  checkpointDescriptor: -1,
-  descriptor: -1,
-  directoryDescriptor: -1,
-  once: false,
-  operation: "",
-  replaced: false,
-  replacement: "",
-  target: "",
-  updating: false,
-}));
+const { fault, failSave } = vi.hoisted(() => {
+  const state = {
+    checkpointDescriptor: -1,
+    descriptor: -1,
+    directoryDescriptor: -1,
+    once: false,
+    operation: "",
+    replaced: false,
+    replacement: "",
+    target: "",
+    updating: false,
+  };
+  return {
+    failSave: (message: string): never => {
+      if (state.once) {
+        state.operation = "";
+      }
+      throw new Error(message);
+    },
+    fault: state,
+  };
+});
 
 // eslint-disable-next-line anti-slop/no-module-mocking -- Inject filesystem errors while exercising real exclusive creates, writes, closes and identity-checked cleanup.
 vi.mock("node:fs", async (importOriginal) => {
   const actual = await importOriginal<typeof fs>();
-  const fail = (message: string): never => {
-    if (fault.once) {
-      fault.operation = "";
-    }
-    throw new Error(message);
-  };
   const replaceOutput = () => {
     if (!fault.replacement || fault.replaced) {
       return;
@@ -52,7 +57,7 @@ vi.mock("node:fs", async (importOriginal) => {
       actual.closeSync(descriptor);
       if (descriptor === fault.descriptor && fault.operation === "close") {
         replaceOutput();
-        fail("EIO: simulated deferred close failure");
+        failSave("EIO: simulated deferred close failure");
       }
     },
     fstatSync: (descriptor: number) => {
@@ -71,20 +76,20 @@ vi.mock("node:fs", async (importOriginal) => {
         throw new Error("EIO: simulated directory sync failure");
       }
       if (descriptor === fault.descriptor && fault.operation === "sync") {
-        fail("EIO: simulated sync failure");
+        failSave("EIO: simulated sync failure");
       }
       if (
         descriptor === fault.checkpointDescriptor &&
         fault.operation === "checkpoint sync"
       ) {
-        fail("EIO: simulated recovery checkpoint sync failure");
+        failSave("EIO: simulated recovery checkpoint sync failure");
       }
       actual.fsyncSync(descriptor);
     },
     ftruncateSync: (descriptor: number, length: number) => {
       actual.ftruncateSync(descriptor, length);
       if (descriptor === fault.descriptor && fault.operation === "truncate") {
-        fail("EIO: simulated truncate failure");
+        failSave("EIO: simulated truncate failure");
       }
     },
     openSync: (file: fs.PathLike, flags: fs.OpenMode, mode?: fs.Mode) => {
@@ -117,7 +122,7 @@ vi.mock("node:fs", async (importOriginal) => {
       if (descriptor === fault.descriptor && fault.operation === "write") {
         if (offset > 0) {
           replaceOutput();
-          fail("ENOSPC: simulated partial write failure");
+          failSave("ENOSPC: simulated partial write failure");
         }
         return actual.writeSync(
           descriptor,
@@ -349,7 +354,9 @@ it.for(saves)(
     fault.operation = "stat";
     await expect(
       Promise.resolve().then(() => test.save(target))
-    ).rejects.toMatchObject({ code: test.code });
+    ).rejects.toMatchObject({
+      code: test.code,
+    });
     const actual = await vi.importActual<typeof fs>("node:fs");
     expect(() => actual.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
     expect(actual.readFileSync(target).byteLength).toBe(0);
@@ -371,7 +378,9 @@ it.for(
     fault.replacement = test.replacement;
     await expect(
       Promise.resolve().then(() => test.save(target))
-    ).rejects.toMatchObject({ code: test.code });
+    ).rejects.toMatchObject({
+      code: test.code,
+    });
     const actual = await vi.importActual<typeof fs>("node:fs");
     expect(() => actual.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
     expect(actual.readFileSync(target, "utf-8")).toBe("caller data");
@@ -392,7 +401,9 @@ it.for(
     fault.operation = test.operation;
     await expect(
       Promise.resolve().then(() => test.save(target))
-    ).rejects.toMatchObject({ code: test.code });
+    ).rejects.toMatchObject({
+      code: test.code,
+    });
     expect(fs.existsSync(target)).toBe(false);
     fault.operation = "";
     await test.save(target);
@@ -428,7 +439,9 @@ it.for(
     fault.replacement = test.replacement;
     await expect(
       Promise.resolve().then(() => test.save(target))
-    ).rejects.toMatchObject({ code: test.code });
+    ).rejects.toMatchObject({
+      code: test.code,
+    });
     expect(fs.readFileSync(target, "utf-8")).toBe("caller data");
   }
 );

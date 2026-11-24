@@ -1,5 +1,5 @@
 import { generateThemeCSS as uiGenerateThemeCSS } from '@inth/sdk/ui/theme';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { generateThemeCSS } from '../theme-utils';
 

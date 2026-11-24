@@ -5,7 +5,7 @@
  */
 import { useSaveConsents } from '@inth/react';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../root';

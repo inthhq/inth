@@ -4,7 +4,7 @@
  * Provides mock implementations for browser globals in Node.js environment
  * using specialized testing libraries for better compatibility.
  */
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import 'vitest-localstorage-mock';
 
 import { preloadPersistenceWriter } from './src/modules/persistence/mount';

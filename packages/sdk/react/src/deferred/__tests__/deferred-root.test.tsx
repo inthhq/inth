@@ -9,7 +9,7 @@ import type { Callbacks, KernelConfig } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { Suspense, act, useLayoutEffect, useSyncExternalStore } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { serverScriptStart } from '../../../../core/src/runtime/script-server-start';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

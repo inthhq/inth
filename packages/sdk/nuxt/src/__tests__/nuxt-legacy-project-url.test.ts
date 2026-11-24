@@ -2,7 +2,7 @@
  * The c15t project URL variables on a running server, applied the way Nuxt
  * applies the Inth ones.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { applyLegacyProjectUrl } from '../runtime/server/legacy-project-url';
 

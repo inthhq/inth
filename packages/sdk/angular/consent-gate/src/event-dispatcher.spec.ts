@@ -5,7 +5,7 @@ import {
 	runInInjectionContext,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from '../../src/__tests__/test-local';

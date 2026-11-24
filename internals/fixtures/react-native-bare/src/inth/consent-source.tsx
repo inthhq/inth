@@ -132,8 +132,8 @@ export const ConsentSourceProvider = ({
 		() => (initialFake ? null : probeNative()),
 		[initialFake]
 	);
-	const [fakeSession, setFakeSession] = useState<FakeNativeSession | null>(
-		() => (probe === null || 'error' in probe ? fakeNativeSdk.start() : null)
+	const [fakeSession, setFakeSession] = useState<FakeNativeSession | null>(() =>
+		probe === null || 'error' in probe ? fakeNativeSdk.start() : null
 	);
 
 	const nativeClient =

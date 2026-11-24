@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env vpx
 
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, rmSync } from 'node:fs';
@@ -243,7 +243,9 @@ const installDocumentationTemplate = function installDocumentationTemplate(
 		'Installing documentation template into workspace',
 		buildMode,
 		branch,
-		{ silent: true }
+		{
+			silent: true,
+		}
 	);
 	try {
 		log('Installing documentation template into workspace...');

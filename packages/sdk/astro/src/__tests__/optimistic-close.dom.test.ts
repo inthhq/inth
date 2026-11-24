@@ -6,7 +6,7 @@
 
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, beforeAll, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, expect, it, vi } from 'vite-plus/test';
 
 // Vite compiles the island's whole component tree on first import. That
 // takes seconds on a busy machine. A static import does it while this file

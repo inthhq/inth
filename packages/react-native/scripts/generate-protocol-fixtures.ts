@@ -3326,10 +3326,14 @@ const formatWith = function formatWith(paths: string[], cwd: string): void {
 		'--ignore-path',
 		resolve(cwd, '.gitignore'),
 	];
-	const format = spawnSync('bunx', ['oxfmt', ...sdkFormatArgs, ...paths], {
-		cwd,
-		stdio: 'ignore',
-	});
+	const format = spawnSync(
+		'pnpm',
+		['exec', 'vp', 'fmt', ...sdkFormatArgs, ...paths],
+		{
+			cwd,
+			stdio: 'ignore',
+		}
+	);
 	if (format.status !== 0) {
 		throw new Error(`Oxfmt failed on: ${paths.join(', ')}`);
 	}

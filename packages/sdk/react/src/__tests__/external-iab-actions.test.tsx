@@ -7,7 +7,7 @@ import {
 	useLayoutEffect,
 	useRef,
 } from 'react';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';

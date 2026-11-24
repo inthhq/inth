@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import * as server from '../server/gvl-cache';
 import * as transport from '../transports/gvl-cache';

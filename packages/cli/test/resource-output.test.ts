@@ -1,6 +1,6 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { formatResource } from "../experiments/node/resource-output.ts";
@@ -69,7 +69,10 @@ describe("human resource output", () => {
         formatResource(
           parseArguments([...example.args, "--json"]),
           example.body,
-          { color: true, columns: 20 }
+          {
+            color: true,
+            columns: 20,
+          }
         )
       ).toBe(example.body);
     }

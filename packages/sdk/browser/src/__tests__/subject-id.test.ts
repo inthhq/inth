@@ -10,7 +10,7 @@ import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
 } from '@inth/sdk-schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
 import { manifest } from '../transports/manifest';

@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h } from 'vue';
 import type { App, ShallowRef } from 'vue';
 

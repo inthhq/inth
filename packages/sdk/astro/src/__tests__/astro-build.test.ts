@@ -17,7 +17,7 @@ import iabBannerClasses from '@inth/sdk/ui/styles/components/iab-consent-banner'
 import iabPanelClasses from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import panelClasses from '@inth/sdk/ui/styles/components/panel';
 import { preferenceItemVariants } from '@inth/sdk/ui/styles/primitives';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vite-plus/test';
 
 const FIXTURE = fileURLToPath(
 	new URL('../../test/fixtures/astro-7', import.meta.url)

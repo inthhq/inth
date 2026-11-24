@@ -66,6 +66,16 @@ minimumReleaseAgeExclude:
   - "@scriptc/runtime-wasm32-wasi@0.3.6"
   - "@scriptc/runtime-win32-x64-msvc@0.3.6"
   - "@scriptc/runtime@0.3.6"
+  - vite-plus
+  - "@voidzero-dev/*"
+  - oxlint
+  - "@oxlint/*"
+  - tsrs
+  - "@tsrs/*"
+  - oxfmt
+  - "@oxfmt/*"
+  - vitest
+  - "@vitest/*"
 patchedDependencies:
   "@scriptc/compiler@0.3.6": patches/@scriptc__compiler@0.3.6.patch
 # Carried over from the SDK. Its range-keyed entries for next and vite are not
@@ -81,6 +91,8 @@ overrides:
   protobufjs: 7.6.5
   shell-quote: ">=1.9.0"
   typeorm: ">=0.3.26"
+  vite@*: "catalog:"
+  vitest@*: "catalog:"
 # These tools import typescript without declaring it. pnpm then gives them
 # whichever copy it hoisted, which was TypeScript 7 and has no compiler API.
 # Declaring the peer makes each one use its consumer's TypeScript.
@@ -105,3 +117,19 @@ packageExtensions:
     peerDependenciesMeta:
       vitest:
         optional: true
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8001
+  vitest: 5.1.1
+  vite-plus: 1.8.0
+  tsrs: 7.1.0-beta.tsrs4
+  "@vitest/coverage-istanbul": 5.1.1
+  "@vitest/ui": 5.1.1
+  "@vitest/browser-playwright": 5.1.1
+  "@vitest/coverage-v8": 5.1.1
+  playwright: 1.63.0
+  "@playwright/test": 1.63.0
+peerDependencyRules:
+  allowAny:
+    - vitest
+  allowedVersions:
+    vitest: "*"

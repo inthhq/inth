@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { validateWriteSchema } from "../src/agent-access-write-input.ts";
 import { parseArguments } from "../src/arguments.ts";

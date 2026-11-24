@@ -7,9 +7,9 @@
 	"scripts": {
 		"build": "bun ../shared/scripts/pack.ts && bun scripts/generate-manifest.ts && next build",
 		"dev": "next dev",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts --write .",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts .",
-		"test:compat": "vitest run"
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts --write .",
+		"lint": "vp lint -c ../../../oxlint.sdk.config.ts .",
+		"test:compat": "vp test run"
 	},
 	"dependencies": {
 		"@inth/next-compat-shared": "workspace:*",
@@ -22,13 +22,12 @@
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",
-		"@vitest/coverage-istanbul": "4.1.10",
+		"@vitest/coverage-istanbul": "catalog:",
 		"jsdom": "25.0.1",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
-		"playwright": "1.61.1",
+		"playwright": "catalog:",
 		"typescript": "6.0.3",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
+		"vite": "catalog:",
+		"vite-plus": "catalog:",
+		"vitest": "catalog:"
 	}
 }

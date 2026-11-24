@@ -7,7 +7,14 @@
 import { ChangeDetectionStrategy, Component, CSP_NONCE } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { KernelTransport } from '@inth/sdk/engine';
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	offlineMode,

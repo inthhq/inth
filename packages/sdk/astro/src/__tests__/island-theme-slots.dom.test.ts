@@ -6,7 +6,7 @@
  */
 
 import type { Theme } from '@inth/sdk/ui/theme';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';

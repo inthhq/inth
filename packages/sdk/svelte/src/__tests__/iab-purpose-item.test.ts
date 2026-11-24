@@ -6,7 +6,7 @@ import { resolveIABCopy } from '@inth/sdk/surface-state';
  */
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABPurposeItem from '../lib/components/iab-purpose-item.svelte';

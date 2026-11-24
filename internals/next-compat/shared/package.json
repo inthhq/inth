@@ -15,9 +15,9 @@
 		"./gated-embed": "./src/gated-embed.tsx"
 	},
 	"scripts": {
-		"check-types": "tsc --noEmit",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts --write .",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ."
+		"check-types": "tsrs --noEmit",
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts --write .",
+		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ."
 	},
 	"dependencies": {
 		"@inth/nextjs": "workspace:*",
@@ -27,14 +27,13 @@
 		"@inth/typescript-config": "workspace:*",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
-		"@vitest/coverage-istanbul": "4.1.10",
+		"@vitest/coverage-istanbul": "catalog:",
 		"jsdom": "25.0.1",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
-		"playwright": "1.61.1",
+		"playwright": "catalog:",
 		"react": "19.2.7",
-		"typescript": "6.0.3",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
+		"tsrs": "catalog:",
+		"vite": "catalog:",
+		"vite-plus": "catalog:",
+		"vitest": "catalog:"
 	}
 }

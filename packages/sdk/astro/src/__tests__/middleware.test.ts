@@ -5,7 +5,7 @@ import {
 import { clearManifestCache } from '@inth/sdk/server';
 import { enTranslations } from '@inth/sdk/translations';
 import { baseTranslations } from '@inth/sdk/translations/all';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';

@@ -21,10 +21,25 @@ runs:
     - shell: bash
       run: pnpm install --frozen-lockfile
     - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: .turbo/cache
+        key: turbo-${{ runner.os }}-${{ github.job }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-${{ github.job }}-
+          turbo-${{ runner.os }}-
+    - id: playwright-key
+      if: inputs.browsers == 'true'
+      shell: bash
+      run: |
+        versions="$(bun -e 'import { browserInstallations } from "./scripts/install-browsers.ts"; console.log([...browserInstallations(".").keys()].sort().join("-"));')"
+        echo "versions=${versions}" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       if: inputs.browsers == 'true'
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        key: playwright-${{ runner.os }}-${{ steps.playwright-key.outputs.versions }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
     # Install system libraries even when the browser archive came from cache.
     - shell: bash
       if: inputs.browsers == 'true'

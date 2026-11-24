@@ -9,9 +9,16 @@
 
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';

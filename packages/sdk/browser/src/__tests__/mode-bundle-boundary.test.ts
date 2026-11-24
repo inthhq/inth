@@ -5,7 +5,7 @@
  * and lets `inth.testing.js` carry it, and keeps the experiment controller
  * out of the files the init script runs before the engine.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { modeBundleBoundary } from '../../scripts/mode-bundle-boundary';
 

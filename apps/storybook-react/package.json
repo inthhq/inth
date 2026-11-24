@@ -29,6 +29,7 @@
 		"@vanilla-extract/vite-plugin": "5.2.6",
 		"storybook": "10.4.6",
 		"typescript": "6.0.3",
-		"vite": "7.3.2"
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

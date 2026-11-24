@@ -3,7 +3,7 @@
  * backend, defaulting to the URL `consentManifest()` read, as Vue's does.
  */
 import { hosted } from '@inth/sdk/modes';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { selectedMode } from '../select-mode';
 import { testing } from '../testing';

@@ -7,7 +7,14 @@ import {
 	normalizePolicyRule,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
@@ -94,7 +101,9 @@ describe('provider list', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(fetchMock).toHaveBeenCalledWith(
 			'https://lists.example/ac?providerIds=89%2C2577',
-			{ signal: expect.any(AbortSignal) }
+			{
+				signal: expect.any(AbortSignal),
+			}
 		);
 		vi.unstubAllGlobals();
 	});
@@ -197,7 +206,9 @@ describe('createIAB with Additional Consent', () => {
 		).toEqual([89, 2577]);
 		expect(fetchMock).toHaveBeenCalledWith(
 			'https://lists.example/ac?providerIds=89%2C404%2C2577',
-			{ signal: expect.any(AbortSignal) }
+			{
+				signal: expect.any(AbortSignal),
+			}
 		);
 	});
 

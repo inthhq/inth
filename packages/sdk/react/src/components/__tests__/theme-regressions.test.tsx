@@ -5,7 +5,7 @@ import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger
 import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import iabDialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';

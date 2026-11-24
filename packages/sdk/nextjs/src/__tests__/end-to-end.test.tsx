@@ -6,7 +6,7 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
@@ -125,7 +125,7 @@ describe('InthProvider: projectUrl triggers auto-init', () => {
 			// After the init roundtrip completes, policy-derived state updates.
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|opt-in|banner');
+				.toMatchTextContent('gdpr|opt-in|banner');
 			expect(fetchSpy).toHaveBeenCalledTimes(1);
 		} finally {
 			globalThis.fetch = originalFetch;
@@ -153,7 +153,7 @@ describe('InthProvider: projectUrl triggers auto-init', () => {
 				</InthProvider>
 			);
 
-			await expect.element(getByTestId('probe')).toHaveTextContent('false');
+			await expect.element(getByTestId('probe')).toMatchTextContent('false');
 			// testing() resolves in the browser and saves nowhere.
 			expect(fetchSpy).not.toHaveBeenCalled();
 		} finally {
@@ -185,7 +185,9 @@ describe('InthProvider: projectUrl triggers auto-init', () => {
 				</InthProvider>
 			);
 
-			await expect.element(getByTestId('probe')).toHaveTextContent('true|none');
+			await expect
+				.element(getByTestId('probe'))
+				.toMatchTextContent('true|none');
 			await new Promise((resolve) => {
 				setTimeout(resolve, 10);
 			});
@@ -238,7 +240,7 @@ describe('InthProvider: resolved state reaches first paint', () => {
 			// First paint carries the prefetched values.
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|opt-in|banner');
+				.toMatchTextContent('gdpr|opt-in|banner');
 
 			// Now resolve the slow init. Snapshot should not regress.
 			expect(fetchSpy).not.toHaveBeenCalled();
@@ -248,7 +250,7 @@ describe('InthProvider: resolved state reaches first paint', () => {
 			});
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|opt-in|banner');
+				.toMatchTextContent('gdpr|opt-in|banner');
 		} finally {
 			globalThis.fetch = originalFetch;
 		}
@@ -352,11 +354,11 @@ describe('InthProvider: config picks the transport', () => {
 
 				await expect
 					.element(getByTestId('probe'))
-					.toHaveTextContent('gdpr|DE|false');
+					.toMatchTextContent('gdpr|DE|false');
 				await getByTestId('save').click();
 				await expect
 					.element(getByTestId('probe'))
-					.toHaveTextContent('gdpr|DE|true');
+					.toMatchTextContent('gdpr|DE|true');
 				// Every page of the origin shares the browser's save queue, and
 				// the kernel resends what another page queued once its init
 				// lands: other test files run in pages beside this one. Such a
@@ -422,7 +424,7 @@ describe('InthProvider: config picks the transport', () => {
 
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('eu-opt-in|DE|false');
+				.toMatchTextContent('eu-opt-in|DE|false');
 			await getByTestId('save').click();
 			await vi.waitFor(() => {
 				expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
@@ -471,7 +473,7 @@ describe('InthProvider: config picks the transport', () => {
 
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('us-ca-opt-out|US|false');
+				.toMatchTextContent('us-ca-opt-out|US|false');
 			expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
 				'/api/consent/v1/consent/manifest',
 				'https://consent.example.com/v1/consent/init',
@@ -510,7 +512,7 @@ describe('InthProvider: config picks the transport', () => {
 
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|DE|false');
+				.toMatchTextContent('gdpr|DE|false');
 			expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
 				'https://consent.example.com/v1/consent/init'
 			);
@@ -554,7 +556,7 @@ describe('InthProvider: config picks the transport', () => {
 			);
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|DE|false');
+				.toMatchTextContent('gdpr|DE|false');
 			await getByTestId('save').click();
 			await vi.waitFor(() =>
 				expect(
@@ -637,7 +639,7 @@ describe('InthProvider: config picks the transport', () => {
 
 			await expect
 				.element(getByTestId('probe'))
-				.toHaveTextContent('gdpr|null|false');
+				.toMatchTextContent('gdpr|null|false');
 			expect(init).toHaveBeenCalledTimes(1);
 			expect(fetchSpy).not.toHaveBeenCalled();
 		} finally {

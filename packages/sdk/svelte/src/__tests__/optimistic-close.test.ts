@@ -3,7 +3,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount, tick, unmount } from 'svelte';
-import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
+import { afterEach, expect, onTestFinished, test, vi } from 'vite-plus/test';
 
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';

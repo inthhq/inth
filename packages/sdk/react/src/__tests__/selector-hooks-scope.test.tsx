@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 import { renderHook } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
@@ -62,7 +62,9 @@ describe('v3 selector hooks: provider state and policy scope', () => {
 	test('useSubscribeToConsentChanges is stable across rerenders', async () => {
 		const { result, rerender } = await renderHook(
 			() => useSubscribeToConsentChanges(),
-			{ wrapper: createWrapper() }
+			{
+				wrapper: createWrapper(),
+			}
 		);
 
 		const firstSubscribe = result.current;

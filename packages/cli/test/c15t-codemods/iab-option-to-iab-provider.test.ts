@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { runIabOptionToIabProviderCodemod as codemod } from "../../src/native/c15t-codemods/iab-option-to-iab-provider.ts";
 import { cleanupProjects, transformFile, transformTwice } from "./helpers.ts";

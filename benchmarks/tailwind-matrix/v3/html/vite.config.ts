@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vite';
-import type { Plugin } from 'vite';
+import { defineConfig } from 'vite-plus';
+import type { Plugin } from 'vite-plus';
 
 /**
  * The script-tag build's files a page with a backend loads. `inth.js` loads

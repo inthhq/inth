@@ -12,7 +12,7 @@ import type { GlobalVendorList } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { render } from '@testing-library/svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/iab-guard-fixture.svelte';

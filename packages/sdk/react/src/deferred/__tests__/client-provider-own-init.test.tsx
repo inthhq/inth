@@ -5,7 +5,7 @@
  * module arrives, and the engine takes the same answer. Its own file: the
  * provider loads its engine once per page.
  */
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';

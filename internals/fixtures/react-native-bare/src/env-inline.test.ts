@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, relative } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const require = createRequire(import.meta.url);
 // The fixture has no @babel/core types; this is the one call the test needs.

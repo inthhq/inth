@@ -4,7 +4,7 @@
  * the configured list sets the order; every framework renders the same rows
  * in the same order, which the parity suite compares.
  */
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';

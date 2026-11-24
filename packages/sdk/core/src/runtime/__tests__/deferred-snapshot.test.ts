@@ -3,7 +3,14 @@
  * the engine's kernel computes from the same prefetched `/v1/consent/init`, or the
  * banner would change when the engine attaches.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { createConsentKernel } from '../../kernel/index';
 import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';

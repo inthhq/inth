@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { nativeAppLabels, nativeConsentLabels } from './native-app-labels';
 import { baseTranslations } from './translations';

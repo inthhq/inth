@@ -1,5 +1,5 @@
 import { createConsentKernel } from '@inth/sdk-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDevTools } from '../../index';
 import type { DevToolsInstance } from '../../index';

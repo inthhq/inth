@@ -14,7 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import type { CliArguments } from "../src/arguments.ts";
@@ -169,7 +169,9 @@ describe("bounded binary upload input", () => {
   ])("rejects unsafe display filename %j", async (name) => {
     await expect(
       prepare(filePath(), "chat", { "file-name": name })
-    ).rejects.toMatchObject({ code: "usage_error" });
+    ).rejects.toMatchObject({
+      code: "usage_error",
+    });
   });
 
   it("rejects an invalid default basename without silently changing it", async () => {

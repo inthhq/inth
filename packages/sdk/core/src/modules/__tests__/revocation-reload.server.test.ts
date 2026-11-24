@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { createConsentKernel } from '../../kernel';
 import { watchRevocationReload } from '../revocation-reload';

@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 
 import angular from '@analogjs/vite-plugin-angular';
 import { baseConfig } from '@inth/vitest-config/base';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 
@@ -27,7 +27,9 @@ import { privateSdkNames } from '../shared/private-sdk-names';
 const uiExports = (
 	JSON.parse(
 		readFileSync(resolve(__dirname, '../ui/package.json'), 'utf8')
-	) as { exports: Record<string, string | { import?: string }> }
+	) as {
+		exports: Record<string, string | { import?: string }>;
+	}
 ).exports;
 const uiStyleAliases = Object.entries(uiExports).flatMap(([subpath, target]) =>
 	subpath.startsWith('./styles/') &&

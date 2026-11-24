@@ -1,7 +1,7 @@
 import { createDevTools as sharedCreateDevTools } from '@inth/sdk/devtools';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { GLOBAL_KEY } from '../browser/page-state';
 import { createDevTools, mountDevTools } from '../devtools';

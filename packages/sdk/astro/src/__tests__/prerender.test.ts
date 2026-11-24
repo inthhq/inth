@@ -1,7 +1,7 @@
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { promptClassNames } from '../banner/class-names';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';

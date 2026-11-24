@@ -1,6 +1,6 @@
 import { policyRulePresets } from '@inth/sdk-core';
 import type { Vendor } from '@inth/sdk-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { activateGatedScripts } from '../gated-scripts';
 import {

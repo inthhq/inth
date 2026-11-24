@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { resolvePolicyRules } from './policy-resolution';
 import { inspectPolicyRules, normalizePolicyRule } from './policy-rule';
@@ -66,7 +66,9 @@ describe('policyRulePresets', () => {
 		expect(
 			inspectPolicyRules(
 				[policyRulePresets.europeOptIn(), policyRulePresets.europeIab()],
-				{ iabEnabled: true }
+				{
+					iabEnabled: true,
+				}
 			).errors
 		).toEqual(['Only one fallback policy is allowed']);
 	});
@@ -159,7 +161,11 @@ describe('policyRulePresets', () => {
 		] as const) {
 			expect(
 				resolvePolicyRules({ countryCode, regionCode, rules })
-			).toMatchObject({ matchedBy, policyId, status: 'matched' });
+			).toMatchObject({
+				matchedBy,
+				policyId,
+				status: 'matched',
+			});
 		}
 		// A known US visitor keeps opt-out rights even when the state is missing.
 		expect(
@@ -404,11 +410,16 @@ describe('regional starter coverage', () => {
 		] as const) {
 			expect(
 				resolvePolicyRules({ countryCode, regionCode, rules })
-			).toMatchObject({ policyId, status: 'matched' });
+			).toMatchObject({
+				policyId,
+				status: 'matched',
+			});
 		}
 		expect(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules })
-		).toMatchObject({ policyId: 'europe_opt_in' });
+		).toMatchObject({
+			policyId: 'europe_opt_in',
+		});
 	});
 
 	test('Switzerland can use no prompt while keeping preferences and disclosure', () => {
@@ -496,7 +507,10 @@ describe('reviewed opt-out and statistics profiles', () => {
 			]) {
 				expect(
 					resolvePolicyRules({ countryCode: 'CA', regionCode, rules: [rule] })
-				).toMatchObject({ policyId: rule.id, status: 'matched' });
+				).toMatchObject({
+					policyId: rule.id,
+					status: 'matched',
+				});
 			}
 			for (const regionCode of ['QC', null]) {
 				expect(
@@ -517,13 +531,20 @@ describe('reviewed opt-out and statistics profiles', () => {
 		];
 		expect(
 			resolvePolicyRules({ countryCode: 'CA', regionCode: 'ON', rules })
-		).toMatchObject({ policy: { prompt: 'notice' } });
+		).toMatchObject({
+			policy: { prompt: 'notice' },
+		});
 		expect(
 			resolvePolicyRules({ countryCode: 'CA', regionCode: 'QC', rules })
-		).toMatchObject({ policyId: 'quebec_opt_in' });
+		).toMatchObject({
+			policyId: 'quebec_opt_in',
+		});
 		expect(
 			resolvePolicyRules({ countryCode: 'CA', regionCode: null, rules })
-		).toMatchObject({ matchedBy: 'fallback', policyId: 'europe_opt_in' });
+		).toMatchObject({
+			matchedBy: 'fallback',
+			policyId: 'europe_opt_in',
+		});
 		expect(normalizePolicyRule({ ...canada, prompt: 'none' }).prompt).toBe(
 			'none'
 		);

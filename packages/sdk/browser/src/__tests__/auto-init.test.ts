@@ -1,5 +1,5 @@
 import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { readPageOptions, readScriptOptions } from '../auto-init';
 import { autoInit, installGlobal } from '../global';
@@ -78,13 +78,17 @@ describe('readScriptOptions', () => {
 	it("reads data-color-scheme='none' as a null scheme", () => {
 		expect(
 			readScriptOptions(scriptWith({ 'data-color-scheme': 'none' }))
-		).toEqual({ ui: { colorScheme: null } });
+		).toEqual({
+			ui: { colorScheme: null },
+		});
 	});
 
 	it('skips animations with data-disable-animation', () => {
 		expect(
 			readScriptOptions(scriptWith({ 'data-disable-animation': '' }))
-		).toEqual({ ui: { disableAnimation: true } });
+		).toEqual({
+			ui: { disableAnimation: true },
+		});
 		expect(
 			readScriptOptions(scriptWith({ 'data-disable-animation': 'false' }))
 		).toEqual({});
@@ -120,7 +124,9 @@ describe('readScriptOptions', () => {
 
 	it('reads the nonce from data-nonce, then from the tag itself', () => {
 		expect(readScriptOptions(scriptWith({ 'data-nonce': 'explicit' }))).toEqual(
-			{ nonce: 'explicit' }
+			{
+				nonce: 'explicit',
+			}
 		);
 		expect(readScriptOptions(scriptWith({ nonce: 'from-tag' }))).toEqual({
 			nonce: 'from-tag',
@@ -129,7 +135,9 @@ describe('readScriptOptions', () => {
 			readScriptOptions(
 				scriptWith({ 'data-nonce': 'explicit', nonce: 'from-tag' })
 			)
-		).toEqual({ nonce: 'explicit' });
+		).toEqual({
+			nonce: 'explicit',
+		});
 		expect(readScriptOptions(scriptWith({ nonce: '' }))).toEqual({});
 	});
 

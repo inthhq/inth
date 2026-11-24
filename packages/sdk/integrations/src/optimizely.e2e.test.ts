@@ -4,7 +4,7 @@
 
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	ALL_DENIED,
@@ -225,7 +225,9 @@ describe('Optimizely Web loader contract', () => {
 		loadScripts(
 			[optimizelyWeb({ projectId: '12345678' })],
 			grantedExperienceConsents,
-			{ nonce: 'provider-nonce' }
+			{
+				nonce: 'provider-nonce',
+			}
 		);
 		expect(getLoader().nonce).toBe('provider-nonce');
 	});

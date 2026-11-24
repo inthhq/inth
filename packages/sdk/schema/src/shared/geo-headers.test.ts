@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { getRegionFromHeaders } from '../index';
 import {
@@ -21,7 +21,9 @@ describe('getRegionFromHeaders, kept for backend call sites', () => {
 	it('prioritizes x-inth-country over cf-ipcountry', () => {
 		expect(
 			getRegionFromHeaders({ 'cf-ipcountry': 'FR', 'x-inth-country': 'DE' })
-		).toEqual({ country: 'DE' });
+		).toEqual({
+			country: 'DE',
+		});
 		expect(getRegionFromHeaders({ 'cf-ipcountry': 'FR' })).toEqual({
 			country: 'FR',
 		});
@@ -86,7 +88,9 @@ describe('extractConsentRequestInputs', () => {
 	it('caller overrides beat everything', () => {
 		const inputs = extractConsentRequestInputs(
 			new Headers({ 'x-inth-country': 'DE' }),
-			{ country: 'JP' }
+			{
+				country: 'JP',
+			}
 		);
 		expect(inputs.country).toBe('JP');
 	});

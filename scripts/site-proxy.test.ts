@@ -2,7 +2,7 @@ import { once } from 'node:events';
 import { request } from 'node:http';
 import type { Server } from 'node:http';
 
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 import { createSiteProxy } from '../benchmarks/reports/cold-start-decomposition-2026-09-25/harness/site-proxy.mjs';
 

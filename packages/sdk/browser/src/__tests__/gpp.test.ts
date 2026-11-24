@@ -1,6 +1,6 @@
 import { policyRulePresets } from '@inth/sdk-core';
 import type { GPPPingData } from '@inth/sdk-iab/gpp';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';

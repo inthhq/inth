@@ -28,7 +28,7 @@ import {
 	CONSENT_CATEGORIES as KERNEL_CONSENT_CATEGORIES,
 	OPTIONAL_CONSENT_CATEGORIES as KERNEL_OPTIONAL_CONSENT_CATEGORIES,
 } from '@inth/sdk/consent-categories';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	ACTIVE_SURFACES,
@@ -302,7 +302,9 @@ const kotlinStringConsts = function kotlinStringConsts(
 const readFixtures = function readFixtures(): FixtureFile[] {
 	const index = JSON.parse(
 		readFileSync(resolve(FIXTURE_DIR, 'index.json'), 'utf8')
-	) as { fixtures: IndexEntry[] };
+	) as {
+		fixtures: IndexEntry[];
+	};
 
 	return index.fixtures.map(
 		(entry) =>

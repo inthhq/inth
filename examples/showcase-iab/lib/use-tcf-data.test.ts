@@ -3,7 +3,7 @@ import type { TCData, TCDataOutsideTCF } from '@inth/nextjs';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { adPartners } from './ad-partners';
 import { canServe, useTcfData } from './use-tcf-data';

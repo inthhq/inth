@@ -7,7 +7,7 @@ import type {
 } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
-import { afterEach, vi } from 'vitest';
+import { afterEach, vi } from 'vite-plus/test';
 
 import { ALL_DENIED } from './engine/vendor-consent';
 

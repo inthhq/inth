@@ -7,9 +7,9 @@
  */
 import '@inth/sdk/ui/styles.css';
 import type { Vendor } from '@inth/sdk/engine';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page } from 'vitest/browser';
 
 import { ConsentDialog } from '../aggregate-components';
 import { InthProvider } from '../provider';

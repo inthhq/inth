@@ -1,5 +1,5 @@
 import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import packageJson from '../package.json' with { type: 'json' };
 import { expectScriptMatchesIntegration } from './__tests__/helpers';
@@ -260,7 +260,9 @@ describe('script integration registry', () => {
 		const drifted = vendorManifests.flatMap((manifest) => {
 			const { label } = getBuiltInScriptIntegrationByVendor(
 				manifest.vendor
-			) ?? { label: undefined };
+			) ?? {
+				label: undefined,
+			};
 			const name = manifest.vendorDetails?.name;
 			return label === name ? [] : [{ label, name, vendor: manifest.vendor }];
 		});

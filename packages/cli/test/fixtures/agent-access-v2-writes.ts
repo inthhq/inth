@@ -61,7 +61,7 @@ const item = (
   args: string[],
   method: string,
   path: string,
-  body: FixtureBody | undefined = undefined,
+  body?: FixtureBody,
   scoped = false,
   response: FixtureBody = updated
 ): WriteCase => ({

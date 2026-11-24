@@ -12,7 +12,7 @@ import {
 	readPolicyResolutionWire,
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
 } from '@inth/sdk-schema/types';
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import {
 	createOfflineTransport,
@@ -104,7 +104,9 @@ describe('resolveInitPolicyWire', () => {
 			readPolicyResolutionWire(
 				resolveInitPolicyWire(
 					{ ...BASE_INIT, policy: LEGACY_POLICY } as InitOutput,
-					{ producerContract: 1 }
+					{
+						producerContract: 1,
+					}
 				)
 			)
 		).toEqual({ policy: null, reason: 'invalid-payload', status: 'failed' });
@@ -115,7 +117,9 @@ describe('resolveInitPolicyWire', () => {
 				readPolicyResolutionWire(
 					resolveInitPolicyWire(
 						{ ...BASE_INIT, policy: LEGACY_POLICY } as InitOutput,
-						{ producerContract }
+						{
+							producerContract,
+						}
 					)
 				)
 			).toEqual({

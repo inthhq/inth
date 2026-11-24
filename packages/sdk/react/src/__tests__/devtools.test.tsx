@@ -4,7 +4,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { createRef } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { mockGVL } from '../components/iab/__tests__/fixtures/mock-consent-state';

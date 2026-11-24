@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 const committed = resolve(
 	import.meta.dirname,

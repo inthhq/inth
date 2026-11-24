@@ -5,7 +5,7 @@
  * vetted copy on the site's own host, keeps its setup and attributes.
  */
 import { createConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { registerVendorContractCleanup } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
@@ -123,7 +123,9 @@ describe('scriptLoader.sources with integrations', () => {
 			async () =>
 				(
 					await import('./vendors/email-and-sms/activecampaign')
-				).activeCampaignTracking({ accountId: '123456' }),
+				).activeCampaignTracking({
+					accountId: '123456',
+				}),
 			() => scriptBySrc('https://acme.example/scripts/'),
 		],
 	])(
@@ -233,7 +235,9 @@ describe('scriptLoader.sources with integrations', () => {
 			async () =>
 				(
 					await import('./vendors/email-and-sms/activecampaign')
-				).activeCampaignTracking({ accountId: '123456' }),
+				).activeCampaignTracking({
+					accountId: '123456',
+				}),
 		],
 		[
 			'Oracle Eloqua',

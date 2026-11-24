@@ -6,7 +6,14 @@ import { createConsentKernel, deferInitGvl } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { createIAB } from '@inth/sdk/iab';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, onTestFinished, test, vi } from 'vitest';
+import {
+	afterEach,
+	describe,
+	expect,
+	onTestFinished,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { decodeTCString } from '../../../iab/src/tcf/tc-string';

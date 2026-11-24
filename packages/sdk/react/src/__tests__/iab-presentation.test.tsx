@@ -8,7 +8,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

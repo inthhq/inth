@@ -2,7 +2,7 @@ import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import type { ComponentProps } from 'react';
 import { useContext } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
@@ -74,7 +74,7 @@ describe('InthProvider with an external runtime', () => {
 		const screen = await render(tree(first));
 		await expect
 			.element(screen.getByTestId('measurement'))
-			.toHaveTextContent('false');
+			.toMatchTextContent('false');
 		expect(firstListeners.size).toBeGreaterThan(0);
 
 		await screen.rerender(tree(second));
@@ -84,11 +84,11 @@ describe('InthProvider with an external runtime', () => {
 		await first.kernel.commands.save('all');
 		await expect
 			.element(screen.getByTestId('measurement'))
-			.toHaveTextContent('false');
+			.toMatchTextContent('false');
 		await second.kernel.commands.save('all');
 		await expect
 			.element(screen.getByTestId('measurement'))
-			.toHaveTextContent('true');
+			.toMatchTextContent('true');
 		expect(first.kernel.getSnapshot().effectivePermissions.measurement).toBe(
 			true
 		);

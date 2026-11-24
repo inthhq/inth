@@ -22,7 +22,7 @@ import { join, relative } from 'node:path';
 
 import { parse } from 'postcss';
 import type { Container, Rule } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const STYLES_DIR = join(__dirname, '..');
 

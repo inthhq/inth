@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 import { resolveManifest } from "../scripts/resolve-manifest.ts";
 

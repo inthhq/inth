@@ -1,11 +1,11 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { build } from 'vite';
 import type { Rollup } from 'vite';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { consentManifest } from '../build';
 
@@ -32,7 +32,9 @@ const EAGER_CSS = '.banner{color:rebeccapurple}';
  * is given.
  */
 const createApp = async (): Promise<string> => {
-	const root = await mkdtemp(join(tmpdir(), 'inth-static-banner-'));
+	const root = await realpath(
+		await mkdtemp(join(tmpdir(), 'inth-static-banner-'))
+	);
 	directories.push(root);
 	const react = join(root, 'node_modules/@inth/react');
 	await write(
@@ -180,13 +182,38 @@ const buildApp = async (
 	})) as Rollup.RollupOutput | Rollup.RollupOutput[];
 	const [first] = Array.isArray(output) ? output : [output];
 	const pages: Record<string, string> = {};
-	let code = '';
+	const chunksByName = new Map<string, Rollup.OutputChunk>();
+	const entryNames: string[] = [];
 	for (const file of first?.output ?? []) {
 		if (file.type === 'asset' && file.fileName.endsWith('.html')) {
 			pages[file.fileName] = String(file.source);
-		} else if (file.type === 'chunk' && file.isEntry) {
-			code += file.code;
+		} else if (file.type === 'chunk') {
+			chunksByName.set(file.fileName, file);
+			if (file.isEntry) {
+				entryNames.push(file.fileName);
+			}
 		}
+	}
+	// Collect entry chunks and their static imports (first-load code),
+	// excluding dynamically imported chunks.
+	const seen = new Set<string>();
+	let code = '';
+	const collectFirstLoad = (fileName: string): void => {
+		if (seen.has(fileName)) {
+			return;
+		}
+		seen.add(fileName);
+		const chunk = chunksByName.get(fileName);
+		if (!chunk) {
+			return;
+		}
+		code += chunk.code;
+		for (const imported of chunk.imports) {
+			collectFirstLoad(imported);
+		}
+	};
+	for (const entryName of entryNames) {
+		collectFirstLoad(entryName);
 	}
 	return { code, pages };
 };
@@ -239,7 +266,7 @@ describe('consentManifest staticBanner', () => {
 		// `#consent-banner` resolved to the gate: the entry imports the
 		// banner's module, it does not hold it.
 		expect(code).toContain('import(');
-		expect(code).not.toContain('id + css');
+		expect(code).not.toMatch(/id \+ css|inth-banner\.banner/u);
 	});
 
 	test('staticBanner: false keeps ConsentBanner in the first load', async () => {
@@ -256,7 +283,7 @@ describe('consentManifest staticBanner', () => {
 				staticBanner: false,
 			})
 		);
-		expect(code).toContain('id + css');
+		expect(code).toMatch(/id \+ css|inth-banner\.banner/u);
 	});
 
 	test('a manifest without a choice banner leaves the banner out and keeps the sheets', async () => {

@@ -3,7 +3,7 @@
  * config.
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	kernelConfigToInitResponse,

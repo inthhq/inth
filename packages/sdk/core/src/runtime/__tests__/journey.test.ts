@@ -11,7 +11,14 @@ import {
 } from '@inth/sdk-schema/types';
 import type { ConsentJourneyParams } from '@inth/sdk-schema/types';
 import { translations } from '@inth/sdk-translations/en';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,

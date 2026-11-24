@@ -4,7 +4,7 @@
  * A throwing or reentrant consumer registered next to it must not keep a
  * committed denial out of storage.
  */
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';

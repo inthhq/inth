@@ -1,6 +1,6 @@
 import { createConsentKernel } from '@inth/nextjs';
 import type { ConsentKernel, ExperimentAssignment } from '@inth/nextjs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { callbacks } from './consent-callbacks';
 

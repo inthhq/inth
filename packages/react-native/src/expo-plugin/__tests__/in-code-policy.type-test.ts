@@ -7,7 +7,7 @@
  */
 
 import type { PolicyRule } from '@inth/sdk/engine';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import type { InCodePolicyRule } from '../params';
 

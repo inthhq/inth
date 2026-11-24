@@ -5,7 +5,7 @@ import { manifest } from '@inth/sdk/modes';
  * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
 import { clearManifestCache } from '@inth/sdk/server';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentRoute, createManifestFetchInit } from '../api';
 import type { NextRouteHandler } from '../api';
@@ -92,7 +92,9 @@ describe('@inth/nextjs/api', () => {
 		const served = await call(
 			GET,
 			'https://app.example.com/api/inth/v1/consent/manifest',
-			{ headers: { 'if-none-match': '"manifest-revision"' } }
+			{
+				headers: { 'if-none-match': '"manifest-revision"' },
+			}
 		);
 
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
@@ -167,6 +169,8 @@ describe('@inth/nextjs/api', () => {
 	test('false disables the Data Cache rather than caching indefinitely', () => {
 		expect(
 			createManifestFetchInit({ manifestRevalidateSeconds: false }).next
-		).toEqual({ revalidate: 0 });
+		).toEqual({
+			revalidate: 0,
+		});
 	});
 });

@@ -1,5 +1,5 @@
 import { translations as en } from '@inth/sdk-translations/en';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	ENGLISH_LEGAL_LINK_LABELS,

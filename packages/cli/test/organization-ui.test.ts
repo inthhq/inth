@@ -3,7 +3,7 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 it.skipIf(process.platform === "win32")(
   "selects and cancels through the real Clack terminal UI",

@@ -9,7 +9,7 @@ import { isAbsolute } from 'node:path';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { logger, runWithNuxtContext } from '@nuxt/kit';
 import { applyEnv } from 'nitropack/runtime/internal/utils.env';
-import { beforeAll, describe, expect, test, vi } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vite-plus/test';
 
 // `useLogger` creates its loggers from Nuxt Kit's, which hands them these
 // mocked types.
@@ -224,7 +224,9 @@ describe('the build snapshot in manifest() mode', () => {
 				{ projectUrl: 'https://consent.example.com' },
 				fetch,
 				true,
-				{ dev }
+				{
+					dev,
+				}
 			);
 			expect(fetch).toHaveBeenCalledWith(
 				'https://consent.example.com/v1/consent/manifest',
@@ -257,7 +259,9 @@ describe('the build snapshot in manifest() mode', () => {
 			{ projectUrl: 'https://consent.example.com' },
 			fetch,
 			true,
-			{ _prepare: true }
+			{
+				_prepare: true,
+			}
 		);
 		expect(fetch).not.toHaveBeenCalled();
 		expect(await importManifestSnapshot(nuxt)).toBeUndefined();
@@ -427,7 +431,9 @@ describe('the build snapshot in manifest() mode', () => {
 			};
 			const variables = (await evaluateModule(
 				virtual['#inth/legacy-project-url-env']?.()
-			)) as { scope: string }[];
+			)) as {
+				scope: string;
+			}[];
 			return variables.map(({ scope }) => scope);
 		};
 		const setUp = async (
@@ -586,7 +592,10 @@ describe('where the snapshot goes', () => {
 		expect(await importClientManifestSnapshot(nuxt)).toEqual(snapshot);
 		expect(
 			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
-		).toEqual({ resolve: 'browser', type: 'manifest' });
+		).toEqual({
+			resolve: 'browser',
+			type: 'manifest',
+		});
 	});
 });
 
@@ -607,7 +616,9 @@ describe('mode and routePrefix', () => {
 		expect(handlerRoutes(nuxt)).toEqual([]);
 		expect(
 			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
-		).toEqual({ type: 'hosted' });
+		).toEqual({
+			type: 'hosted',
+		});
 	});
 
 	test('no mode means manifest(), with the consent route', async () => {
@@ -615,7 +626,9 @@ describe('mode and routePrefix', () => {
 		expect(handlerRoutes(nuxt)).toEqual(['/api/inth/**']);
 		expect(
 			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
-		).toEqual({ type: 'manifest' });
+		).toEqual({
+			type: 'manifest',
+		});
 	});
 
 	test('manifest() adds one catch-all consent route', async () => {
@@ -673,7 +686,10 @@ describe('mode and routePrefix', () => {
 		// The server and the browser run the same mode.
 		expect(
 			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
-		).toEqual({ resolve: 'browser', type: 'manifest' });
+		).toEqual({
+			resolve: 'browser',
+			type: 'manifest',
+		});
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining('runtimeConfig.public.inth.mode')
 		);
@@ -735,7 +751,9 @@ describe('mode and routePrefix', () => {
 			{ projectUrl: '/api/self-host' },
 			vi.fn<typeof globalThis.fetch>(),
 			true,
-			{ _generate: true }
+			{
+				_generate: true,
+			}
 		);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining("manifest({ resolve: 'browser' })")

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,
@@ -172,7 +172,10 @@ describe('displayed category saves', () => {
 			);
 			expect(
 				kernel.getSnapshot().explicitChoice?.categories.measurement
-			).toMatchObject({ confirmedAt: now, value: input === 'all' });
+			).toMatchObject({
+				confirmedAt: now,
+				value: input === 'all',
+			});
 			kernel.dispose();
 		}
 	);

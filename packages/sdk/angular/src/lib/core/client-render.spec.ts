@@ -17,7 +17,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentBanner } from '../banner/consent-banner';

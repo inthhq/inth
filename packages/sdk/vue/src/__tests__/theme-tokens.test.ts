@@ -1,5 +1,12 @@
 import { createConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 import { createApp, createSSRApp, defineComponent, h, toValue } from 'vue';
 import type { App } from 'vue';
 

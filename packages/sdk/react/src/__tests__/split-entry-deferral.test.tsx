@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';

@@ -808,7 +808,8 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 							:root-attrs="footerAttrs"
 							:group-attrs="
 								config.components?.['iab-dialog']?.actionGroup as
-									object | undefined
+									| object
+									| undefined
 							"
 							@action="onAction"
 						/>

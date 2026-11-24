@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../../src/arguments.ts";
 import type { CliError } from "../../src/cli-error.ts";
@@ -144,19 +144,20 @@ interface ExpoPluginModules {
   IOS_PLIST_KEY: { projectUrl: string; categories: string };
 }
 
+const loadExpoPluginFile = (file: string) =>
+  import(
+    pathToFileURL(join(REPO, "packages/react-native/src/expo-plugin", file))
+      .href
+  );
+
 /**
  * The Expo plugin's own rules, which setup has to agree with. Loaded at run
  * time because the CLI does not type-check the React Native package's source.
  */
 const expoPlugin = async (): Promise<ExpoPluginModules> => {
-  const load = (file: string) =>
-    import(
-      pathToFileURL(join(REPO, "packages/react-native/src/expo-plugin", file))
-        .href
-    );
   const [params, constants] = await Promise.all([
-    load("params.ts"),
-    load("constants.ts"),
+    loadExpoPluginFile("params.ts"),
+    loadExpoPluginFile("constants.ts"),
   ]);
   // SAFETY: The two plugin modules export these names with these shapes.
   return { ...params, ...constants } as ExpoPluginModules;

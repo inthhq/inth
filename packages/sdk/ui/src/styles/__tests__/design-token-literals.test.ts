@@ -30,7 +30,7 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const STYLES_DIR = join(__dirname, '..');
 const BASELINE_PATH = join(__dirname, 'design-token-baseline.json');

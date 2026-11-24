@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { mount } from '@vue/test-utils';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 import { ref } from 'vue';
 
 import IabFeatureItem from '../runtime/components/iab-feature-item.vue';

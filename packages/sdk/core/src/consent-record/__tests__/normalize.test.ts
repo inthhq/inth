@@ -1,4 +1,4 @@
-import { assert, describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vite-plus/test';
 
 import { normalizeLegacyConsentRecord } from '../normalize';
 import { validateExplicitChoice, validateNoticeDismissal } from '../validation';
@@ -99,7 +99,10 @@ describe('normalizeLegacyConsentRecord: valid records', () => {
 	it('accepts an anonymous record and a record without a material hash', () => {
 		const result = normalizeLegacyConsentRecord(
 			legacy({ consentInfo: { time: NOW - DAY } }),
-			{ encoding: 'json', now: NOW }
+			{
+				encoding: 'json',
+				now: NOW,
+			}
 		);
 		assert(result.ok);
 		expect(result.subject).toBeNull();

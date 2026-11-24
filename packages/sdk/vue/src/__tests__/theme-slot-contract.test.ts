@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { CONSENT_COMPONENT_SLOT_KEYS } from '@inth/sdk/schema/config';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const runtimeComponentsDir = join(
 	dirname(fileURLToPath(import.meta.url)),

@@ -2,7 +2,7 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { ALL_DENIED, grantedMarketingConsents } from './e2e-test-utils';
 import { amazonAdsTag } from './vendors/ads-and-pixels/amazon-ads';

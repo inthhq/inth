@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import fg from 'fast-glob';
 import { convertMdxToMarkdown } from 'leadtype/convert';
 import { defaultRemarkPlugins, remarkInclude } from 'leadtype/remark';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { collectExampleRegions } from './example-doc-sources';
 import { PACKAGE_DOCS_CONFIGS } from './generate-package-docs';

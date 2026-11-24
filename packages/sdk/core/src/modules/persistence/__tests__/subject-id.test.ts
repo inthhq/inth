@@ -5,7 +5,7 @@
  * the visitor decides anything. It lives in memory until a save records
  * it; the `<key>-sid` copy c15t 3.2 stored is removed.
  */
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

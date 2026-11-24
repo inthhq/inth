@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { validateV2ReadOptions } from "../src/agent-access-v2-reads.ts";
 import { parseArguments } from "../src/arguments.ts";

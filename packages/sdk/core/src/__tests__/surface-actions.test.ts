@@ -4,7 +4,7 @@
  * these functions, so the sequences are pinned here rather than per
  * renderer.
  */
-import { describe, expect, onTestFinished, test, vi } from 'vitest';
+import { describe, expect, onTestFinished, test, vi } from 'vite-plus/test';
 
 import { createConsentKernel } from '../index';
 import type {

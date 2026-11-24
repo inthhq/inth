@@ -1,5 +1,5 @@
 import type { AdTechProvider, NonIABVendor } from '@inth/sdk-core';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	applyPublisherRestrictionsToGVL,

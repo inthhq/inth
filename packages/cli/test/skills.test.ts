@@ -8,7 +8,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import { formatHelp } from "../src/help.ts";
@@ -125,7 +125,10 @@ describe("skills arguments", () => {
     });
     expect(
       parseArguments(["skills", "--non-interactive", "--yes"])
-    ).toMatchObject({ nonInteractive: true, skillsArguments: ["--yes"] });
+    ).toMatchObject({
+      nonInteractive: true,
+      skillsArguments: ["--yes"],
+    });
     expect(formatHelp("skills")).toContain("inth skills [owner/repo]");
     expect(formatHelp("skills")).toContain("--skill");
     expect(formatHelp()).toContain("skills");

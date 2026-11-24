@@ -1,5 +1,5 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { iabPromptClassNames, promptClassNames } from '../banner/class-names';
 import { buildIABPrompt } from '../browser/render-iab-prompt';

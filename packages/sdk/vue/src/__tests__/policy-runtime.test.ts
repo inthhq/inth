@@ -7,7 +7,7 @@ import {
 } from '@inth/sdk/schema/types';
 import type { PolicyResolution, PolicyRule } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 
 import { consentConfigKey } from '../runtime/composables/config';

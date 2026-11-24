@@ -4,7 +4,7 @@
  * What a page starts without the loader. Anything the early path cannot
  * verify is left to the server start or the engine.
  */
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import type { Script } from '../../libs/script-loader/types';
 import type { ConsentSnapshot } from '../../types';

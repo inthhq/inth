@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { expectScriptMatchesIntegration } from '../../__tests__/helpers';
 import { appcues } from './appcues';

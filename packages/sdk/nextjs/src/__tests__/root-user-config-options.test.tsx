@@ -5,7 +5,7 @@
  * the config's callbacks, translations or mode.
  */
 import { ConsentBanner } from '@inth/react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../root';
@@ -33,7 +33,9 @@ vi.mock('@inth/nextjs/user-config', () => ({
 			// A fake backend, built here: the mock runs before other imports.
 			mode: Object.assign(
 				() => ({ init: () => Promise.resolve({}), save: configured.save }),
-				{ kind: 'hosted' as const }
+				{
+					kind: 'hosted' as const,
+				}
 			),
 		},
 		projectUrl: 'https://consent.example.com',

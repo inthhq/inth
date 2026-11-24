@@ -1,10 +1,10 @@
-import { defineConfig } from 'oxlint';
 import antiSlop from 'ultracite/oxlint/anti-slop';
 import core from 'ultracite/oxlint/core';
 import next from 'ultracite/oxlint/next';
 import react from 'ultracite/oxlint/react';
 import vitest from 'ultracite/oxlint/vitest';
 import vue from 'ultracite/oxlint/vue';
+import { defineConfig } from 'vite-plus';
 
 const nextAppDirectories = [
 	'benchmarks/bundle-test-app',
@@ -116,163 +116,170 @@ const deferredAntiSlopRules = [
 ] as const;
 
 export default defineConfig({
-	extends: [core, react, vue, antiSlop],
-	ignorePatterns: [
-		...core.ignorePatterns,
-		'.codex/**',
-		'.repos/**',
-		'.tmp-bun/**',
-		'apps/shadcn-registry/vendor/**',
-		// Injected verbatim into WebView pages, where page script may have
-		// replaced built-ins first. They avoid iterators and destructuring on
-		// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
-		'packages/native-protocol/webview/*.js',
-	],
-	overrides: [
-		{
-			files: [
-				'**/*.{test,spec,test-d,spec-d}.{ts,tsx,js,jsx}',
-				'**/__tests__/**/*.{ts,tsx,js,jsx}',
-			],
-			plugins: ['vitest'],
-			rules: {
-				// Loading the plugin also enables its default rules. Adopt only
-				// these two checks from Ultracite's Vitest preset for now.
-				...Object.fromEntries(
-					Object.keys(vitest.overrides?.[0]?.rules ?? {})
-						.filter((rule) => rule.startsWith('vitest/'))
-						.map((rule) => [rule, 'off'])
-				),
-				'vitest/expect-expect': [
-					'error',
-					{
-						assertFunctionNames: [
-							'expect',
-							'expectTypeOf',
-							'assert',
-							'assertType',
-							// These helpers assert values or throw when a DOM condition fails.
-							'assertParity',
-							'checkCommit',
-							'createBackendConformanceTest',
-							'expectRejected',
-							'expectNonEmpty',
-							'expectScriptMatchesIntegration',
-							'expectSkippedScript',
-							'expectStubCommandQueue',
-							'expectUnique',
-							'waitForElement',
-							'waitForElementRemoved',
-						],
-					},
-				],
-				'vitest/no-conditional-expect': 'error',
-			},
-		},
-		{
-			files: nextAppFiles,
-			plugins: next.plugins,
-			rules: next.rules,
-		},
-		{
-			// shadcn copies these files into users' projects, so they follow
-			// shadcn's code style. Correctness rules still apply.
-			files: ['apps/shadcn-registry/registry/**/*.{ts,tsx}'],
-			rules: {
-				curly: 'off',
-				'func-style': 'off',
-				'import/consistent-type-specifier-style': 'off',
-				'react/function-component-definition': 'off',
-				'react/jsx-handler-names': 'off',
-				'sort-keys': 'off',
-			},
-		},
-		{
-			// Angular declares components and directives as decorated classes.
-			// A primitive's parts share one file, marker directives have no
-			// body, and methods bound from templates need not read `this`.
-			files: [
-				'packages/sdk/angular/**/*.ts',
-				'internals/doc-snippets/angular/**/*.ts',
-				'internals/fixtures/angular/**/*.ts',
-				'benchmarks/angular-browser-bench/src/**/*.ts',
-			],
-			rules: {
-				'class-methods-use-this': 'off',
-				'max-classes-per-file': 'off',
-				'typescript/no-extraneous-class': [
-					'error',
-					{ allowWithDecorator: true },
-				],
-			},
-		},
-		{
-			// Angular's public name for the local-policy mode is `local()` from
-			// `@inth/angular`. Core's deprecated `offline` alias must not reach
-			// Angular code, docs snippets, fixtures or benches.
-			files: [
-				'packages/sdk/angular/**/*.{ts,mts,js,mjs}',
-				'internals/doc-snippets/angular/**/*.{ts,mts,js,mjs}',
-				'internals/fixtures/angular/**/*.{ts,mts,js,mjs}',
-				'internals/angular-compat/**/*.{ts,mts,js,mjs}',
-				'benchmarks/angular-browser-bench/**/*.{ts,mts,js,mjs}',
-				'apps/storybook-angular/**/*.{ts,mts,js,mjs}',
-			],
-			rules: {
-				'no-restricted-imports': [
-					'error',
-					{
-						paths: [
-							{
-								importNames: ['offline'],
-								message: "Use local() from '@inth/angular' instead of offline.",
-								name: '@inth/sdk/engine',
-							},
-						],
-						patterns: [
-							{
-								group: ['@inth/sdk/*'],
-								importNames: ['offline'],
-								message: "Use local() from '@inth/angular' instead of offline.",
-							},
-						],
-					},
-				],
-			},
-		},
-		{
-			files: [...nonReactFrameworkFiles],
-			rules: {
-				// Vue composables also use the `use*` convention, but do not follow
-				// React's component and hook call-order rules.
-				'react/rules-of-hooks': 'off',
-			},
-		},
-	],
-	rules: {
-		// Callback APIs need Promise executors. Banning the constructor led to
-		// copied wrappers that changed exception handling and runtime support.
-		'promise/avoid-new': 'off',
-		...Object.fromEntries(
-			[...deferredRules, ...deferredAntiSlopRules].map((rule) => [rule, 'off'])
-		),
-		'jsdoc/check-tag-names': [
-			'error',
+	lint: {
+		extends: [core, react, vue, antiSlop],
+		ignorePatterns: [
+			...core.ignorePatterns,
+			'.codex/**',
+			'.repos/**',
+			'.tmp-bun/**',
+			'apps/shadcn-registry/vendor/**',
+			// Injected verbatim into WebView pages, where page script may have
+			// replaced built-ins first. They avoid iterators and destructuring on
+			// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
+			'packages/native-protocol/webview/*.js',
+		],
+		overrides: [
 			{
-				definedTags: [
-					'defaultValue',
-					'experimental',
-					'packageDocumentation',
-					'remarks',
-					'typeParam',
-					'vitest-environment',
+				files: [
+					'**/*.{test,spec,test-d,spec-d}.{ts,tsx,js,jsx}',
+					'**/__tests__/**/*.{ts,tsx,js,jsx}',
 				],
+				plugins: ['vitest'],
+				rules: {
+					// Loading the plugin also enables its default rules. Adopt only
+					// these two checks from Ultracite's Vitest preset for now.
+					...Object.fromEntries(
+						Object.keys(vitest.overrides?.[0]?.rules ?? {})
+							.filter((rule) => rule.startsWith('vitest/'))
+							.map((rule) => [rule, 'off'])
+					),
+					'vitest/expect-expect': [
+						'error',
+						{
+							assertFunctionNames: [
+								'expect',
+								'expectTypeOf',
+								'assert',
+								'assertType',
+								// These helpers assert values or throw when a DOM condition fails.
+								'assertParity',
+								'checkCommit',
+								'createBackendConformanceTest',
+								'expectRejected',
+								'expectNonEmpty',
+								'expectScriptMatchesIntegration',
+								'expectSkippedScript',
+								'expectStubCommandQueue',
+								'expectUnique',
+								'waitForElement',
+								'waitForElementRemoved',
+							],
+						},
+					],
+					'vitest/no-conditional-expect': 'error',
+				},
+			},
+			{
+				files: nextAppFiles,
+				plugins: next.plugins,
+				rules: next.rules,
+			},
+			{
+				// shadcn copies these files into users' projects, so they follow
+				// shadcn's code style. Correctness rules still apply.
+				files: ['apps/shadcn-registry/registry/**/*.{ts,tsx}'],
+				rules: {
+					curly: 'off',
+					'func-style': 'off',
+					'import/consistent-type-specifier-style': 'off',
+					'react/function-component-definition': 'off',
+					'react/jsx-handler-names': 'off',
+					'sort-keys': 'off',
+				},
+			},
+			{
+				// Angular declares components and directives as decorated classes.
+				// A primitive's parts share one file, marker directives have no
+				// body, and methods bound from templates need not read `this`.
+				files: [
+					'packages/sdk/angular/**/*.ts',
+					'internals/doc-snippets/angular/**/*.ts',
+					'internals/fixtures/angular/**/*.ts',
+					'benchmarks/angular-browser-bench/src/**/*.ts',
+				],
+				rules: {
+					'class-methods-use-this': 'off',
+					'max-classes-per-file': 'off',
+					'typescript/no-extraneous-class': [
+						'error',
+						{ allowWithDecorator: true },
+					],
+				},
+			},
+			{
+				// Angular's public name for the local-policy mode is `local()` from
+				// `@inth/angular`. Core's deprecated `offline` alias must not reach
+				// Angular code, docs snippets, fixtures or benches.
+				files: [
+					'packages/sdk/angular/**/*.{ts,mts,js,mjs}',
+					'internals/doc-snippets/angular/**/*.{ts,mts,js,mjs}',
+					'internals/fixtures/angular/**/*.{ts,mts,js,mjs}',
+					'internals/angular-compat/**/*.{ts,mts,js,mjs}',
+					'benchmarks/angular-browser-bench/**/*.{ts,mts,js,mjs}',
+					'apps/storybook-angular/**/*.{ts,mts,js,mjs}',
+				],
+				rules: {
+					'no-restricted-imports': [
+						'error',
+						{
+							paths: [
+								{
+									importNames: ['offline'],
+									message:
+										"Use local() from '@inth/angular' instead of offline.",
+									name: '@inth/sdk/engine',
+								},
+							],
+							patterns: [
+								{
+									group: ['@inth/sdk/*'],
+									importNames: ['offline'],
+									message:
+										"Use local() from '@inth/angular' instead of offline.",
+								},
+							],
+						},
+					],
+				},
+			},
+			{
+				files: [...nonReactFrameworkFiles],
+				rules: {
+					// Vue composables also use the `use*` convention, but do not follow
+					// React's component and hook call-order rules.
+					'react/rules-of-hooks': 'off',
+				},
 			},
 		],
-	},
-	settings: {
-		next: {
-			rootDir: [...nextAppDirectories],
+		rules: {
+			// Callback APIs need Promise executors. Banning the constructor led to
+			// copied wrappers that changed exception handling and runtime support.
+			'promise/avoid-new': 'off',
+			...Object.fromEntries(
+				[...deferredRules, ...deferredAntiSlopRules].map((rule) => [
+					rule,
+					'off',
+				])
+			),
+			'jsdoc/check-tag-names': [
+				'error',
+				{
+					definedTags: [
+						'defaultValue',
+						'experimental',
+						'packageDocumentation',
+						'remarks',
+						'typeParam',
+						'vitest-environment',
+					],
+				},
+			],
+		},
+		settings: {
+			next: {
+				rootDir: [...nextAppDirectories],
+			},
 		},
 	},
 });

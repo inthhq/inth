@@ -2,7 +2,7 @@
  * Vendor-level consent through the kernel's public boundaries: hydration,
  * save, bulk actions, events, the transport payload and in-flight narrowing.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

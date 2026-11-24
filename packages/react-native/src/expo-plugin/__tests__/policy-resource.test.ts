@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { applyAndroidManifest } from '../android';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';

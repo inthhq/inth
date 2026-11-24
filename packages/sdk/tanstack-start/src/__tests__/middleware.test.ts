@@ -1,5 +1,5 @@
 import { clearManifestCache } from '@inth/sdk/server';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentRoute } from '../api';
 import { consentRequestMiddleware } from '../middleware';
@@ -91,7 +91,9 @@ describe('consentRequestMiddleware', () => {
 	test('leaves headers untouched when normalization is disabled', async () => {
 		const { next, request } = await run(
 			consentRequestMiddleware({ normalizeHeaders: false }),
-			{ 'cf-ipcountry': 'DE' }
+			{
+				'cf-ipcountry': 'DE',
+			}
 		);
 
 		expect(request.headers.get('x-inth-country')).toBeNull();

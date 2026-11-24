@@ -1,7 +1,8 @@
-import { defineConfig } from 'oxfmt';
 import ultracite from 'ultracite/oxfmt';
+import { defineConfig } from 'vite-plus';
+import type { FormatConfig } from 'vite-plus/fmt';
 
-export default defineConfig({
+export const fmtConfig: FormatConfig = {
 	...ultracite,
 	ignorePatterns: [
 		...ultracite.ignorePatterns,
@@ -37,4 +38,8 @@ export default defineConfig({
 	tabWidth: 2,
 	trailingComma: 'es5',
 	useTabs: true,
+};
+
+export default defineConfig({
+	fmt: fmtConfig,
 });

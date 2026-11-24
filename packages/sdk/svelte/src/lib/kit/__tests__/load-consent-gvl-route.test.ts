@@ -6,7 +6,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * adapters do.
  */
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { inthHandle } from '../handle';
 import { manifest } from '../index';

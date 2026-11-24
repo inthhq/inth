@@ -1,6 +1,6 @@
 import { availableParallelism } from 'node:os';
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 
 /**
  * Turbo sets `TURBO_HASH` for every task it runs, and runs up to 20 test

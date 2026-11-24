@@ -4,7 +4,7 @@
  * since importing the entry registers Italian for the whole module graph.
  */
 import { translations as italian } from '@inth/sdk-translations/it';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { createConsentRuntime } from '../runtime';
 import { testing } from '../testing';

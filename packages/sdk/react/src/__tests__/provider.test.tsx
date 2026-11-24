@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolveStorageKeys } from '@inth/sdk/modules/persistence';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { useContext, useEffect, StrictMode } from 'react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentBanner } from '../components/prompt';
@@ -536,7 +536,7 @@ test('passes host presentation through UI context', async () => {
 	);
 	await expect
 		.element(screen.getByTestId('presentation'))
-		.toHaveTextContent('column');
+		.toMatchTextContent('column');
 });
 
 test('merges selected i18n messages with English defaults', async () => {

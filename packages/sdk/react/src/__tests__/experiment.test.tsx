@@ -6,7 +6,14 @@ import { createOfflineTransport } from '@inth/sdk/transports';
 import type { Theme } from '@inth/sdk/ui/theme';
 import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, beforeEach, expect, expectTypeOf, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	expect,
+	expectTypeOf,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { ConsentBanner } from '../components/prompt';
 import { ConsentTheme } from '../consent-theme';
@@ -260,7 +267,10 @@ test('built-in assignment lands after mount and is stored for the next visit', a
 		expect(['control', 'bar', 'floating']).toContain(arm);
 		expect(
 			JSON.parse(localStorage.getItem(EXPERIMENT_STORAGE_KEY) ?? 'null')
-		).toEqual({ arm, id: 'banner-shape' });
+		).toEqual({
+			arm,
+			id: 'banner-shape',
+		});
 	} finally {
 		mounted.unmount();
 	}
@@ -471,7 +481,9 @@ test('a provider enabled after mount builds its controller then', async () => {
 					experiment,
 					mode: Object.assign(
 						() => ({ save: vi.fn().mockResolvedValue({ ok: true }) }),
-						{ kind: 'custom' as const }
+						{
+							kind: 'custom' as const,
+						}
 					),
 					persistence: false,
 					prefetch: { initialPolicyResolution: resolution },
@@ -515,7 +527,9 @@ test('a disabled provider builds no experiment controller', async () => {
 					},
 					mode: Object.assign(
 						() => ({ save: vi.fn().mockResolvedValue({ ok: true }) }),
-						{ kind: 'custom' as const }
+						{
+							kind: 'custom' as const,
+						}
 					),
 					persistence: false,
 					prefetch: { initialPolicyResolution: resolution },

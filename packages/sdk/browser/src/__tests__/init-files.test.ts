@@ -3,7 +3,14 @@
  * it loads `inth.records.js`: at once for a visitor with a stored choice,
  * never on a first visit.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { runInitScript } from '../init/run';
 import { version } from '../version';

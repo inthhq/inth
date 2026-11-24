@@ -9,7 +9,7 @@ import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '../../__tests__/policy-fixture';

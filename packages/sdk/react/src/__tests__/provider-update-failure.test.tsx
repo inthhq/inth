@@ -4,7 +4,7 @@
  * not leave that rejection unhandled: the next update loads it again.
  */
 import type * as ProviderRuntimeModule from '@inth/sdk/runtime/provider';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../provider';

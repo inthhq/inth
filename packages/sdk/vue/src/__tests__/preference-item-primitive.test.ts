@@ -5,7 +5,7 @@
  * over a still-animating body.
  */
 import { mount } from '@vue/test-utils';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 import { defineComponent, h } from 'vue';
 
 import {

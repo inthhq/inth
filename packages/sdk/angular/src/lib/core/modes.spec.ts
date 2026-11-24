@@ -1,5 +1,5 @@
 import { hosted } from '@inth/sdk/modes';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { testing } from '../../../testing/src/testing-mode';
 import {

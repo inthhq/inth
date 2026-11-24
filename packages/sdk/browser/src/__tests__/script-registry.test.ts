@@ -4,7 +4,7 @@
  * init lists loads from the registry's URL with its hash.
  */
 import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createConsentClient } from '../client';
 import { installGlobal } from '../global';

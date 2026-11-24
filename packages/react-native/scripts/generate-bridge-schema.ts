@@ -31,9 +31,11 @@ mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, `${JSON.stringify(renderBridgeSchema(), null, '\t')}\n`);
 
 const format = spawnSync(
-	'bunx',
+	'pnpm',
 	[
-		'oxfmt',
+		'exec',
+		'vp',
+		'fmt',
 		'-c',
 		resolve(repoRoot, 'oxfmt.sdk.config.ts'),
 		'--ignore-path',

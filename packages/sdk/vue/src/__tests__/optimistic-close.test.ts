@@ -4,7 +4,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { nextTick } from 'vue';
 
 import ConsentManager from '../runtime/components/manager.vue';

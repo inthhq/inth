@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file -- Related in-memory dependencies for protocol tests. */
-import { afterEach, expect } from "vitest";
+import { afterEach, expect } from "vite-plus/test";
 
 import type { CredentialStore } from "../experiments/node/auth.ts";
 import { HttpClient } from "../experiments/node/http.ts";

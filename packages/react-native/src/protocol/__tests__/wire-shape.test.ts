@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	describeSnapshotWireDrift,
@@ -38,7 +38,9 @@ interface FixtureFile {
 const readIndex = function readIndex(): IndexEntry[] {
 	const index = JSON.parse(
 		readFileSync(resolve(FIXTURE_DIR, 'index.json'), 'utf8')
-	) as { fixtures: IndexEntry[] };
+	) as {
+		fixtures: IndexEntry[];
+	};
 
 	return index.fixtures;
 };
@@ -307,13 +309,17 @@ describe('describeSnapshotWireDrift on a hand-written payload', () => {
 		expect(
 			describeSnapshotWireDrift(
 				withField(minimal(), 'iab', { gvl: null, tcString: 'CQ...' }),
-				{ allowUnknownKeys: true }
+				{
+					allowUnknownKeys: true,
+				}
 			)
 		).toEqual([]);
 		expect(
 			describeSnapshotWireDrift(
 				withField(minimal(), 'iab', { tcString: 'CQ...' }),
-				{ allowUnknownKeys: true }
+				{
+					allowUnknownKeys: true,
+				}
 			)
 		).toEqual([
 			'iab.gvl: required here, absent from the payload',

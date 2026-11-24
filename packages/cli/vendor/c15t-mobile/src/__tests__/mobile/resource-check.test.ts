@@ -7,7 +7,7 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { bundleMobileManifest } from '~/mobile/bundle-manifest';
 import { exportMobilePolicy } from '~/mobile/export-manifest';

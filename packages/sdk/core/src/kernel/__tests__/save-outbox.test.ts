@@ -9,7 +9,14 @@
  * are two kernels sharing one store; another tab holding the store is a
  * store wrapper that waits. The browser store has its own suite.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,
@@ -1147,7 +1154,10 @@ describe('save outbox: subject reassignment', () => {
 		kernel.set.subjectId('sub_taken');
 		await expect(
 			kernel.commands.save({ measurement: false })
-		).resolves.toMatchObject({ ok: true, subjectId: newId });
+		).resolves.toMatchObject({
+			ok: true,
+			subjectId: newId,
+		});
 		expect(kernel.getSnapshot().subject?.subjectId).toBe(newId);
 		kernel.dispose();
 	});

@@ -46,7 +46,7 @@ import {
 	unmount,
 	tick,
 } from 'svelte';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
 import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec';

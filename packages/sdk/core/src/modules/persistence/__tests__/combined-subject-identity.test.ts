@@ -9,7 +9,7 @@
  * Every case also checks that nothing grants an optional category and that
  * no explicit choice appears that the visitor did not make.
  */
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

@@ -9,7 +9,7 @@
  * code with it.
  */
 import { useActiveUI, useModel } from '@inth/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../root';
@@ -53,11 +53,11 @@ describe('InthProvider: streamed state', () => {
 		);
 		await expect
 			.element(getByTestId('status'))
-			.toHaveTextContent('pending/none');
+			.toMatchTextContent('pending/none');
 
 		resolveState(policyFixture());
 		await expect
 			.element(getByTestId('status'))
-			.toHaveTextContent('opt-in/banner');
+			.toMatchTextContent('opt-in/banner');
 	});
 });

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { parseAllDocuments } from 'yaml';
 
 /**
@@ -34,7 +34,9 @@ interface Selector {
 
 const { selectors } = JSON.parse(
 	readFileSync(join(MAESTRO_DIR, 'selectors.json'), 'utf8')
-) as { selectors: readonly Selector[] };
+) as {
+	selectors: readonly Selector[];
+};
 
 const walk = function walk(directory: string, pattern: RegExp): string[] {
 	const entries: Dirent[] = readdirSync(directory, { withFileTypes: true });

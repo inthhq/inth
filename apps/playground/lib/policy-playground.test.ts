@@ -1,5 +1,5 @@
 import { policyRulePresets } from '@inth/sdk/schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	autoVariantFor,
@@ -82,7 +82,10 @@ describe('policy playground helpers', () => {
 		});
 		const bumped = inspectPlaygroundRule(
 			toPolicyRule({ ...form, copyRevision: 'v2' }, base.rule),
-			{ country: 'GB', region: '' }
+			{
+				country: 'GB',
+				region: '',
+			}
 		);
 		expect(bumped.fingerprints?.choice).not.toBe(before.fingerprints?.choice);
 	});
@@ -275,7 +278,9 @@ describe('policy playground helpers', () => {
 		const europe = policyRulePresets.europeOptIn();
 		expect(
 			resolvePlaygroundPresentation(DEFAULT_PRESENTATION_FORM, europe)
-		).toEqual({ prompt: { position: 'bottom-left', variant: 'floating' } });
+		).toEqual({
+			prompt: { position: 'bottom-left', variant: 'floating' },
+		});
 		// A manual variant drops the mapped position, which may not fit it.
 		expect(
 			resolvePlaygroundPresentation(

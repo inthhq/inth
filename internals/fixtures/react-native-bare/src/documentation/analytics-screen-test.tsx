@@ -1,4 +1,4 @@
-/// <reference types="vitest/globals" />
+/// <reference types="vite-plus/test/globals" />
 /**
  * The component test the "Test your app" page shows, written for Jest with
  * `jest-expo` and React Native Testing Library. This fixture only type-checks

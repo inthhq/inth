@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 import openapiTS, { astToString } from 'openapi-typescript';
 import type { OpenAPI3 } from 'openapi-typescript';
-import { format } from 'oxfmt';
+import { format } from 'vite-plus/fmt';
 
-import repoConfig from '../oxfmt.sdk.config';
+import { fmtConfig as repoConfig } from '../oxfmt.sdk.config';
 import { openApiToValibot } from './openapi-to-valibot';
 import type { OpenApiDocument } from './openapi-to-valibot';
 

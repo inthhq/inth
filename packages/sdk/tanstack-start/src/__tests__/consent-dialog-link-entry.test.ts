@@ -1,5 +1,5 @@
 import { ConsentDialogLink as ReactConsentDialogLink } from '@inth/react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import manifest from '../../package.json';
 

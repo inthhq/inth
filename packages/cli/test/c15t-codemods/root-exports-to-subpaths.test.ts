@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { runRootExportsToSubpathsCodemod as codemod } from "../../src/native/c15t-codemods/root-exports-to-subpaths.ts";
 import { cleanupProjects, transformFile, transformTwice } from "./helpers.ts";

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { InthProvider } from '../../../provider/src/inth-provider';
 import { testOptions } from '../../__tests__/test-local';

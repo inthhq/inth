@@ -5,7 +5,7 @@
  * instead of running a mode the app never chose.
  */
 import { renderToString } from 'react-dom/server';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../root';

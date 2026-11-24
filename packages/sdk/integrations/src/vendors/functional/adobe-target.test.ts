@@ -3,7 +3,7 @@
  */
 
 import type { Script } from '@inth/sdk/engine';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	createCallbackInfo,
@@ -16,7 +16,9 @@ import type { AdobeTargetOptions } from './adobe-target';
 type TestAlloy = ((
 	command: string,
 	options?: Record<string, unknown>
-) => Promise<unknown>) & { q: unknown[] };
+) => Promise<unknown>) & {
+	q: unknown[];
+};
 type TargetWindow = Window & {
 	alloy?: TestAlloy;
 	__alloyNS?: string[];

@@ -3,7 +3,7 @@
  * load, so each keeps its own copy of the compact codes. They must agree,
  * or a record this release writes would not read back.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../../consent-record/types';
 import {

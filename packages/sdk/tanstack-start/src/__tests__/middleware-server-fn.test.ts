@@ -12,7 +12,7 @@ import { manifest } from '@inth/sdk/modes';
 import { createServerFn } from '@tanstack/react-start';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { optInRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { consentRequestMiddleware } from '../middleware';

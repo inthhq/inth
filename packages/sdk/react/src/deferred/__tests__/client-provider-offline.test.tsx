@@ -5,7 +5,7 @@
  * file: the provider loads its engine once per page.
  */
 import { policyRulePresets } from '@inth/sdk/schema/types';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { offlineMode } from '../../__tests__/fixtures/transport-mode';

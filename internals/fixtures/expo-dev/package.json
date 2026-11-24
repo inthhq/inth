@@ -7,12 +7,12 @@
 	"scripts": {
 		"android": "expo run:android",
 		"bundle": "expo export --platform all --output-dir .artifacts/export --clear",
-		"check-types": "tsc --noEmit",
+		"check-types": "tsrs --noEmit",
 		"config": "expo config --type prebuild --json > .artifacts/expo-config.json",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
 		"ios": "expo run:ios",
 		"ios:release": "expo run:ios --configuration Release",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts App.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
+		"lint": "vp lint -c ../../../oxlint.sdk.config.ts App.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
 		"prebuild": "expo prebuild --clean",
 		"start": "expo start --dev-client"
 	},
@@ -37,8 +37,8 @@
 		"@babel/runtime": "^7.25.0",
 		"@types/node": "25.5.0",
 		"@types/react": "~19.3.0",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
-		"typescript": "7.0.2"
+		"tsrs": "catalog:",
+		"typescript": "7.0.2",
+		"vite-plus": "catalog:"
 	}
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	deniedConsentState,
@@ -118,7 +118,10 @@ describe('googleTagManager', () => {
 		).toBe('measurement');
 		expect(
 			googleTagManager({ category: 'marketing', id: 'GTM-ALWAYS' })
-		).toMatchObject({ alwaysLoad: true, category: 'marketing' });
+		).toMatchObject({
+			alwaysLoad: true,
+			category: 'marketing',
+		});
 	});
 
 	it('sends the current permissions as the default before gtm.js when gated', () => {

@@ -8,7 +8,7 @@
  * queued save at the same moment agree on one id through the real lock.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
 
 import { TAKEN_SUBJECTS_KEY } from './fixtures/subject-conflict-page';
 import type { SubjectConflictPage } from './fixtures/subject-conflict-page';

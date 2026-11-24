@@ -13,7 +13,14 @@ import {
 } from '@inth/sdk/server';
 import { readNuxtRoutePrefix } from '@inth/vue/nuxt';
 import { createApp, createRouter, toWebHandler } from 'h3';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { createConsentRoute } from '../runtime/server/route-factories';
 import { createServerFetch } from '../runtime/server/server-fetch';

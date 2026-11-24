@@ -8,7 +8,7 @@
  * is the one wrong answer that turns tracking on rather than off.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	parseTrackingAuthorization,
@@ -88,13 +88,20 @@ describe('parseTrackingRequest', () => {
 	test('falls back to a settled request for a stage this build cannot name', () => {
 		expect(
 			parseTrackingRequest('{"stage":"pending-review","status":"authorized"}')
-		).toMatchObject({ presentation: undefined, stage: 'final' });
+		).toMatchObject({
+			presentation: undefined,
+			stage: 'final',
+		});
 	});
 
 	test('drops a presentation this build cannot name and keeps the rest', () => {
 		expect(
 			parseTrackingRequest('{"presentation":"fullscreen","status":"denied"}')
-		).toEqual({ presentation: undefined, stage: 'final', status: 'denied' });
+		).toEqual({
+			presentation: undefined,
+			stage: 'final',
+			status: 'denied',
+		});
 	});
 
 	test.each([

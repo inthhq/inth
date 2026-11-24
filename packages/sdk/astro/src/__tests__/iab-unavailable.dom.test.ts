@@ -9,7 +9,14 @@
  */
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import type { AstroConsentClient } from '../client';
 import { boot } from '../client';

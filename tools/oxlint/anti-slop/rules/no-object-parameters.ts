@@ -1,6 +1,4 @@
-import { defineRule } from "@oxlint/plugins";
-
-import type { ESTree } from "@oxlint/plugins";
+import { defineRule, type ESTree } from "vite-plus/lint/plugins";
 
 import {
 	functionParameterBindingName,
@@ -43,9 +41,7 @@ export const noObjectParametersRule = defineRule({
 				if (resolved.type === "TSParenthesizedType") {
 					return matches(resolved.typeAnnotation);
 				}
-				return (
-					resolved.type === "TSUnionType" && resolved.types.some(matches)
-				);
+				return resolved.type === "TSUnionType" && resolved.types.some(matches);
 			});
 
 		const checkParameters = (node: ParameterOwner) => {
@@ -63,10 +59,7 @@ export const noObjectParametersRule = defineRule({
 
 		return {
 			Program(node) {
-				environment = createTypeAliasEnvironment(
-					node,
-					context.sourceCode.visitorKeys,
-				);
+				environment = createTypeAliasEnvironment(node, context.sourceCode.visitorKeys);
 			},
 			ArrowFunctionExpression: checkParameters,
 			FunctionDeclaration: checkParameters,

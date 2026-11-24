@@ -1,5 +1,5 @@
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	createStaticConsentResolver,

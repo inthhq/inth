@@ -4,7 +4,7 @@
  * small evaluator, so the first load does not carry `has`; this table keeps
  * the two from drifting by running every condition form through both.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { AllConsentNames } from '../../consent/consent-types';
 import { has } from '../../libs/has';

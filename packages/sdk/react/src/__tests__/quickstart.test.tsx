@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import {
@@ -56,11 +56,11 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 		.toBeVisible();
 	await expect
 		.element(first.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|undefined');
+		.toMatchTextContent('false|undefined');
 	await first.getByTestId('consent-banner-reject-button').click();
 	await expect
 		.element(first.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|false');
+		.toMatchTextContent('false|false');
 	expect(onChoiceRecorded).toHaveBeenCalledTimes(1);
 	// Saves are queued and written once the write code loads: remount only
 	// after the rejection is stored, as a reload would.
@@ -72,7 +72,7 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 	const returning = await render(app);
 	await expect
 		.element(returning.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|false');
+		.toMatchTextContent('false|false');
 	await expect
 		.element(returning.getByTestId('consent-banner-root'))
 		.not.toBeInTheDocument();

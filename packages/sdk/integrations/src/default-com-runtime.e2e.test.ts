@@ -15,7 +15,7 @@ import {
 	expect,
 	test,
 	vi,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import type { RuntimeOptions } from './__tests__/default-com-runtime-page';
 
@@ -381,7 +381,9 @@ test('removal denies the retained actual client without acquiring a changed glob
 	});
 	expect(
 		await page.evaluate(() => window.__defaultComRuntime.submitRetained())
-	).toMatchObject({ success: true });
+	).toMatchObject({
+		success: true,
+	});
 	const afterDenial = JSON.parse(submitted().at(-1)?.body ?? 'null');
 	expect(afterDenial.anonymousId).not.toBe(previous.anonymousId);
 	expect(afterDenial.sessionId).not.toBe(previous.sessionId);
@@ -443,7 +445,9 @@ test('connected denial targets the owned client after the SDK global changes', a
 	expect(reconfigured()).toHaveLength(0);
 	expect(
 		await page.evaluate(() => window.__defaultComRuntime.submitRetained())
-	).toMatchObject({ success: true });
+	).toMatchObject({
+		success: true,
+	});
 	const afterDenial = JSON.parse(submitted().at(-1)?.body ?? 'null');
 	expect(afterDenial.anonymousId).not.toBe(previous.anonymousId);
 	expect(afterDenial.sessionId).not.toBe(previous.sessionId);
@@ -459,7 +463,9 @@ test('connected denial targets the owned client after the SDK global changes', a
 	await page.evaluate(() => window.__defaultComRuntime.vendor(true));
 	expect(
 		await page.evaluate(() => window.__defaultComRuntime.submit())
-	).toMatchObject({ success: true });
+	).toMatchObject({
+		success: true,
+	});
 	expect(submitted().at(-1)?.url).toBe(
 		'https://changed-global.test/api/form-submission'
 	);
@@ -600,7 +606,9 @@ test('changes scheduler display target and loader through the real SDK', async (
 			iframe.addEventListener(
 				'load',
 				() => iframe.setAttribute('data-loaded', 'true'),
-				{ once: true }
+				{
+					once: true,
+				}
 			);
 		});
 		await completeScheduler();

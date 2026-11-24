@@ -1,5 +1,5 @@
 import { clearGVLCache } from '@inth/sdk-iab';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { readPageOptions } from '../auto-init';

@@ -5,7 +5,14 @@
  * The first attempt carries it from memory; a replay goes without it, so the
  * backend records the save with the link left off.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,

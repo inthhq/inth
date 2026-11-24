@@ -6,7 +6,7 @@
  */
 
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import DialogLinkFixture from '../../__tests__/fixtures/dialog-link-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';

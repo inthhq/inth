@@ -1,7 +1,7 @@
 import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { mount } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { ref } from 'vue';
 
 import ConsentLegalLinks from '../runtime/components/legal-links.vue';

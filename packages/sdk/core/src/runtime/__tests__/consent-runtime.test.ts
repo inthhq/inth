@@ -6,7 +6,14 @@ import { baseTranslations } from '@inth/sdk-translations/all';
  *
  * `createConsentRuntime` — construction, `start()`, `dispose()`.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createIframeBlocker } from '../../modules/iframe-blocker';

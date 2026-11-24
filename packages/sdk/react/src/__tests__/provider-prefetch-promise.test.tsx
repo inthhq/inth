@@ -10,7 +10,7 @@
 import type { ConsentKernel, KernelConfig } from '@inth/sdk/engine';
 import { hosted } from '@inth/sdk/transports';
 import { useContext, useEffect } from 'react';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
@@ -111,17 +111,17 @@ describe('InthProvider prefetch promise', () => {
 			</InthProvider>
 		);
 
-		await expect.element(getByTestId('child')).toHaveTextContent('ready');
+		await expect.element(getByTestId('child')).toMatchTextContent('ready');
 		await expect
 			.element(getByTestId('state'))
-			.toHaveTextContent('none|true|none|false|subject|none|false');
+			.toMatchTextContent('none|true|none|false|subject|none|false');
 		expect(counts.completed).toBe(0);
 
 		prefetch.resolve(policyConfig());
 
 		await expect
 			.element(getByTestId('state'))
-			.toHaveTextContent('banner|false|gdpr|false|subject|DE|false');
+			.toMatchTextContent('banner|false|gdpr|false|subject|DE|false');
 		await vi.waitFor(() => expect(counts.completed).toBe(1));
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(counts.completed).toBe(1);
@@ -145,7 +145,7 @@ describe('InthProvider prefetch promise', () => {
 
 		await expect
 			.element(getByTestId('state'))
-			.toHaveTextContent('banner|false|gdpr|false|subject|DE|false');
+			.toMatchTextContent('banner|false|gdpr|false|subject|DE|false');
 	});
 });
 
@@ -183,7 +183,7 @@ describe('a streamed policy', () => {
 		prefetch.resolve(config);
 		await expect
 			.element(getByTestId('state'))
-			.toHaveTextContent('banner|false|gdpr');
+			.toMatchTextContent('banner|false|gdpr');
 		if (!kernel) {
 			throw new Error('Expected mounted kernel');
 		}

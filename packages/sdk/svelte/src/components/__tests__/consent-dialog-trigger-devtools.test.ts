@@ -4,7 +4,7 @@
  */
 
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import Fixture from '../../__tests__/fixtures/trigger-devtools-fixture.svelte';
 

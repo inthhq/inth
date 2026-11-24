@@ -3,7 +3,7 @@
  * store holds. Otherwise the row times a fallback and still prints a number.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	STORED_ENVELOPE,

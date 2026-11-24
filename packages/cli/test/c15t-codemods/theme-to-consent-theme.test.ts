@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { runThemeToConsentThemeCodemod as codemod } from "../../src/native/c15t-codemods/theme-to-consent-theme.ts";
 import { cleanupProjects, transformFile, transformTwice } from "./helpers.ts";

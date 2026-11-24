@@ -1,5 +1,5 @@
 import type { ConsentState } from '@inth/sdk-core';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
 

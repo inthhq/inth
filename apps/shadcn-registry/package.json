@@ -5,11 +5,11 @@
 	"type": "module",
 	"scripts": {
 		"build": "bun scripts/build.ts",
-		"check-types": "tsc --noEmit && tsc -p tsconfig.radix.json && tsc -p tsconfig.base.json && tsc -p tsconfig.aria.json && bun scripts/check-frameworks.ts",
+		"check-types": "tsrs --noEmit && tsrs -p tsconfig.radix.json && tsrs -p tsconfig.base.json && tsrs -p tsconfig.aria.json && bun scripts/check-frameworks.ts",
 		"fixtures": "bun scripts/fixtures.ts",
-		"fmt": "oxfmt -c ../../oxfmt.sdk.config.ts .",
-		"lint": "oxlint -c ../../oxlint.sdk.config.ts .",
-		"test": "vitest run"
+		"fmt": "vp fmt -c ../../oxfmt.sdk.config.ts .",
+		"lint": "vp lint -c ../../oxlint.sdk.config.ts .",
+		"test": "vp test run"
 	},
 	"dependencies": {
 		"@inth/nextjs": "workspace:*",
@@ -24,21 +24,20 @@
 		"@tanstack/react-start": "1.168.60",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
-		"@vitest/coverage-istanbul": "4.1.10",
+		"@vitest/coverage-istanbul": "catalog:",
 		"class-variance-authority": "^0.7.1",
 		"cn": "^0.4.0",
 		"jsdom": "25.0.1",
 		"lucide-react": "^1.23.0",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
-		"playwright": "1.61.1",
+		"playwright": "catalog:",
 		"radix-ui": "^1.4.3",
 		"react": "19.2.7",
 		"react-aria-components": "^1.22.1",
 		"react-dom": "19.2.7",
 		"shadcn": "4.21.4",
-		"typescript": "7.0.2",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
+		"tsrs": "catalog:",
+		"vite": "catalog:",
+		"vite-plus": "catalog:",
+		"vitest": "catalog:"
 	}
 }

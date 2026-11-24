@@ -2,7 +2,7 @@
  * A narrowed replay drops the TC string, and the AC string with it: an AC
  * string sent without its TC string means nothing.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { SavePayload } from '../../types';
 import { withoutSuperseded } from '../save-outbox/supersession';

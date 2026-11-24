@@ -12,7 +12,7 @@
  * read against the Swift mapping and the Kotlin answer.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { TrackingAuthorization } from '../../protocol';
 import { TRACKING_AUTHORIZATION_STATUSES } from '../../protocol';

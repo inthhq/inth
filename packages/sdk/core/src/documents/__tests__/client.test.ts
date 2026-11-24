@@ -2,7 +2,7 @@
  * The documents client against a stubbed `fetch`.
  */
 import { v1DocumentAcceptancesInputSchema } from '@inth/sdk-schema/v1';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	bodyAt,

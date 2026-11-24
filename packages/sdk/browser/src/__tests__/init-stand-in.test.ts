@@ -15,7 +15,14 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import { enTranslations } from '@inth/sdk-translations';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	ENGINE_TIMEOUT_MS,

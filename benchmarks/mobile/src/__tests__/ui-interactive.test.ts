@@ -4,7 +4,7 @@
  * goes quiet, which is the failure that would otherwise print a plausible number.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { measureUiInteractive } from '../measure/ui-interactive';
 

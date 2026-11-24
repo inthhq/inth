@@ -1,5 +1,5 @@
 import { translations as en } from '@inth/sdk-translations/en';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	resolveActionLabels,
@@ -127,7 +127,10 @@ describe('resolveSurfaceTranslations', () => {
 		expect(t.consentManagerDialog).toEqual(en.consentManagerDialog);
 		expect(t.consentTypes.marketing).toEqual(en.consentTypes.marketing);
 		expect((t.consentTypes as Record<string, unknown>).custom_tracking).toEqual(
-			{ description: 'D', title: 'T' }
+			{
+				description: 'D',
+				title: 'T',
+			}
 		);
 		expect(
 			resolveSurfaceTranslations({

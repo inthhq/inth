@@ -1,5 +1,5 @@
 import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { GET } from './app/api/bench-consent/v1/consent/manifest/route';
 

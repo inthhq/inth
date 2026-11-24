@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	allowedCommonJsArtifacts,
@@ -114,7 +114,11 @@ describe('release artifact selection', () => {
 				spawnSync(
 					'bun',
 					[join(ROOT, 'scripts/check-publish-artifacts.ts'), '--built', name],
-					{ cwd: root, encoding: 'utf8', timeout: 10_000 }
+					{
+						cwd: root,
+						encoding: 'utf8',
+						timeout: 10_000,
+					}
 				);
 			const selected = guard('inth-ci-selected');
 			expect(selected.status, selected.stderr).toBe(0);
@@ -482,7 +486,10 @@ describe('allowedCommonJsArtifacts', () => {
 
 			const manifest = JSON.parse(
 				readFileSync(join(manifestPath, 'package.json'), 'utf8')
-			) as { exports?: unknown; name?: string };
+			) as {
+				exports?: unknown;
+				name?: string;
+			};
 
 			expect(manifest.name).toBe(packageName);
 			collect(manifest.exports, false);
@@ -891,7 +898,9 @@ describe('packages that must stay clear of the consent kernel', () => {
 			);
 			const manifest = JSON.parse(
 				readFileSync(manifestPath, 'utf8')
-			) as PackageManifest & { devDependencies?: Record<string, string> };
+			) as PackageManifest & {
+				devDependencies?: Record<string, string>;
+			};
 
 			expect(manifest.name, manifestPath).toBe(packageName);
 

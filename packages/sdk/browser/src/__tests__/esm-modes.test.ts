@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { manifest as browserManifest } from '@inth/sdk-core/transports/manifest-browser';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { build } from 'esbuild';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { createConsentClient, hosted, manifest } from '../index';

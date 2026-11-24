@@ -12,7 +12,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterAll, expect, test } from 'vitest';
+import { afterAll, expect, test } from 'vite-plus/test';
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 // Inside the package, so `react` and its types resolve the way they do for src.

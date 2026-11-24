@@ -9,7 +9,14 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	holdIdleDialogWarming,

@@ -4,7 +4,7 @@
  * back and a second open retries the import.
  */
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { resetDialogWarmingForTests } from '../lib/dialog-warming';
 import DeferredDialogFixture from './fixtures/deferred-dialog-fixture.svelte';

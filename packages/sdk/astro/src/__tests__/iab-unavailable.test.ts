@@ -6,7 +6,7 @@
  * ship no working consent UI. The server render throws instead.
  */
 import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';

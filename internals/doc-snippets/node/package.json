@@ -3,7 +3,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"check-types": "tsc --noEmit"
+		"check-types": "tsrs --noEmit"
 	},
 	"dependencies": {
 		"@inth/node": "workspace:*",
@@ -11,6 +11,6 @@
 	},
 	"devDependencies": {
 		"@types/node": "25.5.0",
-		"typescript": "7.0.2"
+		"tsrs": "catalog:"
 	}
 }

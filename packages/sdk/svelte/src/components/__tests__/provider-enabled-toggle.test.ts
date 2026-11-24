@@ -6,7 +6,7 @@
  */
 import { render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import EnabledToggleFixture from '../../__tests__/fixtures/enabled-toggle-fixture.svelte';
 import { testing } from '../../lib/testing';

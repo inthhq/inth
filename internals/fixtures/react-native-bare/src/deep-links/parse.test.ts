@@ -7,7 +7,7 @@
  * than a broken parser. So the shapes a shell command can produce are fixed here.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	DEMO_LINK_SCHEME,

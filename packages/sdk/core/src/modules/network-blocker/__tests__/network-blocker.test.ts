@@ -11,7 +11,14 @@
  * - dispose restores originals
  * - IAB-aware evaluation via shared has()
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,

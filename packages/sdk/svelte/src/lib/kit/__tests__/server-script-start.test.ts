@@ -2,7 +2,7 @@
  * `inthHandle`'s page transform adds the start its request's render kept
  * to a `<script>` at the end of `<body>`.
  */
-import { afterEach, beforeAll, expect, test } from 'vitest';
+import { afterEach, beforeAll, expect, test } from 'vite-plus/test';
 
 import { startOnServer } from '../../server-script-start';
 import type { ServerStartOptions } from '../../server-script-start';

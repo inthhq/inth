@@ -5,7 +5,14 @@ import type { Theme } from '@inth/sdk/ui/theme';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from 'vite-plus/test';
 
 import { promptClassNames } from '../banner/class-names';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';

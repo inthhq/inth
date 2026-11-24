@@ -16,7 +16,7 @@ import {
 	releaseNetworkRequests,
 } from '@inth/sdk/modules/network-hold';
 import { useEffect } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../provider';

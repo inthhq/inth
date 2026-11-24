@@ -9,7 +9,7 @@ import {
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 import { translations as germanCopy } from '@inth/sdk-translations/de';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentMode } from '../modes';
 import { earlyInitModes } from '../transports/early-init-modes';

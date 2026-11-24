@@ -4,7 +4,14 @@
  * 404s, proxying, and the config.
  */
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { createConsentRoute } from '../api';
 import { defineConsentConfig } from '../config';
