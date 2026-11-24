@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Απόρριψη',
 		rejectAll: 'Απόρριψη όλων',
 		save: 'Αποθήκευση ρυθμίσεων',
-		securedBy: 'Προστατεύεται από',
+		securedBy: 'Συγκατάθεση από',
 	},
 	consentGate: {
 		actionButton: 'Ενεργοποίηση συγκατάθεσης {category}',
@@ -210,6 +210,148 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'πώληση και στοχευμένη διαφήμιση',
 		statusRequest: 'Το αίτημα εξαίρεσης έγινε δεκτό',
 		statusSignal: 'Το σήμα προτίμησης εξαίρεσης έγινε δεκτό',
+	},
+	privacyChoices: {
+		acceptAll: 'Αποδοχή όλων',
+		advertisingFollowsSale: 'Η διαφήμιση ακολουθεί την παραπάνω επιλογή σας.',
+		advertisingTitle: 'Διαφήμιση',
+		allow: 'Να επιτρέπεται',
+		alwaysOn: 'Πάντα ενεργό',
+		announceSaved: '{message} Αποθηκεύτηκε.',
+		askAll:
+			'να πουλά ή να κοινοποιεί τα προσωπικά σας δεδομένα, μεταξύ άλλων για στοχευμένη διαφήμιση',
+		askSaleAndShare: 'να πουλά ή να κοινοποιεί τα προσωπικά σας δεδομένα',
+		askSaleAndTargetedAds:
+			'να πουλά τα προσωπικά σας δεδομένα ή να τα χρησιμοποιεί για στοχευμένη διαφήμιση',
+		bannerAllowedRightsOff:
+			'Τα προαιρετικά cookies επιτρέπονται. {rights}: παραμένουν απενεργοποιημένες. Μπορείτε να το αλλάξετε στην ενότητα «Οι επιλογές απορρήτου σας».',
+		bannerAllowedRightsOffGpc:
+			'Τα προαιρετικά cookies επιτρέπονται. {rights}: παραμένουν απενεργοποιημένες λόγω του σήματος Global Privacy Control. Μπορείτε να το αλλάξετε στην ενότητα «Οι επιλογές απορρήτου σας».',
+		bannerRejected:
+			'Τα προαιρετικά cookies απορρίφθηκαν. Μπορείτε να το αλλάξετε στην ενότητα «Οι επιλογές απορρήτου σας».',
+		barDescription:
+			'Χρησιμοποιούμε cookies για να βελτιώσουμε την εμπειρία σας και να αναλύσουμε την επισκεψιμότητα.',
+		businessFallback: 'αυτός ο ιστότοπος',
+		choiceRecorded: 'Η επιλογή καταγράφηκε.',
+		choicesSaved:
+			'Οι επιλογές αποθηκεύτηκαν. Μπορείτε να τις αλλάξετε στην ενότητα «Οι επιλογές απορρήτου σας».',
+		choose: 'Επιλογή',
+		chooseWhatToAllow: 'Επιλέξτε τι θα επιτρέπεται',
+		close: 'Κλείσιμο',
+		confirmDescriptionOptIn:
+			'{business} θα μπορεί {rights}. Μπορείτε να το αλλάξετε ανά πάσα στιγμή.',
+		confirmDescriptionOptOut:
+			'{business} θα μπορεί {rights}. Μπορείτε να εξαιρεθείτε ξανά ανά πάσα στιγμή.',
+		confirmKeepOptedOut: 'Παραμονή εκτός',
+		confirmTitleOptIn: 'Να επιτρέπονται {rights};',
+		confirmTitleOptOut: 'Να επιτρέπονται ξανά {rights};',
+		copyFailed: 'Η αντιγραφή απέτυχε. Επιλέξτε και αντιγράψτε την αναφορά σας:',
+		copyFailedAnnouncement:
+			'Η αντιγραφή απέτυχε. Η πλήρης αναφορά σας εμφανίζεται στην απόδειξη.',
+		copyReference: 'Αντιγραφή αναφοράς',
+		dialogIntro: 'Οι επιλογές σας ισχύουν αμέσως.',
+		dialogTitle: 'Οι επιλογές απορρήτου σας',
+		done: 'Τέλος',
+		dontAllow: 'Να μην επιτρέπεται',
+		euDialogIntro:
+			'Επιλέξτε ποια προαιρετικά cookies μπορεί να χρησιμοποιεί {business}. Τα προαιρετικά cookies παραμένουν απενεργοποιημένα, εκτός αν τα ενεργοποιήσετε.',
+		euDialogTitle: 'Ρυθμίσεις απορρήτου',
+		gpcNote:
+			'Το πρόγραμμα περιήγησής σας έστειλε σήμα Global Privacy Control, επομένως {business} {rights} {scope}. Η επιλογή «Να επιτρέπεται» δεν είναι διαθέσιμη όσο το σήμα είναι ενεργό.',
+		justNow: 'μόλις τώρα',
+		nestedSheetNote:
+			'Οι αλλαγές ισχύουν όταν αποθηκεύσετε στις Ρυθμίσεις απορρήτου.',
+		noticeBarDescription:
+			'Χρησιμοποιούμε cookies για τη λειτουργία αυτού του ιστότοπου, τη μέτρηση της επισκεψιμότητας και την εξατομίκευση διαφημίσεων. Μπορείτε να εξαιρεθείτε ανά πάσα στιγμή.',
+		noticeBarDescriptionGpc:
+			'Χρησιμοποιούμε cookies για τη λειτουργία αυτού του ιστότοπου και τη μέτρηση της επισκεψιμότητας. Το σήμα σας Global Privacy Control γίνεται σεβαστό.',
+		noticeGpcHonored:
+			'Το σήμα Global Privacy Control του προγράμματος περιήγησής σας γίνεται σεβαστό.',
+		noticeRightsAction: 'Μην πουλάτε και μην κοινοποιείτε τα δεδομένα μου',
+		nudge: 'Επιλέξτε πρώτα ένα από τα δύο κουμπιά.',
+		optInBarDescription:
+			'{business} ζητά την άδειά σας πριν χρησιμοποιήσει προαιρετικά cookies ή {rights}.',
+		optInDescription:
+			'Με την άδειά σας, {business} θα χρησιμοποιεί προαιρετικά cookies για λειτουργίες του ιστότοπου και αναλυτικά στοιχεία και θα μπορεί {rights}. Τίποτα δεν ενεργοποιείται αν δεν το επιτρέψετε.',
+		optInTitle: 'Οι επιλογές απορρήτου σας',
+		optOutOption: 'Εξαίρεση',
+		panelExpanded: 'Εμφανίζονται περισσότερες επιλογές.',
+		policyColumn: 'Πολιτική απορρήτου',
+		preferencesClose: 'Κλείσιμο προτιμήσεων',
+		preferencesOnCount: 'Ενεργές: {count}',
+		preferencesSheetIntro: 'Οι αλλαγές ισχύουν αμέσως.',
+		preferencesSummary: 'Λειτουργίες ιστότοπου και αναλυτικά στοιχεία',
+		preferencesTitle: 'Προτιμήσεις',
+		purposeColumn: 'Σκοπός',
+		receiptAllowed: 'Επιτρέπονται: {rights}',
+		receiptDetails: 'Λεπτομέρειες',
+		receiptFromGpc: 'από το σήμα σας Global Privacy Control',
+		receiptLive:
+			'Γίνεται σεβαστό το σήμα Global Privacy Control αυτού του προγράμματος περιήγησης',
+		receiptLiveDetail:
+			'Διαβάζεται από το πρόγραμμα περιήγησής σας σε κάθε επίσκεψη.',
+		receiptOptedOut: 'Εξαίρεση από: {rights}',
+		receiptRecorded: 'Καταγράφηκε: {date}',
+		receiptReference: 'Αναφορά',
+		receiptSavedAccount: 'Αποθηκεύτηκε στον λογαριασμό σας · {date}',
+		receiptSavedBrowser:
+			'Αποθηκεύτηκε για αυτό το πρόγραμμα περιήγησης · {date}',
+		receiptScopeAccount:
+			'Ισχύει για αυτό το πρόγραμμα περιήγησης και για τον λογαριασμό σας {business}.',
+		receiptScopeAccountUnnamed:
+			'Ισχύει για αυτό το πρόγραμμα περιήγησης και για τον λογαριασμό σας.',
+		receiptScopeBrowser:
+			'Ισχύει για αυτό το πρόγραμμα περιήγησης. Συνδεθείτε για να ισχύει και για τον λογαριασμό σας.',
+		receiptViaGpc: 'Σήμα Global Privacy Control',
+		referenceCopied: 'Η αναφορά αντιγράφηκε.',
+		refuseAll:
+			'δεν θα πουλά ούτε θα κοινοποιεί τα προσωπικά σας δεδομένα ούτε θα τα χρησιμοποιεί για στοχευμένη διαφήμιση',
+		refuseSaleAndShare:
+			'δεν θα πουλά ούτε θα κοινοποιεί τα προσωπικά σας δεδομένα',
+		refuseSaleAndTargetedAds:
+			'δεν θα πουλά τα προσωπικά σας δεδομένα ούτε θα τα χρησιμοποιεί για στοχευμένη διαφήμιση',
+		rejectAll: 'Απόρριψη όλων',
+		rightsAllowed: '{rights}: επιτρέπονται.',
+		rightsNotAllowed: '{rights}: δεν επιτρέπονται.',
+		rightsOptedOut: 'Έχετε εξαιρεθεί από: {rights}.',
+		saleAllowed: '{business} μπορεί {rights}.',
+		saleGroupOptIn: 'Να επιτρέπονται: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Εξαίρεση από την πώληση των προσωπικών μου δεδομένων και τη στοχευμένη διαφήμιση',
+		saleOffByDefault:
+			'Απενεργοποιημένο από προεπιλογή. {business} {rights}, εκτός αν το επιτρέψετε.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Αποθήκευση επιλογών',
+		saveInSettings: 'Αποθηκεύστε τις επιλογές σας στις Ρυθμίσεις απορρήτου',
+		savedAutomatically: 'Αποθηκεύεται αυτόματα',
+		savedCue: 'Αποθηκεύτηκε',
+		scopeAccount:
+			'σε αυτό το πρόγραμμα περιήγησης ούτε στον λογαριασμό σας {business}',
+		scopeAccountUnnamed:
+			'σε αυτό το πρόγραμμα περιήγησης ούτε στον λογαριασμό σας',
+		scopeBrowser: 'σε αυτό το πρόγραμμα περιήγησης',
+		shortAll: 'πουλήσει ή κοινοποιήσει τα δεδομένα σας για διαφημίσεις',
+		shortSaleAndShare: 'πουλήσει ή κοινοποιήσει τα δεδομένα σας',
+		shortSaleAndTargetedAds:
+			'πουλήσει τα δεδομένα σας ή τα χρησιμοποιήσει για διαφημίσεις',
+		stateOff: 'Ανενεργό',
+		stateOn: 'Ενεργό',
+		switchColumn: 'Ενεργό',
+		switchedOff: '{name}: ανενεργό.',
+		switchedOn: '{name}: ενεργό.',
+		titleAll: 'Πώληση, κοινοποίηση και στοχευμένη διαφήμιση',
+		titleSaleAndShare: 'Πώληση και κοινοποίηση',
+		titleSaleAndTargetedAds: 'Πώληση και στοχευμένη διαφήμιση',
+		vendorColumn: 'Συνεργάτης',
+		vendorPolicy: 'Πολιτική απορρήτου: {vendor}',
+		vendorsClose: 'Κλείσιμο συνεργατών για την κατηγορία «{category}»',
+		vendorsFor: 'για την κατηγορία «{category}»',
+		vendorsHide: 'Απόκρυψη {count} συνεργατών',
+		vendorsHideOne: 'Απόκρυψη 1 συνεργάτη',
+		vendorsOnCount: 'Ενεργοί: {count}',
+		vendorsTable: 'Συνεργάτες για την κατηγορία «{category}»',
+		vendorsView: 'Προβολή {count} συνεργατών',
+		vendorsViewOne: 'Προβολή 1 συνεργάτη',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Οι επιλογές απορρήτου σας στην Καλιφόρνια',

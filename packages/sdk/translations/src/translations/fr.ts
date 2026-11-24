@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Fermer',
 		rejectAll: 'Tout rejeter',
 		save: 'Enregistrer les paramètres',
-		securedBy: 'Sécurisé par',
+		securedBy: 'Consentement par',
 	},
 	consentGate: {
 		actionButton: 'Activer le consentement {category}',
@@ -207,6 +207,143 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'la vente et la publicité ciblée',
 		statusRequest: 'Demande de refus prise en compte',
 		statusSignal: 'Signal de préférence de refus pris en compte',
+	},
+	privacyChoices: {
+		acceptAll: 'Accepter tout',
+		advertisingFollowsSale: 'La publicité suit votre choix ci-dessus.',
+		advertisingTitle: 'Publicité',
+		allow: 'Autoriser',
+		alwaysOn: 'Toujours actif',
+		announceSaved: '{message} Enregistré.',
+		askAll:
+			'vendre ou partager vos informations personnelles, y compris pour la publicité ciblée',
+		askSaleAndShare: 'vendre ou partager vos informations personnelles',
+		askSaleAndTargetedAds:
+			'vendre vos informations personnelles ou les utiliser pour la publicité ciblée',
+		bannerAllowedRightsOff:
+			'Cookies facultatifs autorisés. {rights} : cela reste désactivé. Vous pouvez modifier cela dans « Vos choix de confidentialité ».',
+		bannerAllowedRightsOffGpc:
+			'Cookies facultatifs autorisés. {rights} : cela reste désactivé en raison de votre signal Global Privacy Control. Vous pouvez modifier cela dans « Vos choix de confidentialité ».',
+		bannerRejected:
+			'Cookies facultatifs refusés. Vous pouvez modifier cela dans « Vos choix de confidentialité ».',
+		barDescription:
+			'Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic.',
+		businessFallback: 'ce site',
+		choiceRecorded: 'Choix pris en compte.',
+		choicesSaved:
+			'Choix enregistrés. Vous pouvez les modifier dans « Vos choix de confidentialité ».',
+		choose: 'Choisir',
+		chooseWhatToAllow: 'Choisir ce que vous autorisez',
+		close: 'Fermer',
+		confirmDescriptionOptIn:
+			'{business} pourra {rights}. Vous pouvez modifier cela à tout moment.',
+		confirmDescriptionOptOut:
+			'{business} pourra {rights}. Vous pouvez refuser à nouveau à tout moment.',
+		confirmKeepOptedOut: 'Rester désinscrit',
+		confirmTitleOptIn: 'Autoriser {rights} ?',
+		confirmTitleOptOut: 'Autoriser à nouveau {rights} ?',
+		copyFailed: 'Échec de la copie. Sélectionnez et copiez votre référence :',
+		copyFailedAnnouncement:
+			'Échec de la copie. Votre référence complète figure dans le reçu.',
+		copyReference: 'Copier la référence',
+		dialogIntro: "Vos choix s'appliquent immédiatement.",
+		dialogTitle: 'Vos choix de confidentialité',
+		done: 'Terminé',
+		dontAllow: 'Ne pas autoriser',
+		euDialogIntro:
+			'Choisissez les cookies facultatifs que {business} peut utiliser. Les cookies facultatifs restent désactivés tant que vous ne les activez pas.',
+		euDialogTitle: 'Paramètres de confidentialité',
+		gpcNote:
+			"Votre navigateur a envoyé un signal Global Privacy Control, donc {business} {rights} {scope}. « Autoriser » n'est pas disponible tant que le signal est actif.",
+		justNow: "à l'instant",
+		nestedSheetNote:
+			"Les modifications s'appliquent lorsque vous enregistrez dans Paramètres de confidentialité.",
+		noticeBarDescription:
+			'Nous utilisons des cookies pour faire fonctionner ce site, mesurer le trafic et personnaliser les publicités. Vous pouvez refuser à tout moment.',
+		noticeBarDescriptionGpc:
+			'Nous utilisons des cookies pour faire fonctionner ce site et mesurer le trafic. Votre signal Global Privacy Control est respecté.',
+		noticeGpcHonored:
+			'Le signal Global Privacy Control de votre navigateur est respecté.',
+		noticeRightsAction: 'Ne pas vendre ni partager mes données',
+		nudge: "Choisissez d'abord l'un des deux boutons.",
+		optInBarDescription:
+			"{business} demande votre accord avant d'utiliser des cookies facultatifs ou de {rights}.",
+		optInDescription:
+			"Avec votre accord, {business} utiliserait des cookies facultatifs pour les fonctionnalités du site et l'analyse, et pourrait {rights}. Rien n'est activé sans votre autorisation.",
+		optInTitle: 'Vos choix de confidentialité',
+		optOutOption: 'Refuser',
+		panelExpanded: "Plus d'options affichées.",
+		policyColumn: 'Politique de confidentialité',
+		preferencesClose: 'Fermer les préférences',
+		preferencesOnCount: 'Activées : {count}',
+		preferencesSheetIntro: "Les modifications s'appliquent immédiatement.",
+		preferencesSummary: 'Fonctionnalités du site et analyse',
+		preferencesTitle: 'Préférences',
+		purposeColumn: 'Finalité',
+		receiptAllowed: 'Autorisé : {rights}',
+		receiptDetails: 'Détails',
+		receiptFromGpc: 'via votre signal Global Privacy Control',
+		receiptLive:
+			'Signal Global Privacy Control de ce navigateur pris en compte',
+		receiptLiveDetail: 'Lu depuis votre navigateur à chaque visite.',
+		receiptOptedOut: 'Refusé : {rights}',
+		receiptRecorded: 'Enregistré : {date}',
+		receiptReference: 'Référence',
+		receiptSavedAccount: 'Enregistré sur votre compte · {date}',
+		receiptSavedBrowser: 'Enregistré pour ce navigateur · {date}',
+		receiptScopeAccount:
+			"S'applique à ce navigateur et à votre compte {business}.",
+		receiptScopeAccountUnnamed: "S'applique à ce navigateur et à votre compte.",
+		receiptScopeBrowser:
+			"S'applique à ce navigateur. Connectez-vous pour l'appliquer aussi à votre compte.",
+		receiptViaGpc: 'Signal Global Privacy Control',
+		referenceCopied: 'Référence copiée.',
+		refuseAll:
+			'ne vendra ni ne partagera vos informations personnelles et ne les utilisera pas pour la publicité ciblée',
+		refuseSaleAndShare:
+			'ne vendra ni ne partagera vos informations personnelles',
+		refuseSaleAndTargetedAds:
+			'ne vendra pas vos informations personnelles et ne les utilisera pas pour la publicité ciblée',
+		rejectAll: 'Tout rejeter',
+		rightsAllowed: '{rights} : autorisé.',
+		rightsNotAllowed: '{rights} : non autorisé.',
+		rightsOptedOut: 'Vous avez refusé {rights}.',
+		saleAllowed: '{business} peut {rights}.',
+		saleGroupOptIn: 'Autoriser {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Refuser la vente de mes données personnelles et la publicité ciblée',
+		saleOffByDefault:
+			"Désactivé par défaut. {business} {rights} sauf si vous l'autorisez.",
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Enregistrer mes choix',
+		saveInSettings: 'Enregistrez vos choix dans Paramètres de confidentialité',
+		savedAutomatically: 'Enregistré automatiquement',
+		savedCue: 'Enregistré',
+		scopeAccount: 'sur ce navigateur ni sur votre compte {business}',
+		scopeAccountUnnamed: 'sur ce navigateur ni sur votre compte',
+		scopeBrowser: 'sur ce navigateur',
+		shortAll: 'vendre ou partager vos données à des fins publicitaires',
+		shortSaleAndShare: 'vendre ou partager vos données',
+		shortSaleAndTargetedAds:
+			'vendre vos données ou les utiliser pour la publicité',
+		stateOff: 'Désactivé',
+		stateOn: 'Activé',
+		switchColumn: 'Activé',
+		switchedOff: '{name} : désactivé.',
+		switchedOn: '{name} : activé.',
+		titleAll: 'La vente, le partage et la publicité ciblée',
+		titleSaleAndShare: 'La vente et le partage',
+		titleSaleAndTargetedAds: 'La vente et la publicité ciblée',
+		vendorColumn: 'Fournisseur',
+		vendorPolicy: 'Politique de confidentialité de {vendor}',
+		vendorsClose: 'Fermer les fournisseurs pour {category}',
+		vendorsFor: 'pour {category}',
+		vendorsHide: 'Masquer {count} fournisseurs',
+		vendorsHideOne: 'Masquer 1 fournisseur',
+		vendorsOnCount: 'Activés : {count}',
+		vendorsTable: 'Fournisseurs pour {category}',
+		vendorsView: 'Voir {count} fournisseurs',
+		vendorsViewOne: 'Voir 1 fournisseur',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Vos choix de confidentialité en Californie',

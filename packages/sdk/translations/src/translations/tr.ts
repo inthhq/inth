@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Gizle',
 		rejectAll: 'Tümünü Reddet',
 		save: 'Ayarları Kaydet',
-		securedBy: 'Güvenlik sağlayıcısı:',
+		securedBy: 'Rıza sağlayıcısı:',
 	},
 	consentGate: {
 		actionButton: '{category} çerezlerine rıza verin',
@@ -211,6 +211,142 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'satış ve hedefli reklamcılık',
 		statusRequest: 'Kapsam dışı bırakma isteği uygulandı',
 		statusSignal: 'Kapsam dışı bırakma tercih sinyali uygulandı',
+	},
+	privacyChoices: {
+		acceptAll: 'Tümünü Kabul Et',
+		advertisingFollowsSale:
+			'Reklamcılık, yukarıdaki seçiminize göre belirlenir.',
+		advertisingTitle: 'Reklamcılık',
+		allow: 'İzin ver',
+		alwaysOn: 'Her zaman açık',
+		announceSaved: '{message} Kaydedildi.',
+		askAll:
+			'kişisel bilgilerinizi, hedefli reklamlar için de olmak üzere, satabilir veya paylaşabilir',
+		askSaleAndShare: 'kişisel bilgilerinizi satabilir veya paylaşabilir',
+		askSaleAndTargetedAds:
+			'kişisel bilgilerinizi satabilir veya hedefli reklamlar için kullanabilir',
+		bannerAllowedRightsOff:
+			'İsteğe bağlı çerezlere izin verildi. {rights} kapalı kalıyor. Bunu Gizlilik Tercihleriniz bölümünden değiştirebilirsiniz.',
+		bannerAllowedRightsOffGpc:
+			'İsteğe bağlı çerezlere izin verildi. {rights}, Global Privacy Control sinyaliniz nedeniyle kapalı kalıyor. Bunu Gizlilik Tercihleriniz bölümünden değiştirebilirsiniz.',
+		bannerRejected:
+			'İsteğe bağlı çerezler reddedildi. Bunu Gizlilik Tercihleriniz bölümünden değiştirebilirsiniz.',
+		barDescription:
+			'Deneyiminizi iyileştirmek ve trafiği analiz etmek için çerezler kullanıyoruz.',
+		businessFallback: 'bu site',
+		choiceRecorded: 'Seçim alındı.',
+		choicesSaved:
+			'Seçimler kaydedildi. Bunları Gizlilik Tercihleriniz bölümünden değiştirebilirsiniz.',
+		choose: 'Seç',
+		chooseWhatToAllow: 'Nelere izin vereceğinizi seçin',
+		close: 'Kapat',
+		confirmDescriptionOptIn:
+			'{business} {rights}. Bunu istediğiniz zaman değiştirebilirsiniz.',
+		confirmDescriptionOptOut:
+			'{business} {rights}. İstediğiniz zaman yeniden vazgeçebilirsiniz.',
+		confirmKeepOptedOut: 'Vazgeçmeyi sürdür',
+		confirmTitleOptIn: 'İzin verilsin mi: {rights}?',
+		confirmTitleOptOut: 'Yeniden izin verilsin mi: {rights}?',
+		copyFailed: 'Kopyalanamadı. Referansınızı seçip kopyalayın:',
+		copyFailedAnnouncement:
+			'Kopyalanamadı. Referansınızın tamamı onay kaydında gösteriliyor.',
+		copyReference: 'Referansı kopyala',
+		dialogIntro: 'Seçimleriniz hemen uygulanır.',
+		dialogTitle: 'Gizlilik Tercihleriniz',
+		done: 'Tamam',
+		dontAllow: 'İzin verme',
+		euDialogIntro:
+			'{business} tarafından hangi isteğe bağlı çerezlerin kullanılabileceğini seçin. İsteğe bağlı çerezler siz açmadıkça kapalı kalır.',
+		euDialogTitle: 'Gizlilik Ayarları',
+		gpcNote:
+			'Tarayıcınız bir Global Privacy Control sinyali gönderdi; bu nedenle {business}, {scope} {rights}. Sinyal açıkken İzin ver seçeneği kullanılamaz.',
+		justNow: 'az önce',
+		nestedSheetNote:
+			'Değişiklikler, Gizlilik Ayarları bölümünde kaydettiğinizde uygulanır.',
+		noticeBarDescription:
+			'Bu siteyi çalıştırmak, trafiği ölçmek ve reklamları kişiselleştirmek için çerezler kullanıyoruz. Dilediğiniz zaman vazgeçebilirsiniz.',
+		noticeBarDescriptionGpc:
+			'Bu siteyi çalıştırmak ve trafiği ölçmek için çerezler kullanıyoruz. Global Privacy Control sinyalinize uyuluyor.',
+		noticeGpcHonored:
+			'Tarayıcınızın Global Privacy Control sinyaline uyuluyor.',
+		noticeRightsAction: 'Verilerimi satma veya paylaşma',
+		nudge: 'Önce iki düğmeden birini seçin.',
+		optInBarDescription:
+			'{business}, isteğe bağlı çerezleri kullanmadan veya {rights} önce size sorar.',
+		optInDescription:
+			'İzin verirseniz {business}, isteğe bağlı çerezleri site özellikleri ve analiz için kullanabilir ve {rights}. Siz izin vermedikçe hiçbir şey açılmaz.',
+		optInTitle: 'Gizlilik tercihleriniz',
+		optOutOption: 'Vazgeç',
+		panelExpanded: 'Daha fazla seçenek gösteriliyor.',
+		policyColumn: 'Gizlilik politikası',
+		preferencesClose: 'Tercihleri kapat',
+		preferencesOnCount: '{count} açık',
+		preferencesSheetIntro: 'Değişiklikler hemen uygulanır.',
+		preferencesSummary: 'Site özellikleri ve analiz',
+		preferencesTitle: 'Tercihler',
+		purposeColumn: 'Amaç',
+		receiptAllowed: 'İzin verildi: {rights}',
+		receiptDetails: 'Ayrıntılar',
+		receiptFromGpc: 'Global Privacy Control sinyalinizden',
+		receiptLive:
+			'Bu tarayıcıdan gelen Global Privacy Control sinyaline uyuluyor',
+		receiptLiveDetail: 'Her ziyarette tarayıcınızdan okunur.',
+		receiptOptedOut: 'Vazgeçildi: {rights}',
+		receiptRecorded: 'Kaydedildi: {date}',
+		receiptReference: 'Referans',
+		receiptSavedAccount: 'Hesabınıza kaydedildi · {date}',
+		receiptSavedBrowser: 'Bu tarayıcı için kaydedildi · {date}',
+		receiptScopeAccount: 'Bu tarayıcı ve {business} hesabınız için geçerlidir.',
+		receiptScopeAccountUnnamed: 'Bu tarayıcı ve hesabınız için geçerlidir.',
+		receiptScopeBrowser:
+			'Bu tarayıcı için geçerlidir. Hesabınıza da uygulamak için oturum açın.',
+		receiptViaGpc: 'Global Privacy Control sinyali',
+		referenceCopied: 'Referans kopyalandı.',
+		refuseAll:
+			'kişisel bilgilerinizi satmayacak, paylaşmayacak ve hedefli reklamlar için kullanmayacak',
+		refuseSaleAndShare: 'kişisel bilgilerinizi satmayacak ve paylaşmayacak',
+		refuseSaleAndTargetedAds:
+			'kişisel bilgilerinizi satmayacak ve hedefli reklamlar için kullanmayacak',
+		rejectAll: 'Tümünü Reddet',
+		rightsAllowed: '{rights} için izin verildi.',
+		rightsNotAllowed: '{rights} için izin verilmedi.',
+		rightsOptedOut: 'Vazgeçildi: {rights}.',
+		saleAllowed: '{business} {rights}.',
+		saleGroupOptIn: 'İzin ver: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Kişisel verilerimin satışından ve hedefli reklamcılıktan vazgeç',
+		saleOffByDefault:
+			'Varsayılan olarak kapalı. Siz izin vermedikçe {business} {rights}.',
+		saleRefused: '{business}, {scope} {rights}.',
+		saveChoices: 'Seçimleri kaydet',
+		saveInSettings: 'Seçimlerinizi Gizlilik Ayarları bölümünde kaydedin',
+		savedAutomatically: 'Otomatik olarak kaydedilir',
+		savedCue: 'Kaydedildi',
+		scopeAccount: 'bu tarayıcıda veya {business} hesabınız için',
+		scopeAccountUnnamed: 'bu tarayıcıda veya hesabınız için',
+		scopeBrowser: 'bu tarayıcıda',
+		shortAll: 'verilerinizi reklam için satmadan veya paylaşmadan',
+		shortSaleAndShare: 'verilerinizi satmadan veya paylaşmadan',
+		shortSaleAndTargetedAds:
+			'verilerinizi satmadan veya reklam için kullanmadan',
+		stateOff: 'Kapalı',
+		stateOn: 'Açık',
+		switchColumn: 'Açık',
+		switchedOff: '{name} kapalı.',
+		switchedOn: '{name} açık.',
+		titleAll: 'Satış, paylaşım ve hedefli reklamlar',
+		titleSaleAndShare: 'Satış ve paylaşım',
+		titleSaleAndTargetedAds: 'Satış ve hedefli reklamlar',
+		vendorColumn: 'Satıcı',
+		vendorPolicy: '{vendor} gizlilik politikası',
+		vendorsClose: '{category} satıcılarını kapat',
+		vendorsFor: '{category} için',
+		vendorsHide: '{count} satıcıyı gizle',
+		vendorsHideOne: '1 satıcıyı gizle',
+		vendorsOnCount: '{count} açık',
+		vendorsTable: '{category} satıcıları',
+		vendorsView: '{count} satıcıyı göster',
+		vendorsViewOne: '1 satıcıyı göster',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Kaliforniya Gizlilik Tercihleriniz',

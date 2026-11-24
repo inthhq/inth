@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Dún',
 		rejectAll: 'Diúltaigh do Gach Rud',
 		save: 'Sábháil Socruithe',
-		securedBy: 'Cosanta ag',
+		securedBy: 'Toiliú ó',
 	},
 	consentGate: {
 		actionButton: 'Cumasaigh toiliú {category}',
@@ -209,6 +209,141 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'díol agus fógraíocht spriocdhírithe',
 		statusRequest: 'Iarratas diúltaithe comhlíonta',
 		statusSignal: 'Comhartha rogha diúltaithe comhlíonta',
+	},
+	privacyChoices: {
+		acceptAll: 'Glac le Gach Rud',
+		advertisingFollowsSale: 'Leanann an fhógraíocht an rogha a rinne tú thuas.',
+		advertisingTitle: 'Fógraíocht',
+		allow: 'Ceadaigh',
+		alwaysOn: 'Ar siúl i gcónaí',
+		announceSaved: '{message} Sábháilte.',
+		askAll:
+			'do chuid faisnéise pearsanta a dhíol nó a chomhroinnt, lena n-áirítear le haghaidh fógraíocht spriocdhírithe',
+		askSaleAndShare: 'do chuid faisnéise pearsanta a dhíol nó a chomhroinnt',
+		askSaleAndTargetedAds:
+			'do chuid faisnéise pearsanta a dhíol nó a úsáid le haghaidh fógraíocht spriocdhírithe',
+		bannerAllowedRightsOff:
+			'Ceadaíodh fianáin roghnacha. {rights}: fós múchta. Is féidir leat é seo a athrú in Do Roghanna Príobháideachais.',
+		bannerAllowedRightsOffGpc:
+			'Ceadaíodh fianáin roghnacha. {rights}: fós múchta mar gheall ar do chomhartha Global Privacy Control. Is féidir leat é seo a athrú in Do Roghanna Príobháideachais.',
+		bannerRejected:
+			"Diúltaíodh d'fhianáin roghnacha. Is féidir leat é seo a athrú in Do Roghanna Príobháideachais.",
+		barDescription:
+			'Úsáidimid fianáin chun do thaithí a fheabhsú agus trácht a anailísiú.',
+		businessFallback: 'an suíomh seo',
+		choiceRecorded: 'Rogha taifeadta.',
+		choicesSaved:
+			'Roghanna sábháilte. Is féidir leat iad a athrú in Do Roghanna Príobháideachais.',
+		choose: 'Roghnaigh',
+		chooseWhatToAllow: 'Roghnaigh a bhfuil le ceadú',
+		close: 'Dún',
+		confirmDescriptionOptIn:
+			'Féadfaidh {business} {rights}. Is féidir leat é seo a athrú am ar bith.',
+		confirmDescriptionOptOut:
+			'Féadfaidh {business} {rights}. Is féidir leat diúltú arís am ar bith.',
+		confirmKeepOptedOut: 'Fan diúltaithe',
+		confirmTitleOptIn: 'An gceadaíonn tú {rights}?',
+		confirmTitleOptOut: 'An gceadaíonn tú {rights} arís?',
+		copyFailed: 'Níorbh fhéidir cóipeáil. Roghnaigh agus cóipeáil do thagairt:',
+		copyFailedAnnouncement:
+			'Níorbh fhéidir cóipeáil. Tá do thagairt iomlán le feiceáil san admháil.',
+		copyReference: 'Cóipeáil an tagairt',
+		dialogIntro: 'Bíonn feidhm le do roghanna láithreach.',
+		dialogTitle: 'Do Roghanna Príobháideachais',
+		done: 'Déanta',
+		dontAllow: 'Ná ceadaigh',
+		euDialogIntro:
+			'Roghnaigh na fianáin roghnacha a fhéadfaidh {business} a úsáid. Fanann fianáin roghnacha múchta mura gcuireann tú ar siúl iad.',
+		euDialogTitle: 'Socruithe Príobháideachais',
+		gpcNote:
+			'Sheol do bhrabhsálaí comhartha Global Privacy Control, mar sin ní dhéanfaidh {business} {rights} {scope}. Níl an rogha Ceadaigh ar fáil fad is atá an comhartha ar siúl.',
+		justNow: 'díreach anois',
+		nestedSheetNote:
+			'Bíonn feidhm le hathruithe nuair a shábhálann tú sna Socruithe Príobháideachais.',
+		noticeBarDescription:
+			'Úsáidimid fianáin chun an suíomh seo a rith, trácht a thomhas agus fógraí a phearsantú. Is féidir leat diúltú am ar bith.',
+		noticeBarDescriptionGpc:
+			'Úsáidimid fianáin chun an suíomh seo a rith agus trácht a thomhas. Tá do chomhartha Global Privacy Control á urramú.',
+		noticeGpcHonored:
+			'Tá comhartha Global Privacy Control do bhrabhsálaí á urramú.',
+		noticeRightsAction: 'Ná díol agus ná roinn mo shonraí',
+		nudge: 'Roghnaigh ceann den dá chnaipe ar dtús.',
+		optInBarDescription:
+			'Iarrann {business} cead roimh fhianáin roghnacha a úsáid nó {rights}.',
+		optInDescription:
+			"Le do chead, d'úsáidfeadh {business} fianáin roghnacha le haghaidh gnéithe an tsuímh agus anailísíochta, agus d'fhéadfadh sé {rights}. Ní chuirtear aon rud ar siúl mura gceadaíonn tú é.",
+		optInTitle: 'Do roghanna príobháideachais',
+		optOutOption: 'Diúltaigh',
+		panelExpanded: 'Tá tuilleadh roghanna ar taispeáint.',
+		policyColumn: 'Beartas príobháideachta',
+		preferencesClose: 'Dún na roghanna',
+		preferencesOnCount: '{count} ar siúl',
+		preferencesSheetIntro: 'Bíonn feidhm le hathruithe láithreach.',
+		preferencesSummary: 'Gnéithe an tsuímh agus anailísíocht',
+		preferencesTitle: 'Roghanna',
+		purposeColumn: 'Cuspóir',
+		receiptAllowed: 'Ceadaithe: {rights}',
+		receiptDetails: 'Sonraí',
+		receiptFromGpc: 'ó do chomhartha Global Privacy Control',
+		receiptLive: 'Global Privacy Control ón mbrabhsálaí seo á urramú',
+		receiptLiveDetail: 'Léitear ó do bhrabhsálaí é ar gach cuairt.',
+		receiptOptedOut: 'Diúltaithe: {rights}',
+		receiptRecorded: 'Taifeadta: {date}',
+		receiptReference: 'Tagairt',
+		receiptSavedAccount: 'Sábháilte i do chuntas · {date}',
+		receiptSavedBrowser: 'Sábháilte don bhrabhsálaí seo · {date}',
+		receiptScopeAccount:
+			'Baineann sé leis an mbrabhsálaí seo agus le do chuntas {business}.',
+		receiptScopeAccountUnnamed:
+			'Baineann sé leis an mbrabhsálaí seo agus le do chuntas.',
+		receiptScopeBrowser:
+			'Baineann sé leis an mbrabhsálaí seo. Sínigh isteach chun é a chur i bhfeidhm ar do chuntas freisin.',
+		receiptViaGpc: 'Comhartha Global Privacy Control',
+		referenceCopied: 'Tagairt cóipeáilte.',
+		refuseAll:
+			'do chuid faisnéise pearsanta a dhíol ná a chomhroinnt, ná a úsáid le haghaidh fógraíocht spriocdhírithe',
+		refuseSaleAndShare: 'do chuid faisnéise pearsanta a dhíol ná a chomhroinnt',
+		refuseSaleAndTargetedAds:
+			'do chuid faisnéise pearsanta a dhíol ná a úsáid le haghaidh fógraíocht spriocdhírithe',
+		rejectAll: 'Diúltaigh do Gach Rud',
+		rightsAllowed: '{rights}: ceadaithe.',
+		rightsNotAllowed: '{rights}: gan cheadú.',
+		rightsOptedOut: 'Diúltaithe: {rights}.',
+		saleAllowed: 'Féadfaidh {business} {rights}.',
+		saleGroupOptIn: 'Ceadaigh {rights}',
+		saleGroupSaleAndTargetedAds:
+			"Diúltaigh do dhíol mo shonraí pearsanta agus d'fhógraíocht spriocdhírithe",
+		saleOffByDefault:
+			'Múchta de réir réamhshocraithe. Ní dhéanfaidh {business} {rights} mura gceadaíonn tú é.',
+		saleRefused: 'Ní dhéanfaidh {business} {rights} {scope}.',
+		saveChoices: 'Sábháil roghanna',
+		saveInSettings: 'Sábháil do roghanna sna Socruithe Príobháideachais',
+		savedAutomatically: 'Sábháiltear go huathoibríoch',
+		savedCue: 'Sábháilte',
+		scopeAccount: 'ar an mbrabhsálaí seo ná i do chuntas {business}',
+		scopeAccountUnnamed: 'ar an mbrabhsálaí seo ná i do chuntas',
+		scopeBrowser: 'ar an mbrabhsálaí seo',
+		shortAll: 'do shonraí a dhíol nó a chomhroinnt le haghaidh fógraí',
+		shortSaleAndShare: 'do shonraí a dhíol nó a chomhroinnt',
+		shortSaleAndTargetedAds: 'do shonraí a dhíol nó a úsáid le haghaidh fógraí',
+		stateOff: 'Múchta',
+		stateOn: 'Ar siúl',
+		switchColumn: 'Ar siúl',
+		switchedOff: '{name} múchta.',
+		switchedOn: '{name} ar siúl.',
+		titleAll: 'Díol, comhroinnt agus fógraíocht spriocdhírithe',
+		titleSaleAndShare: 'Díol agus comhroinnt',
+		titleSaleAndTargetedAds: 'Díol agus fógraíocht spriocdhírithe',
+		vendorColumn: 'Soláthróir',
+		vendorPolicy: 'Beartas príobháideachta {vendor}',
+		vendorsClose: 'Dún soláthróirí: {category}',
+		vendorsFor: 'don chatagóir {category}',
+		vendorsHide: 'Folaigh soláthróirí ({count})',
+		vendorsHideOne: 'Folaigh 1 soláthróir',
+		vendorsOnCount: '{count} ar siúl',
+		vendorsTable: 'Soláthróirí: {category}',
+		vendorsView: 'Féach ar sholáthróirí ({count})',
+		vendorsViewOne: 'Féach ar 1 soláthróir',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Do Roghanna Príobháideachais i gCalifornia',

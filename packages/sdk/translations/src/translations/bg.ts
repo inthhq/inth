@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Затвори',
 		rejectAll: 'Отхвърли всички',
 		save: 'Запази настройките',
-		securedBy: 'Защитено от',
+		securedBy: 'Съгласие чрез',
 	},
 	consentGate: {
 		actionButton: 'Активирайте съгласие за {category}',
@@ -205,6 +205,141 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'продажба и насочена реклама',
 		statusRequest: 'Заявката за отказ е уважена',
 		statusSignal: 'Сигналът за предпочитание за отказ е уважен',
+	},
+	privacyChoices: {
+		acceptAll: 'Приеми всички',
+		advertisingFollowsSale: 'Рекламата следва избора ви по-горе.',
+		advertisingTitle: 'Реклама',
+		allow: 'Разреши',
+		alwaysOn: 'Винаги включено',
+		announceSaved: '{message} Запазено.',
+		askAll:
+			'да продава или споделя личните ви данни, включително за таргетирана реклама',
+		askSaleAndShare: 'да продава или споделя личните ви данни',
+		askSaleAndTargetedAds:
+			'да продава личните ви данни или да ги използва за таргетирана реклама',
+		bannerAllowedRightsOff:
+			'Незадължителните бисквитки са разрешени. {rights} остават изключени. Можете да промените това във „Вашите избори за поверителност“.',
+		bannerAllowedRightsOffGpc:
+			'Незадължителните бисквитки са разрешени. {rights} остават изключени заради вашия сигнал Global Privacy Control. Можете да промените това във „Вашите избори за поверителност“.',
+		bannerRejected:
+			'Незадължителните бисквитки са отхвърлени. Можете да промените това във „Вашите избори за поверителност“.',
+		barDescription:
+			'Използваме бисквитки, за да подобрим изживяването ви и да анализираме трафика.',
+		businessFallback: 'този сайт',
+		choiceRecorded: 'Изборът е записан.',
+		choicesSaved:
+			'Изборите са запазени. Можете да ги промените във „Вашите избори за поверителност“.',
+		choose: 'Избери',
+		chooseWhatToAllow: 'Избери какво да разрешиш',
+		close: 'Затвори',
+		confirmDescriptionOptIn:
+			'{business} може {rights}. Можете да промените това по всяко време.',
+		confirmDescriptionOptOut:
+			'{business} може {rights}. Можете да се откажете отново по всяко време.',
+		confirmKeepOptedOut: 'Остани отказан',
+		confirmTitleOptIn: 'Да се разреши ли {rights}?',
+		confirmTitleOptOut: 'Да се разреши ли отново {rights}?',
+		copyFailed:
+			'Копирането не бе успешно. Изберете и копирайте референтния си номер:',
+		copyFailedAnnouncement:
+			'Копирането не бе успешно. Пълният ви референтен номер е показан в потвърждението.',
+		copyReference: 'Копирай референтния номер',
+		dialogIntro: 'Изборите ви се прилагат веднага.',
+		dialogTitle: 'Вашите избори за поверителност',
+		done: 'Готово',
+		dontAllow: 'Не разрешавай',
+		euDialogIntro:
+			'Изберете кои незадължителни бисквитки може да използва {business}. Незадължителните бисквитки остават изключени, освен ако не ги включите.',
+		euDialogTitle: 'Настройки за поверителност',
+		gpcNote:
+			'Браузърът ви изпрати сигнал Global Privacy Control, затова {business} {rights} {scope}. „Разреши“ не е налично, докато сигналът е включен.',
+		justNow: 'току-що',
+		nestedSheetNote:
+			'Промените се прилагат, когато запазите в „Настройки за поверителност“.',
+		noticeBarDescription:
+			'Използваме бисквитки, за да поддържаме този сайт, да измерваме трафика и да персонализираме рекламите. Можете да се откажете по всяко време.',
+		noticeBarDescriptionGpc:
+			'Използваме бисквитки, за да поддържаме този сайт и да измерваме трафика. Вашият сигнал Global Privacy Control се зачита.',
+		noticeGpcHonored:
+			'Сигналът Global Privacy Control на браузъра ви се зачита.',
+		noticeRightsAction: 'Не продавайте и не споделяйте данните ми',
+		nudge: 'Първо изберете един от двата бутона.',
+		optInBarDescription:
+			'{business} пита, преди да използва незадължителни бисквитки или {rights}.',
+		optInDescription:
+			'С ваше разрешение {business} ще използва незадължителни бисквитки за функции на сайта и анализи и ще може {rights}. Нищо не се включва, освен ако не го разрешите.',
+		optInTitle: 'Вашите избори за поверителност',
+		optOutOption: 'Отказ',
+		panelExpanded: 'Показани са още опции.',
+		policyColumn: 'Политика за поверителност',
+		preferencesClose: 'Затвори предпочитанията',
+		preferencesOnCount: 'Включени: {count}',
+		preferencesSheetIntro: 'Промените се прилагат веднага.',
+		preferencesSummary: 'Функции на сайта и анализи',
+		preferencesTitle: 'Предпочитания',
+		purposeColumn: 'Цел',
+		receiptAllowed: 'Разрешено: {rights}',
+		receiptDetails: 'Подробности',
+		receiptFromGpc: 'от вашия сигнал Global Privacy Control',
+		receiptLive: 'Зачита се сигналът Global Privacy Control от този браузър',
+		receiptLiveDetail: 'Чете се от браузъра ви при всяко посещение.',
+		receiptOptedOut: 'Отказ от {rights}',
+		receiptRecorded: 'Записано: {date}',
+		receiptReference: 'Референтен номер',
+		receiptSavedAccount: 'Запазено в акаунта ви · {date}',
+		receiptSavedBrowser: 'Запазено за този браузър · {date}',
+		receiptScopeAccount: 'Важи за този браузър и за вашия акаунт в {business}.',
+		receiptScopeAccountUnnamed: 'Важи за този браузър и за вашия акаунт.',
+		receiptScopeBrowser:
+			'Важи за този браузър. Влезте в профила си, за да важи и за акаунта ви.',
+		receiptViaGpc: 'Сигнал Global Privacy Control',
+		referenceCopied: 'Референтният номер е копиран.',
+		refuseAll:
+			'няма да продава или споделя личните ви данни, нито да ги използва за таргетирана реклама',
+		refuseSaleAndShare: 'няма да продава или споделя личните ви данни',
+		refuseSaleAndTargetedAds:
+			'няма да продава личните ви данни, нито да ги използва за таргетирана реклама',
+		rejectAll: 'Отхвърли всички',
+		rightsAllowed: '{rights}: разрешено.',
+		rightsNotAllowed: '{rights}: не е разрешено.',
+		rightsOptedOut: 'Отказахте се от {rights}.',
+		saleAllowed: '{business} може {rights}.',
+		saleGroupOptIn: 'Разреши {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Отказ от продажбата на личните ми данни и от таргетирана реклама',
+		saleOffByDefault:
+			'Изключено по подразбиране. {business} {rights}, освен ако не го разрешите.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Запази изборите',
+		saveInSettings: 'Запазете изборите си в „Настройки за поверителност“',
+		savedAutomatically: 'Запазва се автоматично',
+		savedCue: 'Запазено',
+		scopeAccount: 'в този браузър или за вашия акаунт в {business}',
+		scopeAccountUnnamed: 'в този браузър или за вашия акаунт',
+		scopeBrowser: 'в този браузър',
+		shortAll: 'да продава или споделя данните ви за реклами',
+		shortSaleAndShare: 'да продава или споделя данните ви',
+		shortSaleAndTargetedAds:
+			'да продава данните ви или да ги използва за реклами',
+		stateOff: 'Изключено',
+		stateOn: 'Включено',
+		switchColumn: 'Включено',
+		switchedOff: '{name}: изключено.',
+		switchedOn: '{name}: включено.',
+		titleAll: 'Продажба, споделяне и таргетирана реклама',
+		titleSaleAndShare: 'Продажба и споделяне',
+		titleSaleAndTargetedAds: 'Продажба и таргетирана реклама',
+		vendorColumn: 'Доставчик',
+		vendorPolicy: 'Политика за поверителност на {vendor}',
+		vendorsClose: 'Затвори доставчиците за {category}',
+		vendorsFor: 'за {category}',
+		vendorsHide: 'Скрий {count} доставчици',
+		vendorsHideOne: 'Скрий 1 доставчик',
+		vendorsOnCount: 'Включени: {count}',
+		vendorsTable: 'Доставчици за {category}',
+		vendorsView: 'Виж {count} доставчици',
+		vendorsViewOne: 'Виж 1 доставчик',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Вашите избори за поверителност в Калифорния',

@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Zoumaachen',
 		rejectAll: 'All refuséieren',
 		save: 'Astellunge späicheren',
-		securedBy: 'Ofgeséchert vun',
+		securedBy: 'Zoustëmmung duerch',
 	},
 	consentGate: {
 		actionButton: '{category} Zoustëmmung aktivéieren',
@@ -205,6 +205,145 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'Verkaf an gezielter Reklamm',
 		statusRequest: 'Ofleenungsufro berücksichtegt',
 		statusSignal: 'Ofleenungssignal berücksichtegt',
+	},
+	privacyChoices: {
+		acceptAll: 'All akzeptéieren',
+		advertisingFollowsSale: "D'Reklamm riicht sech no Ärer Auswiel hei uewen.",
+		advertisingTitle: 'Reklamm',
+		allow: 'Erlaben',
+		alwaysOn: 'Ëmmer un',
+		announceSaved: '{message} Gespäichert.',
+		askAll:
+			'Är perséinlech Date verkafen oder deelen, och fir zilgeriicht Reklamm',
+		askSaleAndShare: 'Är perséinlech Date verkafen oder deelen',
+		askSaleAndTargetedAds:
+			'Är perséinlech Date verkafen oder fir zilgeriicht Reklamm benotzen',
+		bannerAllowedRightsOff:
+			'Optional Cookien erlaabt. {rights} bleiwen ausgeschalt. Dir kënnt dat ënner „Är Dateschutzoptiounen“ änneren.',
+		bannerAllowedRightsOffGpc:
+			'Optional Cookien erlaabt. {rights} bleiwe wéinst Ärem Global Privacy Control-Signal ausgeschalt. Dir kënnt dat ënner „Är Dateschutzoptiounen“ änneren.',
+		bannerRejected:
+			'Optional Cookie refuséiert. Dir kënnt dat ënner „Är Dateschutzoptiounen“ änneren.',
+		barDescription:
+			'Mir benotze Cookien, fir Är Erfahrung ze verbesseren an de Verkéier ze analyséieren.',
+		businessFallback: 'dës Websäit',
+		choiceRecorded: 'Auswiel opgezeechent.',
+		choicesSaved:
+			'Auswiel gespäichert. Dir kënnt se ënner „Är Dateschutzoptiounen“ änneren.',
+		choose: 'Wielen',
+		chooseWhatToAllow: 'Wielt, wat Dir erlaabt',
+		close: 'Zoumaachen',
+		confirmDescriptionOptIn:
+			'{business} däerf dann {rights}. Dir kënnt dat zu all Moment änneren.',
+		confirmDescriptionOptOut:
+			'{business} däerf dann {rights}. Dir kënnt Iech zu all Moment erëm ofmellen.',
+		confirmKeepOptedOut: 'Ofgemellt bleiwen',
+		confirmTitleOptIn: 'Erlaben: {rights}?',
+		confirmTitleOptOut: 'Erëm erlaben: {rights}?',
+		copyFailed:
+			'Kopéieren huet net geklappt. Markéiert a kopéiert Är Referenz:',
+		copyFailedAnnouncement:
+			'Kopéieren huet net geklappt. Är komplett Referenz steet an der Bestätegung.',
+		copyReference: 'Referenz kopéieren',
+		dialogIntro: 'Är Auswiel gëllt direkt.',
+		dialogTitle: 'Är Dateschutzoptiounen',
+		done: 'Fäerdeg',
+		dontAllow: 'Net erlaben',
+		euDialogIntro:
+			'Wielt, wéi eng optional Cookien {business} benotzen däerf. Optional Cookie bleiwen ausgeschalt, bis Dir se uschalt.',
+		euDialogTitle: 'Privatsphär Astellungen',
+		gpcNote:
+			"Äre Browser huet e Global Privacy Control-Signal geschéckt. {business} {rights}; dat gëllt {scope}. „Erlaben“ ass net verfügbar, soulaang d'Signal aktiv ass.",
+		inlineAll: 'Verkaf, Deelen an zilgeriicht Reklamm',
+		inlineSaleAndShare: 'Verkaf an Deelen',
+		inlineSaleAndTargetedAds: 'Verkaf an zilgeriicht Reklamm',
+		justNow: 'grad elo',
+		nestedSheetNote:
+			'Ännerunge gëllen, wann Dir an de Privatsphär Astellunge späichert.',
+		noticeBarDescription:
+			'Mir benotze Cookien, fir dës Websäit ze bedreiwen, de Verkéier ze moossen a Reklammen ze personaliséieren. Dir kënnt Iech zu all Moment ofmellen.',
+		noticeBarDescriptionGpc:
+			'Mir benotze Cookien, fir dës Websäit ze bedreiwen an de Verkéier ze moossen. Äert Global Privacy Control-Signal gëtt respektéiert.',
+		noticeGpcHonored:
+			"D'Global Privacy Control-Signal vun Ärem Browser gëtt respektéiert.",
+		noticeRightsAction: 'Meng Donnéeën net verkafen oder deelen',
+		nudge: "Wielt fir d'éischt ee vun deenen zwee Knäppercher.",
+		optInBarDescription:
+			'{business} freet Är Erlaabnes, fir optional Cookien ze benotzen a fir {rights}.',
+		optInDescription:
+			'Mat Ärer Erlaabnes géif {business} optional Cookie fir Funktioune vun der Websäit an Analytik benotzen an {rights}. Näischt gëtt ageschalt, ouni datt Dir et erlaabt.',
+		optInTitle: 'Är Dateschutzoptiounen',
+		optOutOption: 'Ofmellen',
+		panelExpanded: 'Méi Optioune ginn ugewisen.',
+		policyColumn: 'Dateschutzrichtlinn',
+		preferencesClose: 'Astellungen zoumaachen',
+		preferencesOnCount: '{count} un',
+		preferencesSheetIntro: 'Ännerunge gëllen direkt.',
+		preferencesSummary: 'Funktioune vun der Websäit an Analytik',
+		preferencesTitle: 'Astellungen',
+		purposeColumn: 'Zweck',
+		receiptAllowed: 'Erlaabt: {rights}',
+		receiptDetails: 'Detailer',
+		receiptFromGpc: 'duerch Äert Global Privacy Control-Signal',
+		receiptLive:
+			"D'Global Privacy Control-Signal vun dësem Browser gëtt respektéiert",
+		receiptLiveDetail: 'Gëtt bei all Besuch aus Ärem Browser gelies.',
+		receiptOptedOut: 'Ofgemellt vun: {rights}',
+		receiptRecorded: 'Opgezeechent: {date}',
+		receiptReference: 'Referenz',
+		receiptSavedAccount: 'An Ärem Kont gespäichert · {date}',
+		receiptSavedBrowser: 'Fir dëse Browser gespäichert · {date}',
+		receiptScopeAccount: 'Gëllt fir dëse Browser an Äre {business}-Kont.',
+		receiptScopeAccountUnnamed: 'Gëllt fir dëse Browser an Äre Kont.',
+		receiptScopeBrowser:
+			'Gëllt fir dëse Browser. Mellt Iech un, fir datt et och fir Äre Kont gëllt.',
+		receiptViaGpc: 'Global Privacy Control-Signal',
+		referenceCopied: 'Referenz kopéiert.',
+		refuseAll:
+			'verkeeft oder deelt Är perséinlech Daten net a benotzt se net fir zilgeriicht Reklamm',
+		refuseSaleAndShare: 'verkeeft oder deelt Är perséinlech Daten net',
+		refuseSaleAndTargetedAds:
+			'verkeeft Är perséinlech Daten net a benotzt se net fir zilgeriicht Reklamm',
+		rejectAll: 'All refuséieren',
+		rightsAllowed: '{rights}: erlaabt.',
+		rightsNotAllowed: '{rights}: net erlaabt.',
+		rightsOptedOut: 'Ofgemellt vun: {rights}.',
+		saleAllowed: '{business} däerf {rights}.',
+		saleGroupOptIn: 'Erlaben: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Vum Verkaf vu menge perséinlechen Daten a vun zilgeriichter Reklamm ofmellen',
+		saleOffByDefault:
+			'Standardméisseg ausgeschalt. {business} {rights}, ausser Dir erlaabt et.',
+		saleRefused: '{business} {rights}. Dat gëllt {scope}.',
+		saveChoices: 'Auswiel späicheren',
+		saveInSettings: 'Späichert Är Auswiel an de Privatsphär Astellungen',
+		savedAutomatically: 'Automatesch gespäichert',
+		savedCue: 'Gespäichert',
+		scopeAccount: 'fir dëse Browser a fir Äre {business}-Kont',
+		scopeAccountUnnamed: 'fir dëse Browser a fir Äre Kont',
+		scopeBrowser: 'fir dëse Browser',
+		shortAll: 'Är Date fir Reklamm ze verkafen oder ze deelen',
+		shortSaleAndShare: 'Är Daten ze verkafen oder ze deelen',
+		shortSaleAndTargetedAds:
+			'Är Daten ze verkafen oder fir Reklamm ze benotzen',
+		stateOff: 'Aus',
+		stateOn: 'Un',
+		switchColumn: 'Un',
+		switchedOff: '{name} aus.',
+		switchedOn: '{name} un.',
+		titleAll: 'Verkaf, Deelen an zilgeriicht Reklamm',
+		titleSaleAndShare: 'Verkaf an Deelen',
+		titleSaleAndTargetedAds: 'Verkaf an zilgeriicht Reklamm',
+		vendorColumn: 'Ubidder',
+		vendorPolicy: 'Dateschutzrichtlinn: {vendor}',
+		vendorsClose: 'Ubidder zoumaachen: {category}',
+		vendorsFor: 'fir {category}',
+		vendorsHide: 'Ubidder verstoppen ({count})',
+		vendorsHideOne: '1 Ubidder verstoppen',
+		vendorsOnCount: '{count} un',
+		vendorsTable: 'Ubidder: {category}',
+		vendorsView: 'Ubidder weisen ({count})',
+		vendorsViewOne: '1 Ubidder weisen',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Är kalifornesch Dateschutzoptiounen',

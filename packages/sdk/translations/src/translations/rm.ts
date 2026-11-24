@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Serrar',
 		rejectAll: 'Refusar tut',
 		save: 'Memorisar las configuraziuns',
-		securedBy: 'Protegiu da',
+		securedBy: 'Consentiment da',
 	},
 	consentGate: {
 		actionButton: 'Activar il consentiment da {category}',
@@ -206,6 +206,142 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'vendita e reclama dirigida',
 		statusRequest: 'Dumonda da refusa resguardada',
 		statusSignal: 'Signal da preferenza da refusa resguardà',
+	},
+	privacyChoices: {
+		acceptAll: 'Acceptar tut',
+		advertisingFollowsSale: 'La reclama suonda tia tscherna survart.',
+		advertisingTitle: 'Reclama',
+		allow: 'Permetter',
+		alwaysOn: 'Adina activ',
+		announceSaved: '{message} Memorisà.',
+		askAll:
+			'vender u cundivider tias datas persunalas, era per reclama dirigida',
+		askSaleAndShare: 'vender u cundivider tias datas persunalas',
+		askSaleAndTargetedAds:
+			'vender tias datas persunalas u las duvrar per reclama dirigida',
+		bannerAllowedRightsOff:
+			'Cookies opziunals permess. {rights} restan deactivadas. Ti pos midar quai en Tias tschernas da protecziun da datas.',
+		bannerAllowedRightsOffGpc:
+			'Cookies opziunals permess. {rights} restan deactivadas pervia da tes signal Global Privacy Control. Ti pos midar quai en Tias tschernas da protecziun da datas.',
+		bannerRejected:
+			'Cookies opziunals refusads. Ti pos midar quai en Tias tschernas da protecziun da datas.',
+		barDescription:
+			'Nus duvrain cookies per meglierar tia experientscha ed analisar il traffic.',
+		businessFallback: 'questa pagina',
+		choiceRecorded: 'Tscherna registrada.',
+		choicesSaved:
+			'Tschernas memorisadas. Ti pos midar ellas en Tias tschernas da protecziun da datas.',
+		choose: 'Tscherner',
+		chooseWhatToAllow: 'Tscherner tge che ti permettas',
+		close: 'Serrar',
+		confirmDescriptionOptIn:
+			'{business} dastga {rights}. Ti pos midar quai da tut temp.',
+		confirmDescriptionOptOut:
+			'{business} dastga {rights}. Ti pos puspè renunziar da tut temp.',
+		confirmKeepOptedOut: 'Restar deannunzià',
+		confirmTitleOptIn: 'Permetter {rights}?',
+		confirmTitleOptOut: 'Permetter puspè {rights}?',
+		copyFailed: 'Impussibel da copiar. Marca e copiescha tia referenza:',
+		copyFailedAnnouncement:
+			'Impussibel da copiar. Tia referenza cumpletta vegn mussada en la quittanza.',
+		copyReference: 'Copiar la referenza',
+		dialogIntro: 'Tias tschernas valan immediat.',
+		dialogTitle: 'Tias tschernas da protecziun da datas',
+		done: 'Finì',
+		dontAllow: 'Betg permetter',
+		euDialogIntro:
+			'Tscherna tge cookies opziunals che {business} dastga duvrar. Cookies opziunals restan deactivads, nun che ti als activeschias.',
+		euDialogTitle: 'Configuraziuns da la sfera privata',
+		gpcNote:
+			"Tes navigatur ha tramess in signal Global Privacy Control. {business} {rights} {scope}. Permetter n'è betg disponibel uschè ditg ch'il signal è activà.",
+		justNow: 'gist ussa',
+		nestedSheetNote:
+			'Las midadas valan cura che ti memoriseschas en las Configuraziuns da la sfera privata.',
+		noticeBarDescription:
+			'Nus duvrain cookies per manar questa pagina, mesirar il traffic e persunalisar reclamas. Ti pos renunziar da tut temp.',
+		noticeBarDescriptionGpc:
+			'Nus duvrain cookies per manar questa pagina e mesirar il traffic. Tes signal Global Privacy Control vegn respectà.',
+		noticeGpcHonored:
+			'Il signal Global Privacy Control da tes navigatur vegn respectà.',
+		noticeRightsAction: 'Betg vender ni parter mias datas',
+		nudge: "Tscherna l'emprim in dals dus buttuns.",
+		optInBarDescription:
+			'{business} dumonda tes consentiment per cookies opziunals e per {rights}.',
+		optInDescription:
+			'Cun tia permissiun duvrass {business} cookies opziunals per funcziuns da la pagina ed analisas, e pudess {rights}. Nagut na vegn activà senza che ti permettas quai.',
+		optInTitle: 'Tias tschernas da protecziun da datas',
+		optOutOption: 'Renunziar',
+		panelExpanded: 'Dapli opziuns vegnan mussadas.',
+		policyColumn: 'Directivas da protecziun da datas',
+		preferencesClose: 'Serrar las preferenzas',
+		preferencesOnCount: '{count} activadas',
+		preferencesSheetIntro: 'Las midadas valan immediat.',
+		preferencesSummary: 'Funcziuns da la pagina ed analisas',
+		preferencesTitle: 'Preferenzas',
+		purposeColumn: 'Intent',
+		receiptAllowed: 'Permess: {rights}',
+		receiptDetails: 'Detagls',
+		receiptFromGpc: 'da tes signal Global Privacy Control',
+		receiptLive: 'Global Privacy Control da quest navigatur vegn respectà',
+		receiptLiveDetail: 'Vegn legì da tes navigatur tar mintga visita.',
+		receiptOptedOut: 'Renunzià a {rights}',
+		receiptRecorded: 'Registrà: {date}',
+		receiptReference: 'Referenza',
+		receiptSavedAccount: 'Memorisà en tes conto · {date}',
+		receiptSavedBrowser: 'Memorisà per quest navigatur · {date}',
+		receiptScopeAccount:
+			'Vala per quest navigatur e per tes conto tar {business}.',
+		receiptScopeAccountUnnamed: 'Vala per quest navigatur e per tes conto.',
+		receiptScopeBrowser:
+			'Vala per quest navigatur. Annunzia tai per applitgar quai era a tes conto.',
+		receiptViaGpc: 'Signal Global Privacy Control',
+		referenceCopied: 'Referenza copiada.',
+		refuseAll:
+			'na venda e na cundivida betg tias datas persunalas e na las dovra betg per reclama dirigida',
+		refuseSaleAndShare: 'na venda e na cundivida betg tias datas persunalas',
+		refuseSaleAndTargetedAds:
+			'na venda betg tias datas persunalas e na las dovra betg per reclama dirigida',
+		rejectAll: 'Refusar tut',
+		rightsAllowed: '{rights}: permess.',
+		rightsNotAllowed: '{rights}: betg permess.',
+		rightsOptedOut: 'Renunzià a {rights}.',
+		saleAllowed: '{business} dastga {rights}.',
+		saleGroupOptIn: 'Permetter {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Renunziar a la vendita da mias datas persunalas ed a reclama dirigida',
+		saleOffByDefault:
+			'Deactivà da standard. {business} {rights}, nun che ti permettas quai.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Memorisar las tschernas',
+		saveInSettings:
+			'Memorisescha tias tschernas en las Configuraziuns da la sfera privata',
+		savedAutomatically: 'Memorisà automaticamain',
+		savedCue: 'Memorisà',
+		scopeAccount: 'en quest navigatur u per tes conto tar {business}',
+		scopeAccountUnnamed: 'en quest navigatur u per tes conto',
+		scopeBrowser: 'en quest navigatur',
+		shortAll: 'la vendita u la cundivisiun da tias datas per reclama',
+		shortSaleAndShare: 'la vendita u la cundivisiun da tias datas',
+		shortSaleAndTargetedAds:
+			'la vendita da tias datas u lur diever per reclama',
+		stateOff: 'Deactivà',
+		stateOn: 'Activà',
+		switchColumn: 'Activà',
+		switchedOff: '{name} deactivà.',
+		switchedOn: '{name} activà.',
+		titleAll: 'Vendita, cundivisiun e reclama dirigida',
+		titleSaleAndShare: 'Vendita e cundivisiun',
+		titleSaleAndTargetedAds: 'Vendita e reclama dirigida',
+		vendorColumn: 'Proveder',
+		vendorPolicy: 'Directivas da protecziun da datas da {vendor}',
+		vendorsClose: 'Serrar ils proveders da {category}',
+		vendorsFor: 'per {category}',
+		vendorsHide: 'Zuppentar {count} proveders',
+		vendorsHideOne: 'Zuppentar 1 proveder',
+		vendorsOnCount: '{count} activads',
+		vendorsTable: 'Proveders da {category}',
+		vendorsView: 'Mussar {count} proveders',
+		vendorsViewOne: 'Mussar 1 proveder',
 	},
 	rights: {
 		californiaPrivacyChoices:

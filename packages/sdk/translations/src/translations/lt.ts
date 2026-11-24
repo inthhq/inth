@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Uždaryti',
 		rejectAll: 'Atmesti visus',
 		save: 'Išsaugoti nustatymus',
-		securedBy: 'Apsaugą teikia',
+		securedBy: 'Sutikimus valdo',
 	},
 	consentGate: {
 		actionButton: 'Įgalinti {category} sutikimą',
@@ -208,6 +208,141 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'pardavimo ir tikslinės reklamos',
 		statusRequest: 'Atsisakymo prašymas įvykdytas',
 		statusSignal: 'Atsisakymo nuostatos signalas įvykdytas',
+	},
+	privacyChoices: {
+		acceptAll: 'Priimti visus',
+		advertisingFollowsSale: 'Reklama priklauso nuo jūsų pasirinkimo aukščiau.',
+		advertisingTitle: 'Reklama',
+		allow: 'Leisti',
+		alwaysOn: 'Visada įjungta',
+		announceSaved: '{message} Išsaugota.',
+		askAll:
+			'parduoti jūsų asmens duomenis arba jais dalytis, taip pat ir tikslinės reklamos tikslais',
+		askSaleAndShare: 'parduoti jūsų asmens duomenis arba jais dalytis',
+		askSaleAndTargetedAds:
+			'parduoti jūsų asmens duomenis arba naudoti juos tikslinei reklamai',
+		bannerAllowedRightsOff:
+			'Neprivalomi slapukai leidžiami. {rights} lieka išjungta. Tai galite pakeisti skiltyje „Jūsų privatumo pasirinkimai“.',
+		bannerAllowedRightsOffGpc:
+			'Neprivalomi slapukai leidžiami. {rights} lieka išjungta dėl jūsų Global Privacy Control signalo. Tai galite pakeisti skiltyje „Jūsų privatumo pasirinkimai“.',
+		bannerRejected:
+			'Neprivalomi slapukai atmesti. Tai galite pakeisti skiltyje „Jūsų privatumo pasirinkimai“.',
+		barDescription:
+			'Naudojame slapukus, kad pagerintume jūsų patirtį ir analizuotume srautą.',
+		businessFallback: 'ši svetainė',
+		choiceRecorded: 'Pasirinkimas užregistruotas.',
+		choicesSaved:
+			'Pasirinkimai išsaugoti. Juos galite pakeisti skiltyje „Jūsų privatumo pasirinkimai“.',
+		choose: 'Pasirinkti',
+		chooseWhatToAllow: 'Pasirinkite, ką leisti',
+		close: 'Uždaryti',
+		confirmDescriptionOptIn:
+			'{business} galės {rights}. Tai galite bet kada pakeisti.',
+		confirmDescriptionOptOut:
+			'{business} galės {rights}. Bet kada galėsite vėl atsisakyti.',
+		confirmKeepOptedOut: 'Likti atsisakius',
+		confirmTitleOptIn: 'Leisti: {rights}?',
+		confirmTitleOptOut: 'Vėl leisti: {rights}?',
+		copyFailed:
+			'Nepavyko nukopijuoti. Pažymėkite ir nukopijuokite savo nuorodą:',
+		copyFailedAnnouncement:
+			'Nepavyko nukopijuoti. Visa nuoroda rodoma patvirtinime.',
+		copyReference: 'Kopijuoti nuorodą',
+		dialogIntro: 'Jūsų pasirinkimai įsigalioja iš karto.',
+		dialogTitle: 'Jūsų privatumo pasirinkimai',
+		done: 'Atlikta',
+		dontAllow: 'Neleisti',
+		euDialogIntro:
+			'Pasirinkite, kuriuos neprivalomus slapukus gali naudoti {business}. Neprivalomi slapukai lieka išjungti, kol jų neįjungiate.',
+		euDialogTitle: 'Privatumo nustatymai',
+		gpcNote:
+			'Jūsų naršyklė atsiuntė Global Privacy Control signalą, todėl {business} {rights} {scope}. Kol signalas įjungtas, parinktis „Leisti“ negalima.',
+		justNow: 'ką tik',
+		nestedSheetNote:
+			'Pakeitimai įsigalios, kai išsaugosite privatumo nustatymuose.',
+		noticeBarDescription:
+			'Naudojame slapukus šiai svetainei veikti, srautui matuoti ir reklamoms pritaikyti. Galite bet kada atsisakyti.',
+		noticeBarDescriptionGpc:
+			'Naudojame slapukus šiai svetainei veikti ir srautui matuoti. Jūsų Global Privacy Control signalo paisoma.',
+		noticeGpcHonored: 'Jūsų naršyklės Global Privacy Control signalo paisoma.',
+		noticeRightsAction: 'Neparduoti ir nesidalyti mano duomenimis',
+		nudge: 'Pirmiausia pasirinkite vieną iš dviejų mygtukų.',
+		optInBarDescription:
+			'{business} prašo jūsų sutikimo dėl neprivalomų slapukų ir dėl {rights}.',
+		optInDescription:
+			'Jums leidus, {business} naudotų neprivalomus slapukus svetainės funkcijoms ir analizei, taip pat galėtų {rights}. Niekas neįjungiama, kol neleidžiate.',
+		optInTitle: 'Jūsų privatumo pasirinkimai',
+		optOutOption: 'Atsisakyti',
+		panelExpanded: 'Rodoma daugiau parinkčių.',
+		policyColumn: 'Privatumo politika',
+		preferencesClose: 'Uždaryti nuostatas',
+		preferencesOnCount: 'Įjungta: {count}',
+		preferencesSheetIntro: 'Pakeitimai įsigalioja iš karto.',
+		preferencesSummary: 'Svetainės funkcijos ir analizė',
+		preferencesTitle: 'Nuostatos',
+		purposeColumn: 'Tikslas',
+		receiptAllowed: 'Leista: {rights}',
+		receiptDetails: 'Išsami informacija',
+		receiptFromGpc: 'pagal jūsų Global Privacy Control signalą',
+		receiptLive: 'Paisoma šios naršyklės Global Privacy Control signalo',
+		receiptLiveDetail:
+			'Nuskaitoma iš jūsų naršyklės kiekvieno apsilankymo metu.',
+		receiptOptedOut: 'Atsisakyta: {rights}',
+		receiptRecorded: 'Užregistruota: {date}',
+		receiptReference: 'Nuoroda',
+		receiptSavedAccount: 'Išsaugota jūsų paskyroje · {date}',
+		receiptSavedBrowser: 'Išsaugota šiai naršyklei · {date}',
+		receiptScopeAccount:
+			'Taikoma šiai naršyklei ir jūsų „{business}“ paskyrai.',
+		receiptScopeAccountUnnamed: 'Taikoma šiai naršyklei ir jūsų paskyrai.',
+		receiptScopeBrowser:
+			'Taikoma šiai naršyklei. Prisijunkite, kad tai būtų taikoma ir jūsų paskyrai.',
+		receiptViaGpc: 'Global Privacy Control signalas',
+		referenceCopied: 'Nuoroda nukopijuota.',
+		refuseAll:
+			'neparduos jūsų asmens duomenų, jais nesidalys ir nenaudos jų tikslinei reklamai',
+		refuseSaleAndShare: 'neparduos jūsų asmens duomenų ir jais nesidalys',
+		refuseSaleAndTargetedAds:
+			'neparduos jūsų asmens duomenų ir nenaudos jų tikslinei reklamai',
+		rejectAll: 'Atmesti visus',
+		rightsAllowed: '{rights}: leista.',
+		rightsNotAllowed: '{rights}: neleista.',
+		rightsOptedOut: 'Atsisakyta: {rights}.',
+		saleAllowed: '{business} gali {rights}.',
+		saleGroupOptIn: 'Leisti: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Atsisakyti mano asmens duomenų pardavimo ir tikslinės reklamos',
+		saleOffByDefault:
+			'Pagal numatytuosius nustatymus išjungta. {business} {rights}, kol neleisite.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Išsaugoti pasirinkimus',
+		saveInSettings: 'Išsaugokite savo pasirinkimus privatumo nustatymuose',
+		savedAutomatically: 'Išsaugoma automatiškai',
+		savedCue: 'Išsaugota',
+		scopeAccount: 'nei šioje naršyklėje, nei jūsų „{business}“ paskyroje',
+		scopeAccountUnnamed: 'nei šioje naršyklėje, nei jūsų paskyroje',
+		scopeBrowser: 'šioje naršyklėje',
+		shortAll: 'jūsų duomenų pardavimo ar dalijimosi jais reklamos tikslais',
+		shortSaleAndShare: 'jūsų duomenų pardavimo ar dalijimosi jais',
+		shortSaleAndTargetedAds: 'jūsų duomenų pardavimo ar naudojimo reklamai',
+		stateOff: 'Išjungta',
+		stateOn: 'Įjungta',
+		switchColumn: 'Įjungta',
+		switchedOff: '{name}: išjungta.',
+		switchedOn: '{name}: įjungta.',
+		titleAll: 'Pardavimas, dalijimasis ir tikslinė reklama',
+		titleSaleAndShare: 'Pardavimas ir dalijimasis',
+		titleSaleAndTargetedAds: 'Pardavimas ir tikslinė reklama',
+		vendorColumn: 'Tiekėjas',
+		vendorPolicy: '„{vendor}“ privatumo politika',
+		vendorsClose: 'Uždaryti kategorijos „{category}“ tiekėjus',
+		vendorsFor: 'kategorijoje „{category}“',
+		vendorsHide: 'Slėpti tiekėjus ({count})',
+		vendorsHideOne: 'Slėpti 1 tiekėją',
+		vendorsOnCount: 'Įjungta: {count}',
+		vendorsTable: 'Kategorijos „{category}“ tiekėjai',
+		vendorsView: 'Rodyti tiekėjus ({count})',
+		vendorsViewOne: 'Rodyti 1 tiekėją',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Jūsų Kalifornijos privatumo pasirinkimai',
