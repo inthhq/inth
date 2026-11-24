@@ -32,6 +32,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	deepActiveElement,
 	restoreFocus,
 	revealDisclosure,
 	scheduleReveal,
@@ -680,7 +681,9 @@ const DialogContent = ({
 		if (!(open && backdrop && main)) {
 			return;
 		}
-		opener.current = document.activeElement;
+		// The focused control itself, not the host of the shadow root it is
+		// in, so focus can go back to a button inside a web component.
+		opener.current = deepActiveElement(document);
 		const release = attachPageBlock(backdrop);
 		// Back from an opt-out (after its revocation reload, or from a
 		// one-click opt-out link), the dialog opens on the receipt that
@@ -707,6 +710,7 @@ const DialogContent = ({
 				const returned = restoreFocus({
 					fallbacks: RETURN_TARGETS,
 					opener: target,
+					root: main,
 				});
 				if (!(returned || bannerReturns)) {
 					focusReturnTargetOnceRendered();

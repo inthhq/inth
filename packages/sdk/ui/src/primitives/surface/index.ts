@@ -21,4 +21,5 @@ export * from './reveal-disclosure';
 export * from './scroll-reveal.model';
 export * from './attach-theme-switch-guard';
 export * from './attach-top-layer-trap';
+export { deepActiveElement } from './composed-tree.model';
 export * from './restore-focus';
