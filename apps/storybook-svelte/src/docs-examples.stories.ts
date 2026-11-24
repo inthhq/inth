@@ -102,6 +102,12 @@ export const PrivacyControlsExample: Story = {
 		await userEvent.click(
 			await body().findByRole('button', { name: 'Allow analytics' })
 		);
+		// `saveConsents('custom')` loads the preference draft on first use; wait
+		// for that save to commit before opening the dialog so its settle cannot
+		// close the newly opened dialog.
+		await waitFor(() => {
+			expect(localStorage.getItem('inth')).not.toBeNull();
+		});
 		await userEvent.click(
 			body().getByRole('button', { name: 'Privacy settings' })
 		);
