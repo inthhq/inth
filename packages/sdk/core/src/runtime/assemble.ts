@@ -303,8 +303,8 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				return;
 			}
 			if (prevExternalId !== nextUser.externalId) {
+				bumpIdentityEpoch({ preservePending: true });
 				kernel.setUserWithPending(nextUser, { pending: false });
-				bumpIdentityEpoch();
 			}
 			try {
 				await kernel.commands.identify(nextUser);

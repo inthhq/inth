@@ -3080,4 +3080,79 @@ describe('runtime regressions (set 7)', () => {
 			clock.mockRestore();
 		}
 	});
+
+	test('identify(otherUser) bumps identity epoch before switching user so a synchronous subscriber calling syncUserConsent(promise) is not cancelled', async () => {
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const userA = { externalId: 'user_a' };
+		const userB = { externalId: 'user_b' };
+		let resolveB!: (value: UserConsent) => void;
+		const promiseB = new Promise<UserConsent>((resolve) => {
+			resolveB = resolve;
+		});
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					now: NOW,
+				},
+				user: userA,
+				userConsent: makeUserConsent({
+					checkedAt: NOW - 1000,
+					externalId: userA.externalId,
+					optOut: null,
+				}),
+			},
+			defaultRuntimeModules
+		);
+		let syncedFromSubscriber = false;
+		const unsubscribe = runtime.kernel.subscribe((snap) => {
+			if (snap.user?.externalId === userB.externalId && !syncedFromSubscriber) {
+				syncedFromSubscriber = true;
+				runtime.syncUserConsent(promiseB);
+			}
+		});
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().user?.externalId).toBe(
+				userA.externalId
+			);
+
+			await runtime.identify(userB);
+			expect(syncedFromSubscriber).toBe(true);
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+
+			resolveB(
+				makeUserConsent({
+					checkedAt: NOW,
+					externalId: userB.externalId,
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 2000,
+						rights: ['sale', 'share'],
+					},
+				})
+			);
+			await promiseB;
+			await flushMicrotasks();
+
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+			expect(runtime.kernel.getSnapshot().optOut?.rights).toEqual([
+				'sale',
+				'share',
+			]);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			unsubscribe();
+			runtime.dispose();
+			clock.mockRestore();
+		}
+	});
 });
