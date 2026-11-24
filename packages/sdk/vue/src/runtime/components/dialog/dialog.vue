@@ -36,6 +36,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	deepActiveElement,
 	restoreFocus,
 	revealDisclosure,
 	scheduleReveal,
@@ -350,7 +351,9 @@ watch(
 		if (!(open.value && mounted.value && backdrop && main)) {
 			return;
 		}
-		opener = document.activeElement;
+		// The focused control itself, not the host of the shadow root it is
+		// in, so focus can go back to a button inside a web component.
+		opener = deepActiveElement(document);
 		const release = attachPageBlock(backdrop);
 		// Back from an opt-out (after its revocation reload, or from a
 		// one-click opt-out link), the dialog opens on the receipt that
@@ -373,7 +376,11 @@ watch(
 				// The page is released by now, so an opener that cannot take
 				// focus is skipped: one that unmounted while the dialog was
 				// open, such as the floating trigger, or one the page hides.
-				return restoreFocus({ fallbacks: RETURN_TARGETS, opener: target });
+				return restoreFocus({
+					fallbacks: RETURN_TARGETS,
+					opener: target,
+					root: main,
+				});
 			},
 		});
 		onCleanup(() => {

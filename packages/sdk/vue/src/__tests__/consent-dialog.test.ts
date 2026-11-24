@@ -157,6 +157,29 @@ describe('opening', () => {
 		);
 	});
 
+	// GPT round 2b: the opener was read from `document.activeElement`, which
+	// is the shadow host, not the button inside it.
+	test('[FOC-03] an opener inside an open shadow root gets focus back', async () => {
+		const current = await mount({ page: trigger });
+		const host = document.createElement('div');
+		document.body.append(host);
+		const shadow = host.attachShadow({ mode: 'open' });
+		const opener = document.createElement('button');
+		opener.textContent = 'Shadow opener';
+		shadow.append(opener);
+		try {
+			opener.focus();
+			expect(shadow.activeElement).toBe(opener);
+			current.activeUI.value = 'manager';
+			await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
+			must('consent-dialog-done').click();
+			await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+			await waitFor(() => expect(shadow.activeElement).toBe(opener));
+		} finally {
+			host.remove();
+		}
+	});
+
 	test('[PERM-05][BNR-02] the banner leaves at once when the dialog opens', async () => {
 		await mount({ region: 'eu' });
 		await waitFor(() => expect($('consent-banner-root')).not.toBeNull());

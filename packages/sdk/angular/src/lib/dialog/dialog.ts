@@ -49,6 +49,7 @@ import {
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
+	deepActiveElement,
 	restoreFocus,
 	revealDisclosure,
 	scheduleReveal,
@@ -831,7 +832,9 @@ export class ConsentDialogBody {
 				return;
 			}
 			untracked(() => {
-				let opener: Element | null = document.activeElement;
+				// The focused control itself, not the host of the shadow root it is
+				// in, so focus can go back to a button inside a web component.
+				let opener: Element | null = deepActiveElement(document);
 				const kernel = this.#consent.kernel();
 				const release = attachPageBlock(backdrop);
 				// Back from an opt-out (after its revocation reload, or from a
@@ -857,7 +860,11 @@ export class ConsentDialogBody {
 						// The page is released by now, so an opener that cannot take
 						// focus is skipped: one that unmounted while the dialog was
 						// open, such as the floating trigger, or one the page hides.
-						return restoreFocus({ fallbacks: RETURN_TARGETS, opener: target });
+						return restoreFocus({
+							fallbacks: RETURN_TARGETS,
+							opener: target,
+							root: main.element(),
+						});
 					},
 				});
 				onCleanup(() => {
