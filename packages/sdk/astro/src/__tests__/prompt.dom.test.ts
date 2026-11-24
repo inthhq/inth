@@ -21,6 +21,7 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../../../core/src/surface-actions/early-consent-tap-script';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import { setPromptLoaderForTest } from '../boot-client-engine';
 import * as promptChunk from '../browser/mount-prompt';
@@ -351,6 +352,65 @@ describe('a tap before the prompt chunk mounted', () => {
 			warn.mockRestore();
 		}
 	});
+
+	// GPT round 2: the banner the failed chunk restored took the next tap,
+	// but nothing loaded the chunk again until a navigation event, so a
+	// visitor's click went nowhere.
+	it.each([
+		['blocking', true],
+		['non-blocking', false],
+	])(
+		'a click on the %s banner a failed chunk restored loads the chunk again and commits',
+		async (_, blockUntilChoice) => {
+			const warn = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => undefined);
+			let failFirst: (error: Error) => void = () => undefined;
+			let calls = 0;
+			setPromptLoaderForTest(() => {
+				calls += 1;
+				if (calls > 1) {
+					return Promise.resolve(promptChunk);
+				}
+				// oxlint-disable-next-line promise/avoid-new -- Failed by the test.
+				return new Promise((_resolve, reject) => {
+					failFirst = reject;
+				});
+			});
+			// The real early-tap script, as the server renders it ahead of the
+			// banner.
+			// oxlint-disable-next-line no-new-func -- The inline script as shipped.
+			new Function(EARLY_CONSENT_TAP_SCRIPT)();
+			const accept = () =>
+				must('consent-banner-root')
+					.querySelector<HTMLButtonElement>('[data-action="accept"]')
+					?.click();
+			try {
+				const page = await mount({ blockUntilChoice });
+				accept();
+				expect(document.getElementById(EARLY_TAP_STYLE_ID)).not.toBeNull();
+				failFirst(new Error('chunk failed'));
+				await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+				expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+				expect(page.getConsent().explicitChoice).toBeNull();
+				expect(calls).toBe(1);
+
+				// No navigation event: the click alone retries.
+				accept();
+				await vi.waitFor(() =>
+					expect(page.getConsent().explicitChoice).not.toBeNull()
+				);
+				expect(calls).toBe(2);
+				expect(page.getConsent().effectivePermissions.marketing).toBe(true);
+				expect(page.getConsent().activeUI).toBe('none');
+			} finally {
+				(
+					globals[EARLY_TAPS_WINDOW_KEY] as { stop?: () => void } | undefined
+				)?.stop?.();
+				warn.mockRestore();
+			}
+		}
+	);
 
 	it('drops a tap made under another policy, and shows the prompt again', async () => {
 		holdTap('reject', { model: 'opt-out', prompt: 'notice' });
