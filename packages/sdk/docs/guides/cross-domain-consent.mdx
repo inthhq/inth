@@ -311,6 +311,18 @@ Inth applies the account's consent before it decides on the banner and scripts, 
 
 Changing `user.externalId` or removing `user` also drops the previous user's account layer and deletes its storage synchronously.
 
+## How opt-outs and opt-ins combine across domains
+
+An opt-out of sale or sharing follows the user to every domain. An opt-in made on another domain counts only while Inth knows who the user is.
+
+- **An opt-out on any device applies to the account.** When a signed-in user opts out on one domain, your other domains treat them as opted out once they receive that user's `userConsent`.
+- **An account with no opt-out never clears a device's opt-out.** If this browser opted out and the account shows no opt-out, this browser stays opted out.
+- **A newer confirmed opt-in on the account wins on other domains while the user is signed in.** If the user opts back in on another domain after this browser opted out, this domain follows the opt-in for the rights it covers.
+- **GPC always wins on its browser.** An opt-out recorded from the browser's Global Privacy Control signal stays in force, whatever the account says.
+- **After sign-out, the device's own opt-out applies again.** Inth never deletes a device's opt-out because of the account. When the user signs out, or another user signs in, it applies again.
+
+An opt-in made in this browser, with `optIn()`, clears this browser's own opt-out as before.
+
 ## Memoize a `Promise`
 
 When you pass a `Promise<UserConsent | null>`, memoize it per user (for example with `useMemo` keyed on `user?.externalId`).
@@ -344,7 +356,7 @@ Account state is stored apart from browser-made records in three compact cookies
 
 - `<key>-acct-c`: category choices with a shared basis table, raw times, and optional expiry.
 - `<key>-acct-v`: denied vendor IDs only (with raw times).
-- `<key>-acct-o`: person-held opt-out record.
+- `<key>-acct-o`: person-held opt-out record, and the time of the account's latest opt-in for each right.
 - `<key>-acct` (localStorage): full account layer, including category grants and the complete vendor map.
 
 Keeping granted vendors in localStorage keeps the cookies small even with large vendor lists. Empty parts are written explicitly so an empty list differs from a failed cookie write.

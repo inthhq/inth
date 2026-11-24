@@ -26,7 +26,10 @@ import {
 	readStoredAccountLayer,
 } from '../../modules/persistence/account-codec';
 import { resolveAccountStorageKeys } from '../../modules/persistence/account-keys';
-import { encodeVendorChoiceCompact } from '../../modules/persistence/writer/encode';
+import {
+	encodeOptOutRecordCompact,
+	encodeVendorChoiceCompact,
+} from '../../modules/persistence/writer/encode';
 import { resolveRequestConsent } from '../../server/request-consent';
 import { testing } from '../../testing';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
@@ -3154,5 +3157,87 @@ describe('runtime regressions (set 7)', () => {
 			runtime.dispose();
 			clock.mockRestore();
 		}
+	});
+});
+
+describe('server render with an account opt-in', () => {
+	test('a newer account opt-in outranks the device opt-out cookie for the signed-in user, from the document and from account cookies', async () => {
+		// The offline server render resolves its own policy, so this checks the
+		// effective opt-out rather than a permission.
+		const rule = optOutRule({ prompt: 'choice' });
+		const optIn = { sale: NOW - 5000, share: NOW - 5000 };
+		const deviceCookie = `${resolveStorageKeys().optOut}=${encodeOptOutRecordCompact(
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 10_000,
+				rights: ['sale', 'share'],
+				version: 1,
+			}
+		)}`;
+		const bootKernel = (prefetch: RuntimePrefetch) =>
+			createRuntimeKernel({
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				prefetch,
+			});
+
+		const fromDocument = await resolveRequestConsent({
+			adapter: '@inth/test',
+			mode: 'offline',
+			now: NOW,
+			offline: { policy: [rule] },
+			request: { cookie: deviceCookie, headers: new Headers() },
+			user: { externalId: 'user_a' },
+			userConsent: makeUserConsent({ externalId: 'user_a', optIn }),
+		});
+		const documentKernel = bootKernel(fromDocument);
+		expect(documentKernel.getBrowserRecords().optOut).toMatchObject({
+			heldBy: 'device',
+			rights: ['sale', 'share'],
+		});
+		expect(documentKernel.getSnapshot().optOut).toBeNull();
+		documentKernel.dispose();
+
+		const layer = normalizeUserConsent(
+			makeUserConsent({ externalId: 'user_a', optIn }),
+			NOW
+		);
+		if (!layer) {
+			throw new Error('expected a layer');
+		}
+		const keys = resolveAccountStorageKeys();
+		const cookie = [
+			deviceCookie,
+			`${keys.accountChoices}=${encodeAccountChoicesCookie(layer, 'rev_1')}`,
+			`${keys.accountVendors}=${encodeAccountVendorsCookie(layer, 'rev_1')}`,
+			`${keys.accountOptOut}=${encodeAccountOptOutCookie(layer, 'rev_1')}`,
+		].join('; ');
+		const fromCookies = await resolveRequestConsent({
+			adapter: '@inth/test',
+			mode: 'offline',
+			now: NOW,
+			offline: { policy: [rule] },
+			request: { cookie, headers: new Headers() },
+			user: { externalId: 'user_a' },
+		});
+		const cookieKernel = bootKernel(fromCookies);
+		expect(cookieKernel.getAccountLayer()?.optIn).toEqual(optIn);
+		expect(cookieKernel.getSnapshot().optOut).toBeNull();
+		cookieKernel.dispose();
+
+		const signedOut = await resolveRequestConsent({
+			adapter: '@inth/test',
+			mode: 'offline',
+			now: NOW,
+			offline: { policy: [rule] },
+			request: { cookie, headers: new Headers() },
+		});
+		const signedOutKernel = bootKernel(signedOut);
+		expect(signedOutKernel.getSnapshot().optOut).toMatchObject({
+			heldBy: 'device',
+			rights: ['sale', 'share'],
+		});
+		signedOutKernel.dispose();
 	});
 });
