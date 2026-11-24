@@ -133,6 +133,9 @@ const noneRegime: readonly PolicyScenario[] = [
 				},
 				operation: { kind: 'open-preferences', via: 'trigger' },
 			},
+			// With no prompt owed, Save stays disabled until a switch changes
+			// and the dialog has no Done: the header Close is the visitor's
+			// control, and it answers nothing.
 			{
 				expect: {
 					...quiet,
@@ -141,7 +144,7 @@ const noneRegime: readonly PolicyScenario[] = [
 					preferencesOpen: false,
 					prompt: { kind: 'none' },
 				},
-				operation: { kind: 'save-current' },
+				operation: { close: 'close', kind: 'save-current' },
 			},
 		],
 	},
@@ -332,7 +335,7 @@ const gpc = (
 				preferencesOpen: false,
 				prompt: { kind: 'notice', reason: 'missing' },
 			},
-			operation: { kind: 'save-current' },
+			operation: { close: 'done', kind: 'save-current' },
 		},
 		{
 			// The visitor acknowledges the notice from that banner. That records
