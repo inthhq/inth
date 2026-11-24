@@ -17,7 +17,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Choose your setup](./docs/concepts/choose-your-setup.md): Pick the Inth SDK setup for your web framework, rendering mode or native mobile platform.
 - [Performance](./docs/performance.md): How Inth removes /v1/consent/init latency with build-time manifests, streams SSR consent without blocking paint, and defers UI and engine JavaScript.
 - [How consent works](./docs/concepts/how-consent-works.md): Learn how Inth evaluates policies, stored choices, and browser privacy signals on every page load to gate scripts and save consent.
-- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Verify consent](./docs/guides/verify-consent.md): Verify in a production build that tracking scripts wait for consent, rejections persist across reloads, preferences reopen, and GPC applies.
 - [Migrate from c15t](./docs/migrate-from-c15t.md): Migrate a c15t or @c15t/* app to @inth/* packages, InthProvider, hooks, callbacks, and themes while keeping visitors' stored choices.
 
@@ -32,17 +32,17 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Clear on revocation](./docs/frameworks/next/clear-on-revocation.md): Delete first-party cookies and Web Storage keys in Next.js when a consent category is denied using clearOnRevocation.
 - [Client-side initialization](./docs/frameworks/next/client-side.md): Initialize Inth in the browser in Next.js using hosted() mode, without server prefetch or consent API routes.
 - [Components](./docs/frameworks/next/components.md): Reference for every Inth component exported by @inth/nextjs, whether it runs on the client or server, and where to mount it.
-- [ConsentBanner](./docs/frameworks/next/components/consent-banner.md): Render ConsentBanner inside a Next.js InthProvider and configure variants, per-policy button layouts, compound parts and data attributes.
-- [ConsentDialog](./docs/frameworks/next/components/consent-dialog.md): Mount ConsentDialog inside a Next.js InthProvider to open the modal preference center from banners, links and triggers.
+- [ConsentBanner](./docs/frameworks/next/components/consent-banner.md): Render ConsentBanner inside a Next.js InthProvider and choose its container, edge style, blocking, and per-policy button layouts.
+- [ConsentDialog](./docs/frameworks/next/components/consent-dialog.md): Mount ConsentDialog, the Your Privacy Choices dialog, inside a Next.js InthProvider and open it from links, triggers, or your own code.
 - [ConsentDialogLink](./docs/frameworks/next/components/consent-dialog-link.md): Reopen the preference center from a Next.js footer with ConsentDialogLink inside InthProvider.
 - [ConsentDialogTrigger](./docs/frameworks/next/components/consent-dialog-trigger.md): Add a floating ConsentDialogTrigger button or multi-action toolbar to a Next.js InthProvider to reopen preferences.
 - [ConsentGate](./docs/frameworks/next/components/consent-gate.md): Gate iframes and third-party widgets behind consent in Next.js with ConsentGate inside InthProvider.
 - [ConsentWidget](./docs/frameworks/next/components/consent-widget.md): Render ConsentWidget as an inline preference center on a Next.js privacy page inside InthProvider.
 - [DevTools](./docs/frameworks/next/components/dev-tools.md): Load the Inth DevTools panel only in Next.js development builds to inspect consent state, scripts, policies and events.
 - [InthProvider](./docs/frameworks/next/components/inth-provider.md): Mount InthProvider once in a Next.js root layout or _app.tsx to connect server state, inth.config.ts and the consent runtime.
-- [Compose your own banner](./docs/frameworks/next/compose.md): Build a custom Next.js consent banner from ConsentBanner compound parts in @inth/nextjs inside InthProvider.
+- [PrivacyChoicesLink](./docs/frameworks/next/components/privacy-choices-link.md): Add a PrivacyChoicesLink to your Next.js footer for US opt-out regions inside InthProvider.
 - [Content Security Policy](./docs/frameworks/next/content-security-policy.md): Pass a per-request CSP nonce to InthProvider in Next.js and allow your Inth project origin in connect-src.
-- [Customize](./docs/frameworks/next/customize.md): Style Inth components in Next.js with ConsentTheme tokens, component slots, dark mode, banner variants and optional CSS imports.
+- [Customize](./docs/frameworks/next/customize.md): Style Inth components in Next.js with ConsentTheme tokens, component slots, the banner container, dark mode and optional CSS imports.
 - [Data fetching reference](./docs/frameworks/next/data-fetching-reference.md): Reference for Next.js inth.config.ts options, modes, resolveConsent, withConsentProps, route handlers, static manifests and testing.
 - [Embeds](./docs/frameworks/next/embeds.md): Keep YouTube videos, maps and third-party iframes out of Next.js pages until consent is granted using ConsentGate or the iframe blocker.
 - [Geography headers](./docs/frameworks/next/geography-headers.md): Use inthProxy in Next.js proxy.ts or middleware.ts so Server Components and Route Handlers receive visitor country and region headers.
@@ -84,7 +84,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Class names and CSS-in-JS](./docs/customization/class-names.md): Style Inth consent components with CSS Modules, vanilla-extract, StyleX, Emotion, or plain classes in every supported framework.
 - [Dark mode](./docs/customization/dark-mode.md): Configure Inth dark mode with colorScheme, theme.dark tokens, .dark class tracking, and flash-free SSR rendering.
 - [Motion and animation](./docs/customization/motion.md): Customize Inth animation timing with motion tokens, turn animations off with disableAnimation, and animate on dialog data-state.
-- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./docs/customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Banner designs](./docs/customization/recipes.md): Copy five tested Inth consent banner designs, from a single prop to headless markup, for React, Vue, Svelte, Astro, and HTML.
 - [Component parts](./docs/customization/slots.md): Reference every Inth banner, dialog, widget, trigger, and ConsentGate part key across frameworks, plus data state attributes and noStyle.
 - [Stylesheets and CSS layers](./docs/customization/stylesheets.md): Load Inth component styles automatically or manually, control CSS cascade layer order, defer dialog CSS, and disable default styles.
