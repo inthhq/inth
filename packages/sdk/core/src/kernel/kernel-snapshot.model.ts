@@ -355,7 +355,10 @@ export const buildInitialKernelState = function buildInitialKernelState(
 			: null;
 	const evaluationPolicy = buildEvaluationPolicy(effective, consentCategories);
 	const policyPending = config.initialPolicyPending ?? false;
-	const userConsentPending = config.initialUserConsentPending === true;
+	// An external CMP owns the outcome, so no account hold applies under it.
+	const userConsentPending =
+		config.initialUserConsentPending === true &&
+		config.initialExternalPermissions === undefined;
 
 	const validated = config.initialRecords
 		? validateHydrationRecords(config.initialRecords, now)

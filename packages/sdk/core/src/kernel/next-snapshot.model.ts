@@ -344,10 +344,14 @@ export const buildNextSnapshot = function buildNextSnapshot(
 	}
 
 	const policyPending = pick(patch.policyPending, current.policyPending);
-	const userConsentPending = pick(
-		patch.userConsentPending,
-		current.userConsentPending
+	const externalPermissions = pick(
+		patch.externalPermissions,
+		current.externalPermissions
 	);
+	// An external CMP owns the outcome, so no account hold applies under it.
+	const userConsentPending =
+		pick(patch.userConsentPending, current.userConsentPending) &&
+		!externalPermissions;
 	const hasAccountLayer =
 		patch.hasAccountLayer === undefined
 			? Boolean(current.hasAccountLayer)
@@ -365,10 +369,6 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		userConsentPending === current.userConsentPending &&
 		now >= current.evaluatedAt &&
 		(current.nextDeadline === null || now < current.nextDeadline);
-	const externalPermissions = pick(
-		patch.externalPermissions,
-		current.externalPermissions
-	);
 	let evaluation = reuseEvaluation
 		? {
 				nextDeadline: current.nextDeadline,
