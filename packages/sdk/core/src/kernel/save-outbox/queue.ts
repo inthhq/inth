@@ -709,8 +709,15 @@ export interface QueueWorker {
 	/**
 	 * Move the visitor off a subject id: to a new one when the backend
 	 * refused it, or to the canonical one it answered for a `sub_` id.
+	 * `owned`, when given, must still hold inside the storage transaction
+	 * and again just before the subject is committed: an answer for one
+	 * account never moves the subject of the account identified since.
 	 */
-	reassignSubject: (from: string, to?: string) => Promise<string | null>;
+	reassignSubject: (
+		from: string,
+		to?: string,
+		owned?: () => boolean
+	) => Promise<string | null>;
 	/** Replay every queued save entry; resolves to whether any is left. */
 	replay: (save: NonNullable<KernelTransport['save']>) => Promise<boolean>;
 	/** Replay every queued opt-out entry in order; resolves to whether any is left. */
@@ -1065,19 +1072,20 @@ export const createQueueWorker = function createQueueWorker({
 	 * cannot start a new reassignment.
 	 */
 	const followRecordedReassignment = async function followRecordedReassignment(
-		from: string
+		from: string,
+		owned: () => boolean
 	): Promise<string | null> {
 		const to = await store.transact(
 			(tx) => readReassignments(tx).find((item) => item.from === from)?.to
 		);
-		if (to === undefined || currentSubjectId() !== to) {
+		if (to === undefined || currentSubjectId() !== to || !owned()) {
 			return null;
 		}
 		// Moves the queued saves; the record already names `to`.
 		const moved = await claimReassignment(
 			from,
 			to,
-			() => currentSubjectId() === to
+			() => currentSubjectId() === to && owned()
 		);
 		return moved === null ? null : to;
 	};
@@ -1099,26 +1107,34 @@ export const createQueueWorker = function createQueueWorker({
 	 * no reassignment of it leads to the current one: a save for a subject
 	 * since replaced or cleared is not moved onto whoever holds the snapshot
 	 * now.
+	 *
+	 * `owned` binds the move to the account whose answer asked for it. The
+	 * same browser subject outlives an `identify()` or a sign-out, so the
+	 * subject alone cannot tell a late answer for the previous account from
+	 * one for the current. It is asked inside the storage transaction, with
+	 * the subject check, and again just before the subject is committed;
+	 * when it fails, nothing moves and this resolves to `null`.
 	 */
 	const reassignSubject = async function reassignSubject(
 		from: string,
-		proposed?: string
+		proposed?: string,
+		owned: () => boolean = () => true
 	): Promise<string | null> {
 		const generation = runtime.getGeneration();
 		const cached = reassignedSubjects.get(from);
 		const earlier =
 			cached?.generation === generation ? cached.claim : undefined;
 		if (earlier === undefined && currentSubjectId() !== from) {
-			return followRecordedReassignment(from);
+			return followRecordedReassignment(from, owned);
 		}
 		// Still the visitor this reassignment started for: on `from`, or
-		// already moved to its replacement. The subject alone decides. The
-		// records generation also advances when the same visitor's choice
+		// already moved to its replacement, and still the account that asked.
+		// The records generation also advances when the same visitor's choice
 		// changes (a server merge, another tab's save), and a clear or a
-		// switch always moves the subject.
+		// subject switch always moves the subject.
 		const unchanged = (to?: string) => () => {
 			const id = currentSubjectId();
-			return id === from || (to !== undefined && id === to);
+			return (id === from || (to !== undefined && id === to)) && owned();
 		};
 		let claim = earlier;
 		if (claim === undefined) {
@@ -1131,7 +1147,14 @@ export const createQueueWorker = function createQueueWorker({
 		}
 		const to = await claim;
 		if (to === null) {
-			return null;
+			// A claim refused for its own caller records nothing. Forget it, so
+			// it does not refuse the next caller, which may own the subject.
+			if (reassignedSubjects.get(from)?.claim === claim) {
+				reassignedSubjects.delete(from);
+			}
+			return earlier === undefined
+				? null
+				: reassignSubject(from, proposed, owned);
 		}
 		// Moves saves queued under `from` since the first claim.
 		if (
@@ -1141,6 +1164,10 @@ export const createQueueWorker = function createQueueWorker({
 			return null;
 		}
 
+		// The account can change between the transaction and this commit.
+		if (!owned()) {
+			return null;
+		}
 		const current = getSnapshot().subject;
 		if (current?.subjectId === to) {
 			return to;
@@ -1171,7 +1198,8 @@ export const createQueueWorker = function createQueueWorker({
 	const followCanonicalSubject = async function followCanonicalSubject(
 		from: string,
 		canonical: string | undefined,
-		moved: Map<string, string> | null
+		moved: Map<string, string> | null,
+		owned?: () => boolean
 	): Promise<string | undefined> {
 		if (
 			!moved ||
@@ -1181,7 +1209,7 @@ export const createQueueWorker = function createQueueWorker({
 		) {
 			return undefined;
 		}
-		const to = await reassignSubject(from, canonical);
+		const to = await reassignSubject(from, canonical, owned);
 		if (to !== null) {
 			moved.set(from, to);
 			return to;
@@ -1441,14 +1469,21 @@ export const createQueueWorker = function createQueueWorker({
 		entry: PendingOptOutEntry,
 		error: unknown,
 		moved: Map<string, string> | null,
-		retryWithoutToken: boolean
+		retryWithoutToken: boolean,
+		owned: () => boolean
 	): Promise<{
 		next: PendingOptOutEntry;
 		moved: Map<string, string> | null;
 		retryWithoutToken: boolean;
 	} | null> {
+		// The refusal is the act's account's: under another account, or
+		// after a sign-out, it gives the current visitor no new subject.
 		if (moved && isSubjectConflict(error)) {
-			const subjectId = await reassignSubject(entry.payload.subjectId);
+			const subjectId = await reassignSubject(
+				entry.payload.subjectId,
+				undefined,
+				owned
+			);
 			if (subjectId !== null) {
 				moved.set(entry.payload.subjectId, subjectId);
 				return {
@@ -1509,6 +1544,7 @@ export const createQueueWorker = function createQueueWorker({
 		// page. Its answer applies only while that account is identified and
 		// no one was identified or signed out while it was out.
 		const identity = runtime.getIdentityVersion();
+		const owned = () => answerOwnedBy(runtime, entry.payload.user, identity);
 		try {
 			const result = await dispatchOptOutReplay(
 				transports,
@@ -1537,7 +1573,8 @@ export const createQueueWorker = function createQueueWorker({
 				entry,
 				error,
 				moved,
-				retryWithoutToken
+				retryWithoutToken,
+				owned
 			);
 			if (recovery) {
 				return replayOptOutEntry(
@@ -1566,12 +1603,14 @@ export const createQueueWorker = function createQueueWorker({
 			written,
 			failure
 		);
-		if (
-			outcome === 'saved' &&
-			answerOwnedBy(runtime, entry.payload.user, identity)
-		) {
+		if (outcome === 'saved' && owned()) {
 			const { subjectId } = entry.payload;
-			const adopted = await followCanonicalSubject(subjectId, canonical, moved);
+			const adopted = await followCanonicalSubject(
+				subjectId,
+				canonical,
+				moved,
+				owned
+			);
 			if (isLast && remainingCount === 0 && answeredOptOut !== undefined) {
 				applySyncedOptOut(runtime, answeredOptOut, {
 					account: entry.payload.user,

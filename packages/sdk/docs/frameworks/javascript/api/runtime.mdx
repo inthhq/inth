@@ -40,7 +40,7 @@ so the module is safe to import on the server.
 | `i18n` | `{ locale?, messages }` | English | Initial locale and key-by-key copy overrides; see [translations](/docs/frameworks/javascript/translations). |
 | `presentation` | `{ prompt?, preferences? }` | none | Layout and blocking hints for `resolveConsentPresentation`. |
 | `journey` | `'page'`, `'tab'` or `false` | `'page'` | Links `/v1/consent/init` to subsequent saves; see [session reports](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows). |
-| `user` | `{ externalId, identityProvider? }` | none | Identified visitor metadata. |
+| `user` | `{ externalId, identityProvider? }` | none | Identified visitor metadata. Updating it to none signs the user out; see [sign-out and auth loading](#sign-out-and-auth-loading). |
 | `vendors` | `Vendor[]` | none | Declared vendors for non-IAB vendor consent. |
 | `nonce` | `string` | none | CSP nonce stamped on inserted `<script>` tags (script-level `nonce` overrides). |
 | `scriptLoader` | `{ onDebug? }` | none | `onDebug` receives script loader lifecycle events (read at start). |
@@ -111,6 +111,25 @@ Framework providers whose props can change use
 `callbacks` and `reloadOnConsentRevoked`. Static startup options (`mode`,
 `i18n`, `experiment`, `persistence`, `storageConfig`, `nonce`) are read once
 and log a dev warning if changed.
+
+### Sign-out and auth loading
+
+<include src="../../../shared/browser/provider-user-sign-out.mdx" />
+
+Call `update()` with a new `user` only when your auth state is settled:
+
+{/* example: fragment */}
+
+```ts
+auth.onChange(({ status, user }) => {
+	if (status === 'authenticated') {
+		void runtime.update({ ...options, user: { externalId: user.id } });
+	} else if (status === 'unauthenticated') {
+		void runtime.update({ ...options, user: undefined });
+	}
+	// While status is 'loading', keep the last confirmed user.
+});
+```
 
 To support streamed server promises for `prefetch`, include `streamPrefetch`
 (from `@inth/sdk/runtime`) or `lazyStreamPrefetch` (from

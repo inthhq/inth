@@ -1,0 +1,18 @@
+When `user` changes from a user to none (`undefined` or `null`), Inth treats
+it as a sign-out, at once:
+
+- `snapshot.user` becomes `null`, and saves and opt-out requests made after
+  that carry no user identity. They are recorded for the anonymous visitor.
+- IAB authority given while the user was signed in is retired.
+- An answer still on its way for the signed-out user no longer changes the
+  visitor's opt-out, subject or categories.
+
+The visitor's subject, stored choices and any held opt-out stay. When a user
+is passed again, Inth identifies them with the backend again.
+
+Many auth libraries report no user while they load or refresh a session, for
+example on page load or while a token renews. Passed straight through, that
+gap signs the user out of Inth, and a choice made during it is not linked to
+the account. When your app knows the session is still active, keep passing
+the last confirmed user while auth loads. Pass no user only when the visitor
+signs out or the session ends.

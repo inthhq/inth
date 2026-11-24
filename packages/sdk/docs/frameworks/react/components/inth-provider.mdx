@@ -34,7 +34,7 @@ Keep `InthProvider` mounted across route navigation. It reads `mode`, `prefetch`
 | `reloadOnConsentRevoked` | Reloads the page after a save or one-click opt-out revokes a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload. With `persistence: false`, nothing reloads because a reload would discard the choice it was for. Defaults to `true` |
 | `consentCategories` | Categories offered in the preference dialog alongside script categories, within policy scope |
 | `overrides` | Forces country, region, or language for testing |
-| `user` | Links consent records to a signed-in user |
+| `user` | Links consent records to a signed-in user. Changing it to none signs the user out; see [Sign-out and auth loading](#sign-out-and-auth-loading) |
 | `callbacks` | Choice, permission, error, and revocation-reload hooks |
 | `i18n` | Languages and message overrides |
 | `legalLinks` | Privacy policy and other legal links rendered in the banner and dialog |
@@ -50,6 +50,37 @@ Keep `InthProvider` mounted across route navigation. It reads `mode`, `prefetch`
 | `enabled` | Set `false` only to deliberately bypass consent enforcement |
 
 `enabled: false` grants all categories and suppresses consent UI. Never use it to silence initialization errors or hide a banner in production.
+
+## Sign-out and auth loading
+
+<include src="../../../shared/browser/provider-user-sign-out.mdx" />
+
+This component keeps the last confirmed user while `useAuth()`, standing in
+for your auth library's hook, reports that the session is loading:
+
+{/* example: fragment */}
+
+```tsx
+const [user, setUser] = useState<KernelUser>();
+
+useEffect(() => {
+	if (auth.status === 'authenticated') {
+		setUser({ externalId: auth.user.id });
+	} else if (auth.status === 'unauthenticated') {
+		setUser(undefined);
+	}
+	// While auth.status is 'loading', keep the last confirmed user.
+}, [auth.status, auth.user?.id]);
+
+return (
+	<InthProvider mode={hosted()} user={user}>
+		{children}
+	</InthProvider>
+);
+```
+
+`KernelUser` is exported from `@inth/react`. Next.js and TanStack Start pass
+`user` to the same provider.
 
 ## Observe changes without inventing choices
 

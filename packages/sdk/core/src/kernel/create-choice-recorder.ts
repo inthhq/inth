@@ -1253,6 +1253,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const result = await outbox.send(payload, {
 				confirmed: recorded.confirmed,
 				generation,
+				identity,
 				optOutActVersion,
 				snapshot: after,
 			});

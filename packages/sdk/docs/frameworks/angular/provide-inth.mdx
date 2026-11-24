@@ -56,7 +56,7 @@ other option is optional.
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save or one-click opt-out withdraws a category or vendor that was granted. Privacy signals and backend-synced opt-outs do not reload. With `persistence: false`, nothing reloads because a reload would discard the choice it was for. |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. See [clear on revocation](./clear-on-revocation). Read once. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. |
-| `user` | `User` | none | Identity sent with the policy request and every saved choice. |
+| `user` | `User` | none | Identity sent with the policy request and every saved choice. Changing it to none signs the user out; see [Sign-out and auth loading](#sign-out-and-auth-loading). |
 | `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. With server rendering, pass the same name as `cookieName` to `provideInthServer()`. |
 | `persistence` | `boolean` or options | `true` | `false` keeps choices in memory only. Read once. |
 | `prefetch` | `RuntimePrefetch` | none | State resolved elsewhere. `provideInthServer()` fills it for you; see [rendering](./rendering). |
@@ -150,6 +150,30 @@ running runtime, and UI options such as `theme`, `noStyle`, `legalLinks` and
 `presentation` re-render the components. `mode`, `i18n`, `experiment`,
 `persistence` and `storageConfig` are read once; outside production, changing
 them logs a warning.
+
+## Sign-out and auth loading
+
+<include src="../../shared/browser/provider-user-sign-out.mdx" />
+
+With `updateOptions()`, update `user` only when your auth state is settled.
+Here `auth.status`, standing in for your auth service, is a signal:
+
+{/* example: fragment */}
+
+```ts
+// In a component or service that injected ConsentManager as `consent`
+effect(() => {
+	const status = this.auth.status();
+	if (status === 'authenticated') {
+		void this.consent.updateOptions({
+			user: { externalId: this.auth.userId() },
+		});
+	} else if (status === 'unauthenticated') {
+		void this.consent.updateOptions({ user: undefined });
+	}
+	// While status is 'loading', keep the last confirmed user.
+});
+```
 
 ## Share one runtime
 

@@ -102,6 +102,12 @@ export interface RecordedAction {
 	generation: number;
 	/** Local opt-out act counter when the action landed. */
 	optOutActVersion: number;
+	/**
+	 * Identification generation when the action landed. A sign-in and
+	 * sign-out while the save is out leave `snapshot.user` looking the same
+	 * (`null`), so the save's opt-out answer is checked against this.
+	 */
+	identity: number;
 	/** The snapshot the action committed. */
 	snapshot: ConsentSnapshot;
 	/** Categories the action confirmed, echoed in the result. */
@@ -176,8 +182,17 @@ export interface SaveOutbox {
 	 * Move the visitor from the `sub_` id `from` to the UUID the backend
 	 * answered for it, in every tab, with the entries queued under `from`.
 	 * Returns the adopted UUID when it moved, else `null`.
+	 *
+	 * `owned`, for an answer to one account's request, is asked inside the
+	 * storage transaction and again just before the subject is committed.
+	 * When it fails, nothing moves: the account identified since keeps its
+	 * subject.
 	 */
-	adoptSubject: (from: string, to: string) => Promise<string | null>;
+	adoptSubject: (
+		from: string,
+		to: string,
+		owned?: () => boolean
+	) => Promise<string | null>;
 	/** Whether an opt-out route answered `404` on this kernel. */
 	areOptOutsUnsupported: () => boolean;
 	/** Number of direct opt-out and lift requests currently in flight. */
@@ -617,21 +632,25 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	const adoptSubject = async function adoptSubject(
 		from: string,
-		to: string
+		to: string,
+		owned?: () => boolean
 	): Promise<string | null> {
 		if (from.startsWith(LEGACY_SUBJECT_PREFIX) && from !== to) {
-			return (await (await loadWorker())?.reassignSubject(from, to)) ?? null;
+			return (
+				(await (await loadWorker())?.reassignSubject(from, to, owned)) ?? null
+			);
 		}
 		return null;
 	};
 
 	const adoptServerSubjectById = async function adoptServerSubjectById(
 		subjectId: string | undefined,
-		sentSubjectId: string | undefined
+		sentSubjectId: string | undefined,
+		owned?: () => boolean
 	): Promise<string | undefined> {
 		const from = getSnapshot().subject?.subjectId;
 		if (subjectId && from && from === sentSubjectId) {
-			return (await adoptSubject(from, subjectId)) ?? undefined;
+			return (await adoptSubject(from, subjectId, owned)) ?? undefined;
 		}
 		return undefined;
 	};
@@ -665,12 +684,14 @@ export const createSaveOutbox = function createSaveOutbox({
 			action.snapshot.subject?.subjectId
 		);
 		// The answer is the account's that saved: after a sign-out or
-		// another `identify()`, its opt-out is someone else's.
+		// another `identify()`, its opt-out is someone else's. Signing in and
+		// out again leaves the user `null` as before, so the identification
+		// generation decides, not the user alone.
 		if (
 			result.optOut !== undefined &&
 			directOptOutSends.size === 0 &&
 			!(await hasQueued('optOuts')) &&
-			getSnapshot().user === action.snapshot.user
+			answerOwnedBy(runtime, action.snapshot.user, action.identity)
 		) {
 			applySyncedOptOut(runtime, result.optOut, {
 				actVersion: action.optOutActVersion,
@@ -868,6 +889,10 @@ export const createSaveOutbox = function createSaveOutbox({
 				? Boolean(transport?.optOut)
 				: Boolean(transport?.liftOptOut);
 		const startedClear = clearVersion;
+		// Whether the act's account is still the identified one.
+		const ownedBy = (): boolean =>
+			context.identity === undefined ||
+			answerOwnedBy(runtime, act.payload.user, context.identity);
 		let staged: OptOutEnqueueResult = alreadyQueued ? 'queued' : 'unstored';
 		let hasEarlier = false;
 		if (hasTransport && !alreadyQueued) {
@@ -961,13 +986,12 @@ export const createSaveOutbox = function createSaveOutbox({
 				markSettled();
 				// Recorded either way; only the account that made the act
 				// takes its answer, the subject it names included.
-				const owned =
-					context.identity === undefined ||
-					answerOwnedBy(runtime, act.payload.user, context.identity);
+				const owned = ownedBy();
 				const adopted = owned
 					? await adoptServerSubjectById(
 							result.subjectId,
-							act.payload.subjectId
+							act.payload.subjectId,
+							ownedBy
 						)
 					: undefined;
 				if (owned && result.optOut !== undefined) {
@@ -990,6 +1014,8 @@ export const createSaveOutbox = function createSaveOutbox({
 				await markOptOutsUnsupported();
 				return;
 			}
+			// A refusal for another account's act, or one answered after a
+			// sign-out, gives the current visitor no new subject.
 			if (
 				reassign &&
 				clearVersion === startedClear &&
@@ -998,7 +1024,8 @@ export const createSaveOutbox = function createSaveOutbox({
 				const subjectId =
 					(await (
 						await loadWorker()
-					)?.reassignSubject(act.payload.subjectId)) ?? null;
+					)?.reassignSubject(act.payload.subjectId, undefined, ownedBy)) ??
+					null;
 				if (subjectId !== null) {
 					const reassigned: OptOutAct =
 						act.kind === 'record'
@@ -1050,6 +1077,8 @@ export const createSaveOutbox = function createSaveOutbox({
 			return { ok: false };
 		}
 		const startedClear = clearVersion;
+		const ownedBy = (): boolean =>
+			answerOwnedBy(runtime, payload.user, identity);
 		const act: OptOutAct = { kind: 'lift', payload };
 		let staged: OptOutEnqueueResult = alreadyQueued ? 'queued' : 'unstored';
 		let hasEarlier = false;
@@ -1106,8 +1135,12 @@ export const createSaveOutbox = function createSaveOutbox({
 			// The lift is recorded, but its answer is the account's that
 			// asked: after a sign-out or another `identify()` it must not move
 			// the current subject. The recorder then drops the answer.
-			const adopted = answerOwnedBy(runtime, payload.user, identity)
-				? await adoptServerSubjectById(result.subjectId, payload.subjectId)
+			const adopted = ownedBy()
+				? await adoptServerSubjectById(
+						result.subjectId,
+						payload.subjectId,
+						ownedBy
+					)
 				: undefined;
 			return {
 				ok: true,
@@ -1124,9 +1157,11 @@ export const createSaveOutbox = function createSaveOutbox({
 				clearVersion === startedClear &&
 				isSubjectConflict(error)
 			) {
+				// Only while the lift's account is still the identified one.
 				const subjectId =
-					(await (await loadWorker())?.reassignSubject(payload.subjectId)) ??
-					null;
+					(await (
+						await loadWorker()
+					)?.reassignSubject(payload.subjectId, undefined, ownedBy)) ?? null;
 				if (subjectId !== null) {
 					return performAccountLift(
 						{ ...payload, subjectId },

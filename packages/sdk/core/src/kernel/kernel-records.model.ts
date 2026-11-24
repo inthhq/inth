@@ -28,7 +28,11 @@ import type {
 } from '../consent-kernel.model';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type { KernelRuntime } from './create-runtime';
-import { applySyncedOptOut, sameOptOutAnswer } from './kernel-opt-out.model';
+import {
+	answerOwnedBy,
+	applySyncedOptOut,
+	sameOptOutAnswer,
+} from './kernel-opt-out.model';
 import type { SnapshotPatch } from './kernel-patch.model';
 import {
 	mergeNewestChoice,
@@ -134,8 +138,15 @@ export interface RecordsBoundaryOptions {
 	transport: KernelTransport | undefined;
 	/** Starts the lifecycle; hydration counts as a lifecycle command. */
 	start: () => void;
-	/** Moves a visitor on a `sub_` id to the UUID a link answered for it. */
-	adoptSubject: (from: string, to: string) => Promise<string | null>;
+	/**
+	 * Moves a visitor on a `sub_` id to the UUID a link answered for it,
+	 * while `owned` holds (see `SaveOutbox.adoptSubject`).
+	 */
+	adoptSubject: (
+		from: string,
+		to: string,
+		owned?: () => boolean
+	) => Promise<string | null>;
 }
 
 export interface RecordsBoundary {
@@ -359,7 +370,12 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			return effectiveSubjectId;
 		}
 		if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
-			const adopted = await adoptSubject(linkedId, linked.subjectId);
+			// Checked again inside the storage transaction and just before
+			// the subject is committed: the account can change while the
+			// move waits for storage.
+			const adopted = await adoptSubject(linkedId, linked.subjectId, () =>
+				answerOwnedBy(runtime, user, attempt)
+			);
 			if (adopted !== null) {
 				effectiveSubjectId = adopted;
 			}

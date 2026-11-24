@@ -554,6 +554,27 @@ export const createInitLifecycle = function createInitLifecycle({
 			: { error, ok: false };
 	};
 
+	/**
+	 * Whether an init request sent from `requested` (records generation
+	 * `recordsGeneration`, identification generation `identity`) still owns
+	 * the visitor's stored records. A sign-in and sign-out while it was out
+	 * leave the user `null` as before; the identification generation tells
+	 * the two anonymous visits apart.
+	 */
+	const ownsRecords = function ownsRecords(
+		requested: ConsentSnapshot,
+		recordsGeneration: number,
+		identity: number
+	): boolean {
+		const current = getSnapshot();
+		return (
+			recordsGeneration === runtime.getGeneration() &&
+			identity === runtime.getIdentityVersion() &&
+			requested.subject?.subjectId === current.subject?.subjectId &&
+			requested.user === current.user
+		);
+	};
+
 	const runInitAttempt = async function runInitAttempt(
 		attempt: number
 	): Promise<InitResult> {
@@ -577,6 +598,7 @@ export const createInitLifecycle = function createInitLifecycle({
 
 		const generation = initGeneration;
 		const recordsGeneration = runtime.getGeneration();
+		const identity = runtime.getIdentityVersion();
 		try {
 			const snapshot = getSnapshot();
 			const ctx: InitContext = {
@@ -600,10 +622,11 @@ export const createInitLifecycle = function createInitLifecycle({
 				);
 			}
 			const current = getSnapshot();
-			const recordsAreCurrent =
-				recordsGeneration === runtime.getGeneration() &&
-				snapshot.subject?.subjectId === current.subject?.subjectId &&
-				snapshot.user === current.user;
+			const recordsAreCurrent = ownsRecords(
+				snapshot,
+				recordsGeneration,
+				identity
+			);
 			// Policy can still resolve after clear or identification changes,
 			// but the old request no longer owns this subject's stored records.
 			const accepted = recordsAreCurrent
