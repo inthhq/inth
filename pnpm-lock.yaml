@@ -4337,6 +4337,9 @@ importers:
       oxlint:
         specifier: 1.80.0
         version: 1.80.0
+      playwright:
+        specifier: 1.63.0
+        version: 1.63.0
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -45999,7 +46002,7 @@ snapshots:
 
   browserslist@4.29.3:
     dependencies:
-      baseline-browser-mapping: 2.11.37
+      baseline-browser-mapping: 2.11.39
       caniuse-lite: 1.0.30001814
       electron-to-chromium: 1.5.445
       node-releases: 2.0.57

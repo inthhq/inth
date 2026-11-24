@@ -91,6 +91,11 @@ import {
 } from './page-state.model';
 import { readConsentBoot } from './read-consent-boot';
 import { readPageNonce } from './read-page-nonce';
+import {
+	choiceFromTaps,
+	recoverChunkLoad,
+	replayPendingChoice,
+} from './recover-chunk-load';
 import { registerDeferredClient } from './register-deferred-client';
 import {
 	scheduleDeferredEngine,
@@ -244,6 +249,10 @@ export const startDeferredClient = function startDeferredClient(
 
 	let engine: AstroEngineClient | null = null;
 	let loading: Promise<AstroEngineClient> | null = null;
+	/** Whether a load of the engine has failed, so the next is a retry. */
+	let engineFailed = false;
+	/** Stops a tap on the banner from retrying the engine. */
+	let disarmTapRetry: (() => void) | null = null;
 	let disposed = false;
 	let stopTrigger = (): void => undefined;
 
@@ -253,7 +262,7 @@ export const startDeferredClient = function startDeferredClient(
 			try {
 				const module = await loadEngine();
 				if (!getWindow()?.[GLOBAL_KEY]) {
-					module.boot(options, extension, {});
+					replayPendingChoice(module.boot(options, extension, {}));
 				}
 			} catch (error) {
 				console.warn('@inth/astro: the consent engine failed to load.', error);
@@ -323,6 +332,7 @@ export const startDeferredClient = function startDeferredClient(
 
 	const attach = (real: AstroEngineClient): void => {
 		engine = real;
+		disarmTapRetry?.();
 		earlyDialog?.standIn.attach(real.runtime);
 		real.subscribe(notify);
 		for (const choice of replays.splice(0)) {
@@ -361,21 +371,89 @@ export const startDeferredClient = function startDeferredClient(
 				return real;
 			} catch (error) {
 				loading = null;
+				engineFailed = true;
 				throw error;
 			}
 		})();
 		return loading;
 	};
 
+	/**
+	 * Start the engine for a visitor's tap. A retry after a failed load
+	 * that fails again reloads the page when the chunk answers again
+	 * (see `recoverChunkLoad`), keeping the tapped choice.
+	 */
+	const startForTap = async (
+		choice: Choice | null
+	): Promise<AstroEngineClient> => {
+		const retry = engineFailed;
+		try {
+			return await start();
+		} catch (error) {
+			if (retry && !disposed) {
+				await recoverChunkLoad(error, choice);
+			}
+			throw error;
+		}
+	};
+
+	/**
+	 * After a failed load, a tap on one of the prompt's buttons is the
+	 * retry. The early-tap script routes the taps it holds itself, and
+	 * stops the click before this sees it; without it (a prerendered page,
+	 * or once it stopped) only the first press loaded the engine, and a
+	 * later tap would do nothing. An accept or reject waits for the engine,
+	 * which replays it.
+	 */
+	const armTapRetry = (retry: () => void): void => {
+		if (disarmTapRetry) {
+			return;
+		}
+		const onClick = (event: Event): void => {
+			const button = (event.target as Element | null)?.closest?.(
+				`${EARLY_TAP_ROOT} [data-action]`
+			);
+			if (!button || engine || disposed) {
+				return;
+			}
+			disarmTapRetry?.();
+			const action = button.getAttribute('data-action');
+			if (action === 'accept') {
+				replays.push('all');
+			} else if (action === 'reject') {
+				replays.push('none');
+			}
+			retry();
+		};
+		document.addEventListener('click', onClick, true);
+		disarmTapRetry = (): void => {
+			document.removeEventListener('click', onClick, true);
+			disarmTapRetry = null;
+		};
+	};
+
 	const request = (): void => {
+		const retry = engineFailed;
 		void (async () => {
 			try {
 				await start();
 			} catch (error) {
+				// A retry while a choice waits for the engine (one the commit
+				// chunk left to it, or a tap the early-tap script holds) is the
+				// visitor's.
+				const taps = earlyTapQueue()?.taps;
+				if (
+					retry &&
+					!disposed &&
+					(replays.length > 0 || Boolean(taps?.length))
+				) {
+					await recoverChunkLoad(error, replays.at(-1) ?? choiceFromTaps(taps));
+				}
 				if (!disposed) {
 					// The prompt that would replay a held tap never mounts: show
 					// it again rather than leave it hidden for good.
 					unhideEarlyTap();
+					armTapRetry(request);
 					console.warn(
 						'@inth/astro: the consent engine failed to load.',
 						error
@@ -466,7 +544,7 @@ export const startDeferredClient = function startDeferredClient(
 			await early;
 			return;
 		}
-		await onEngine(engine ?? (await start()));
+		await onEngine(engine ?? (await startForTap(choice)));
 	};
 
 	// The engine may wait for the page, and the island renders a borrowed
@@ -581,6 +659,7 @@ export const startDeferredClient = function startDeferredClient(
 			}
 			disposed = true;
 			stopTrigger();
+			disarmTapRetry?.();
 			listeners.clear();
 			if (earlyDialog && !engine) {
 				void earlyDialog.handle.destroy();
@@ -746,5 +825,7 @@ export const startDeferredClient = function startDeferredClient(
 		}
 		request();
 	}
+	// A choice tapped before a recovery reload (see `recoverChunkLoad`).
+	replayPendingChoice(client);
 	return client;
 };
