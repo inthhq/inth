@@ -1029,9 +1029,17 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			if (disposed) {
 				return;
 			}
+			const previous = codeScripts;
 			codeScripts = next;
 			pendingScripts = mergedScripts();
-			drain();
+			try {
+				drain();
+			} catch (error) {
+				// A list a check refused never registered, so a later remote
+				// list merges with the code scripts that did.
+				codeScripts = previous;
+				throw error;
+			}
 		},
 	};
 	/**

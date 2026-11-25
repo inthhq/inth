@@ -485,6 +485,52 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('forgets a code update that failed validation, so a later list still applies', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const options = {
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
+				initialScriptRegistry: {
+					load: load(acmeManifest({ alwaysLoad: true })),
+				},
+			},
+			remoteScripts: true,
+		} satisfies Parameters<typeof createConsentProviderRuntime>[0];
+		const runtime = createConsentProviderRuntime(
+			options,
+			defaultRuntimeModules
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+
+		// Code claims the remote entry with a script whose check fails.
+		await Promise.resolve(
+			runtime.update({
+				...options,
+				scripts: [
+					{
+						category: 'marketing',
+						id: 'acme-pixel',
+						src: ACME_SRC,
+						validate: () => {
+							throw new Error('rejected');
+						},
+					},
+				],
+			})
+		).catch(() => undefined);
+
+		// The server then drops the entry.
+		answer.resolve({ scriptRegistry: { load: [] } });
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(0));
+		runtime.dispose();
+	});
+
 	test('applies a registry pin only when its upstream URL is the manifest URL', async () => {
 		const pinned = 'https://acme.inth.app/scripts/pixel@abc.js';
 		const pin = (upstreamUrl: string) =>
