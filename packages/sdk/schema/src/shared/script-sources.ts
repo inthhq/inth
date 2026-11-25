@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 
+import type { JsonValue } from './policy-rule-fingerprint';
 import { isPlainPolicyObject } from './policy-rule-invariants';
 
 /**
@@ -100,7 +101,7 @@ export interface RemoteScriptWire {
 	 * The integration's resolved manifest: plain JSON that Inth checks
 	 * before it runs any of it.
 	 */
-	manifest: unknown;
+	manifest: { [key: string]: JsonValue | undefined };
 }
 
 /**
