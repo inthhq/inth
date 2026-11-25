@@ -35,6 +35,9 @@ Once the mobile SDKs are public, the pages are at
   `gateDecision` subscription so a withdrawal stops it. `PENDING` is not a
   refusal: keep listening. Disable the vendor's own auto-initialization first.
 - Keep a Privacy settings action reachable after the first prompt closes.
+- Under a US state opt-out policy, also show `PrivacyChoicesLink` from
+  `inth-consent-ui`, with `InthConsent` on screen to draw its confirmation. Opting
+  back in takes two steps; call `ConsentDraft.optIn()` only after the person confirms.
 - `CommitResult.ok` means the choice is stored on the device and queued for
   delivery. It does not mean the backend has it. Under `dryRun` the choice is
   stored and nothing is queued, so `queued` is false.

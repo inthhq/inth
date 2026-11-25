@@ -108,9 +108,10 @@ suspend fun ConsentCore.awaitOptOut(): OptOutResult =
  * [ConsentCore.optIn] as a suspend function, run on [Dispatchers.IO].
  *
  * Lifting a device-held opt-out performs a durable write, and lifting an account-held
- * opt-out (`person` or `both`) makes a blocking network request to the backend, so
- * this never runs on the caller's thread. Cancelling the caller does not stop a lift
- * that has started.
+ * opt-out (`person` or `both`) stores the lift in the opt-out queue and waits for the
+ * backend's answer, so this never runs on the caller's thread. An account lift that does
+ * not reach the backend stays queued and replays with the same idempotency key.
+ * Cancelling the caller does not stop a lift that has started.
  *
  * @return The same [OptInResult] the blocking call returns.
  */

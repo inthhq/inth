@@ -67,6 +67,12 @@ Edits stay in the draft until `save()`. The draft seeds from recorded choices (n
 
 Each save passes the snapshot revision the draft read. The core rejects stale writes with `concurrent-change` and keeps edits visible for review. A successful save confirms durable device storage and queues backend delivery. Hardware Back routes through `requestClose()`, asking before discarding edits and never interrupting a running save.
 
+### Opt out of sale and sharing
+
+Under an opt-out policy, `draft.privacyChoicesLink(variant)` gives the link's title, whether it carries the CPPA icon, and whether a tap opts out or opens your settings. `draft.optOut()` records the opt-out in one step. `draft.optOutReceipt()` gives what to show once one is held: the heading, the honored status, where it holds, and when it was recorded.
+
+Opting back in takes two steps (11 CCR §7028(a)). Ask with `draft.optOutCopy.optInTitle` and `optInSentence(rights)`, and call `draft.optIn()` only from the confirm button. `draft.optOutCopy` holds the rest of the opt-out copy in the served language. When the person's account holds the opt-out, the lift waits for the backend. A lift that does not reach the backend stays queued and replays, and the opt-out stays until the backend answers. `draft.isChangingOptOut` is `true` while either runs.
+
 ## Build your own IAB screen
 
 Under a TCF policy, `iab` on the scope (or `draft.iab`) exposes an `IabDraftHandle` with disclosure rows and draft commands:

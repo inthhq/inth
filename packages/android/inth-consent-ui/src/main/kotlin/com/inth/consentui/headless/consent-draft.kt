@@ -26,9 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 /** What a consent control asks the core to record. */
 enum class ConsentWriteAction {
@@ -121,6 +120,8 @@ class ConsentDraft internal constructor(
     /** The last message a screen reader should hear. [announcementSequence] moves with each one. */
     var announcement by mutableStateOf(""); private set
     var announcementSequence by mutableIntStateOf(0); private set
+    /** An opt-out or an opt-back-in from [optOut] or [optIn] is running. Disable the controls that start one. */
+    var isChangingOptOut by mutableStateOf(false); private set
 
     private var baseRevision = 0L
     private var seedCategories: Map<ConsentCategory, Boolean> = emptyMap()
@@ -188,9 +189,20 @@ class ConsentDraft internal constructor(
     /** Honored opt-out status line for preferences, or `null` when no opt-out is held. */
     val optOutStatus: String? get() {
         if (!optOutState.honored) return null
-        val text = optOutCopy(snapshot)
+        val text = resolveOptOutCopy(snapshot)
         return if (optOutState.via == OptOutVia.SIGNAL) text.statusSignal else text.statusRequest
     }
+
+    /** Opt-out and Privacy Choices copy in the served language, for an app-owned opt-out screen. */
+    val optOutCopy: OptOutCopy get() = resolveOptOutCopy(snapshot)
+
+    /** The held opt-out as a receipt, or `null` when none is held. [variant] names the title a heading falls back to. */
+    fun optOutReceipt(variant: OptOutLinkVariant = OptOutLinkVariant.DO_NOT_SELL): OptOutReceipt? =
+        resolveOptOutReceipt(snapshot, optOutState, variant)
+
+    /** The Privacy Choices link for the current snapshot with the [variant] title, or `null` when it shows nothing. */
+    fun privacyChoicesLink(variant: OptOutLinkVariant = OptOutLinkVariant.DO_NOT_SELL): PrivacyChoicesLinkState? =
+        resolvePrivacyChoicesLink(snapshot, optOutState, variant)
 
     /** Why [category] is locked or annotated for an opt-out or privacy signal, or `null`. */
     fun categoryOptOutLock(category: ConsentCategory): OptOutLock? =
@@ -210,7 +222,7 @@ class ConsentDraft internal constructor(
         val gpcLocked = optOutLock == OptOutLock.GPC_ACTIVE
         val strictScope = PolicyEvaluator.RESTRICTION_STRICT_SCOPE in snapshot.restrictions[category.wireName].orEmpty()
         val locked = !category.optional || gpcLocked || strictScope
-        val optOutText = optOutCopy(snapshot)
+        val optOutText = resolveOptOutCopy(snapshot)
         val note = when {
             !category.optional -> null
             gpcLocked -> optOutText.lockedByGpc
@@ -305,6 +317,85 @@ class ConsentDraft internal constructor(
 
     /** Send the last action again after a refused save. */
     fun retry(onResult: (Boolean) -> Unit = {}) { lastAction?.let { save(it, onResult) } }
+
+    /**
+     * Record a durable opt-out of sale and sharing in one step, as the "Do Not Sell or Share" link
+     * does. Available while the policy offers the opt-out ([ResolvedOptOutState.available]).
+     *
+     * The opt-out is stored on this device before anything is sent, and queued for the backend.
+     * Show the receipt ([optOutReceipt]) once it settles.
+     *
+     * @param onResult Called on the main thread with whether an opt-out is held afterwards.
+     */
+    fun optOut(onResult: (Boolean) -> Unit = {}) {
+        if (isSaving || isChangingOptOut) return
+        isChangingOptOut = true
+        scope.launch {
+            val result = withContext(io) { core.optOut() }
+            isChangingOptOut = false
+            settleOptOutChange(result.ok, if (result.ok) resolveOptOutCopy(core.snapshot()).statusRequest else copy.saveFailed, onResult)
+        }
+    }
+
+    /**
+     * Opt back in to sale and sharing: the second step, after the person confirmed
+     * ("Opt back in?"). California requires the two steps (11 CCR §7028(a)); show the question
+     * first and call this only on its confirm button. Port of the web `confirmSaleRight`.
+     *
+     * A device-held opt-out is lifted. When the person's stored choice still refuses the
+     * category that decides the opt-out, the grant is saved instead, which lifts it as it records.
+     * An opt-out the person's account holds is the backend's to lift: the lift goes first and
+     * waits for its answer, and the grant follows only while the same account is signed in. A lift
+     * the backend did not answer stays queued and the opt-out stays until it does. Does nothing
+     * while Global Privacy Control holds the opt-out.
+     *
+     * @param onResult Called on the main thread with whether the opt-out is gone afterwards.
+     */
+    fun optIn(onResult: (Boolean) -> Unit = {}) {
+        if (isSaving || isChangingOptOut) return
+        val state = optOutState
+        if (state.lock == OptOutLock.GPC_ACTIVE) return
+        val before = snapshot
+        val deciding = state.decidingCategory
+        isChangingOptOut = true
+        scope.launch {
+            withContext(io) {
+                val refused = deciding != null && before.explicitChoice?.consents?.get(deciding.wireName) == false
+                val liftIsEnough = state.available && !refused
+                val grant = { if (deciding != null) core.save(CommitIntent.Custom(mapOf(deciding to true))) }
+                when {
+                    core.snapshot().optOut == null -> grant()
+                    state.lock != OptOutLock.HELD_BY_ACCOUNT -> if (liftIsEnough || deciding == null) core.optIn() else grant()
+                    else -> {
+                        // The grant belongs to the account that asked. If the app identified
+                        // someone else while the lift was out, it is not theirs.
+                        val asked = before.subject?.externalId
+                        val lifted = core.optIn()
+                        if (lifted.ok && !liftIsEnough && core.snapshot().subject?.externalId == asked) grant()
+                    }
+                }
+            }
+            isChangingOptOut = false
+            val after = core.snapshot()
+            val ok = after.optOut == null
+            val message = when {
+                ok -> copy.choicesSaved
+                state.lock == OptOutLock.HELD_BY_ACCOUNT -> resolveOptOutCopy(after).lockedByAccount
+                else -> copy.saveFailed
+            }
+            settleOptOutChange(ok, message, onResult)
+        }
+    }
+
+    private fun settleOptOutChange(ok: Boolean, message: String, onResult: (Boolean) -> Unit) {
+        sync()
+        // A clean draft reseeds, so the switches show what the opt-out now allows.
+        if (!isDirty && !isSaving) reset()
+        announcement = message
+        announcers.lastOrNull()?.invoke(announcement)
+        onResult(ok)
+        announcementSequence += 1
+    }
 
     /** Ask the backend for the current policy and vendor list. The draft reloads when it lands, or turns stale if it has edits. */
     fun refresh() { if (!isSaving) { reloadAfterRefresh = true; io.asExecutor().execute { core.refresh() } } }
@@ -422,37 +513,3 @@ internal fun initialIabChoices(presentation: IabPresentation, firstTime: Boolean
 internal fun List<Int>.select(id: Int, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
 internal fun List<Long>.select(id: Long, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
 internal fun List<String>.select(id: String, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
-
-internal data class OptOutCopy(
-    val statusRequest: String,
-    val statusSignal: String,
-    val lockedByGpc: String,
-    val lockedByAccount: String,
-)
-
-private val DEFAULT_OPT_OUT_COPY = OptOutCopy(
-    statusRequest = "Opt-out request honored",
-    statusSignal = "Opt-out preference signal honored",
-    lockedByGpc = "Your browser's Global Privacy Control signal is on, so this stays off.",
-    lockedByAccount = "Your account has opted out, and you can change this after signing in.",
-)
-
-/**
- * Reads `optOut.*` copy from the served translation bundle when present, falling back to
- * the same English strings as `@inth/sdk-translations`.
- */
-internal fun optOutCopy(snapshot: ConsentSnapshot): OptOutCopy {
-    val section = snapshot.translations?.get("optOut") as? JsonObject ?: return DEFAULT_OPT_OUT_COPY
-    fun string(key: String, fallback: String): String =
-        (section[key] as? JsonPrimitive)
-            ?.takeIf { it.isString }
-            ?.content
-            ?.takeIf { it.isNotBlank() }
-            ?: fallback
-    return OptOutCopy(
-        statusRequest = string("statusRequest", DEFAULT_OPT_OUT_COPY.statusRequest),
-        statusSignal = string("statusSignal", DEFAULT_OPT_OUT_COPY.statusSignal),
-        lockedByGpc = string("lockedByGpc", DEFAULT_OPT_OUT_COPY.lockedByGpc),
-        lockedByAccount = string("lockedByAccount", DEFAULT_OPT_OUT_COPY.lockedByAccount),
-    )
-}
