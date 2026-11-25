@@ -315,6 +315,11 @@ export type ConsentSignalType = 'gtag' | 'rudderstack' | 'clarity';
  * which turns each one into a `Script`.
  */
 export interface ResolvedManifest extends ManifestContract {
+	/**
+	 * The manifest runtime level the manifest needs, when it is above 1. A
+	 * level 1 manifest leaves it out.
+	 */
+	requires?: number;
 	vendor: string;
 	vendorDetails?: VendorDetails;
 	category: HasCondition<AllConsentNames>;

@@ -2,6 +2,7 @@ import {
 	isCategoryCondition,
 	isCategoryName,
 } from '../modules/script-loader/category-condition';
+import { MANIFEST_RUNTIME_LEVEL } from './level';
 import {
 	MANIFEST_STEP_TYPES,
 	RUNTIME_VALUE_KIND,
@@ -107,6 +108,7 @@ const MANIFEST_KEYS: ReadonlySet<string> = new Set<keyof ResolvedManifest>([
 	...STEP_LISTS,
 	'kind',
 	'schemaVersion',
+	'requires',
 	'vendor',
 	'vendorDetails',
 	'category',
@@ -228,6 +230,17 @@ const manifestProblem = (
 	const extra = unknownKey(manifest, MANIFEST_KEYS);
 	if (extra !== undefined) {
 		return `it has the unknown field ${extra}`;
+	}
+	const { requires } = manifest;
+	if (
+		requires !== undefined &&
+		!(Number.isInteger(requires) && (requires as number) >= 1)
+	) {
+		return 'its requires is not a whole number from 1';
+	}
+	// A level this SDK does not run uses steps or fields it would skip.
+	if (typeof requires === 'number' && requires > MANIFEST_RUNTIME_LEVEL) {
+		return `it needs manifest runtime level ${String(requires)}, and this SDK runs level ${MANIFEST_RUNTIME_LEVEL}`;
 	}
 	if (typeof manifest.vendor !== 'string' || manifest.vendor.length === 0) {
 		return 'it names no vendor';

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { MANIFEST_RUNTIME_LEVEL } from '../level';
 import { parseResolvedManifest } from '../parse';
 import { resolvedManifestToScript } from '../runtime';
 
@@ -226,5 +227,31 @@ describe('parseResolvedManifest', () => {
 		const { loadScript: _loadScript, ...callbackOnly } = manifest();
 
 		expect(parseResolvedManifest(callbackOnly).ok).toBe(true);
+	});
+
+	it.each([undefined, 1, MANIFEST_RUNTIME_LEVEL])(
+		'accepts requires %j, a level this runtime runs',
+		(requires) => {
+			expect(parseResolvedManifest({ ...manifest(), requires }).ok).toBe(true);
+		}
+	);
+
+	it('refuses a manifest that needs a level above this runtime', () => {
+		expect(
+			parseResolvedManifest({
+				...manifest(),
+				requires: MANIFEST_RUNTIME_LEVEL + 1,
+			})
+		).toEqual({
+			ok: false,
+			reason: `it needs manifest runtime level ${MANIFEST_RUNTIME_LEVEL + 1}, and this SDK runs level ${MANIFEST_RUNTIME_LEVEL}`,
+		});
+	});
+
+	it.each([0, -1, 1.5, '1', null])('refuses requires %j', (requires) => {
+		expect(parseResolvedManifest({ ...manifest(), requires })).toEqual({
+			ok: false,
+			reason: 'its requires is not a whole number from 1',
+		});
 	});
 });
