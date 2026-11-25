@@ -13,31 +13,20 @@
  */
 
 import type { createDialog } from '../ui/dialog';
-import { version } from '../version';
 import type { openEarlyDialog } from './early-dialog';
+import { loadPartFile } from './part-file';
+import type { PartFile } from './part-file';
 
 /** Global `inth.dialog.js` publishes its {@link DialogFile} on. */
 export const DIALOG_KEY = '__inthDialog';
 
 /** What `inth.dialog.js` publishes. @internal */
-export interface DialogFile {
+export interface DialogFile extends PartFile {
 	/** The stock dialog surface, for the engine. */
 	createDialog: typeof createDialog;
 	/** The dialog over the init script's stand-in, for the init script. */
 	openEarlyDialog: typeof openEarlyDialog;
-	/** The package version the file was built from. */
-	version: string;
 }
-
-const published = (): DialogFile | undefined => {
-	const file = (window as unknown as Record<string, DialogFile | undefined>)[
-		DIALOG_KEY
-	];
-	// A file from another release may not match this bundle's markup.
-	return file?.version === version ? file : undefined;
-};
-
-const loads = new Map<string, Promise<DialogFile | undefined>>();
 
 /**
  * Load `inth.dialog.js` from `src`, once per URL, unless a file from this
@@ -52,31 +41,5 @@ export const loadDialogFile = function loadDialogFile(
 	src: string,
 	nonce?: string
 ): Promise<DialogFile | undefined> {
-	const ready = published();
-	if (ready) {
-		return Promise.resolve(ready);
-	}
-	let pending = loads.get(src);
-	if (!pending) {
-		// oxlint-disable-next-line promise/avoid-new -- Settled by the script element.
-		pending = new Promise((resolve) => {
-			const element = document.createElement('script');
-			element.src = src;
-			if (nonce) {
-				element.nonce = nonce;
-			}
-			const settle = () => {
-				const file = published();
-				if (!file) {
-					loads.delete(src);
-				}
-				resolve(file);
-			};
-			element.addEventListener('load', settle);
-			element.addEventListener('error', settle);
-			document.head.append(element);
-		});
-		loads.set(src, pending);
-	}
-	return pending;
+	return loadPartFile<DialogFile>(DIALOG_KEY, src, nonce);
 };

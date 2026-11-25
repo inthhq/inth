@@ -234,6 +234,8 @@ const manifest = remoteIntegrations.googleTagManager?.resolveRemote(
 
 Integrations that run their own lifecycle code, such as HubSpot and Sentry, stay npm-only.
 
+The script tag loads these integrations by default; set `data-remote-scripts="false"` on it to turn that off. The npm packages load them only with `remoteScripts: true`, such as `<InthProvider remoteScripts>` in React. A script your site declares in code for the same integration wins over the one from the server.
+
 ## Mobile SDKs
 
 Bundled mobile helpers ship in `InthApple`, `inth-android`, and `@inth/react-native/integrations`. They add no vendor dependencies; install only the vendor SDKs your app uses.

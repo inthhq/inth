@@ -860,3 +860,52 @@ describe('inth.dialog.js', () => {
 		});
 	}
 });
+
+describe('scripts the Inth server lists', () => {
+	const REMOTE_SRC = 'https://remote-pixel.invalid/pixel.js';
+	const remoteTag = (win: PageWindow): HTMLScriptElement | null =>
+		win.document.querySelector(`script[src="${REMOTE_SRC}"]`);
+	const manifestsRequested = (win: PageWindow): boolean =>
+		[...win.document.querySelectorAll('script')].some((tag) =>
+			tag.src.includes('/inth.manifests.js')
+		);
+
+	it('loads one that may run before a choice through the engine and inth.manifests.js', async () => {
+		const win = await open({ remote: 'always' });
+
+		// Its setup ran and its tag is in the page, while the banner waits.
+		await expect.poll(() => win.__ran, { timeout: 8000 }).toContain('remote');
+		expect(remoteTag(win)).not.toBeNull();
+		expect(manifestsRequested(win)).toBe(true);
+		expect(win.inth.client).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).toBeNull();
+	});
+
+	it('waits for its category, and starts once an accept before the engine grants it', async () => {
+		const win = await open({ 'hosted-delay': 1500, remote: 'gated' });
+		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
+		// The list arrived, so its file is on its way before the engine.
+		await expect.poll(() => manifestsRequested(win)).toBe(true);
+		expect(win.__ran).not.toContain('remote');
+
+		buttonOf(win, 'accept')?.click();
+
+		await expect.poll(() => win.__ran, { timeout: 8000 }).toContain('remote');
+		expect(remoteTag(win)).not.toBeNull();
+		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
+	});
+
+	it('loads nothing the server lists with data-remote-scripts="false"', async () => {
+		const win = await open({ 'no-remote': true, remote: 'always' });
+
+		// The engine still loads on its own schedule.
+		win.inth.openDialog();
+		await expect.poll(() => win.inth.client, { timeout: 8000 }).not.toBeNull();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 500);
+		});
+		expect(win.__ran).not.toContain('remote');
+		expect(remoteTag(win)).toBeNull();
+		expect(manifestsRequested(win)).toBe(false);
+	});
+});

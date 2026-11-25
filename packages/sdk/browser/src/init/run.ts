@@ -79,7 +79,13 @@ import {
 	writePendingTap,
 } from './pending-tap';
 import type { PendingTap } from './pending-tap';
-import { readPolicyCache, writePolicyCache } from './policy-cache';
+import {
+	readPolicyCache,
+	updatePolicyCacheRegistry,
+	writePolicyCache,
+} from './policy-cache';
+import { readRemoteStandIns, withCachedRegistry } from './remote-entries';
+import type { RemoteStandIns } from './remote-entries';
 import { scheduleEngine } from './schedule';
 
 /**
@@ -218,6 +224,8 @@ export const runInitScript = function runInitScript(
 	const parts: { commit?: InitCommitPart; records?: InitRecordsPart } = {};
 	const partLoads: Partial<Record<InitFile, Promise<unknown>>> = {};
 	const configs: ScriptTagClientOptions[] = [];
+	/** The server's `load` list, read from the last answer or the cache. */
+	let remote: RemoteStandIns = { categories: [], scripts: [] };
 	const listeners = new Set<(next: ConsentSnapshot) => void>();
 	const cleanups: (() => void)[] = [];
 
@@ -247,6 +255,26 @@ export const runInitScript = function runInitScript(
 			// A choice the engine records also keeps the policy for the next
 			// page's init script.
 			engine.onInit((client) => {
+				// The engine's own answers, such as an empty list after the
+				// init script gave up waiting, replace the cached list too.
+				let cachedRegistry: ConsentSnapshot['scriptRegistry'] | undefined;
+				client.subscribe((next) => {
+					const projectUrl =
+						options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
+					if (
+						next.policyPending ||
+						next.scriptRegistry === cachedRegistry ||
+						!projectUrl
+					) {
+						return;
+					}
+					cachedRegistry = next.scriptRegistry;
+					updatePolicyCacheRegistry(
+						projectUrl,
+						options?.overrides,
+						next.scriptRegistry
+					);
+				});
 				const off = client.subscribe((next) => {
 					if (next.explicitChoice) {
 						off();
@@ -347,7 +375,8 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `inth.commit.js`, `inth.records.js` or `inth.dialog.js`, once.
+	 * Fetch `inth.commit.js`, `inth.records.js`, `inth.dialog.js` or
+	 * `inth.manifests.js`, once.
 	 * Settles when it has run, failed, or after {@link INIT_WAIT_MS}; `parts`
 	 * or the dialog global holds what it provided.
 	 */
@@ -461,7 +490,9 @@ export const runInitScript = function runInitScript(
 		if (
 			scripts.some(
 				(entry) => isRunnableNow(entry, next) && !isPlainScript(entry)
-			)
+			) ||
+			// A server-listed script runs only through the engine's loader.
+			remote.scripts.some((entry) => isRunnableNow(entry, next))
 		) {
 			loadEngine();
 		}
@@ -788,6 +819,29 @@ export const runInitScript = function runInitScript(
 			overrides: current.overrides,
 		};
 		snapshot = pendingSnapshot(snapshotOptions);
+		/**
+		 * Read the server's list from `data`. Its categories join the ones the
+		 * visitor is asked about, as the engine registers them, so an accept
+		 * before the engine covers them; its manifest file loads ahead of the
+		 * engine.
+		 */
+		const readRemote = (data: SSRInitialData | undefined): void => {
+			if (current.remoteScripts === false) {
+				return;
+			}
+			remote = readRemoteStandIns(data, current.scripts ?? []);
+			snapshotOptions.consentCategories = remote.scripts.length
+				? [
+						...new Set([
+							...(current.consentCategories ?? []),
+							...remote.categories,
+						]),
+					]
+				: current.consentCategories;
+			if (remote.scripts.length) {
+				void loadPart('manifests');
+			}
+		};
 		let pending: Promise<SSRInitialData | undefined> | undefined;
 		if (supportsEarlyStart(current, projectUrl)) {
 			try {
@@ -829,13 +883,12 @@ export const runInitScript = function runInitScript(
 					const read = reader.readStoredRecords(undefined, Date.now());
 					if (read.found) {
 						snapshotOptions.records = read.records;
-						const cached =
-							answered || api
-								? undefined
-								: snapshotFromPrefetchedInit(
-										readPolicyCache(projectUrl, current.overrides),
-										snapshotOptions
-									);
+						let cached: ConsentSnapshot | undefined;
+						if (!(answered || api)) {
+							const policy = readPolicyCache(projectUrl, current.overrides);
+							readRemote(policy);
+							cached = snapshotFromPrefetchedInit(policy, snapshotOptions);
+						}
 						if (cached) {
 							setSnapshot(cached);
 							startScripts(cached);
@@ -845,58 +898,67 @@ export const runInitScript = function runInitScript(
 				})
 			: true;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-		const handled = Promise.all([pending, records]).then(([data, readable]) => {
-			if (api || boot.commit || boot.disposed) {
-				return;
-			}
-			lastInit = data;
-			if (!readable) {
-				// A stored choice the init script could not read: the engine
-				// decides, now.
-				loadEngine();
-				return;
-			}
-			const resolved = snapshotFromPrefetchedInit(data, snapshotOptions);
-			if (!(data && resolved)) {
-				// A response the init script cannot read, or none: the engine
-				// decides, now.
-				loadEngine();
-				return;
-			}
-			const config = configFromPrefetchedInit(data, current.overrides);
-			if (config) {
-				boot.prefetch = { config, overrides: current.overrides, projectUrl };
-			}
-			if (stored) {
-				writePolicyCache(projectUrl, current.overrides, data);
-			}
-			setSnapshot(resolved);
-			startScripts(resolved);
-			if (resolved.activeUI !== 'banner') {
-				return;
-			}
-			if (
-				pendingTap ||
-				!supportsEarlyBanner(current) ||
-				!hasBannerCopy(resolved)
-			) {
-				loadEngine();
-				return;
-			}
-			if (document.body) {
-				renderBanner(resolved);
-			} else {
-				document.addEventListener(
-					'DOMContentLoaded',
-					() => {
-						if (snapshot === resolved) {
-							renderBanner(resolved);
-						}
-					},
-					{ once: true }
+		const handled = Promise.all([pending, records]).then(
+			([answer, readable]) => {
+				if (api || boot.commit || boot.disposed) {
+					return;
+				}
+				// A registry the server could not read keeps the last list, for
+				// this page and, through `lastInit`, the cache.
+				const data = withCachedRegistry(
+					answer,
+					readPolicyCache(projectUrl, current.overrides)
 				);
+				lastInit = data;
+				if (!readable) {
+					// A stored choice the init script could not read: the engine
+					// decides, now.
+					loadEngine();
+					return;
+				}
+				readRemote(data);
+				const resolved = snapshotFromPrefetchedInit(data, snapshotOptions);
+				if (!(data && resolved)) {
+					// A response the init script cannot read, or none: the engine
+					// decides, now.
+					loadEngine();
+					return;
+				}
+				const config = configFromPrefetchedInit(data, current.overrides);
+				if (config) {
+					boot.prefetch = { config, overrides: current.overrides, projectUrl };
+				}
+				if (stored) {
+					writePolicyCache(projectUrl, current.overrides, data);
+				}
+				setSnapshot(resolved);
+				startScripts(resolved);
+				if (resolved.activeUI !== 'banner') {
+					return;
+				}
+				if (
+					pendingTap ||
+					!supportsEarlyBanner(current) ||
+					!hasBannerCopy(resolved)
+				) {
+					loadEngine();
+					return;
+				}
+				if (document.body) {
+					renderBanner(resolved);
+				} else {
+					document.addEventListener(
+						'DOMContentLoaded',
+						() => {
+							if (snapshot === resolved) {
+								renderBanner(resolved);
+							}
+						},
+						{ once: true }
+					);
+				}
 			}
-		});
+		);
 		// The engine waits for this before it takes over, so it starts from
 		// the answer instead of sending /init again, but not for long.
 		boot.settled = Promise.race([

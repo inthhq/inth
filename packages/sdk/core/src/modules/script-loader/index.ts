@@ -33,6 +33,7 @@ export {
 export type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
 
 export type {
+	RemoteManifestRuntime,
 	Script,
 	ScriptCallbackInfo,
 	ScriptLoaderDebugEvent,

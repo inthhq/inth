@@ -268,6 +268,14 @@ export interface ConsentClientBaseOptions extends Pick<
 	 */
 	experimentalScriptRegistry?: ConsentRuntimeOptions['experimentalScriptRegistry'];
 	/**
+	 * Load the `@inth/integrations` scripts the project added on the Inth
+	 * server, next to `scripts`. Each keeps its integration's own consent
+	 * settings, and a script in `scripts` for the same integration wins. On
+	 * by default for the script tag, where `data-remote-scripts="false"`
+	 * turns it off; off by default for the npm package. Initial-only.
+	 */
+	remoteScripts?: boolean;
+	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.
 	 * Removing a script cannot stop code that already ran, so the reload

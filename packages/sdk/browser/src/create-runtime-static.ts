@@ -24,6 +24,8 @@ import {
 	mountRuntimeIAB,
 } from '@inth/sdk-core/runtime/on-demand';
 
+import { loadManifestsFile } from './init/manifests-import';
+
 /**
  * Creates the page runtime with every module mounted statically.
  *
@@ -32,15 +34,22 @@ import {
 export const createBrowserRuntime = function createBrowserRuntime(
 	options: ConsentRuntimeOptions
 ): ConsentRuntime {
-	return createConsentRuntimeWith(options, {
-		connectConsentSource,
-		createClearOnRevocation,
-		createIframeBlocker,
-		createNetworkBlocker,
-		createPersistence,
-		createScriptLoader,
-		createWindowDebug,
-		mountIAB: mountRuntimeIAB,
-		watchRevocationReload,
-	});
+	// A script tag loads the integrations added on the Inth server unless
+	// the page turns that off (`data-remote-scripts="false"`).
+	return createConsentRuntimeWith(
+		{ ...options, remoteScripts: options.remoteScripts ?? true },
+		{
+			connectConsentSource,
+			createClearOnRevocation,
+			createIframeBlocker,
+			createNetworkBlocker,
+			createPersistence,
+			createScriptLoader,
+			createWindowDebug,
+			// `remoteScripts` runs manifests from `inth.manifests.js`.
+			loadManifestRuntime: loadManifestsFile,
+			mountIAB: mountRuntimeIAB,
+			watchRevocationReload,
+		}
+	);
 };

@@ -225,6 +225,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		prefetch: options.prefetch,
 		presentation: options.presentation,
 		reloadOnConsentRevoked: options.reloadOnConsentRevoked,
+		remoteScripts: options.remoteScripts,
 		scriptLoader: options.scriptLoader,
 		scripts: options.scripts,
 		storageConfig: options.storageConfig,

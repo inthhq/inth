@@ -39,6 +39,7 @@ export const OPTIONS: Record<keyof InthProviderOptions, 'display' | 'key'> = {
 	presentation: 'display',
 	projectUrl: 'key',
 	reloadOnConsentRevoked: 'key',
+	remoteScripts: 'key',
 	scriptLoader: 'key',
 	scripts: 'key',
 	scrollLock: 'display',

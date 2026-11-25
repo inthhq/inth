@@ -71,7 +71,12 @@ const INIT_BUNDLES = new Set([
 ]);
 
 /** Script builds that run hosted or manifest mode: no testing transport. */
-const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
+const PRODUCTION_BUNDLES = new Set([
+	'inth.headless',
+	'inth.iab',
+	'inth.gpp',
+	'inth.manifests',
+]);
 
 /**
  * The ESM build loads the preference centre on demand
@@ -225,6 +230,7 @@ export default defineConfig({
 		scriptTagLib('inth.commit', './src/entries/cdn-commit.ts'),
 		scriptTagLib('inth.records', './src/entries/cdn-records.ts'),
 		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
+		scriptTagLib('inth.manifests', './src/entries/cdn-manifests.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),

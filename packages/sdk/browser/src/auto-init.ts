@@ -145,6 +145,10 @@ export const readScriptOptions = function readScriptOptions(
 	if (nonce) {
 		options.nonce = nonce;
 	}
+	// On by default for a tag (see `createGlobalWith`); this turns it off.
+	if (element.getAttribute('data-remote-scripts') === 'false') {
+		options.remoteScripts = false;
+	}
 	if (readFlag(element, 'data-no-ui')) {
 		options.ui = false;
 		return options;

@@ -153,6 +153,15 @@ describe('readScriptOptions', () => {
 		).toEqual({});
 	});
 
+	it('turns remote scripts off with data-remote-scripts="false" only', () => {
+		expect(
+			readScriptOptions(scriptWith({ 'data-remote-scripts': 'false' }))
+		).toEqual({ remoteScripts: false });
+		expect(
+			readScriptOptions(scriptWith({ 'data-remote-scripts': 'true' }))
+		).toEqual({});
+	});
+
 	it('ignores unknown modes and schemes', () => {
 		expect(
 			readScriptOptions(

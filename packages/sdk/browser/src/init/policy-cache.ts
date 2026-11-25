@@ -41,6 +41,32 @@ const keyOf = (projectUrl: string, overrides?: KernelOverrides): string =>
 		overrides?.language ?? '',
 	].join('|');
 
+/** The stored entry for `key`, fresh or not, or `undefined`. */
+const readEntry = (key: string): CachedPolicy | undefined => {
+	try {
+		const entry = JSON.parse(
+			window.localStorage.getItem(POLICY_CACHE_KEY) ?? 'null'
+		) as CachedPolicy | null;
+		return entry?.k === key ? entry : undefined;
+	} catch {
+		// Blocked or unreadable storage: nothing cached.
+		return undefined;
+	}
+};
+
+const store = (entry: CachedPolicy): void => {
+	try {
+		window.localStorage.setItem(POLICY_CACHE_KEY, JSON.stringify(entry));
+	} catch {
+		// Full or blocked storage: the next page waits for `/v1/consent/init`.
+	}
+};
+
+const isUnavailable = (registry: unknown): boolean =>
+	typeof registry === 'object' &&
+	registry !== null &&
+	(registry as { unavailable?: unknown }).unavailable === true;
+
 /**
  * The cached response for this backend and overrides, shaped as a
  * prefetch result `snapshotFromPrefetchedInit` reads, or `undefined`.
@@ -49,20 +75,10 @@ export const readPolicyCache = function readPolicyCache(
 	projectUrl: string,
 	overrides?: KernelOverrides
 ): SSRInitialData | undefined {
-	try {
-		const entry = JSON.parse(
-			window.localStorage.getItem(POLICY_CACHE_KEY) ?? 'null'
-		) as CachedPolicy | null;
-		if (
-			entry?.k === keyOf(projectUrl, overrides) &&
-			Date.now() - entry.t < MAX_AGE_MS
-		) {
-			return { init: entry.i } as unknown as SSRInitialData;
-		}
-	} catch {
-		// Blocked or unreadable storage: nothing cached.
-	}
-	return undefined;
+	const entry = readEntry(keyOf(projectUrl, overrides));
+	return entry && Date.now() - entry.t < MAX_AGE_MS
+		? ({ init: entry.i } as unknown as SSRInitialData)
+		: undefined;
 };
 
 /** Keep the policy fields of a `/v1/consent/init` response. */
@@ -75,21 +91,45 @@ export const writePolicyCache = function writePolicyCache(
 	if (!init?.policyResolution) {
 		return;
 	}
-	const entry: CachedPolicy = {
+	const key = keyOf(projectUrl, overrides);
+	// A registry the server could not read never replaces the last list.
+	const scriptRegistry = isUnavailable(init.scriptRegistry)
+		? readEntry(key)?.i.scriptRegistry
+		: init.scriptRegistry;
+	store({
 		i: {
 			branding: init.branding,
 			hosting: init.hosting,
 			location: init.location,
 			policyResolution: init.policyResolution,
 			policySnapshotToken: init.policySnapshotToken,
-			scriptRegistry: init.scriptRegistry,
+			scriptRegistry,
 		},
-		k: keyOf(projectUrl, overrides),
+		k: key,
 		t: Date.now(),
-	};
-	try {
-		window.localStorage.setItem(POLICY_CACHE_KEY, JSON.stringify(entry));
-	} catch {
-		// Full or blocked storage: the next page waits for `/v1/consent/init`.
+	});
+};
+
+/**
+ * Replace the cached entry's script registry with the one the engine has
+ * now, such as an empty `load` list from a later answer, so the next page
+ * does not start scripts the server stopped listing. Does nothing without
+ * an entry for this backend and overrides, or for an unavailable registry.
+ */
+export const updatePolicyCacheRegistry = function updatePolicyCacheRegistry(
+	projectUrl: string,
+	overrides: KernelOverrides | undefined,
+	registry: unknown
+): void {
+	const entry = readEntry(keyOf(projectUrl, overrides));
+	if (!entry || isUnavailable(registry)) {
+		return;
 	}
+	const scriptRegistry = registry ?? undefined;
+	if (
+		JSON.stringify(entry.i.scriptRegistry) === JSON.stringify(scriptRegistry)
+	) {
+		return;
+	}
+	store({ ...entry, i: { ...entry.i, scriptRegistry } });
 };

@@ -22,6 +22,11 @@
  * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/v1/consent/init` answers.
  * - `/__inth-init__/backend/v1/consent/init`: the init answer, an opt-in policy for
  *   measurement and marketing with English copy.
+ * - `/__inth-init__/backend-remote-<mode>/v1/consent/init`: the same, with a
+ *   `scriptRegistry.load` list of one marketing script whose setup pushes
+ *   `remote` onto `window.__ran`: `always` loads before a choice, `gated`
+ *   waits for marketing. The page's `remote=<mode>` points its tag there,
+ *   and `no-remote` adds `data-remote-scripts="false"`.
  * - `/__inth-init__/backend/v1/consent/records`: counts saves.
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
@@ -42,8 +47,51 @@ import {
 } from '@inth/sdk-schema/types';
 import { enTranslations } from '@inth/sdk-translations';
 
-const initBody = () =>
+/** The remote script's file, on a host that never answers. */
+export const REMOTE_SRC = 'https://remote-pixel.invalid/pixel.js';
+
+/** A resolved manifest, as the Inth server sends one on `load`. */
+const remoteManifest = (alwaysLoad: boolean) => ({
+	afterLoadSteps: [],
+	alwaysLoad,
+	bootstrapSteps: [],
+	category: 'marketing',
+	kind: 'inth.vendor-manifest',
+	loadScript: { async: true, src: REMOTE_SRC, type: 'loadScript' },
+	onBeforeLoadDeniedSteps: [],
+	onBeforeLoadGrantedSteps: [],
+	onConsentChangeSteps: [],
+	onConsentDeniedSteps: [],
+	onConsentGrantedSteps: [],
+	onLoadDeniedSteps: [],
+	onLoadGrantedSteps: [],
+	schemaVersion: 1,
+	setupSteps: [{ queue: '__ran', type: 'pushToQueue', value: 'remote' }],
+	vendor: 'remote-pixel',
+	vendorDetails: {
+		name: 'Remote Pixel',
+		privacyPolicyUrl: 'https://remote-pixel.invalid/privacy',
+	},
+});
+
+const remoteRegistry = (mode: string | undefined) =>
+	mode === 'always' || mode === 'gated'
+		? {
+				scriptRegistry: {
+					load: [
+						{
+							id: 'remote-pixel',
+							integration: 'remotePixel',
+							manifest: remoteManifest(mode === 'always'),
+						},
+					],
+				},
+			}
+		: {};
+
+const initBody = (remote?: string) =>
 	JSON.stringify({
+		...remoteRegistry(remote),
 		branding: 'inth',
 		location: { countryCode: 'DE', regionCode: null },
 		policyResolution: writePolicyResolutionWire(
@@ -101,7 +149,7 @@ const page = (query: URLSearchParams): string => {
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend${query.has('remote') ? `-remote-${query.get('remote')}` : ''}"${query.has('no-remote') ? ' data-remote-scripts="false"' : ''} data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>
@@ -238,16 +286,17 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		);
 		return;
 	}
-	const backend = /^\/__inth-init__\/backend\/(?<route>.+)$/u.exec(
-		url.pathname
-	);
+	const backend =
+		/^\/__inth-init__\/backend(?:-remote-(?<remote>[a-z]+))?\/(?<route>.+)$/u.exec(
+			url.pathname
+		);
 	if (backend?.groups) {
 		response.setHeader('Access-Control-Allow-Origin', '*');
 		response.setHeader('Content-Type', 'application/json');
 		if (backend.groups.route === 'v1/consent/init') {
 			inits += 1;
 			await wait(initDelay);
-			response.end(initBody());
+			response.end(initBody(backend.groups.remote));
 			return;
 		}
 		if (request.method === 'POST') {

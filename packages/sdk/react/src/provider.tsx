@@ -292,6 +292,15 @@ export interface InthProviderOptions
 	 */
 	experimentalScriptRegistry?: ConsentRuntimeOptions['experimentalScriptRegistry'];
 	/**
+	 * Load the `@inth/integrations` scripts the project added on the Inth
+	 * server, next to `scripts`. Each keeps its integration's own consent
+	 * settings, and a script in `scripts` for the same integration wins. The
+	 * manifest runtime that runs them loads on demand. Initial-only: remount
+	 * the provider to change it.
+	 * @default false
+	 */
+	remoteScripts?: boolean;
+	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.
 	 * Removing a script cannot stop code that already ran, so the reload
@@ -486,6 +495,7 @@ const reactRuntimeModules = function reactRuntimeModules(
 		createPersistence,
 		createScriptLoader: lazyRuntimeModule(loadScriptLoader),
 		createWindowDebug,
+		loadManifestRuntime: () => import('@inth/sdk/manifest-runtime'),
 		preloadScriptLoader: options.__preloadScriptLoader?.(loadScriptLoader),
 		streamPrefetch: resolveStreamedInit
 			? streamPrefetchWith(resolveStreamedInit)
