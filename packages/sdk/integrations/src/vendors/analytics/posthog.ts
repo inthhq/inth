@@ -1,8 +1,9 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { stripTrailingSlashes, trimToUndefined } from '../_shared/script-url';
 
@@ -435,6 +436,36 @@ const resolveFeatureInitOptions = function resolveFeatureInitOptions(
 };
 
 /**
+ * Builds the serializable manifest behind {@link posthog}. `id` must already
+ * be a trimmed, non-empty project key.
+ */
+export const resolvePosthogManifest = function resolvePosthogManifest(
+	options: PosthogConsentOptions & {
+		loadMode?: Exclude<PosthogLoadMode, 'disabled'>;
+	}
+): ResolvedManifest {
+	const { apiHost, uiHost, scriptUrl } = resolvePosthogHosts(options);
+	const manifest =
+		options.loadMode === 'after-consent'
+			? posthogAfterConsentManifest
+			: posthogManifest;
+	return getCompiledManifest(manifest, {
+		apiHost,
+		id: options.id,
+		initOptions: {
+			cookieless_mode: 'on_reject',
+			defaults: DEFAULTS_DATE,
+			...resolveFeatureInitOptions(options.features),
+			...options.initOptions,
+			api_host: apiHost,
+			ui_host: uiHost,
+		},
+		scriptUrl,
+		uiHost,
+	});
+};
+
+/**
  * Creates an Inth PostHog script helper.
  *
  * The `posthog()` helper uses `region` to resolve the PostHog API, UI, and
@@ -477,23 +508,7 @@ export const posthog = function posthog(
 		});
 	}
 
-	const { apiHost, uiHost, scriptUrl } = resolvePosthogHosts(options);
-	const manifest =
-		options.loadMode === 'after-consent'
-			? posthogAfterConsentManifest
-			: posthogManifest;
-	return resolveManifest(manifest, {
-		apiHost,
-		id,
-		initOptions: {
-			cookieless_mode: 'on_reject',
-			defaults: DEFAULTS_DATE,
-			...resolveFeatureInitOptions(options.features),
-			...options.initOptions,
-			api_host: apiHost,
-			ui_host: uiHost,
-		},
-		scriptUrl,
-		uiHost,
-	});
+	return resolvedManifestToScript(
+		resolvePosthogManifest({ ...options, id, loadMode: options.loadMode })
+	);
 };

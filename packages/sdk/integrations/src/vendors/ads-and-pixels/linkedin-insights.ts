@@ -1,8 +1,9 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl } from '../_shared/script-url';
 
@@ -96,6 +97,24 @@ export interface LinkedInInsightsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link linkedinInsights}. `id` must
+ * already be a trimmed, non-empty partner ID.
+ */
+export const resolveLinkedinInsightsManifest =
+	function resolveLinkedinInsightsManifest({
+		id,
+		scriptSrc,
+	}: LinkedInInsightsOptions): ResolvedManifest {
+		return getCompiledManifest(linkedinInsightsManifest, {
+			id,
+			scriptSrc: resolveScriptUrl(
+				scriptSrc,
+				'https://snap.licdn.com/li.lms-analytics/insight.min.js'
+			),
+		});
+	};
+
+/**
  * LinkedIn Insight Tag script.
  *
  * @remarks When `id` is missing or blank, the
@@ -111,11 +130,10 @@ export interface LinkedInInsightsOptions {
  *
  * @see {@link https://www.linkedin.com/help/lms/answer/a418880} Add the LinkedIn Insight Tag to your website
  */
-export const linkedinInsights = function linkedinInsights({
-	id,
-	scriptSrc,
-}: LinkedInInsightsOptions): Script {
-	const normalizedId = readId(id);
+export const linkedinInsights = function linkedinInsights(
+	options: LinkedInInsightsOptions
+): Script {
+	const normalizedId = readId(options.id);
 	if (normalizedId === undefined) {
 		return skipMissingId('linkedinInsights', 'id', {
 			category: 'marketing',
@@ -123,13 +141,7 @@ export const linkedinInsights = function linkedinInsights({
 		});
 	}
 
-	const resolved = resolveManifest(linkedinInsightsManifest, {
-		id: normalizedId,
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			'https://snap.licdn.com/li.lms-analytics/insight.min.js'
-		),
-	});
-
-	return resolved;
+	return resolvedManifestToScript(
+		resolveLinkedinInsightsManifest({ ...options, id: normalizedId })
+	);
 };

@@ -48,7 +48,12 @@ const getManifestCacheKey = function getManifestCacheKey(
 	return serializeConfigValue(config);
 };
 
-const getCompiledManifest = function getCompiledManifest(
+/**
+ * Compiles a `VendorManifest` + config into its serializable
+ * `ResolvedManifest`. Repeated calls with the same manifest object and an
+ * equal config return the same cached object, so callers must not mutate it.
+ */
+export const getCompiledManifest = function getCompiledManifest(
 	manifest: VendorManifest,
 	config: Record<string, unknown>
 ): ResolvedManifest {

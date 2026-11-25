@@ -1,8 +1,9 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { buildQueuePixelInstall } from '../_shared/install-builders';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl } from '../_shared/script-url';
@@ -370,6 +371,38 @@ const buildMetaPixelInstall = function buildMetaPixelInstall({
 };
 
 /**
+ * Builds the serializable manifest behind {@link metaPixel}. `pixelId` must
+ * already be a trimmed, non-empty pixel ID.
+ */
+export const resolveMetaPixelManifest = function resolveMetaPixelManifest({
+	pixelId,
+	initOptions,
+	trackPageView = true,
+	dataProcessingOptions,
+	scriptSrc,
+}: MetaPixelOptions): ResolvedManifest {
+	const install = buildMetaPixelInstall({
+		dataProcessingOptions,
+		hasInitOptions: initOptions !== undefined,
+		trackPageView,
+	});
+
+	const manifest = {
+		...metaPixelManifest,
+		install,
+	} as const satisfies VendorManifest;
+
+	return getCompiledManifest(manifest, {
+		initOptions,
+		pixelId,
+		scriptSrc: resolveScriptUrl(
+			scriptSrc,
+			'https://connect.facebook.net/en_US/fbevents.js'
+		),
+	});
+};
+
+/**
  * Creates a Meta Pixel script.
  *
  * @remarks When `pixelId` is missing or blank, the
@@ -385,14 +418,8 @@ const buildMetaPixelInstall = function buildMetaPixelInstall({
  *
  * @see {@link https://developers.facebook.com/docs/meta-pixel/get-started} Meta Pixel documentation
  */
-export const metaPixel = function metaPixel({
-	pixelId,
-	initOptions,
-	trackPageView = true,
-	dataProcessingOptions,
-	scriptSrc,
-}: MetaPixelOptions): Script {
-	const normalizedPixelId = readId(pixelId);
+export const metaPixel = function metaPixel(options: MetaPixelOptions): Script {
+	const normalizedPixelId = readId(options.pixelId);
 	if (normalizedPixelId === undefined) {
 		return skipMissingId('metaPixel', 'pixelId', {
 			category: 'marketing',
@@ -400,27 +427,9 @@ export const metaPixel = function metaPixel({
 		});
 	}
 
-	const install = buildMetaPixelInstall({
-		dataProcessingOptions,
-		hasInitOptions: initOptions !== undefined,
-		trackPageView,
-	});
-
-	const manifest = {
-		...metaPixelManifest,
-		install,
-	} as const satisfies VendorManifest;
-
-	const resolved = resolveManifest(manifest, {
-		initOptions,
-		pixelId: normalizedPixelId,
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			'https://connect.facebook.net/en_US/fbevents.js'
-		),
-	});
-
-	return resolved;
+	return resolvedManifestToScript(
+		resolveMetaPixelManifest({ ...options, pixelId: normalizedPixelId })
+	);
 };
 
 const callFbq = function callFbq(...args: unknown[]): void {

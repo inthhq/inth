@@ -1,8 +1,9 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
 
@@ -215,31 +216,38 @@ export interface ClarityOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link clarity}. Needs `id` or a
+ * `scriptUrl` override.
+ */
+export const resolveClarityManifest = function resolveClarityManifest({
+	id,
+	defaultConsent,
+	scriptUrl,
+}: ClarityOptions): ResolvedManifest {
+	return getCompiledManifest(clarityManifest, {
+		consentDefaults: getClarityConsentDefaults(defaultConsent),
+		scriptUrl: resolveScriptUrl(scriptUrl, `https://www.clarity.ms/tag/${id}`),
+	});
+};
+
+/**
  * Creates a Microsoft Clarity script.
  *
  * @remarks When `id` is missing or blank and no `scriptUrl` override is set, the helper logs
  *   `clarity: missing or invalid id` with `console.error` and
  *   returns a script that never loads.
  */
-export const clarity = function clarity({
-	id,
-	defaultConsent,
-	scriptUrl,
-}: ClarityOptions): Script {
-	const scriptUrlOverride = trimToUndefined(scriptUrl);
-	const normalizedId = readId(id);
-	if (scriptUrlOverride === undefined && normalizedId === undefined) {
+export const clarity = function clarity(options: ClarityOptions): Script {
+	const scriptUrl = trimToUndefined(options.scriptUrl);
+	const normalizedId = readId(options.id);
+	if (scriptUrl === undefined && normalizedId === undefined) {
 		return skipMissingId('clarity', 'id', {
 			category: 'measurement',
 			manifest: clarityManifest,
 		});
 	}
 
-	return resolveManifest(clarityManifest, {
-		consentDefaults: getClarityConsentDefaults(defaultConsent),
-		scriptUrl: resolveScriptUrl(
-			scriptUrlOverride,
-			`https://www.clarity.ms/tag/${normalizedId ?? ''}`
-		),
-	});
+	return resolvedManifestToScript(
+		resolveClarityManifest({ ...options, id: normalizedId ?? '', scriptUrl })
+	);
 };

@@ -1,8 +1,9 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	GTAG_BOOTSTRAP,
@@ -13,7 +14,8 @@ import { readId, skipMissingId } from '../_shared/required-id';
 /**
  * Google Tag Manager vendor manifest. `dataLayer` and `gtag` name the
  * container's queue and its gtag function, and `layerQuery` is the `&l=`
- * query `gtm.js` needs for a queue not named `dataLayer`.
+ * query `gtm.js` needs for a queue not named `dataLayer`. The container
+ * element names its queue in `data-inth-layer`.
  */
 export const googleTagManagerManifest = {
 	...vendorManifestContract,
@@ -35,6 +37,7 @@ export const googleTagManagerManifest = {
 		},
 		{
 			async: true,
+			attributes: { 'data-inth-layer': '{{dataLayer}}' },
 
 			src: 'https://www.googletagmanager.com/gtm.js?id={{id}}{{layerQuery}}',
 			type: 'loadScript',
@@ -67,18 +70,22 @@ export const googleTagManagerManifest = {
 export type GoogleTagManagerLoadMode = 'always' | 'after-consent';
 
 /**
- * Category condition for a container that waits for consent.
+ * Google Tag Manager manifest for `loadMode: 'after-consent'`.
  *
  * A container usually holds measurement tags, such as Google Analytics, and
  * marketing tags, such as Google Ads. Loading it once either is allowed lets
  * each tag run for a visitor who allowed only its purpose, while Consent Mode
- * keeps Google tags from using the purpose that is still denied. A new object
- * per call keeps one script's category from leaking into another.
+ * keeps Google tags from using the purpose that is still denied.
+ *
+ * Removing gtm.js does not stop a running container. Keeping the element
+ * lets a later grant reuse it instead of starting a second container.
  */
-const afterConsentCategory =
-	function afterConsentCategory(): HasCondition<AllConsentNames> {
-		return { or: ['measurement', 'marketing'] };
-	};
+const googleTagManagerAfterConsentManifest = {
+	...googleTagManagerManifest,
+	alwaysLoad: undefined,
+	category: { or: ['measurement', 'marketing'] },
+	persistAfterConsentRevoked: true,
+} as const satisfies VendorManifest;
 
 export interface GoogleTagManagerOptions {
 	/** Container queue name. Defaults to dataLayer. */
@@ -159,6 +166,41 @@ export interface GoogleTagManagerOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link googleTagManager}. `id`
+ * must already be a trimmed, non-empty container ID.
+ */
+export const resolveGoogleTagManagerManifest =
+	function resolveGoogleTagManagerManifest({
+		id,
+		dataLayer = 'dataLayer',
+		updateEventName,
+		consentMapping,
+		loadMode = 'always',
+		category,
+	}: GoogleTagManagerOptions): ResolvedManifest {
+		const loadModeManifest =
+			loadMode === 'after-consent'
+				? googleTagManagerAfterConsentManifest
+				: googleTagManagerManifest;
+		const manifest =
+			category === undefined
+				? loadModeManifest
+				: { ...loadModeManifest, category };
+		const custom = dataLayer !== 'dataLayer';
+
+		return getCompiledManifest(
+			withOptionalConsentMapping(manifest, consentMapping),
+			{
+				dataLayer,
+				gtag: custom ? `${dataLayer}Gtag` : 'gtag',
+				id,
+				layerQuery: custom ? `&l=${encodeURIComponent(dataLayer)}` : '',
+				updateEventName: updateEventName ?? 'consent-update',
+			}
+		);
+	};
+
+/**
  * Creates a Google Tag Manager script.
  * GTM can be used for managing the consent of other scripts via Google Tag Manager consent mode.
  * We recommend using Inth's script loader instead so your script logic is centralised.
@@ -176,54 +218,25 @@ export interface GoogleTagManagerOptions {
  * googleTagManager({ id: 'GTM-XXXXXXX', loadMode: 'after-consent' });
  * ```
  */
-export const googleTagManager = function googleTagManager({
-	id,
-	dataLayer = 'dataLayer',
-	updateEventName,
-	consentMapping,
-	loadMode = 'always',
-	category,
-}: GoogleTagManagerOptions): Script {
-	const scriptCategory =
-		loadMode === 'after-consent'
-			? (category ?? afterConsentCategory())
-			: category;
-	const normalizedId = readId(id);
+export const googleTagManager = function googleTagManager(
+	options: GoogleTagManagerOptions
+): Script {
+	const normalizedId = readId(options.id);
 	if (normalizedId === undefined) {
 		// Keep the category so it stays in the consent scope while the ID is
 		// missing.
 		return skipMissingId('googleTagManager', 'id', {
-			category: scriptCategory ?? googleTagManagerManifest.category,
+			category:
+				options.category ??
+				(options.loadMode === 'after-consent'
+					? googleTagManagerAfterConsentManifest
+					: googleTagManagerManifest
+				).category,
 			manifest: googleTagManagerManifest,
 		});
 	}
 
-	const custom = dataLayer !== 'dataLayer';
-	const resolved = resolveManifest(
-		withOptionalConsentMapping(googleTagManagerManifest, consentMapping),
-		{
-			dataLayer,
-			gtag: custom ? `${dataLayer}Gtag` : 'gtag',
-			id: normalizedId,
-			layerQuery: custom ? `&l=${encodeURIComponent(dataLayer)}` : '',
-			updateEventName: updateEventName ?? 'consent-update',
-		}
+	return resolvedManifestToScript(
+		resolveGoogleTagManagerManifest({ ...options, id: normalizedId })
 	);
-
-	const gtmScript: Script = {
-		...resolved,
-		attributes: { ...resolved.attributes, 'data-inth-layer': dataLayer },
-	};
-
-	if (loadMode === 'after-consent') {
-		gtmScript.alwaysLoad = undefined;
-		// Removing gtm.js does not stop a running container. Keeping the element
-		// lets a later grant reuse it instead of starting a second container.
-		gtmScript.persistAfterConsentRevoked = true;
-	}
-	if (scriptCategory !== undefined) {
-		gtmScript.category = scriptCategory;
-	}
-
-	return gtmScript;
 };

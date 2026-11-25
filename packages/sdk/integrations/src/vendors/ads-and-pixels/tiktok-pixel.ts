@@ -1,8 +1,9 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl } from '../_shared/script-url';
 
@@ -185,6 +186,23 @@ export interface TikTokPixelOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link tiktokPixel}. `pixelId`
+ * must already be a trimmed, non-empty pixel ID.
+ */
+export const resolveTiktokPixelManifest = function resolveTiktokPixelManifest({
+	pixelId,
+	scriptSrc,
+}: TikTokPixelOptions): ResolvedManifest {
+	return getCompiledManifest(tiktokPixelManifest, {
+		pixelId,
+		scriptSrc: resolveScriptUrl(
+			scriptSrc,
+			'https://analytics.tiktok.com/i18n/pixel/events.js'
+		),
+	});
+};
+
+/**
  * Creates a Tiktok Pixel script.
  * This script is persistent after consent is revoked because it has built-in functionality to opt into and out of tracking based on consent, which allows us to not need to load the script again when consent is revoked.
  *
@@ -201,11 +219,10 @@ export interface TikTokPixelOptions {
  *
  * @see {@link https://ads.tiktok.com/help/article/tiktok-pixel} TikTok Pixel documentation
  */
-export const tiktokPixel = function tiktokPixel({
-	pixelId,
-	scriptSrc,
-}: TikTokPixelOptions): Script {
-	const normalizedPixelId = readId(pixelId);
+export const tiktokPixel = function tiktokPixel(
+	options: TikTokPixelOptions
+): Script {
+	const normalizedPixelId = readId(options.pixelId);
 	if (normalizedPixelId === undefined) {
 		return skipMissingId('tiktokPixel', 'pixelId', {
 			category: 'marketing',
@@ -213,13 +230,7 @@ export const tiktokPixel = function tiktokPixel({
 		});
 	}
 
-	const resolved = resolveManifest(tiktokPixelManifest, {
-		pixelId: normalizedPixelId,
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			'https://analytics.tiktok.com/i18n/pixel/events.js'
-		),
-	});
-
-	return resolved;
+	return resolvedManifestToScript(
+		resolveTiktokPixelManifest({ ...options, pixelId: normalizedPixelId })
+	);
 };

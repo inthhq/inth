@@ -1,8 +1,9 @@
 import type { AllConsentNames, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { getCompiledManifest } from '../../resolve';
 import { runtimeDateValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	GTAG_BOOTSTRAP,
@@ -58,6 +59,12 @@ export const gtagManifest = {
 		name: 'Google Tag',
 		privacyPolicyUrl: 'https://policies.google.com/privacy',
 	},
+} as const satisfies VendorManifest;
+
+/** Google Tag manifest for `loadMode: 'after-consent'`. */
+const gtagAfterConsentManifest = {
+	...gtagManifest,
+	alwaysLoad: undefined,
 } as const satisfies VendorManifest;
 
 /**
@@ -141,6 +148,40 @@ export interface GtagOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link gtag}. `id` must already be
+ * a trimmed, non-empty tag ID.
+ */
+export const resolveGtagManifest = function resolveGtagManifest({
+	id,
+	config,
+	category,
+	consentMapping,
+	loadMode = 'always',
+}: Omit<GtagOptions, 'script'>): ResolvedManifest {
+	const loadModeManifest =
+		loadMode === 'after-consent' ? gtagAfterConsentManifest : gtagManifest;
+	const base =
+		config === undefined
+			? loadModeManifest
+			: {
+					...loadModeManifest,
+					install: loadModeManifest.install.map((step) =>
+						step.type === 'callGlobal' && step.args[0] === 'config'
+							? { ...step, args: ['config', '{{id}}', '{{config}}'] }
+							: step
+					),
+				};
+
+	return getCompiledManifest(withOptionalConsentMapping(base, consentMapping), {
+		category,
+		config,
+		dataLayer: 'dataLayer',
+		gtag: 'gtag',
+		id,
+	});
+};
+
+/**
  * Creates a Google Tag (gtag.js) script.
  * Allows you to send data website to linked Google products like Analytics, Ads & Floodlight.
  *
@@ -161,46 +202,18 @@ export interface GtagOptions {
  * });
  * ```
  */
-export const gtag = function gtag({
-	id,
-	config,
-	category,
-	consentMapping,
-	loadMode = 'always',
-	script,
-}: GtagOptions): Script {
-	const normalizedId = readId(id);
+export const gtag = function gtag({ script, ...options }: GtagOptions): Script {
+	const normalizedId = readId(options.id);
 	if (normalizedId === undefined) {
 		return skipMissingId('gtag', 'id', {
-			category,
+			category: options.category,
 			manifest: gtagManifest,
 		});
 	}
 
-	const base =
-		config === undefined
-			? gtagManifest
-			: {
-					...gtagManifest,
-					install: gtagManifest.install.map((step) =>
-						step.type === 'callGlobal' && step.args[0] === 'config'
-							? { ...step, args: ['config', '{{id}}', '{{config}}'] }
-							: step
-					),
-				};
-	const manifest = withOptionalConsentMapping(base, consentMapping);
-
-	const resolved = resolveManifest(manifest, {
-		category,
-		config,
-		dataLayer: 'dataLayer',
-		gtag: 'gtag',
-		id: normalizedId,
-	});
-
-	if (loadMode === 'after-consent') {
-		resolved.alwaysLoad = undefined;
-	}
+	const resolved = resolvedManifestToScript(
+		resolveGtagManifest({ ...options, id: normalizedId })
+	);
 
 	if (!script) {
 		return resolved;
