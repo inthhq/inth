@@ -11,9 +11,10 @@
  *   the person's latest opt-in per right
  *
  * LocalStorage (`<key>-acct`) holds the full layer (including grants and the
- * full vendor map) under the same revision. Any part whose revision differs
- * from the winning revision is treated as missing. Empty parts are written
- * explicitly so "empty" differs from a failed cookie write.
+ * full vendor map) under the same revision. Empty parts are written
+ * explicitly so "empty" differs from a failed cookie write. The newest
+ * revision supplies every part it has; a part it is missing comes from an
+ * older revision of the same person (see `assembleAccountPartsDetailed`).
  *
  * Exempt from the future-timestamp rule in `checkTimestamp()`, like opt-out
  * `recordedAt`.
@@ -748,15 +749,16 @@ const addPartToGroup = function addPartToGroup(
 };
 
 const mergeGroupVendors = function mergeGroupVendors(
-	group: PartGroup
+	local: DecodedLocalPart | undefined,
+	cookie: DecodedVendorsPart | undefined
 ): Record<string, AccountVendorDecision> {
-	const vendors: Record<string, AccountVendorDecision> = group.local
-		? { ...group.local.layer.vendors }
+	const vendors: Record<string, AccountVendorDecision> = local
+		? { ...local.layer.vendors }
 		: {};
-	if (!group.vendors) {
+	if (!cookie) {
 		return vendors;
 	}
-	for (const [id, entry] of Object.entries(group.vendors.denied)) {
+	for (const [id, entry] of Object.entries(cookie.denied)) {
 		if (!Object.hasOwn(vendors, id)) {
 			Object.defineProperty(vendors, id, {
 				configurable: true,
@@ -767,15 +769,6 @@ const mergeGroupVendors = function mergeGroupVendors(
 		}
 	}
 	return vendors;
-};
-
-/** The opt-ins of a part group: from the opt-out cookie, else localStorage. */
-const groupOptIn = function groupOptIn(
-	group: PartGroup
-): AccountOptIn | undefined {
-	return group.optOut === undefined
-		? group.local?.layer.optIn
-		: group.optOut.optIn;
 };
 
 /** Detailed result of reading stored account consent parts from browser storage. */
@@ -805,6 +798,53 @@ const isPartialAccountGroup = function isPartialAccountGroup(
 	);
 };
 
+const hasChoices = (group: PartGroup): boolean =>
+	group.choices !== undefined || group.local !== undefined;
+const hasVendors = (group: PartGroup): boolean =>
+	group.vendors !== undefined || group.local !== undefined;
+const hasOptOut = (group: PartGroup): boolean =>
+	group.optOut !== undefined || group.local !== undefined;
+
+const pickChoices = (
+	group: PartGroup | undefined
+): AccountConsentLayer['choices'] =>
+	group?.choices?.choices ?? group?.local?.layer.choices ?? {};
+
+/** The opt-out and opt-ins of a part group: the opt-out cookie, else localStorage. */
+const pickOptOut = function pickOptOut(group: PartGroup | undefined): {
+	readonly optOut: AccountOptOutRecord | null;
+	readonly optIn: AccountOptIn | undefined;
+} {
+	if (group?.optOut !== undefined) {
+		return { optIn: group.optOut.optIn, optOut: group.optOut.optOut };
+	}
+	return {
+		optIn: group?.local?.layer.optIn,
+		optOut: group?.local?.layer.optOut ?? null,
+	};
+};
+
+/**
+ * Assemble the stored account layer from decoded parts.
+ *
+ * The newest revision (see `compareGroups`) supplies the identity, the
+ * times, and every part it has. A part it is missing, because that cookie's
+ * write was rejected or the localStorage copy is gone, comes from the newest
+ * older revision of the same person that has the part. It never reads as an
+ * empty part: a missing opt-out part is not a lift, and a missing vendors
+ * part is not "no vendor denials".
+ *
+ * This is never less restrictive than the newest complete revision. A write
+ * replaces one cookie only when that cookie lands, so each stored part is
+ * either that revision's own part or a newer one this browser wrote on
+ * purpose. Parts of another person are never used. A part that no revision
+ * of this person has was never stored, so it reads as it did before the
+ * first account document arrived.
+ *
+ * The result is the same on the server (cookies only) and in the browser
+ * when localStorage has no newer copy. `partial` still reports mixed or
+ * incomplete revisions so cross-tab reconcile can skip them.
+ */
 const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 	parts: readonly (DecodedAccountPart | null)[]
 ): { readonly layer: AccountConsentLayer | null; readonly partial: boolean } {
@@ -821,33 +861,32 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 		}
 		addPartToGroup(group, part);
 	}
-	let winner: PartGroup | null = null;
-	for (const candidate of groups.values()) {
-		if (!winner || compareGroups(candidate, winner) > 0) {
-			winner = candidate;
-		}
-	}
+	// Newest first.
+	const ordered = [...groups.values()].sort((left, right) =>
+		compareGroups(right, left)
+	);
+	const [winner] = ordered;
 	if (!winner) {
 		return { layer: null, partial: false };
 	}
 	const { appliedAt, checkedAt, externalId, liftedRecordedAt, skew } =
 		winner.header;
-	const choices = winner.choices?.choices ?? winner.local?.layer.choices ?? {};
-	const optOut =
-		winner.optOut === undefined
-			? (winner.local?.layer.optOut ?? null)
-			: winner.optOut.optOut;
-	const optIn = groupOptIn(winner);
-	const vendorsOverflow = winner.vendors?.overflow === true && !winner.local;
+	const sources = ordered.filter(
+		(group) => group.header.externalId === externalId
+	);
+	const { optIn, optOut } = pickOptOut(sources.find(hasOptOut));
+	const vendorsFrom = sources.find(hasVendors);
+	const vendorsOverflow =
+		vendorsFrom?.vendors?.overflow === true && !vendorsFrom.local;
 	const partial = isPartialAccountGroup(winner, groups.size, vendorsOverflow);
 	const baseLayer: AccountConsentLayer = {
 		appliedAt,
 		checkedAt,
-		choices,
+		choices: pickChoices(sources.find(hasChoices)),
 		externalId,
 		optOut,
 		skew,
-		vendors: mergeGroupVendors(winner),
+		vendors: mergeGroupVendors(vendorsFrom?.local, vendorsFrom?.vendors),
 	};
 	const withOptIn = optIn === undefined ? baseLayer : { ...baseLayer, optIn };
 	const withLift =
@@ -861,8 +900,8 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 };
 
 /**
- * Assemble an `AccountConsentLayer` from decoded parts. Parts whose revision
- * differs from the winning group are treated as missing.
+ * Assemble an `AccountConsentLayer` from decoded parts. A part the newest
+ * revision is missing comes from an older revision of the same person.
  */
 export const assembleAccountParts = function assembleAccountParts(
 	parts: readonly (DecodedAccountPart | null)[]

@@ -247,6 +247,14 @@ export const createRecordStore = function createRecordStore(
 			`${consentKey}-acct`,
 			tools.encodeAccountLocalJson(layer, rev)
 		);
+		// The opt-out cookie goes first and the vendors cookie, the largest,
+		// last: when the browser rejects a later cookie, the reader keeps that
+		// part from the last write that landed, and a new opt-out is already in.
+		const optOutWritten = writeCookieText(
+			`${consentKey}-acct-o`,
+			cookieText(() => encodeOptOut(layer, rev)),
+			config
+		);
 		const choicesWritten = writeCookieText(
 			`${consentKey}-acct-c`,
 			cookieText(() => encodeChoices(layer, rev)),
@@ -255,11 +263,6 @@ export const createRecordStore = function createRecordStore(
 		const vendorsWritten = writeCookieText(
 			`${consentKey}-acct-v`,
 			cookieText(() => encodeVendors(layer, rev)),
-			config
-		);
-		const optOutWritten = writeCookieText(
-			`${consentKey}-acct-o`,
-			cookieText(() => encodeOptOut(layer, rev)),
 			config
 		);
 		return (

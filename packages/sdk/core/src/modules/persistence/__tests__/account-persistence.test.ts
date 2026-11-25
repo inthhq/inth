@@ -16,6 +16,7 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel } from '../../../kernel';
+import type { AccountConsentLayer } from '../../../kernel/account-layer';
 import { LOADER_RAN_KEY, PAGE_RENDER_KEY } from '../../../libs/page-globals';
 import { storedChoiceNames } from '../../../libs/storage-keys';
 import { hasStoredConsent } from '../../../runtime/deferred-boot';
@@ -27,6 +28,7 @@ import {
 	encodeAccountOptOutCookie,
 	encodeAccountVendorsCookie,
 	readStoredAccountLayer,
+	readStoredAccountLayerDetailed,
 	readStoredAccountLayerFromCookieHeader,
 } from '../account-codec';
 import { resolveAccountStorageKeys } from '../account-keys';
@@ -173,7 +175,7 @@ describe('account layer split cookies and localStorage persistence', () => {
 		kernel.dispose();
 	});
 
-	test('a part with a mismatched revision is treated as missing', () => {
+	test('an older revision never replaces a part the newer revision has', () => {
 		const keys = resolveAccountStorageKeys();
 		const layer = {
 			appliedAt: NOW,
@@ -197,18 +199,21 @@ describe('account layer split cookies and localStorage persistence', () => {
 			},
 		};
 
-		// Choices and vendors share rev_2, while optOut carries stale rev_1.
-		const header = [
-			`${keys.accountChoices}=${encodeAccountChoicesCookie(layer, 'rev_2')}`,
-			`${keys.accountVendors}=${encodeAccountVendorsCookie(layer, 'rev_2')}`,
-			`${keys.accountOptOut}=${encodeAccountOptOutCookie({ ...layer, checkedAt: NOW - 5000 }, 'rev_1')}`,
-		].join('; ');
+		// Every cookie carries rev_2 with no opt-out and no vendor denials,
+		// while localStorage still holds the older rev_1 with both.
+		const newer = { ...layer, optOut: null, vendors: {} };
+		document.cookie = `${keys.accountChoices}=${encodeAccountChoicesCookie(newer, 'rev_2')}; path=/`;
+		document.cookie = `${keys.accountVendors}=${encodeAccountVendorsCookie(newer, 'rev_2')}; path=/`;
+		document.cookie = `${keys.accountOptOut}=${encodeAccountOptOutCookie(newer, 'rev_2')}; path=/`;
+		window.localStorage.setItem(
+			keys.accountState,
+			encodeAccountLocalJson({ ...layer, checkedAt: NOW - 5000 }, 'rev_1')
+		);
 
-		const decoded = readStoredAccountLayerFromCookieHeader(header, undefined);
-		expect(decoded).not.toBeNull();
+		const decoded = readStoredAccountLayer(undefined);
+		expect(decoded?.checkedAt).toBe(NOW);
 		expect(decoded?.choices.marketing?.value).toBe(false);
-		expect(decoded?.vendors['meta-pixel']?.value).toBe(false);
-		// Mismatched opt-out part is treated as missing!
+		expect(decoded?.vendors).toEqual({});
 		expect(decoded?.optOut).toBeNull();
 	});
 
@@ -1361,6 +1366,217 @@ describe('persistence and SSR regressions (set 3)', () => {
 		} finally {
 			p1.dispose();
 			k1.dispose();
+		}
+	});
+});
+
+describe('a newer account revision with a cookie part that was not written', () => {
+	const keys = resolveAccountStorageKeys();
+	const basis = { fingerprint: 'fp_1', kind: 'choice-v1' as const };
+
+	// The older revision every cookie part landed for: a person-held opt-out,
+	// an opt-in for one right, and one vendor denial.
+	const older: AccountConsentLayer = {
+		appliedAt: NOW - 5000,
+		checkedAt: NOW - 5000,
+		choices: {
+			marketing: { basis, rawConfirmedAt: NOW - 6000, value: false },
+		},
+		externalId: 'user_part',
+		optIn: { targeted_ads: NOW - 7000 },
+		optOut: {
+			method: 'button',
+			rawRecordedAt: NOW - 6000,
+			rights: ['sale', 'share'],
+		},
+		skew: 0,
+		vendors: {
+			'meta-pixel': { rawConfirmedAt: NOW - 6000, value: false },
+		},
+	};
+	const newer: AccountConsentLayer = {
+		...older,
+		appliedAt: NOW,
+		checkedAt: NOW,
+		choices: {
+			...older.choices,
+			measurement: { basis, rawConfirmedAt: NOW - 1000, value: true },
+		},
+	};
+
+	const cookieHeader = (parts: {
+		readonly choices: string;
+		readonly vendors?: string;
+		readonly optOut?: string;
+	}) =>
+		[
+			`${keys.accountChoices}=${parts.choices}`,
+			parts.vendors === undefined
+				? null
+				: `${keys.accountVendors}=${parts.vendors}`,
+			parts.optOut === undefined
+				? null
+				: `${keys.accountOptOut}=${parts.optOut}`,
+		]
+			.filter((entry): entry is string => entry !== null)
+			.join('; ');
+
+	const setCookies = (header: string) => {
+		for (const entry of header.split('; ')) {
+			document.cookie = `${entry}; path=/`;
+		}
+	};
+
+	test('a missing opt-out part keeps the older revision opt-out on the server and in the browser', () => {
+		const header = cookieHeader({
+			choices: encodeAccountChoicesCookie(newer, 'rev_2'),
+			optOut: encodeAccountOptOutCookie(older, 'rev_1'),
+			vendors: encodeAccountVendorsCookie(newer, 'rev_2'),
+		});
+
+		const ssr = readStoredAccountLayerFromCookieHeader(header, undefined);
+		expect(ssr?.checkedAt).toBe(NOW);
+		expect(ssr?.choices.measurement?.value).toBe(true);
+		expect(ssr?.optOut).toEqual(older.optOut);
+		expect(ssr?.optIn).toEqual(older.optIn);
+
+		setCookies(header);
+		const browser = readStoredAccountLayerDetailed(undefined);
+		expect(browser.layer).toEqual(ssr);
+		expect(browser.partial).toBe(true);
+		expect(readStoredRecordsFromCookieHeader(header, undefined, NOW)).toEqual(
+			readStoredRecords(undefined, NOW).records
+		);
+	});
+
+	test('a missing vendors part keeps the older revision vendor denials', () => {
+		const header = cookieHeader({
+			choices: encodeAccountChoicesCookie(newer, 'rev_2'),
+			optOut: encodeAccountOptOutCookie(newer, 'rev_2'),
+			vendors: encodeAccountVendorsCookie(
+				{
+					...older,
+					vendors: {
+						...older.vendors,
+						'tiktok-pixel': { rawConfirmedAt: NOW - 6000, value: false },
+					},
+				},
+				'rev_1'
+			),
+		});
+
+		const ssr = readStoredAccountLayerFromCookieHeader(header, undefined);
+		expect(ssr?.checkedAt).toBe(NOW);
+		expect(Object.keys(ssr?.vendors ?? {}).sort()).toEqual([
+			'meta-pixel',
+			'tiktok-pixel',
+		]);
+		expect(ssr?.optOut).toEqual(newer.optOut);
+	});
+
+	test('a complete newer revision reads as written, lift and empty vendors included', () => {
+		const lifted: AccountConsentLayer = {
+			...newer,
+			liftedRecordedAt: NOW - 6000,
+			optIn: { sale: NOW - 500, share: NOW - 500 },
+			optOut: null,
+			vendors: {},
+		};
+		const header = cookieHeader({
+			choices: encodeAccountChoicesCookie(lifted, 'rev_2'),
+			optOut: encodeAccountOptOutCookie(lifted, 'rev_2'),
+			vendors: encodeAccountVendorsCookie(lifted, 'rev_2'),
+		});
+
+		expect(readStoredAccountLayerFromCookieHeader(header, undefined)).toEqual(
+			lifted
+		);
+		setCookies(header);
+		expect(readStoredAccountLayerDetailed(undefined)).toEqual({
+			degraded: false,
+			layer: lifted,
+			partial: false,
+		});
+	});
+
+	test("another person's older part never fills a missing part", () => {
+		const header = cookieHeader({
+			choices: encodeAccountChoicesCookie(
+				{ ...newer, externalId: 'user_other' },
+				'rev_2'
+			),
+			optOut: encodeAccountOptOutCookie(older, 'rev_1'),
+		});
+
+		const ssr = readStoredAccountLayerFromCookieHeader(header, undefined);
+		expect(ssr?.externalId).toBe('user_other');
+		expect(ssr?.optOut).toBeNull();
+		expect(ssr?.vendors).toEqual({});
+	});
+
+	test('a new opt-out lands before the other account cookies, so it survives when later cookie writes fail', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'choice' }));
+		const user = { externalId: 'user_quota' };
+		const kernel = createKernel({
+			initialPolicyResolution: resolution,
+			initialUser: user,
+			now: NOW,
+		});
+		const persistence = createPersistence({ kernel, now: () => NOW });
+		const cookieDesc = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'cookie'
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({ checkedAt: NOW - 5000, externalId: user.externalId })
+			);
+			await flushMacrotasks();
+			expect(
+				readStoredAccountLayerFromCookieHeader(document.cookie, undefined)
+					?.optOut
+			).toBeNull();
+
+			// Only the first account cookie of the next write fits.
+			let accountWrites = 0;
+			vi.spyOn(document, 'cookie', 'set').mockImplementation((value) => {
+				if (/-acct-[cvo]=v=1/u.test(value)) {
+					accountWrites += 1;
+					if (accountWrites > 1) {
+						return;
+					}
+				}
+				cookieDesc?.set?.call(document, value);
+			});
+			vi.spyOn(document, 'cookie', 'get').mockImplementation(
+				() => cookieDesc?.get?.call(document) as string
+			);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW,
+					externalId: user.externalId,
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 1000,
+						rights: ['sale', 'share'],
+					},
+				})
+			);
+			await flushMacrotasks();
+			expect(accountWrites).toBeGreaterThan(1);
+
+			const ssr = readStoredAccountLayerFromCookieHeader(
+				document.cookie,
+				undefined
+			);
+			expect(ssr?.checkedAt).toBe(NOW);
+			expect(ssr?.optOut?.rights).toEqual(['sale', 'share']);
+		} finally {
+			if (cookieDesc) {
+				Object.defineProperty(document, 'cookie', cookieDesc);
+			}
+			persistence.dispose();
+			kernel.dispose();
 		}
 	});
 });
