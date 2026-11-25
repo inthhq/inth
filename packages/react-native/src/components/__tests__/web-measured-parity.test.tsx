@@ -993,7 +993,7 @@ describe('switch thumb', () => {
 		// of the border token around the disc, so the thumb is a ring rather than a
 		// filled dot, and the 4pt hole reads as the track colour it sits on.
 		expect(dot).toMatchObject({ height: 4, width: 4 });
-		expect(dot.backgroundColor).toBe(defaultConsentTheme.colors.switchTrack);
+		expect(dot.backgroundColor).toBe(defaultConsentTheme.colors.switchTrackOff);
 		expect(nodeStyle(thumb).boxShadow).toBe(
 			`0 0 0 1px ${defaultConsentTheme.colors.border}`
 		);

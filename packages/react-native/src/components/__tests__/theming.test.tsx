@@ -611,7 +611,7 @@ describe('theme', () => {
 		expect(28 + slop.left + slop.right).toBe(MIN_TAP_TARGET);
 
 		expect(trackStyle().backgroundColor).toBe(
-			defaultConsentTheme.colors.switchTrack
+			defaultConsentTheme.colors.switchTrackOff
 		);
 
 		flush(() => {

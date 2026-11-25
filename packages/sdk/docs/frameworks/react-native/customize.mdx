@@ -188,6 +188,6 @@ Native screens load labels from `@inth/sdk/translations` in the policy's served 
 
 ## React-rendered components
 
-`@inth/react-native` also exports `ConsentBanner`, `ConsentDialog`, `ConsentPreferences`, `ConsentIabDrawer`, and `createConsentTheme`. Pass the returned theme (`colors` and `dark` palettes following device appearance) to `theme` and per-part overrides to `styles`. Updated component tokens include `textOnPrimary`, `switchTrackActive`, `surfaceHover`, `xs` to `xl` spacing, `sm`/`md`/`lg`/`full` radii, `defaultConsentTheme`, and `resolveConsentTypeRoles`.
+`@inth/react-native` also exports `ConsentBanner`, `ConsentDialog`, `ConsentPreferences`, `ConsentIabDrawer`, and `createConsentTheme`. Pass the returned theme (`colors` and `dark` palettes following device appearance) to `theme` and per-part overrides to `styles`. Updated component tokens include `textOnPrimary`, `switchTrackActive`, `switchTrackOff`, `surfaceHover`, `xs` to `xl` spacing, `sm`/`md`/`lg`/`full` radii, `defaultConsentTheme`, and `resolveConsentTypeRoles`.
 
 Prefer the stock native screens for standard mobile flows; when using React components, inspect every [commit result](/docs/frameworks/react-native/usage#inspect-every-local-commit) and keep native SDK gates active.

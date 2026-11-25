@@ -634,6 +634,7 @@ const COLOR_PARITY: readonly (readonly [
 	['switch-thumb', 'switchThumb'],
 	['switch-track', 'switchTrack'],
 	['switch-track-active', 'switchTrackActive'],
+	['switch-track-off', 'switchTrackOff'],
 	['text', 'text'],
 	['text-muted', 'textMuted'],
 	['text-on-primary', 'textOnPrimary'],
@@ -725,4 +726,47 @@ describe('web token parity', () => {
 			width: size('width'),
 		});
 	});
+});
+
+/** One native presenter's theme source, relative to `packages`. */
+const NATIVE_THEME_SOURCES = [
+	'swift/Sources/InthConsentUI/consent-theme.swift',
+	'react-native/vendor/InthConsentUI/consent-theme.swift',
+	'android/inth-consent-ui/src/main/kotlin/com/inth/consentui/consent-theme.kt',
+] as const;
+
+/**
+ * The stock `primary` of a native presenter's `Colors.default`, as
+ * `#RRGGBB` light and dark. Swift writes `primary: ConsentThemeColor(light:
+ * 0x…, dark: 0x…)` and Kotlin `primary = ConsentThemeColor(0x…, 0x…)`.
+ */
+const nativeStockPrimary = function nativeStockPrimary(path: string): {
+	dark: string;
+	light: string;
+} {
+	const source = read(join(ROOT, 'packages', path));
+	const stock = source.slice(source.indexOf('default'));
+	const match =
+		/\bprimary(?::| =) ConsentThemeColor\((?:light: )?0x(?<light>[\dA-F]{6}), (?:dark: )?0x(?<dark>[\dA-F]{6})\)/u.exec(
+			stock
+		)?.groups;
+	if (match?.light === undefined || match.dark === undefined) {
+		throw new Error(`No stock primary in ${path}`);
+	}
+	return { dark: `#${match.dark}`, light: `#${match.light}` };
+};
+
+describe('native presenter palette', () => {
+	test.each(NATIVE_THEME_SOURCES)(
+		'%s draws the web accent',
+		(path) => {
+			// Native draws links, switches and the Save button in one `primary`, so
+			// the dark value is the web's dark accent text, not its dark fill: the
+			// fill is too dark to read as a link on the dark surface.
+			expect(nativeStockPrimary(path)).toEqual({
+				dark: asNativeColor(tokenBySuffix('primary-text', true)),
+				light: asNativeColor(tokenBySuffix('primary')),
+			});
+		}
+	);
 });
