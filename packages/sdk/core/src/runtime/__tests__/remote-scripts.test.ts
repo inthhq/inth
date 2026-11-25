@@ -391,6 +391,9 @@ describe('remoteScripts', () => {
 		);
 		runtime.start();
 		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		const queue = () => (window as { acmeQueue?: unknown[] }).acmeQueue ?? [];
+		const remoteSetups = queue().length;
+		expect(remoteSetups).toBeGreaterThan(0);
 
 		const codeSetup = vi.fn();
 		await runtime.update({
@@ -412,10 +415,11 @@ describe('remoteScripts', () => {
 		await vi.waitFor(() => expect(codeSetup).toHaveBeenCalledOnce());
 		expect(tags()).toHaveLength(1);
 
-		// With the code script gone, the remote entry mounts again.
+		// With the code script gone, the remote entry mounts again and runs
+		// its setup a second time.
 		await runtime.update({ ...options, scripts: [] });
 		await vi.waitFor(() =>
-			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toBeDefined()
+			expect(queue().length).toBeGreaterThan(remoteSetups)
 		);
 		await vi.waitFor(() => expect(tags()).toHaveLength(1));
 		runtime.dispose();
