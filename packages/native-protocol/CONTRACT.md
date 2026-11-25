@@ -66,6 +66,34 @@ own:
                     Kotlin and resolveGoogleConsentMode in React Native are
                     tested against that file. Firebase helpers send its four
                     Firebase types; later vendor helpers read the same mapping.
+    Policy surface  a matched rule may carry `surface: { container?,
+                    edgeStyle?, blocking? }` and `fingerprints.presentation`.
+                    Both cores read them as readPolicyResolutionWire does:
+                    strictly (an unknown key, container type, position,
+                    edge, side, edge style or blocking constraint is
+                    `unsupported-contract`; a wrong JSON type, a `required`
+                    blocking on a rule that cannot block, or a surface without
+                    its presentation fingerprint is `invalid-payload`, and
+                    either fails closed like any unreadable policy), then in
+                    canonical form (default position, edge or side filled in,
+                    a card's edge style dropped, a blocking constraint the
+                    rule implies dropped, an empty surface read as none).
+                    The snapshot's `resolution` carries the canonical
+                    `surface` and the `layout` it resolves to on a phone with
+                    no host presentation (`type`, `placement`, `flow`,
+                    `blocking`, `edgeStyle`, from `resolveLayout` in
+                    @inth/sdk-core); both keys are absent under a rule without
+                    a surface, so that snapshot is unchanged. `surface` never
+                    reaches the evaluator and is in no consent fingerprint.
+                    packages/native-protocol/policy-surface/cases.json pins it;
+                    packages/sdk/core/src/libs/__tests__/policy-surface-native-fixture.test.ts
+                    regenerates it from the web reader and fails when it is
+                    stale, and both cores run every case. The stock native
+                    presenters do not draw the layout yet: their first layer
+                    is always a modal screen chosen by the host theme
+                    (`FirstLayer` page, sheet or prompt), so a rule that
+                    forbids blocking still gets a modal first layer. An
+                    in-code policy (`ConsentPolicy`) has no surface option.
 
     IAB GPP         off until the host passes `gpp` (Kotlin NativeConfig.gpp,
                     Swift CoreConfig.gpp, the Expo plugin's `gpp` option). Then
@@ -181,7 +209,7 @@ mobile:
     effectivePermissions: { necessary, functionality, experience, measurement, marketing }  // all boolean
     consentCategories: string[] | null
     restrictions: { [category]: string[] }
-    resolution: { status, policyId, fingerprint }
+    resolution: { status, policyId, fingerprint, reason?, surface?, layout? }  // surface and layout: see "Policy surface"
     policySnapshotToken: string | null
     overrides: { country | null, region | null, language, gpc | null }
     privacySignals: { gpc: { detected, override | null, active } }

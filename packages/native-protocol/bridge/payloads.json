@@ -676,6 +676,52 @@
 							"required": true,
 							"type": "string"
 						},
+						"layout": {
+							"nullable": false,
+							"required": false,
+							"fields": {
+								"blocking": {
+									"nullable": false,
+									"required": true,
+									"type": "boolean"
+								},
+								"edgeStyle": {
+									"nullable": false,
+									"required": true,
+									"type": "string",
+									"values": ["inset", "flush"]
+								},
+								"flow": {
+									"nullable": false,
+									"required": true,
+									"type": "string",
+									"values": ["expand-in-place", "all-in-one"]
+								},
+								"placement": {
+									"nullable": false,
+									"required": true,
+									"type": "string",
+									"values": [
+										"card-start",
+										"card-end",
+										"card-center",
+										"banner-bottom",
+										"banner-top",
+										"drawer-bottom",
+										"drawer-top",
+										"drawer-start",
+										"drawer-end"
+									]
+								},
+								"type": {
+									"nullable": false,
+									"required": true,
+									"type": "string",
+									"values": ["card", "banner", "drawer"]
+								}
+							},
+							"type": "object"
+						},
 						"policyId": {
 							"nullable": true,
 							"required": true,
@@ -698,6 +744,56 @@
 							"required": true,
 							"type": "string",
 							"values": ["unconfigured", "matched", "no-match", "failed"]
+						},
+						"surface": {
+							"nullable": false,
+							"required": false,
+							"fields": {
+								"blocking": {
+									"nullable": false,
+									"required": false,
+									"type": "string",
+									"values": ["forbidden", "allowed", "required"]
+								},
+								"container": {
+									"nullable": false,
+									"required": false,
+									"fields": {
+										"edge": {
+											"nullable": false,
+											"required": false,
+											"type": "string",
+											"values": ["bottom", "top"]
+										},
+										"position": {
+											"nullable": false,
+											"required": false,
+											"type": "string",
+											"values": ["start", "end", "center"]
+										},
+										"side": {
+											"nullable": false,
+											"required": false,
+											"type": "string",
+											"values": ["bottom", "top", "start", "end"]
+										},
+										"type": {
+											"nullable": false,
+											"required": true,
+											"type": "string",
+											"values": ["card", "banner", "drawer"]
+										}
+									},
+									"type": "object"
+								},
+								"edgeStyle": {
+									"nullable": false,
+									"required": false,
+									"type": "string",
+									"values": ["inset", "flush"]
+								}
+							},
+							"type": "object"
 						}
 					},
 					"type": "object"

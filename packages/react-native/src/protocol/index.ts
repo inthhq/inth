@@ -72,6 +72,8 @@ export type {
 	NativePrivacySignals,
 	NativeSnapshotError,
 	PolicyResolutionFailure,
+	SnapshotPolicyLayout,
+	SnapshotPolicySurface,
 	SnapshotResolution,
 } from './consent-snapshot.model';
 export { POLICY_RESOLUTION_FAILURES } from './consent-snapshot.model';
