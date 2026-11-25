@@ -4,10 +4,11 @@ import {
 } from '../modules/script-loader/category-condition';
 import {
 	MANIFEST_STEP_TYPES,
+	RUNTIME_VALUE_KIND,
 	VENDOR_MANIFEST_KIND,
 	VENDOR_MANIFEST_SCHEMA_VERSION,
 } from './types';
-import type { ResolvedManifest } from './types';
+import type { ManifestStep, ResolvedManifest } from './types';
 
 /** A manifest that passed {@link parseResolvedManifest}, or why it failed. */
 export type ParsedManifest =
@@ -59,6 +60,158 @@ const isStringRecord = (
 const isOptional = (value: unknown, check: (value: unknown) => boolean) =>
 	value === undefined || check(value);
 
+/** The fields each step type may carry, besides `type`. */
+const STEP_KEYS: {
+	readonly [Type in ManifestStep['type']]: readonly Exclude<
+		keyof Extract<ManifestStep, { type: Type }>,
+		'type'
+	>[];
+} = {
+	callGlobal: ['global', 'method', 'args', 'literalArgs'],
+	constructGlobal: [
+		'constructor',
+		'assignTo',
+		'args',
+		'copyAssignedValueToArgProperty',
+	],
+	defineGlobalMethods: ['target', 'methods', 'ifGlobalIsQueue'],
+	defineQueueClass: ['target', 'name', 'queueProperty', 'methods'],
+	defineQueueFunction: ['name', 'queue', 'ifUndefined', 'pushStyle'],
+	defineQueueMethods: [
+		'target',
+		'methods',
+		'queue',
+		'queueFormat',
+		'returnTarget',
+		'preserveExisting',
+	],
+	defineQueueProxy: ['name', 'queue'],
+	defineStubFunction: [
+		'name',
+		'queue',
+		'dispatchProperty',
+		'queueFormat',
+		'aliases',
+		'selfReferences',
+		'properties',
+		'ifUndefined',
+	],
+	loadScript: ['src', 'async', 'defer', 'attributes', 'fetchPriority'],
+	pushToQueue: ['queue', 'value'],
+	setCookie: ['cookie'],
+	setGlobal: ['name', 'value', 'ifUndefined', 'keepExistingQueue'],
+	setGlobalPath: ['path', 'value', 'ifGlobalIsQueue', 'ifUndefined'],
+};
+
+const MANIFEST_KEYS: ReadonlySet<string> = new Set<keyof ResolvedManifest>([
+	...STEP_LISTS,
+	'kind',
+	'schemaVersion',
+	'vendor',
+	'vendorDetails',
+	'category',
+	'alwaysLoad',
+	'persistAfterConsentRevoked',
+	'loadScript',
+	'consentMapping',
+	'consentSignal',
+	'consentSignalTarget',
+	'consentSignalDefaults',
+]);
+
+/** Fields that hold data a step passes on, not names it reads or writes. */
+const DATA_KEYS: ReadonlySet<string> = new Set([
+	'value',
+	'args',
+	'properties',
+	'attributes',
+	'cookie',
+	'src',
+]);
+
+/** Names that would reach an object's prototype instead of a property. */
+const UNSAFE_NAMES: ReadonlySet<string> = new Set([
+	'__proto__',
+	'prototype',
+	'constructor',
+]);
+
+const RUNTIME_VALUES: ReadonlySet<unknown> = new Set(['date', 'timestamp']);
+
+const MAX_DEPTH = 32;
+
+const unknownKey = (
+	value: Record<string, unknown>,
+	known: ReadonlySet<string>
+): string | undefined => Object.keys(value).find((key) => !known.has(key));
+
+/** The first unsafe name among the names a step reads or writes. */
+const unsafeName = (value: unknown, depth = 0): string | undefined => {
+	if (typeof value === 'string') {
+		return UNSAFE_NAMES.has(value) ? value : undefined;
+	}
+	if (depth > MAX_DEPTH || !(Array.isArray(value) || isRecord(value))) {
+		return undefined;
+	}
+	const entries = Array.isArray(value)
+		? value
+		: Object.entries(value)
+				.filter(([key]) => !DATA_KEYS.has(key))
+				.map(([, entry]) => entry);
+	for (const entry of entries) {
+		const name = unsafeName(entry, depth + 1);
+		if (name !== undefined) {
+			return name;
+		}
+	}
+	return undefined;
+};
+
+/**
+ * Whether `value` holds a runtime value this runtime cannot fill in. Such
+ * a value would otherwise pass through as a plain object.
+ */
+const hasUnknownRuntimeValue = (value: unknown, depth = 0): boolean => {
+	if (depth > MAX_DEPTH) {
+		return true;
+	}
+	if (Array.isArray(value)) {
+		return value.some((entry) => hasUnknownRuntimeValue(entry, depth + 1));
+	}
+	if (!isRecord(value)) {
+		return false;
+	}
+	if (value.kind === RUNTIME_VALUE_KIND) {
+		return (
+			unknownKey(value, new Set(['kind', 'value'])) !== undefined ||
+			!RUNTIME_VALUES.has(value.value)
+		);
+	}
+	return Object.values(value).some((entry) =>
+		hasUnknownRuntimeValue(entry, depth + 1)
+	);
+};
+
+/** Why a step of a known type cannot run, or `undefined`. */
+const stepProblem = (step: Record<string, unknown>): string | undefined => {
+	const known = new Set<string>([
+		'type',
+		...STEP_KEYS[step.type as ManifestStep['type']],
+	]);
+	const extra = unknownKey(step, known);
+	if (extra !== undefined) {
+		return `has a ${String(step.type)} step with the unknown field ${extra}`;
+	}
+	const name = unsafeName(step);
+	if (name !== undefined) {
+		return `has a ${String(step.type)} step that names ${name}`;
+	}
+	if (hasUnknownRuntimeValue(step)) {
+		return `has a ${String(step.type)} step with a runtime value this SDK does not know`;
+	}
+	return undefined;
+};
+
 /** Why `manifest` cannot run, or `undefined` when it can. */
 // oxlint-disable-next-line complexity -- One check per manifest field.
 const manifestProblem = (
@@ -69,6 +222,12 @@ const manifestProblem = (
 		manifest.schemaVersion !== VENDOR_MANIFEST_SCHEMA_VERSION
 	) {
 		return `it is not a version ${VENDOR_MANIFEST_SCHEMA_VERSION} vendor manifest`;
+	}
+	// A newer manifest's field this SDK does not know would be skipped,
+	// running the rest without it.
+	const extra = unknownKey(manifest, MANIFEST_KEYS);
+	if (extra !== undefined) {
+		return `it has the unknown field ${extra}`;
 	}
 	if (typeof manifest.vendor !== 'string' || manifest.vendor.length === 0) {
 		return 'it names no vendor';
@@ -98,6 +257,10 @@ const manifestProblem = (
 			if (step.type === 'loadScript') {
 				return `${list} has a loadScript step`;
 			}
+			const problem = stepProblem(step);
+			if (problem !== undefined) {
+				return `${list} ${problem}`;
+			}
 		}
 	}
 	const { loadScript } = manifest;
@@ -106,6 +269,7 @@ const manifestProblem = (
 		!(
 			isRecord(loadScript) &&
 			loadScript.type === 'loadScript' &&
+			stepProblem(loadScript) === undefined &&
 			isHttpsUrl(loadScript.src) &&
 			isOptional(
 				loadScript.attributes,

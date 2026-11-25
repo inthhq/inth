@@ -139,6 +139,89 @@ describe('parseResolvedManifest', () => {
 		expect(parseResolvedManifest(input).ok).toBe(false);
 	});
 
+	// An older SDK must refuse what a newer manifest adds, never run part of it.
+	it.each<[string, unknown]>([
+		['an unknown manifest field', { ...manifest(), onDisposeSteps: [] }],
+		[
+			'an unknown step field',
+			{
+				...manifest(),
+				setupSteps: [
+					{ global: 'a', method: 'b', path: ['c'], type: 'callGlobal' },
+				],
+			},
+		],
+		[
+			'an unknown loadScript field',
+			{
+				...manifest(),
+				loadScript: { ...manifest().loadScript, target: 'body' },
+			},
+		],
+		[
+			'an unknown runtime value',
+			{
+				...manifest(),
+				setupSteps: [
+					{
+						args: [{ kind: 'inth.runtime-value', value: 'consent' }],
+						global: 'a',
+						type: 'callGlobal',
+					},
+				],
+			},
+		],
+		[
+			'a runtime value with an extra field',
+			{
+				...manifest(),
+				setupSteps: [
+					{
+						name: 'started',
+						type: 'setGlobal',
+						value: { kind: 'inth.runtime-value', mapping: {}, value: 'date' },
+					},
+				],
+			},
+		],
+	])('refuses %s', (_label, input) => {
+		expect(parseResolvedManifest(input).ok).toBe(false);
+	});
+
+	it.each(['__proto__', 'prototype', 'constructor'])(
+		'refuses %s as a name a step writes to',
+		(name) => {
+			for (const step of [
+				{ path: [name, 'polluted'], type: 'setGlobalPath', value: 1 },
+				{ name, type: 'setGlobal', value: 1 },
+				{ global: 'a', method: name, type: 'callGlobal' },
+			]) {
+				expect(
+					parseResolvedManifest({ ...manifest(), setupSteps: [step] }).ok,
+					JSON.stringify(step)
+				).toBe(false);
+			}
+		}
+	);
+
+	it('accepts runtime values it knows, and those names inside plain data', () => {
+		const input = {
+			...manifest(),
+			setupSteps: [
+				{
+					name: 'started',
+					type: 'setGlobal',
+					value: {
+						at: { kind: 'inth.runtime-value', value: 'timestamp' },
+						label: 'constructor',
+					},
+				},
+			],
+		};
+
+		expect(parseResolvedManifest(input).ok).toBe(true);
+	});
+
 	it('accepts a manifest with no script to load', () => {
 		const { loadScript: _loadScript, ...callbackOnly } = manifest();
 
