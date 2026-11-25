@@ -316,7 +316,7 @@ const expectedFor = function expectedFor(wire: Record<string, unknown>) {
 	}
 	// `resolvePromptContainer` with no host presentation: the policy's
 	// container, its edge style beside anything but a card, and its blocking.
-	const container = surface.container;
+	const { container } = surface;
 	const resolved = resolveLayout({
 		blockingConstraint: surface.blocking,
 		container,
