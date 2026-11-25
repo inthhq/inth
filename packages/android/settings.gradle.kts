@@ -7,6 +7,10 @@ pluginManagement {
 				includeGroupAndSubgroups("com.google")
 			}
 		}
+		maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+			name = "MavenCentralGoogleMirror"
+			mavenContent { releasesOnly() }
+		}
 		mavenCentral()
 		gradlePluginPortal()
 	}
@@ -18,6 +22,13 @@ dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 	repositories {
 		google()
+		// Maven Central answers GitHub runners with 429 under load; Google's
+		// mirror serves the same releases, and Gradle falls through to Central
+		// only for an artifact the mirror lacks.
+		maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+			name = "MavenCentralGoogleMirror"
+			mavenContent { releasesOnly() }
+		}
 		mavenCentral()
 	}
 }
