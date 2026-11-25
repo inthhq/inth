@@ -6,7 +6,11 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
 import { resolvedManifestToScript } from './engine/runtime';
-import { remoteIntegrations, validateRemoteOptions } from './remote';
+import {
+	manifestLevel,
+	remoteIntegrations,
+	validateRemoteOptions,
+} from './remote';
 import type { RemoteIntegration } from './remote';
 import { linkedinInsights } from './vendors/ads-and-pixels/linkedin-insights';
 import { metaPixel } from './vendors/ads-and-pixels/meta-pixel';
@@ -129,6 +133,25 @@ describe('remoteIntegrations', () => {
 				ok: true,
 			}
 		);
+	});
+
+	it.each(cases)(
+		'%s %s needs runtime level 1 and carries no requires',
+		(key, _label, options) => {
+			const manifest = remoteIntegrations[key]?.resolveRemote(options);
+
+			expect(manifest && manifestLevel(manifest)).toBe(1);
+			expect(manifest).not.toHaveProperty('requires');
+		}
+	);
+
+	it('reads a manifest stamped for a later level as that level', () => {
+		const manifest = remoteIntegrations.metaPixel?.resolveRemote({
+			pixelId: '123',
+		});
+
+		expect(manifestLevel({ ...manifest, requires: 2 } as never)).toBe(2);
+		expect(manifestLevel({ ...manifest, requires: 1 } as never)).toBe(1);
 	});
 
 	it.each(cases)(

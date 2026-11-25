@@ -28,6 +28,22 @@ import { resolveGoogleTagManagerManifest } from './vendors/tag-managers/google-t
 export type { ManifestStep, ResolvedManifest } from './types';
 
 /**
+ * The manifest runtime level `manifest` needs: the highest level of any
+ * step, field or runtime value it uses, and at least its own `requires`.
+ * Every manifest feature today is level 1.
+ *
+ * The Inth server sets `requires` to this level when it is above 1, and
+ * lists the entry only for a request whose `manifestLevel` is at least this
+ * level. An SDK sends `manifestLevel` with its own runtime level, and reads
+ * a request without it as level 1.
+ */
+export const manifestLevel = function manifestLevel(
+	manifest: ResolvedManifest
+): number {
+	return Math.max(1, manifest.requires ?? 1);
+};
+
+/**
  * One option of a remote integration. A dashboard form renders from it.
  *
  * - `id`: free text that must match `pattern`, a regular expression with
