@@ -21,9 +21,9 @@ const own =
 		: (document.currentScript as HTMLScriptElement | null);
 
 /**
- * The manifest runtime, from `inth.manifests.js` next to the engine, at
- * this version (`partSrc`). The `loadManifestRuntime` runtime module of the
- * script-tag engines.
+ * The manifest runtime, from `inth.manifests.js` at this version
+ * (`partSrc`), next to `inth.js`, or next to the engine on a page without
+ * one. The `loadManifestRuntime` runtime module of the script-tag engines.
  *
  * @throws {Error} When the file has no URL, fails to load, or is from
  * another release; the loader then reports that remote scripts do not load.
@@ -31,7 +31,13 @@ const own =
  */
 export const loadManifestsFile =
 	async function loadManifestsFile(): Promise<RemoteManifestRuntime> {
-		const src = partSrc('manifests', adoptedBoot()?.script ?? own, own?.src);
+		// Beside `inth.js` once the engine took over from it, where the init
+		// script preloads it, even when `data-hosted-src` moved the engine.
+		// Beside the engine on a page with no init script.
+		const init = adoptedBoot()?.script;
+		const src = init
+			? partSrc('manifests', init, init.getAttribute('src'))
+			: partSrc('manifests', own, own?.src);
 		if (!src) {
 			throw new Error('inth.manifests.js has no URL');
 		}
