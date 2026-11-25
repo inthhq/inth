@@ -145,6 +145,11 @@
 			"import": "./dist/transport-manifest.js",
 			"default": "./dist/transport-manifest.js"
 		},
+		"./manifest-runtime": {
+			"types": "./dist-types/manifest-runtime/index.d.ts",
+			"import": "./dist/manifest-runtime/index.js",
+			"default": "./dist/manifest-runtime/index.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./dist-types/transports/manifest-browser.d.ts",
 			"import": "./dist/transports/manifest-browser.js",

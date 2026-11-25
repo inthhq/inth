@@ -189,6 +189,11 @@
 			"import": "./lib/core/dist/transport-manifest.js",
 			"default": "./lib/core/dist/transport-manifest.js"
 		},
+		"./manifest-runtime": {
+			"types": "./lib/core/dist-types/manifest-runtime/index.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/index.js",
+			"default": "./lib/core/dist/manifest-runtime/index.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
 			"import": "./lib/core/dist/transports/manifest-browser.js",

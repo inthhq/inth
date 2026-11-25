@@ -18,7 +18,7 @@ export default defineConfig({
 		{
 			enforce: 'pre',
 			name: 'repository-sources-before-package-builds',
-			resolveId(source, importer) {
+			resolveId(source) {
 				// The mobile exporter lives in the CLI and imports these packages by
 				// name, and their own sources import each other by private name.
 				// Repository tests run before package builds, so exercise their
@@ -26,19 +26,6 @@ export default defineConfig({
 				const sdkFile = sdkSource(source);
 				if (sdkFile) {
 					return sdkFile;
-				}
-				// The manifest runtime only imports core's debug emitter at runtime.
-				// Resolve that real implementation without requiring a core build.
-				if (
-					source === '@inth/sdk/engine' &&
-					importer?.endsWith('/packages/sdk/integrations/src/engine/runtime.ts')
-				) {
-					return fileURLToPath(
-						new URL(
-							'../packages/sdk/core/src/libs/script-loader/debug.ts',
-							import.meta.url
-						)
-					);
 				}
 			},
 			transform(code, id) {

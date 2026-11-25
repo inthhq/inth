@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { toPublicSpecifier } from '../packages/sdk/shared/sdk-parts';
 
 const SOURCES: Record<string, string> = {
+	'@inth/sdk/manifest-runtime': 'core/src/manifest-runtime/index.ts',
 	'@inth/sdk/schema': 'schema/src/index.ts',
 	'@inth/sdk/schema/types': 'schema/src/types.ts',
 	'@inth/sdk/translations': 'translations/src/index.ts',
