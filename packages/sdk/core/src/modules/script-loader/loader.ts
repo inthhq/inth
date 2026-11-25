@@ -248,7 +248,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		lastLoad = load;
 		reportedRemote.clear();
-		const { entries, problems } = readRemoteEntries(load);
+		const { entries, problems } = readRemoteEntries(load, options.remote.level);
 		for (const problem of problems) {
 			reportRemote('error', problem.id, problem.message);
 		}

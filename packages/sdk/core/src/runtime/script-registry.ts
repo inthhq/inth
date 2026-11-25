@@ -1,3 +1,4 @@
+import { MANIFEST_RUNTIME_LEVEL } from '../manifest-runtime/level';
 import type { ScriptLoaderOptions } from '../modules/script-loader/types';
 import type { ConsentRuntimeModules, ConsentRuntimeOptions } from './types';
 
@@ -71,5 +72,8 @@ export const remoteScripts = function remoteScripts(
 		}
 		return undefined;
 	}
-	return { loadRuntime: modules.loadManifestRuntime };
+	return {
+		level: MANIFEST_RUNTIME_LEVEL,
+		loadRuntime: modules.loadManifestRuntime,
+	};
 };

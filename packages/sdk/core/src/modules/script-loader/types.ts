@@ -174,6 +174,12 @@ export interface ScriptLoaderOptions {
 	remote?: {
 		/** Loads the manifest runtime; called once, for the first entry. */
 		loadRuntime: () => Promise<RemoteManifestRuntime>;
+		/**
+		 * The manifest runtime level `loadRuntime` loads
+		 * (`MANIFEST_RUNTIME_LEVEL`). An entry whose manifest requires a
+		 * higher one is skipped and reported, before it declares anything.
+		 */
+		level: number;
 	};
 	/**
 	 * When true, also dispatch debug events to the page's script debug

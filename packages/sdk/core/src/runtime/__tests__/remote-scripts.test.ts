@@ -23,6 +23,7 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 } from '../../libs/script-loader/types';
+import { MANIFEST_RUNTIME_LEVEL } from '../../manifest-runtime/level';
 import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
 import { rootNeedsEngine } from '../../surface-actions/plain-scripts';
 import type { ProviderTransportFactory } from '../../transports/mode';
@@ -341,6 +342,51 @@ describe('remoteScripts', () => {
 		expect(snapshot.vendors?.declared).toContainEqual(
 			expect.objectContaining({ id: 'acme-pixel', name: 'Acme Pixel' })
 		);
+		runtime.dispose();
+	});
+
+	test('skips an entry whose manifest requires a later runtime level, before declaring anything', async () => {
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const runtime = createConsentRuntimeWith(
+			{
+				mode: quietMode,
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: load(
+							acmeManifest({
+								category: 'experience',
+								requires: MANIFEST_RUNTIME_LEVEL + 1,
+							})
+						),
+					},
+				},
+				remoteScripts: true,
+				scriptLoader: { onDebug },
+			},
+			defaultRuntimeModules
+		);
+		runtime.start();
+
+		const snapshot = runtime.kernel.getSnapshot();
+		expect(snapshot.consentCategories ?? []).not.toContain('experience');
+		expect(snapshot.vendors?.declared ?? []).not.toContainEqual(
+			expect.objectContaining({ id: 'acme-pixel' })
+		);
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message: expect.stringContaining('runtime level'),
+					scriptId: 'acme-pixel',
+				})
+			)
+		);
+		expect(document.head.querySelectorAll('script')).toHaveLength(0);
 		runtime.dispose();
 	});
 

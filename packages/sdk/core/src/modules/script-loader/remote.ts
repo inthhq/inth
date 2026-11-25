@@ -1,8 +1,10 @@
-import type { Script } from '../../libs/script-loader/types';
 /**
  * Scripts the Inth server sends on `scriptRegistry.load`, read before the
  * manifest runtime that runs them has loaded.
  */
+import { runsAtManifestLevel } from '@inth/sdk-schema/types';
+
+import type { Script } from '../../libs/script-loader/types';
 import { isCategoryCondition } from './category-condition';
 
 /** One `load` entry with the shape the loader can use. */
@@ -26,10 +28,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * The usable entries of `load`: a string `id`, an `integration`, and an
- * object `manifest` whose `vendor` is the `id`. A second entry with the
- * same `id` is skipped. Anything else is reported, not thrown.
+ * object `manifest` whose `vendor` is the `id` and that runs at manifest
+ * runtime `level`. A second entry with the same `id` is skipped. Anything
+ * else is reported, not thrown.
  */
-export const readRemoteEntries = function readRemoteEntries(load: unknown): {
+export const readRemoteEntries = function readRemoteEntries(
+	load: unknown,
+	level: number
+): {
 	entries: RemoteEntry[];
 	problems: RemoteEntryProblem[];
 } {
@@ -52,6 +58,15 @@ export const readRemoteEntries = function readRemoteEntries(load: unknown): {
 			problems.push({
 				id,
 				message: `The Inth server sent a remote script without an id, an integration and a manifest, so it does not load.`,
+			});
+			continue;
+		}
+		// Checked before anything the entry declares: a list kept in a cache
+		// or copied from a static manifest was not filtered for this SDK.
+		if (!runsAtManifestLevel(entry.manifest, level)) {
+			problems.push({
+				id,
+				message: `The Inth server sent remote script ${id}, whose manifest requires runtime level ${JSON.stringify(entry.manifest.requires)}; this SDK runs level ${level}, so it does not load. Update the SDK to load it.`,
 			});
 			continue;
 		}
