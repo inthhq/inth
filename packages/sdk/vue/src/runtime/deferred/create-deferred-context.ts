@@ -31,6 +31,7 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
@@ -106,8 +107,13 @@ const BANNER_LEAVE_MS = 10_000;
 const loadCompleteCommit = async (
 	input: CompleteCommitInput
 ): Promise<CompleteCommitResult | null> => {
-	const { completeCommit } =
-		await import('@inth/sdk/surface-actions/early-commit');
+	const completeCommit = await importChunk(
+		() => import('@inth/sdk/surface-actions/early-commit'),
+		(module) =>
+			typeof module.completeCommit === 'function'
+				? module.completeCommit
+				: undefined
+	);
 	return completeCommit(input);
 };
 

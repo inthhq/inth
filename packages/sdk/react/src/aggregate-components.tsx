@@ -1,5 +1,6 @@
 'use client';
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	claimOptOutConfirmationHost,
 	showConsentSurface,
@@ -51,16 +52,28 @@ const dialogModule = createDeferredModule(
 const LazyDialogBody = dialogModule.component(
 	(module) => module.ConsentDialogBody
 );
-const widgetModule = createDeferredModule(
-	() => import('./components/preferences')
+const widgetModule = createDeferredModule(() =>
+	importChunk(
+		() => import('./components/preferences'),
+		(module) =>
+			typeof module.ConsentWidget === 'function' ? module : undefined
+	)
 );
 const optOutConfirmationModule = createDeferredModule(async () => {
 	void preloadSurfaceSheets(PARTS_SHEETS);
-	return await import('./components/opt-out-confirmation');
+	return await importChunk(
+		() => import('./components/opt-out-confirmation'),
+		(module) =>
+			typeof module.OptOutConfirmation === 'function' ? module : undefined
+	);
 });
 const optInConfirmationModule = createDeferredModule(async () => {
 	void preloadSurfaceSheets(PARTS_SHEETS);
-	return await import('./components/opt-in-confirmation');
+	return await importChunk(
+		() => import('./components/opt-in-confirmation'),
+		(module) =>
+			typeof module.OptInConfirmation === 'function' ? module : undefined
+	);
 });
 const lazyWidgetExport = (name: string) =>
 	widgetModule.component(
@@ -71,8 +84,12 @@ const lazyOptOutConfirmationExport = (name: string) =>
 		(module) => (module as Record<string, unknown>)[name] as AnyComponent
 	);
 
-const triggerModule = createDeferredModule(
-	() => import('./components/panel-trigger')
+const triggerModule = createDeferredModule(() =>
+	importChunk(
+		() => import('./components/panel-trigger'),
+		(module) =>
+			typeof module.ConsentDialogTrigger === 'function' ? module : undefined
+	)
 );
 const LazyConsentDialogTrigger = triggerModule.component(
 	(module) => module.ConsentDialogTrigger

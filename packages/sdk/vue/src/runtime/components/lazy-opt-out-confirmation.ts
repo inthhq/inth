@@ -1,18 +1,15 @@
 // Keep lazy module filenames neutral: Vite derives chunk URLs from them.
 import { claimOptOutConfirmationHost } from '@inth/sdk/surface-actions';
-import {
-	defineAsyncComponent,
-	defineComponent,
-	h,
-	onBeforeUnmount,
-	onMounted,
-} from 'vue';
+import { defineComponent, h, onBeforeUnmount, onMounted } from 'vue';
 
 import { useConsentKernel } from '../composables/use-consent-kernel';
 import type OptOutConfirmationComponent from './opt-out-confirmation.vue';
+import { defineChunkComponent } from './parts/define-chunk-component';
+import { importComponent } from './parts/import-component';
 
-const OptOutConfirmationView = defineAsyncComponent(
-	() => import('./opt-out-confirmation.vue')
+const OptOutConfirmationView = defineChunkComponent(
+	'OptOutConfirmationView',
+	() => importComponent(() => import('./opt-out-confirmation.vue'))
 );
 /**
  * The standalone opt-out confirmation. It claims the host as soon as it

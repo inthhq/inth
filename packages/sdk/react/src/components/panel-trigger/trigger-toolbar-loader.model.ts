@@ -10,6 +10,8 @@
  * @packageDocumentation
  */
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
+
 import type { TriggerToolbar } from './atoms/trigger-toolbar';
 
 /** The toolbar view the trigger renders while DevTools is mounted. */
@@ -53,7 +55,11 @@ export const loadTriggerToolbar =
 		}
 		pending ??= (async () => {
 			try {
-				const module = await import('./atoms/trigger-toolbar');
+				const module = await importChunk(
+					() => import('./atoms/trigger-toolbar'),
+					(chunk) =>
+						typeof chunk.TriggerToolbar === 'function' ? chunk : undefined
+				);
 				loaded ??= module.TriggerToolbar;
 				return loaded;
 			} catch (error) {

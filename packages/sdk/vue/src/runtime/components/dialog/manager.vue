@@ -8,7 +8,7 @@
  * It hosts the opt-in confirmation while mounted, so a confirmation asked
  * for from the dialog never waits on a banner that is not on the page.
  */
-import { defineAsyncComponent, inject, ref, watch } from 'vue';
+import { inject, ref, watch } from 'vue';
 
 import { useConsentActiveUI } from '../../composables';
 import {
@@ -18,6 +18,8 @@ import {
 	useOptOutConfirmationOpen,
 } from '../../composables/use-consent-kernel';
 import { symbolConfirmationHosted } from '../../utils/consent-symbols.model';
+import { defineChunkComponent } from '../parts/define-chunk-component';
+import { importComponent } from '../parts/import-component';
 import { useAdoptOptOutConfirmation } from '../parts/use-adopt-opt-out-confirmation';
 import { loadConsentDialog } from './load-panel';
 
@@ -31,9 +33,14 @@ const props = withDefaults(
 	{ disableAnimation: undefined }
 );
 
-const LazyConsentDialog = defineAsyncComponent(loadConsentDialog);
-const LazyOptInConfirmation = defineAsyncComponent(
-	() => import('../opt-in-confirmation.vue')
+// A failed chunk loads again on the next snapshot, such as the next open.
+const LazyConsentDialog = defineChunkComponent(
+	'LazyConsentDialog',
+	loadConsentDialog
+);
+const LazyOptInConfirmation = defineChunkComponent(
+	'LazyOptInConfirmation',
+	() => importComponent(() => import('../opt-in-confirmation.vue'))
 );
 
 const activeUI = useConsentActiveUI();

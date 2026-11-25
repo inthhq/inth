@@ -31,21 +31,29 @@ import {
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
 } from '@inth/angular';
 import type { ActiveUI, Model } from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 
 import type { IABConsentDialogBody } from './iab-dialog-body';
 import { IAB_DIALOG_SHEETS } from './iab-dialog-sheets';
 
 /**
- * Loads the IAB dialog's body, a chunk of its own. Provide another to test
- * a failed load.
+ * Loads the IAB dialog's body, a chunk of its own. Each call imports the
+ * chunk again, so the next open after a failed download fetches it again
+ * (`importChunk`). Provide another to test a failed load.
  *
  * @internal
  */
 export const IAB_CONSENT_DIALOG_BODY = new InjectionToken<
 	() => Promise<Type<IABConsentDialogBody>>
 >('INTH_IAB_CONSENT_DIALOG_BODY', {
-	factory: () => async () =>
-		(await import('./iab-dialog-body')).IABConsentDialogBody,
+	factory: () => () =>
+		importChunk(
+			() => import('./iab-dialog-body'),
+			(module) =>
+				typeof module.IABConsentDialogBody === 'function'
+					? module.IABConsentDialogBody
+					: undefined
+		),
 });
 
 /** A tab of the IAB preference centre. */

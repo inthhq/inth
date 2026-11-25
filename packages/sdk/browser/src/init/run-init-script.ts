@@ -57,7 +57,7 @@ import {
 import { version } from '../version';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
 import { hasPendingOptOutConfirmation } from './init-script-session.store';
-import { partSrc } from './part-src';
+import { partSrc, retrySrc } from './part-src';
 import type { InitFile } from './part-src';
 import { readPolicyCache, writePolicyCache } from './policy-cache.store';
 import { BOOT_KEY } from './read-boot';
@@ -236,7 +236,10 @@ export const runInitScript = function runInitScript(
 		}
 		let tries = 0;
 		const request = () => {
-			const element = appendScript(src);
+			// Each retry has a URL of its own, so the browser fetches it again
+			// even when the failure came with cache headers, as a missing
+			// file's 404 may.
+			const element = appendScript(retrySrc(src, tries));
 			element.addEventListener('error', () => {
 				element.remove();
 				if (api) {
@@ -250,8 +253,6 @@ export const runInitScript = function runInitScript(
 				const wait = ENGINE_RETRY_MS[tries];
 				tries += 1;
 				if (wait !== undefined) {
-					// The same URL: the browser fetches it again unless the
-					// failure came with cache headers, as a missing file's may.
 					setTimeout(() => {
 						if (boot.disposed) {
 							engineRequested = false;

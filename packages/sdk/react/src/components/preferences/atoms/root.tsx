@@ -1,5 +1,6 @@
 'use client';
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import styles from '@inth/sdk/ui/styles/components/consent-manager';
 import { useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
@@ -23,8 +24,12 @@ import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
 import { createDeferredModule } from '~/utils/create-deferred-module';
 
-const LazyOptInConfirmation = createDeferredModule(
-	() => import('~/components/opt-in-confirmation')
+const LazyOptInConfirmation = createDeferredModule(() =>
+	importChunk(
+		() => import('~/components/opt-in-confirmation'),
+		(module) =>
+			typeof module.OptInConfirmation === 'function' ? module : undefined
+	)
 ).component((module) => module.OptInConfirmation);
 
 /**

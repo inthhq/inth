@@ -13,6 +13,7 @@
  * @internal
  */
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import type { ComponentType, ReactNode } from 'react';
 import { Suspense, createElement, useContext } from 'react';
 
@@ -127,7 +128,14 @@ type BannerModule = typeof BannerModuleNamespace;
 export const DeferredConsentBanner = surfaceWithParts(
 	'ConsentBanner',
 	async (): Promise<BannerModule> => {
-		const module = await import('../components/prompt/index');
+		const module = await importChunk(
+			() => import('../components/prompt/index'),
+			(chunk) =>
+				typeof chunk.ConsentBanner === 'function' &&
+				typeof chunk.preloadServerContainer === 'function'
+					? chunk
+					: undefined
+		);
 		// The container the server rendered loads with the banner, so
 		// hydration keeps the server's markup without a second wait.
 		await module.preloadServerContainer();
@@ -147,7 +155,12 @@ type DialogModule = typeof DialogModuleNamespace;
  */
 export const DeferredConsentDialog = surfaceWithParts(
 	'ConsentDialog',
-	(): Promise<DialogModule> => import('../aggregate-components'),
+	(): Promise<DialogModule> =>
+		importChunk(
+			() => import('../aggregate-components'),
+			(module) =>
+				typeof module.ConsentDialog === 'function' ? module : undefined
+		),
 	(module) => module.ConsentDialog,
 	[]
 ) as ComponentType<ConsentDialogProps>;

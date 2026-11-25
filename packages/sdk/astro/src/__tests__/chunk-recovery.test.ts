@@ -2,15 +2,22 @@
  * Builds the fixture site and taps its banner in Chromium while one of the
  * consent chunks fails to download.
  *
- * Chromium keeps a failed module fetch for the life of the document, so
- * a later `import()` of the chunk fails without a request. Only a real
- * build shows it: the chunks are the bundler's, and other chunks import
- * them by their plain URL. The fixture's page is prerendered, so no
- * early-tap script holds the tap.
+ * Playwright's Chromium (153) keeps a failed module fetch for the life of
+ * the document, as the HTML standard required before July 2026, so a
+ * later `import()` of the chunk's URL fails without a request. Only a real
+ * build shows what that leaves: the chunks are the bundler's, and other
+ * chunks import them by their plain URL.
  *
- * The page must not reload itself to get past that: a reload throws away
- * what the visitor typed into the host page. The banner shows again, no
- * choice is recorded, and the next page load fetches the chunk again.
+ * `importChunk` loads a failed chunk again from its URL with
+ * `inth-retry=<n>` added. The prompt chunk recovers that way: nothing else
+ * imports it. The engine chunk does not: the prompt chunk imports it by
+ * its plain URL, which stays failed. The fixture's page is prerendered, so
+ * no early-tap script holds the tap.
+ *
+ * The page must not reload itself: a reload throws away what the visitor
+ * typed into the host page. When the chunk cannot load, the banner shows
+ * again, no choice is recorded, and the next page load fetches the chunk
+ * again.
  */
 import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -50,6 +57,8 @@ const TYPES: Record<string, string> = {
 interface Site {
 	/** Each request's method and path, in order. */
 	requests: string[];
+	/** Each request's path and query, in order. */
+	urls: string[];
 	/** Answers the next request for a matching chunk with a 503. */
 	failNext: (pattern: RegExp, times?: number) => void;
 	/** Forgets the requests and the failures still to come. */
@@ -85,10 +94,13 @@ beforeAll(async () => {
 	);
 
 	const requests: string[] = [];
+	const urls: string[] = [];
 	const failures: { pattern: RegExp; left: number }[] = [];
 	server = createServer((request, response) => {
-		const path = new URL(request.url ?? '/', 'http://site').pathname;
+		const url = new URL(request.url ?? '/', 'http://site');
+		const path = url.pathname;
 		requests.push(`${request.method} ${path}`);
+		urls.push(`${path}${url.search}`);
 		const failure = failures.find(
 			({ left, pattern }) => left > 0 && pattern.test(path)
 		);
@@ -123,9 +135,11 @@ beforeAll(async () => {
 		requests,
 		reset() {
 			requests.length = 0;
+			urls.length = 0;
 			failures.length = 0;
 		},
 		url: `http://127.0.0.1:${port}/`,
+		urls,
 	};
 	browser = await chromium.launch();
 }, 240_000);
@@ -147,10 +161,11 @@ const marketing = async function marketing(page: Page): Promise<string> {
 	return /(?:^|&)mk=(?<granted>[01])/u.exec(value)?.groups?.granted ?? '';
 };
 
-const gets = (pattern: RegExp): number =>
-	site.requests.filter(
-		(entry) => entry.startsWith('GET ') && pattern.test(entry.slice(4))
-	).length;
+/** The queries of the requests whose path matches `pattern`. */
+const queries = (pattern: RegExp): string[] =>
+	site.urls
+		.filter((entry) => pattern.test(entry.split('?')[0] ?? ''))
+		.map((entry) => entry.split('?')[1] ?? '');
 
 /** The page's consent client, as the banner left it. */
 const consent = (page: Page) =>
@@ -235,13 +250,35 @@ const leftInPlace = async function leftInPlace(page: Page): Promise<void> {
 };
 
 describe('a consent chunk that fails to download once', () => {
+	it('loads the prompt chunk again from a URL of its own, and records the tap', async () => {
+		site.reset();
+		site.failNext(PROMPT);
+		const page = await (browser as Browser).newPage();
+		await page.goto(site.url);
+		await page.evaluate(() => {
+			const field = document.createElement('textarea');
+			field.id = 'draft';
+			document.body.append(field);
+		});
+		await page.fill('#draft', 'unsaved draft');
+		await page.getByTestId('consent-banner-accept-button').click();
+		await expect.poll(() => marketing(page), { timeout: 10_000 }).toBe('1');
+		// The same page, with the visitor's draft.
+		expect(site.requests.filter((entry) => entry === 'GET /')).toHaveLength(1);
+		expect(await page.inputValue('#draft')).toBe('unsaved draft');
+		expect(queries(PROMPT)).toEqual(['', 'inth-retry=1']);
+		await page.close();
+	}, 60_000);
+
 	it('leaves the page in place after the engine chunk answered 503, and records a tap after the next load', async () => {
 		site.reset();
 		site.failNext(ENGINE);
 		const page = await acceptTwice();
 		await leftInPlace(page);
-		// Chromium sent no request for the retry.
-		expect(gets(ENGINE)).toBe(1);
+		// The engine loaded again from a URL of its own, but the prompt chunk
+		// imports it by its plain URL, which Chromium keeps failed. The second
+		// tap reuses the engine that loaded.
+		expect(queries(ENGINE)).toEqual(['', 'inth-retry=1']);
 
 		// The next page load fetches the chunk again.
 		await page.reload();
@@ -268,21 +305,19 @@ describe('a consent chunk that fails to download once', () => {
 		await page.close();
 	}, 60_000);
 
-	it('leaves the page in place after the prompt chunk answered 503', async () => {
-		site.reset();
-		site.failNext(PROMPT);
-		const page = await acceptTwice();
-		await leftInPlace(page);
-		expect(gets(PROMPT)).toBe(1);
-		await page.close();
-	}, 60_000);
-
 	it('leaves the page in place while the engine chunk keeps failing', async () => {
 		site.reset();
 		site.failNext(ENGINE, 100);
 		const page = await acceptTwice();
 		await leftInPlace(page);
-		expect(gets(ENGINE)).toBe(1);
+		// One request at the plain URL, which Chromium then keeps failed;
+		// every later try asked once more, each at a URL of its own.
+		const [plain, ...retries] = queries(ENGINE);
+		expect(plain).toBe('');
+		expect(retries.length).toBeGreaterThanOrEqual(2);
+		expect(retries).toEqual(
+			retries.map((_, index) => `inth-retry=${index + 1}`)
+		);
 		await page.close();
 	}, 60_000);
 });

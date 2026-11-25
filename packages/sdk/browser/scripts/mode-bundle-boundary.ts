@@ -78,6 +78,21 @@ const INIT_EXCLUSIONS = [
 	/\/(?:packages\/(?:sdk\/)?ui|@inth\/sdk-ui)\/(?:src|dist)\/styles\//u,
 ];
 
+/**
+ * What `inth.choices.js` itself must not carry: the dialog and the opt-in
+ * confirmation, which are its chunk `inth.choices-dialog.js`, so a visitor
+ * who only answers the banner never downloads them.
+ */
+const DIALOG_PARTS = [
+	new RegExp(
+		`/${BROWSER}/(?:ui/(?:dialog/dialog|opt-in-confirmation|parts/create-rights-receipt)|entries/cdn-choices-dialog)\\.[jt]s(?:$|[?|])`,
+		'u'
+	),
+];
+
+/** The one chunk `inth.choices.js` may load on demand. */
+export const CHOICES_DIALOG_CHUNK = 'inth.choices-dialog';
+
 type BoundaryMode = 'choices' | 'hosted' | 'init' | 'production' | 'testing';
 
 const EXCLUSIONS: Record<BoundaryMode, RegExp[]> = {
@@ -90,9 +105,9 @@ const EXCLUSIONS: Record<BoundaryMode, RegExp[]> = {
 
 const assertModules = function assertModules(
 	mode: BoundaryMode,
-	modules: readonly BundledModule[]
+	modules: readonly BundledModule[],
+	exclusions: readonly RegExp[] = EXCLUSIONS[mode]
 ): void {
-	const exclusions = EXCLUSIONS[mode];
 	for (const module of modules) {
 		const id = (module.nameForCondition ?? module.identifier ?? '').replaceAll(
 			'\\',
@@ -104,7 +119,7 @@ const assertModules = function assertModules(
 			);
 		}
 		if (module.modules) {
-			assertModules(mode, module.modules);
+			assertModules(mode, module.modules, exclusions);
 		}
 	}
 };
@@ -139,7 +154,23 @@ export const modeBundleBoundary = (
 				orphanModules: true,
 			});
 			for (const chunk of output.chunks ?? []) {
-				assertModules(mode, chunk.modules ?? []);
+				const initial = chunk.initial !== false;
+				if (mode === 'choices' && !initial) {
+					// The chunk's URL is set at run time for the one chunk
+					// (`src/entries/cdn-choices.ts`): a second would load from it.
+					if (!chunk.names?.includes(CHOICES_DIALOG_CHUNK)) {
+						throw new Error(
+							`Unexpected chunk in choices browser bundle: ${chunk.names?.join(', ') || String(chunk.id)}. inth.choices.js loads only ${CHOICES_DIALOG_CHUNK}.js on demand.`
+						);
+					}
+				}
+				assertModules(
+					mode,
+					chunk.modules ?? [],
+					mode === 'choices' && initial
+						? [...EXCLUSIONS.choices, ...DIALOG_PARTS]
+						: EXCLUSIONS[mode]
+				);
 			}
 		});
 	},

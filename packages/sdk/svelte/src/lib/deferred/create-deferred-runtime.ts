@@ -34,6 +34,7 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk/runtime';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import type {
 	ConsentProviderRuntime,
@@ -102,9 +103,17 @@ export interface DeferredRuntime extends ConsentProviderRuntime {
 /** Load the engine anyway this long after an early dialog opened. */
 const DIALOG_SHOWN_MS = 3000;
 
+/**
+ * The commit chunk, loaded once. A failed load clears, so the next commit
+ * imports it again.
+ */
 let commitModule: Promise<typeof CommitModule> | undefined;
 const loadCommitModule = async (): Promise<typeof CommitModule> => {
-	commitModule ??= import('@inth/sdk/surface-actions/early-commit');
+	commitModule ??= importChunk(
+		() => import('@inth/sdk/surface-actions/early-commit'),
+		(module) =>
+			typeof module.completeCommit === 'function' ? module : undefined
+	);
 	try {
 		return await commitModule;
 	} catch (error) {

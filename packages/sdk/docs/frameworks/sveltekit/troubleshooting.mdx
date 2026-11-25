@@ -99,6 +99,14 @@ group: frameworks
 
 <include src="../../shared/svelte/troubleshooting.mdx" />
 
+## The banner or dialog fails to load
+
+**Check.** Open the console. A warning or error from Inth that says the banner, the dialog or the engine failed to load means the browser could not download one of Inth's chunks, for example during a dropped connection or a deploy that removed old files.
+
+After a failure the page stays as it is: Inth never reloads it, because a reload would discard what the visitor typed into your page. Nothing is recorded, and the banner stays or shows again. The next tap, open or snapshot tries the download again. Your bundler loads chunks with native `import()`. Firefox 155 or later, Chrome 156 or later, and Safari send a new request for a chunk that failed. Earlier Chromium and Firefox keep the failure for the life of the page; there Inth loads the chunk again from its URL with `inth-retry=<n>` added, which works unless another chunk imports it by its plain URL. A chunk whose own dependency failed stays failed in every browser.
+
+**Fix.** Nothing on the page. The next page load downloads the chunk again. If the failures follow a deploy, keep the previous build's chunk files available until cached pages that link to them expire. See [a consent chunk fails to load](/docs/guides/troubleshooting#a-consent-chunk-fails-to-load) for which browsers and builds can retry on the same page.
+
 ## More help
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared across frameworks, including missing banners, early analytics, lost choices, hydration mismatches, and content blockers. [Verify consent](/docs/guides/verify-consent) has the release checklist.

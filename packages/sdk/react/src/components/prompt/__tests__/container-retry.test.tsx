@@ -3,6 +3,7 @@
  * banner for a tap: the banner shows again, keeps the server's markup while
  * the chunk loads again, and renders once it is in.
  */
+import { setChunkImportForTest } from '@inth/sdk/runtime/import-chunk';
 import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import { Suspense, act } from 'react';
 import { hydrateRoot } from 'react-dom/client';
@@ -11,6 +12,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { deferredContainer } from '../prompt';
 import type { PromptSurfaceOptions } from '../prompt-surface';
+import type * as StripModule from '../strip';
 
 const RETRY_MS = 20;
 
@@ -51,6 +53,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	setChunkImportForTest();
 	host.remove();
 	document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
 });
@@ -116,4 +119,51 @@ test('a hydrating banner keeps the server markup while its failed container chun
 	act(() => {
 		root.unmount();
 	});
+});
+
+/**
+ * What a browser that keeps a failed import (Chromium before 156, Firefox
+ * before 155) answers every `import()` of the strip's chunk after one
+ * failed download: the same error, without a request.
+ */
+const keptFailure = () =>
+	vi
+		.fn<() => Promise<typeof StripModule>>()
+		.mockRejectedValue(
+			new TypeError(
+				'Failed to fetch dynamically imported module: http://localhost/assets/strip.js'
+			)
+		);
+
+test('a container chunk the browser keeps failing loads again from its URL', async () => {
+	const strip = await import('../strip');
+	const importUrl = vi.fn((_url: string) => Promise.resolve(strip));
+	setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
+	const importModule = keptFailure();
+	const pick = vi.fn((loaded: typeof strip) => loaded.BannerSurface);
+	const container = deferredContainer(importModule, pick, RETRY_MS);
+	await container.preload();
+	// In on the first try: no second load a while later.
+	expect(importModule).toHaveBeenCalledOnce();
+	expect(importUrl).toHaveBeenCalledExactlyOnceWith(
+		'http://localhost/assets/strip.js?inth-retry=1'
+	);
+	expect(pick).toHaveLastReturnedWith(strip.BannerSurface);
+});
+
+test('a URL that exports the container under other names is not used', async () => {
+	// A bundler that re-exports the chunk's namespace under a short name.
+	const importUrl = vi.fn(async (_url: string) => ({
+		t: await import('../strip'),
+	}));
+	setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
+	const importModule = keptFailure();
+	const container = deferredContainer(
+		importModule,
+		(loaded) => loaded.BannerSurface,
+		RETRY_MS
+	);
+	await container.preload();
+	expect(importModule).toHaveBeenCalledTimes(3);
+	expect(importUrl).toHaveBeenCalled();
 });

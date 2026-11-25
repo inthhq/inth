@@ -2,6 +2,8 @@
 	lang="ts"
 	module
 >
+	import { importChunk } from '@inth/sdk/runtime/import-chunk';
+
 	import type PanelComponent from './panel.svelte';
 
 	let pendingPanel: Promise<typeof PanelComponent> | null = null;
@@ -14,7 +16,11 @@
 	const loadPanel = function loadPanel(): Promise<typeof PanelComponent> {
 		pendingPanel ??= (async () => {
 			try {
-				return (await import('./panel.svelte')).default;
+				return await importChunk(
+					() => import('./panel.svelte'),
+					(module) =>
+						typeof module.default === 'function' ? module.default : undefined
+				);
 			} catch (error) {
 				pendingPanel = null;
 				throw error;

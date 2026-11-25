@@ -1,4 +1,5 @@
 import type { HydrationRecords } from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { PREFETCH_WINDOW_KEY } from '@inth/sdk/runtime/page-globals';
 import type { RequestConsentState } from '@inth/sdk/server';
 import {
@@ -47,6 +48,19 @@ import type {
 } from './vue-consent-kernel-context.model';
 
 export { withClientData } from './with-client-data';
+
+/**
+ * The consent engine's chunk in the browser, loaded so that a retry on the
+ * same page can load it again (see `importChunk`).
+ */
+const loadEngineChunk = () =>
+	importChunk(
+		() => import('./deferred/engine'),
+		(module) =>
+			typeof module.createNuxtEngineContext === 'function'
+				? module.createNuxtEngineContext
+				: undefined
+	);
 
 /**
  * Development only: after the first init, warn when the `/v1/consent/init` request the
@@ -441,8 +455,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 				loadEngine: async () => {
 					// The stock banner hydrates once the engine is in: one round
 					// trip for both.
-					const [{ createNuxtEngineContext }] = await Promise.all([
-						import('./deferred/engine'),
+					const [createNuxtEngineContext] = await Promise.all([
+						loadEngineChunk(),
 						loadConsentBanner(),
 					]);
 					return (committed) =>
@@ -451,7 +465,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 				snapshot: toRaw(bootState.s),
 			});
 		} else {
-			const { createNuxtEngineContext } = await import('./deferred/engine');
+			const createNuxtEngineContext = await loadEngineChunk();
 			context = createNuxtEngineContext(engineInput());
 		}
 	}

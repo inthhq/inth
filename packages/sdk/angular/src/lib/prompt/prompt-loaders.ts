@@ -13,6 +13,7 @@ import type {
 	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 
 import type { SurfaceStyleSheet } from '../core/consent-styles';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
@@ -65,7 +66,9 @@ export interface PromptLoaders {
  * Loads the consent prompt and the container it shows. One chunk per
  * container, each naming its own stylesheet, so a page downloads only the
  * container it shows; a page that never owes a choice downloads none.
- * Provide another to test what a page loads.
+ * Each call imports its chunk again, so the prompt's next try after a
+ * failed download fetches it again (`importChunk`). Provide another to
+ * test what a page loads.
  *
  * @internal
  */
@@ -76,14 +79,30 @@ export const PROMPT_LOADERS = new InjectionToken<PromptLoaders>(
 			container: async (type) => {
 				switch (type) {
 					case 'banner':
-						return (await import('./strip')).BANNER_CONTAINER;
+						return await importChunk(
+							() => import('./strip'),
+							(module) => module.BANNER_CONTAINER
+						);
 					case 'drawer':
-						return (await import('./drawer-container')).DRAWER_CONTAINER;
+						return await importChunk(
+							() => import('./drawer-container'),
+							(module) => module.DRAWER_CONTAINER
+						);
 					default:
-						return (await import('./card-container')).CARD_CONTAINER;
+						return await importChunk(
+							() => import('./card-container'),
+							(module) => module.CARD_CONTAINER
+						);
 				}
 			},
-			surface: async () => (await import('./prompt-surface')).PromptSurface,
+			surface: () =>
+				importChunk(
+					() => import('./prompt-surface'),
+					(module) =>
+						typeof module.PromptSurface === 'function'
+							? module.PromptSurface
+							: undefined
+				),
 		}),
 	}
 );
