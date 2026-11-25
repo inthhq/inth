@@ -149,14 +149,17 @@ public struct ConsentTheme: Equatable, Sendable {
         /// primary pulled toward `text`. Derived, so a host theme gets the same floor for free.
         var statusTagText: ConsentThemeColor { primary.blended(toward: text, fraction: 0.3) }
 
-        /// Warm paper, ink decisions, and the c15t blue for links and switches.
+        /// Warm paper, ink decisions, and the web's blue for links and switches. `primary` is the
+        /// web's `--inth-primary` (`#2563EB`) in light. In dark it is the web's dark
+        /// `--inth-primary-text` (`#8AB4FF`), not the dark `--inth-primary` fill (`#2F66DF`):
+        /// native draws links in `primary`, and the fill is only about 3.3:1 on the dark surface.
         public static let `default` = Colors(
             canvas: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411),
             surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x211D18),
             surfaceMuted: ConsentThemeColor(light: 0xEFE9DF, dark: 0x2B2620),
             text: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
             textMuted: ConsentThemeColor(light: 0x6B655D, dark: 0xA49D93),
-            primary: ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF),
+            primary: ConsentThemeColor(light: 0x2563EB, dark: 0x8AB4FF),
             textOnPrimary: ConsentThemeColor(light: 0xFFFFFF, dark: 0x0A1033),
             decision: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
             textOnDecision: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411))

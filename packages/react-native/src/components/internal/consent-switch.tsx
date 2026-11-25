@@ -182,9 +182,11 @@ export const ConsentSwitch = ({
 	// The travel stays the web's own calculation, which reads the live thumb size
 	// even while a smaller disabled one is drawn, so an immovable category stops at
 	// exactly the point a movable one does.
+	// The off track is `switchTrackOff`, not `switchTrack`, which is too faint
+	// against the surface to read as a control (VIS-03).
 	const trackColor = value
 		? theme.colors.switchTrackActive
-		: theme.colors.switchTrack;
+		: theme.colors.switchTrackOff;
 	const size = disabled ? THUMB_SIZE_DISABLED : thumb;
 
 	const thumbStyle: ViewStyle = {
@@ -215,9 +217,7 @@ export const ConsentSwitch = ({
 				style={[
 					track,
 					{
-						backgroundColor: value
-							? theme.colors.switchTrackActive
-							: theme.colors.switchTrack,
+						backgroundColor: trackColor,
 						opacity: disabled ? 0.4 : 1,
 					},
 				]}

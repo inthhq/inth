@@ -115,6 +115,7 @@ export const JS_ONLY_COLOR_NAMES = [
 	'switchThumb',
 	'switchTrack',
 	'switchTrackActive',
+	'switchTrackOff',
 ] as const;
 
 /** Native keys for the non-colour theme values. */

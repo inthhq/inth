@@ -8,6 +8,7 @@ import com.inth.core.model.KernelOverrides
 import com.inth.core.model.PolicyResolution
 import com.inth.core.model.PrivacySignals
 import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyLayout
 import com.inth.core.policy.PolicyRead
 import com.inth.core.policy.StrictPolicyReader
 import com.inth.core.tc.GlobalVendorList
@@ -126,6 +127,8 @@ object InitMapper {
 				status = PolicyResolution.STATUS_MATCHED,
 				policyId = read.policy.id,
 				fingerprint = read.policy.policyFingerprint,
+				surface = read.surface,
+				layout = read.surface?.let { PolicyLayout.resolve(it, read.policy.model, read.policy.prompt) },
 			) to read.policy
 
 			is PolicyRead.NoPolicy -> PolicyResolution(status = read.status) to null

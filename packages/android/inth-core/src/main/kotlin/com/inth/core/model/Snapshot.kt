@@ -2,6 +2,8 @@
 
 package com.inth.core.model
 
+import com.inth.core.policy.PolicyLayout
+import com.inth.core.policy.PolicySurface
 import com.inth.core.tc.GlobalVendorList
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -51,6 +53,17 @@ data class PolicyResolution(
 	val policyId: String? = null,
 	val fingerprint: String? = null,
 	val reason: String? = null,
+	/**
+	 * The matched rule's [PolicySurface], in canonical form. `null` when the rule has none, and
+	 * then left off the bridge, so a snapshot under such a rule reads exactly as it did before
+	 * `surface` existed.
+	 */
+	val surface: PolicySurface? = null,
+	/**
+	 * The phone layout [surface] resolves to with no host presentation. Present exactly when
+	 * [surface] is. The stock Compose presenter does not draw it yet; see [PolicyLayout].
+	 */
+	val layout: PolicyLayout? = null,
 ) {
 	val matched: Boolean
 		get() = status == STATUS_MATCHED

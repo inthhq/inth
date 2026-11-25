@@ -272,6 +272,14 @@ final class ContrastTests: XCTestCase {
         return channel(16) | channel(8) | channel(0)
     }
 
+    /// The stock accent is the web's: `--inth-primary` in light, and the dark `--inth-primary-text`
+    /// in dark, because native draws links in `primary` and the dark web fill is too dark for text.
+    /// `packages/react-native/src/components/__tests__/web-token-parity.test.ts` reads both from
+    /// the web theme source.
+    func testStockPrimaryIsTheWebAccent() {
+        XCTAssertEqual(ConsentTheme.Colors.default.primary, ConsentThemeColor(light: 0x2563EB, dark: 0x8AB4FF))
+    }
+
     func testBlendMovesEachAppearanceSeparately() {
         let blended = ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF).blended(toward: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6), fraction: 0.3)
         XCTAssertEqual(blended, ConsentThemeColor(light: 0x2D49B9, dark: 0xABB9F8))

@@ -35,6 +35,16 @@ class ThemeTest {
         assertNull(ConsentThemeColor.parse("#00CCBC,"))
     }
 
+    /**
+     * The stock accent is the web's: `--inth-primary` in light, and the dark `--inth-primary-text`
+     * in dark, because native draws links in `primary` and the dark web fill is too dark for text.
+     * `packages/react-native/src/components/__tests__/web-token-parity.test.ts` reads both from
+     * the web theme source.
+     */
+    @Test fun stockPrimaryIsTheWebAccent() {
+        assertEquals(ConsentThemeColor(0x2563EB, 0x8AB4FF), ConsentTheme.Colors.default.primary)
+    }
+
     @Test fun blendMovesEachAppearanceSeparately() {
         val blended = ConsentThemeColor(0x335CFF, 0x8CA2FF).blended(toward = ConsentThemeColor(0x1E1B17, 0xF3EEE6), fraction = 0.3f)
         assertEquals(ConsentThemeColor(0x2D49B9, 0xABB9F8), blended)

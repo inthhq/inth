@@ -23,7 +23,17 @@
  */
 
 import { COMMIT_FAILURE_REASONS } from './commit-payload.model';
-import { POLICY_RESOLUTION_FAILURES } from './consent-snapshot.model';
+import {
+	POLICY_BANNER_EDGES,
+	POLICY_BLOCKING_CONSTRAINTS,
+	POLICY_CARD_POSITIONS,
+	POLICY_CONTAINER_TYPES,
+	POLICY_DRAWER_SIDES,
+	POLICY_EDGE_STYLES,
+	POLICY_FLOWS,
+	POLICY_PLACEMENTS,
+	POLICY_RESOLUTION_FAILURES,
+} from './consent-snapshot.model';
 import {
 	ACTIVE_SURFACES,
 	NATIVE_MODELS,
@@ -258,9 +268,37 @@ export const BRIDGE_PAYLOADS = {
 		resolution: {
 			fields: {
 				fingerprint: 'string | null',
+				layout: {
+					fields: {
+						blocking: 'boolean',
+						edgeStyle: { enum: POLICY_EDGE_STYLES },
+						flow: { enum: POLICY_FLOWS },
+						placement: { enum: POLICY_PLACEMENTS },
+						type: { enum: POLICY_CONTAINER_TYPES },
+					},
+					optional: true,
+				},
 				policyId: 'string | null',
 				reason: { enum: POLICY_RESOLUTION_FAILURES, optional: true },
 				status: { enum: ['unconfigured', 'matched', 'no-match', 'failed'] },
+				surface: {
+					fields: {
+						blocking: { enum: POLICY_BLOCKING_CONSTRAINTS, optional: true },
+						// One of `position`, `edge` and `side`, by `type`. The schema
+						// checks each on its own.
+						container: {
+							fields: {
+								edge: { enum: POLICY_BANNER_EDGES, optional: true },
+								position: { enum: POLICY_CARD_POSITIONS, optional: true },
+								side: { enum: POLICY_DRAWER_SIDES, optional: true },
+								type: { enum: POLICY_CONTAINER_TYPES },
+							},
+							optional: true,
+						},
+						edgeStyle: { enum: POLICY_EDGE_STYLES, optional: true },
+					},
+					optional: true,
+				},
 			},
 		},
 		restrictions: 'object',

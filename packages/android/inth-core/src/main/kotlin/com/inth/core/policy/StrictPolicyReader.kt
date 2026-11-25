@@ -14,8 +14,13 @@ import kotlinx.serialization.json.longOrNull
 
 /** Outcome of reading a `policyResolution` wire value. */
 sealed class PolicyRead {
-	/** A rule this build can represent. */
-	data class Matched(val policy: EvaluationPolicy) : PolicyRead()
+	/**
+	 * A rule this build can represent.
+	 *
+	 * [surface] is the rule's canonical [PolicySurface], `null` when it has none. It never
+	 * reaches the evaluator: it decides where a prompt sits, not what is allowed.
+	 */
+	data class Matched(val policy: EvaluationPolicy, val surface: PolicySurface? = null) : PolicyRead()
 
 	/** A resolution the backend reported that asks for no policy. */
 	data class NoPolicy(val status: String) : PolicyRead()
@@ -102,6 +107,11 @@ object StrictPolicyReader {
 		// `policyFingerprintsSchema` in `@inth/sdk-schema` requires all three; only
 		// `legacyMaterial` is optional. A notice dismissal is judged against this one.
 		val noticeFingerprint = fingerprints.stringOrNull("notice") ?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		// Optional, but a non-empty string when present: `readFingerprints` in `@inth/sdk-schema`.
+		val presentationFingerprint = fingerprints?.get("presentation")?.let { value ->
+			(value as? JsonPrimitive)?.takeIf { it.isString && it.content.isNotEmpty() }?.content
+				?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
 
 		val model = ConsentModel.fromWireName(policy.stringOrNull("model"))
 			// Any model this build does not name. `iab` reads; a value from a newer schema
@@ -158,6 +168,23 @@ object StrictPolicyReader {
 			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 		}
 
+		// Read strictly, then made canonical, as `readSurface` and `canonicalizePolicySurface` do in
+		// `@inth/sdk-schema`, unlike the lenient fields above: a surface this build cannot name is a
+		// newer contract, and guessing a layout could put a blocking prompt where a rule forbids one.
+		val surface = when (val read = readSurface(policy["surface"])) {
+			is SurfaceRead.Refused -> return PolicyRead.Unreadable(read.reason)
+			is SurfaceRead.Read -> read.surface?.canonical(model, prompt)
+		}
+		// `collectPolicySurfaceRuleIssues`: `required` on a rule that can never block.
+		if (surface?.blocking == PolicySurface.Blocking.REQUIRED && !PolicySurface.canBlock(model, prompt)) {
+			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
+		// `isPolicySurfaceUnfingerprinted`: caches keyed on what a subject sees compare the
+		// presentation fingerprint, so a layout must never travel without it.
+		if (surface != null && presentationFingerprint == null) {
+			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
+
 		return PolicyRead.Matched(
 			EvaluationPolicy(
 				id = policy.stringOrNull("id") ?: policyId,
@@ -172,8 +199,90 @@ object StrictPolicyReader {
 				policyFingerprint = policyFingerprint,
 				noticeFingerprint = noticeFingerprint,
 				rights = rights.sortedBy { it.wireName },
-			)
+			),
+			surface = surface,
 		)
+	}
+
+	/** Outcome of reading `policy.surface`. */
+	private sealed class SurfaceRead {
+		/** Readable; `null` when the rule has no `surface`. Not yet canonical. */
+		data class Read(val surface: PolicySurface?) : SurfaceRead()
+
+		/** Not readable, for [reason]. */
+		data class Refused(val reason: String) : SurfaceRead()
+	}
+
+	/** Thrown inside [readSurface] to stop at the first problem, as the web reader does. */
+	private class SurfaceProblem(val reason: String) : Exception(null, null, false, false)
+
+	private fun invalid(): Nothing = throw SurfaceProblem(PolicyResolution.REASON_INVALID_PAYLOAD)
+	private fun unsupported(): Nothing = throw SurfaceProblem(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
+
+	/**
+	 * `policy.surface`, read as `readSurface` in `@inth/sdk-schema` reads it: an unknown key,
+	 * container type, position, edge, side, edge style or blocking constraint is an unsupported
+	 * contract, and a value of the wrong JSON type is an invalid payload. The container's default
+	 * position, edge or side is filled in.
+	 */
+	private fun readSurface(element: JsonElement?): SurfaceRead = try {
+		if (element == null) {
+			SurfaceRead.Read(null)
+		} else {
+			val surface = objectWith(element, setOf("container", "edgeStyle", "blocking"))
+			SurfaceRead.Read(
+				PolicySurface(
+					container = surface["container"]?.let(::readContainer),
+					edgeStyle = member(surface["edgeStyle"], PolicySurface.EdgeStyle.entries) { it.wireName },
+					blocking = member(surface["blocking"], PolicySurface.Blocking.entries) { it.wireName },
+				)
+			)
+		}
+	} catch (problem: SurfaceProblem) {
+		SurfaceRead.Refused(problem.reason)
+	}
+
+	private fun readContainer(element: JsonElement): PolicySurface.Container {
+		val fields = element as? JsonObject ?: invalid()
+		return when (member(fields["type"], listOf("card", "banner", "drawer")) { it }) {
+			"card" -> {
+				objectWith(element, setOf("type", "position"))
+				PolicySurface.Container.Card(
+					member(fields["position"], PolicySurface.CardPosition.entries) { it.wireName }
+						?: PolicySurface.CardPosition.START
+				)
+			}
+			"banner" -> {
+				objectWith(element, setOf("type", "edge"))
+				PolicySurface.Container.Banner(
+					member(fields["edge"], PolicySurface.BannerEdge.entries) { it.wireName }
+						?: PolicySurface.BannerEdge.BOTTOM
+				)
+			}
+			"drawer" -> {
+				objectWith(element, setOf("type", "side"))
+				PolicySurface.Container.Drawer(
+					member(fields["side"], PolicySurface.DrawerSide.entries) { it.wireName }
+						?: PolicySurface.DrawerSide.BOTTOM
+				)
+			}
+			// No `type` at all.
+			else -> invalid()
+		}
+	}
+
+	/** A JSON object whose every key is in [allowed]. */
+	private fun objectWith(element: JsonElement, allowed: Set<String>): JsonObject {
+		val fields = element as? JsonObject ?: invalid()
+		if (!allowed.containsAll(fields.keys)) unsupported()
+		return fields
+	}
+
+	/** An optional string naming one of [members]: absent is `null`. */
+	private fun <Member> member(element: JsonElement?, members: List<Member>, name: (Member) -> String): Member? {
+		if (element == null) return null
+		val text = (element as? JsonPrimitive)?.takeIf { it.isString }?.content ?: invalid()
+		return members.firstOrNull { name(it) == text } ?: unsupported()
 	}
 
 	/**

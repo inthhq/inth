@@ -138,6 +138,8 @@ Set `firstLayer` in the Expo theme (or `com.inth.consent.firstLayer` / `com.inth
 
 Every container renders the same copy, partner link, and equal Accept all and Reject all buttons. Customize always opens full screen, accessibility text sizes switch every layout to `page`, and IAB TCF expands `sheet` and `prompt` to `page` on tablets and wide windows.
 
+A policy rule's `surface` (container, edge style and blocking) does not choose the native layout. The native cores read it and publish it on the snapshot as `resolution.surface`, with the phone layout it resolves to as `resolution.layout` (including whether the prompt should block the app). Every native first layer is a modal screen, so a rule that forbids blocking still gets one. Read `resolution.layout` if you present your own UI.
+
 `appearance` selects the base palette: `system` (default) uses platform backgrounds, text colors, your app accent (`AccentColor` on iOS, `colorPrimary` on Android), centered layout, and app name/icon fallbacks, darkening your accent until white text hits 5:1 contrast. `c15t` uses the warm paper and ink palette. `sheet` and `prompt` always use system colors and tinted surface buttons rather than `buttonPrimary` fills. Explicit colors always override stock palettes.
 
 ## Choose provider attribution
@@ -188,6 +190,6 @@ Native screens load labels from `@inth/sdk/translations` in the policy's served 
 
 ## React-rendered components
 
-`@inth/react-native` also exports `ConsentBanner`, `ConsentDialog`, `ConsentPreferences`, `ConsentIabDrawer`, and `createConsentTheme`. Pass the returned theme (`colors` and `dark` palettes following device appearance) to `theme` and per-part overrides to `styles`. Updated component tokens include `textOnPrimary`, `switchTrackActive`, `surfaceHover`, `xs` to `xl` spacing, `sm`/`md`/`lg`/`full` radii, `defaultConsentTheme`, and `resolveConsentTypeRoles`.
+`@inth/react-native` also exports `ConsentBanner`, `ConsentDialog`, `ConsentPreferences`, `ConsentIabDrawer`, and `createConsentTheme`. Pass the returned theme (`colors` and `dark` palettes following device appearance) to `theme` and per-part overrides to `styles`. Updated component tokens include `textOnPrimary`, `switchTrackActive`, `switchTrackOff`, `surfaceHover`, `xs` to `xl` spacing, `sm`/`md`/`lg`/`full` radii, `defaultConsentTheme`, and `resolveConsentTypeRoles`.
 
 Prefer the stock native screens for standard mobile flows; when using React components, inspect every [commit result](/docs/frameworks/react-native/usage#inspect-every-local-commit) and keep native SDK gates active.
