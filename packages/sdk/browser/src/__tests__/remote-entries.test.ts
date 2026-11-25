@@ -52,6 +52,7 @@ describe('readRemoteStandIns', () => {
 					entry('posthog', { category: 'advertising' }),
 					entry('tiktok-pixel', { vendor: 'other' }),
 					{ id: 'clarity' },
+					{ id: 'acme', manifest: { category: 'marketing', vendor: 'acme' } },
 					'junk',
 				],
 			}),

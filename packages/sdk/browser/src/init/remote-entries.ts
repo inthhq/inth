@@ -104,6 +104,7 @@ export const readRemoteStandIns = function readRemoteStandIns(
 			: null;
 		if (
 			typeof id !== 'string' ||
+			!(isRecord(entry) && typeof entry.integration === 'string') ||
 			!isRecord(manifest) ||
 			manifest.vendor !== id ||
 			!categories ||
