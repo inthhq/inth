@@ -10,7 +10,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { onMounted } from 'vue';
 
 import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout.model';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import ConsentDialog from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import PrivacyChoicesLink from '../../../packages/sdk/vue/src/runtime/components/privacy-choices-link.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import { STORYBOOK_OPT_OUT_REFERENCE } from '../../storybook-consent-policy';
@@ -26,12 +26,12 @@ import {
 } from './storybook-consent-fixtures';
 
 const meta = {
-	component: ConsentManager,
+	component: ConsentDialog,
 	parameters: {
 		layout: 'fullscreen',
 	},
 	title: 'COMPONENTS - VUE/Core/Consent Dialog',
-} satisfies Meta<typeof ConsentManager>;
+} satisfies Meta<typeof ConsentDialog>;
 
 export default meta;
 
@@ -39,21 +39,21 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookConsent('dialog');
 		},
-		template: '<ConsentManager />',
+		template: '<ConsentDialog />',
 	}),
 };
 
 /** The banner, the dialog, and the page's "Your Privacy Choices" link that opens it. */
 const bannerAndDialog = () => ({
-	components: { ConsentBanner, ConsentManager, PrivacyChoicesLink },
+	components: { ConsentBanner, ConsentDialog, PrivacyChoicesLink },
 	setup() {
 		setupStorybookConsent('banner');
 	},
-	template: '<PrivacyChoicesLink /><ConsentBanner /><ConsentManager />',
+	template: '<PrivacyChoicesLink /><ConsentBanner /><ConsentDialog />',
 });
 
 export const DialogContract: Story = {
@@ -74,7 +74,7 @@ export const DialogEscapeCloses: Story = {
 /** Opt-out policy before the visitor opts out. */
 export const OptOutNotOptedOut: Story = {
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('none', {
 				activeUI: 'dialog',
@@ -83,14 +83,14 @@ export const OptOutNotOptedOut: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
 /** Opted out by a click before backend rights confirmation. */
 export const OptOutHonoredByRequest: Story = {
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'dialog',
@@ -102,14 +102,14 @@ export const OptOutHonoredByRequest: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
 /** Opted out with sale and sharing confirmed by the backend. */
 export const OptOutConfirmedSaleAndShare: Story = {
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'dialog',
@@ -122,7 +122,7 @@ export const OptOutConfirmedSaleAndShare: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
@@ -130,7 +130,7 @@ export const OptOutConfirmedSaleAndShare: Story = {
 export const OptOutGpcLocked: Story = {
 	play: optOutGpcLocked,
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('gpc', {
 				activeUI: 'dialog',
@@ -139,7 +139,7 @@ export const OptOutGpcLocked: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
@@ -147,7 +147,7 @@ export const OptOutGpcLocked: Story = {
 export const OptInConfirmation: Story = {
 	play: optInConfirmation,
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'dialog',
@@ -159,7 +159,7 @@ export const OptInConfirmation: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
@@ -167,7 +167,7 @@ export const OptInConfirmation: Story = {
 export const OptInConfirmationConfirmedRights: Story = {
 	play: optInConfirmationConfirmedRights,
 	render: () => ({
-		components: { ConsentManager },
+		components: { ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'dialog',
@@ -180,7 +180,7 @@ export const OptInConfirmationConfirmedRights: Story = {
 				},
 			});
 		},
-		template: '<ConsentManager disable-animation />',
+		template: '<ConsentDialog disable-animation />',
 	}),
 };
 
@@ -205,7 +205,7 @@ const dialogStory = function dialogStory(
 ): Story {
 	const story: Story = {
 		render: () => ({
-			components: { ConsentBanner, ConsentManager, DialogDemoPage },
+			components: { ConsentBanner, ConsentDialog, DialogDemoPage },
 			setup() {
 				const context = setupStorybookConsent(
 					'banner',
@@ -230,7 +230,7 @@ const dialogStory = function dialogStory(
 				return { region };
 			},
 			template:
-				'<DialogDemoPage :region="region" /><ConsentBanner /><ConsentManager />',
+				'<DialogDemoPage :region="region" /><ConsentBanner /><ConsentDialog />',
 		}),
 	};
 	if (options.phone) {

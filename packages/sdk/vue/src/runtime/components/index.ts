@@ -12,7 +12,7 @@ export { default as ConsentDialogLink } from './consent-dialog-link.vue';
 export { default as ConsentDialogTrigger } from './panel-trigger.vue';
 export { default as ConsentGate } from './consent-gate.vue';
 export { default as ConsentLink } from './link.vue';
-export { default as ConsentManager } from './dialog/manager.vue';
+export { default as ConsentDialog } from './dialog/manager.vue';
 export { default as InthProvider } from './inth-provider.vue';
 export { default as PrivacyChoicesLink } from './privacy-choices-link.vue';
 export { default as ConsentSwitch } from './switch.vue';

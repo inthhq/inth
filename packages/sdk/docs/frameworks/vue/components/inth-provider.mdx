@@ -28,7 +28,7 @@ as a sibling to your layout rather than wrapping your app in it.
 
 | Policy | `activeUI` is `'banner'` | `activeUI` is `'dialog'` |
 | --- | --- | --- |
-| Standard, opt-in, or opt-out | [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | [`ConsentManager`](/docs/frameworks/vue/components/consent-manager) |
+| Standard, opt-in, or opt-out | [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | [`ConsentDialog`](/docs/frameworks/vue/components/consent-dialog) |
 | IAB TCF with vendor list | [`IABConsentBanner`](/docs/frameworks/vue/components/iab-consent-banner) | [`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog) |
 
 It also renders [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger)
@@ -66,7 +66,7 @@ Use `country` and `region` to preview regional policies locally, and bind
 
 ## Compose the surfaces yourself
 
-To place or configure `ConsentBanner`, `ConsentManager`, and the IAB
+To place or configure `ConsentBanner`, `ConsentDialog`, and the IAB
 components yourself, render them instead of `InthProvider`. See
 [ConsentBanner](/docs/frameworks/vue/components/consent-banner#import-the-banner-into-your-root-component).
 Never mount both `InthProvider` and individual surfaces together, or visitors

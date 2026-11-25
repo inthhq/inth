@@ -84,7 +84,7 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: /^@inth\/vue\/runtime\/components\/consent-manager\.vue$/u,
+						find: /^@inth\/vue\/runtime\/components\/consent-dialog\.vue$/u,
 						replacement: vuePackage(
 							'runtime',
 							'components',

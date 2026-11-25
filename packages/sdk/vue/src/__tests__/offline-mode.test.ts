@@ -7,7 +7,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { inth } from '../index';
-import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentDialog from '../runtime/components/dialog/manager.vue';
 import { useConsentKernelContext } from '../runtime/composables';
 import { testing } from '../testing';
 
@@ -22,11 +22,11 @@ test('offline() gives the dialog its English title without a request', async () 
 	let context!: ReturnType<typeof useConsentKernelContext>;
 	const wrapper = mount(
 		{
-			components: { ConsentManager },
+			components: { ConsentDialog },
 			setup() {
 				context = useConsentKernelContext();
 			},
-			template: '<ConsentManager />',
+			template: '<ConsentDialog />',
 		},
 		{
 			attachTo: document.body,

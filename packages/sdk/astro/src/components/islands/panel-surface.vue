@@ -11,7 +11,7 @@
 	`start()`/`dispose()` to the owner.
 -->
 <script setup lang="ts">
-import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
+import ConsentDialog from '@inth/vue/runtime/components/consent-dialog.vue';
 import OptOutConfirmation from '@inth/vue/runtime/components/opt-out-confirmation.vue';
 import { defineAsyncComponent } from 'vue';
 
@@ -46,6 +46,6 @@ const IABDialogSurface = defineAsyncComponent(
 	/>
 	<template v-else>
 		<OptOutConfirmation v-if="standaloneOptOut" />
-		<ConsentManager />
+		<ConsentDialog />
 	</template>
 </template>

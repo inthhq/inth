@@ -56,7 +56,7 @@ const KNOWN = new Set([
 	'packages/sdk/nuxt/src/components/consent-banner.ts',
 	'packages/sdk/nuxt/src/components/consent-dialog-link.ts',
 	'packages/sdk/nuxt/src/components/consent-dialog-trigger.ts',
-	'packages/sdk/nuxt/src/components/consent-manager.ts',
+	'packages/sdk/nuxt/src/components/consent-dialog.ts',
 	'packages/sdk/nuxt/src/components/consent-widget.ts',
 	'packages/sdk/nuxt/src/components/iab-consent-banner.ts',
 	'packages/sdk/nuxt/src/components/iab-consent-dialog.ts',

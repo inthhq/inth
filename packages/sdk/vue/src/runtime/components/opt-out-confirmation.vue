@@ -52,7 +52,7 @@ const props = withDefaults(
 		/** Skip enter and exit animations. Defaults to the config's. */
 		disableAnimation?: boolean;
 		/**
-		 * Marks an embedded host inside `InthProvider` or `ConsentManager`.
+		 * Marks an embedded host inside `InthProvider` or `ConsentDialog`.
 		 *
 		 * @internal
 		 */

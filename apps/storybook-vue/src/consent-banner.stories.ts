@@ -10,7 +10,7 @@ import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
 } from '../../../packages/sdk/core/src/libs/consent-layout.model';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import ConsentDialog from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import {
 	BannerDemoPage,
@@ -48,11 +48,11 @@ export const Default: Story = {
 /** Opt-out notice: an underlined opt-out link beside the primary Accept All. */
 export const Notice: Story = {
 	render: () => ({
-		components: { ConsentBanner, ConsentManager },
+		components: { ConsentBanner, ConsentDialog },
 		setup() {
 			setupStorybookConsent('banner', undefined, storybookNoticeInit);
 		},
-		template: '<ConsentBanner /><ConsentManager />',
+		template: '<ConsentBanner /><ConsentDialog />',
 	}),
 };
 
@@ -70,11 +70,11 @@ export const BannerContract: Story = {
 export const BannerToDialogFlow: Story = {
 	play: bannerToDialogFlow,
 	render: () => ({
-		components: { ConsentBanner, ConsentManager },
+		components: { ConsentBanner, ConsentDialog },
 		setup() {
 			setupStorybookConsent('banner');
 		},
-		template: '<ConsentBanner /><ConsentManager />',
+		template: '<ConsentBanner /><ConsentDialog />',
 	}),
 };
 
@@ -103,7 +103,7 @@ export const BannerFocusManagement: Story = {
 /** Notice banner with the statutory opt-out link. */
 export const OptOutLink: Story = {
 	render: () => ({
-		components: { ConsentBanner, ConsentManager },
+		components: { ConsentBanner, ConsentDialog },
 		setup() {
 			setupStorybookConsent(
 				'banner',
@@ -112,14 +112,14 @@ export const OptOutLink: Story = {
 			);
 		},
 		template:
-			'<ConsentBanner disable-animation /><ConsentManager disable-animation />',
+			'<ConsentBanner disable-animation /><ConsentDialog disable-animation />',
 	}),
 };
 
 /** Notice banner with the Privacy Choices link and CPPA opt-out icon. */
 export const PrivacyChoicesLink: Story = {
 	render: () => ({
-		components: { ConsentBanner, ConsentManager },
+		components: { ConsentBanner, ConsentDialog },
 		setup() {
 			setupStorybookConsent(
 				'banner',
@@ -128,7 +128,7 @@ export const PrivacyChoicesLink: Story = {
 			);
 		},
 		template:
-			'<ConsentBanner disable-animation /><ConsentManager disable-animation />',
+			'<ConsentBanner disable-animation /><ConsentDialog disable-animation />',
 	}),
 };
 
@@ -145,7 +145,7 @@ const containerStory = function containerStory(
 ): Story {
 	return {
 		render: () => ({
-			components: { BannerDemoPage, ConsentBanner, ConsentManager },
+			components: { BannerDemoPage, ConsentBanner, ConsentDialog },
 			setup() {
 				setupStorybookConsent(
 					'banner',
@@ -153,7 +153,7 @@ const containerStory = function containerStory(
 					regionInit(region, 'banner')
 				);
 			},
-			template: '<BannerDemoPage /><ConsentBanner /><ConsentManager />',
+			template: '<BannerDemoPage /><ConsentBanner /><ConsentDialog />',
 		}),
 	};
 };

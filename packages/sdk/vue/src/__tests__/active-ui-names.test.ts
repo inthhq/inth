@@ -39,3 +39,12 @@ describe('activeUI names', () => {
 		}
 	});
 });
+
+describe('component names', () => {
+	test('the dialog is exported as ConsentDialog, as in React and Svelte', async () => {
+		const entry: Record<string, unknown> = await import('../index');
+		const dialog = await import('../runtime/components/dialog/manager.vue');
+		expect(entry.ConsentDialog).toBe(dialog.default);
+		expect(entry).not.toHaveProperty('ConsentManager');
+	});
+});

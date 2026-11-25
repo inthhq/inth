@@ -1,17 +1,17 @@
 ---
-title: ConsentManager
+title: ConsentDialog
 description: Render and open the Inth preference dialog in Nuxt, and inspect its actions, accessibility, and styling slots.
 group: frameworks
 ---
 
-Import `ConsentManager` when composing consent surfaces yourself, or open it
+Import `ConsentDialog` when composing consent surfaces yourself, or open it
 programmatically via auto-imported `useConsentActiveUI()`.
 
 ## Import the dialog when you compose surfaces
 
-`InthProvider` already mounts `ConsentManager` when preferences open. Because
+`InthProvider` already mounts `ConsentDialog` when preferences open. Because
 `@inth/nuxt` does not register it globally, import it from
-`@inth/nuxt/components/consent-manager` only when composing surfaces without
+`@inth/nuxt/components/consent-dialog` only when composing surfaces without
 `InthProvider`:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
@@ -31,13 +31,13 @@ For a footer button that automatically hides when the policy offers no
 preferences, use
 [ConsentDialogLink](/docs/frameworks/nuxt/components/consent-dialog-link).
 
-<import src="../../../shared/vue/components/consent-manager.mdx#behavior" />
+<import src="../../../shared/vue/components/consent-dialog.mdx#behavior" />
 
-<import src="../../../shared/vue/components/consent-manager.mdx#accessibility" />
+<import src="../../../shared/vue/components/consent-dialog.mdx#accessibility" />
 
-<import src="../../../shared/vue/components/consent-manager.mdx#styling" />
+<import src="../../../shared/vue/components/consent-dialog.mdx#styling" />
 
-<import src="../../../shared/vue/components/consent-manager.mdx#verify" />
+<import src="../../../shared/vue/components/consent-dialog.mdx#verify" />
 
 ## Next steps
 

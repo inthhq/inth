@@ -4,7 +4,7 @@ import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import ConsentDialog from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import { useStorybookConsent as setupStorybookConsent } from './storybook-consent-fixtures';
 
 /**
@@ -36,7 +36,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: linkOpensDialog,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentManager },
+		components: { ConsentDialogLink, ConsentDialog },
 		setup() {
 			const { kernel } = setupStorybookConsent(null);
 			const snapshot = kernel.getSnapshot();
@@ -66,7 +66,7 @@ export const Default: Story = {
 		template: `
 			<div style="padding: 2rem;">
 				<ConsentDialogLink :class="buttonClass" data-mode="stroke" data-size="small" data-variant="neutral">Privacy preferences</ConsentDialogLink>
-				<ConsentManager />
+				<ConsentDialog />
 			</div>
 		`,
 	}),

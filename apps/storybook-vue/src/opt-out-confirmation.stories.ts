@@ -6,7 +6,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
 import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import ConsentDialog from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import OptOutConfirmation from '../../../packages/sdk/vue/src/runtime/components/opt-out-confirmation.vue';
 import {
 	storybookMode as createOfflineStorybookMode,
@@ -96,7 +96,7 @@ export const AccountCovered: Story = {
 export const SignalHonored: Story = {
 	play: signalHonored,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentManager },
+		components: { ConsentDialogLink, ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('gpc', {
 				configOverrides: {
@@ -109,14 +109,14 @@ export const SignalHonored: Story = {
 			});
 		},
 		template:
-			'<ConsentDialogLink right="opt-out" /><ConsentManager disable-animation />',
+			'<ConsentDialogLink right="opt-out" /><ConsentDialog disable-animation />',
 	}),
 };
 
 export const AccountAdopted: Story = {
 	play: accountAdopted,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentManager },
+		components: { ConsentDialogLink, ConsentDialog },
 		setup() {
 			setupStorybookOptOutConsent('none', {
 				configOverrides: {
@@ -129,6 +129,6 @@ export const AccountAdopted: Story = {
 			});
 		},
 		template:
-			'<ConsentDialogLink right="opt-out" /><ConsentManager disable-animation />',
+			'<ConsentDialogLink right="opt-out" /><ConsentDialog disable-animation />',
 	}),
 };
