@@ -97,7 +97,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	(target.inth as { dispose?: () => void } | undefined)?.dispose?.();
+	// Not disposed: that rejects the queued calls' promises, which a page's
+	// push() never holds.
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 	releaseBoot();
