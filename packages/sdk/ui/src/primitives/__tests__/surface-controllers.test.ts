@@ -219,6 +219,26 @@ describe('page block', () => {
 		expect(late.hasAttribute('inert')).toBe(false);
 	});
 
+	test('a modal dialog the page opens over the surface while blocking stays interactive', async () => {
+		const surface = document.createElement('div');
+		document.body.append(surface);
+		const release = attachPageBlock(surface, { scrollLock: false });
+		const portal = document.createElement('div');
+		const modal = document.createElement('div');
+		modal.setAttribute('role', 'dialog');
+		modal.setAttribute('aria-modal', 'true');
+		portal.append(modal);
+		const late = document.createElement('div');
+		document.body.append(portal, late);
+		await Promise.resolve();
+		expect(portal.hasAttribute('inert')).toBe(false);
+		expect(late.hasAttribute('inert')).toBe(true);
+		release();
+		portal.remove();
+		late.remove();
+		surface.remove();
+	});
+
 	test('[BNR-13] locks and restores document scrolling', () => {
 		const surface = document.createElement('div');
 		document.body.append(surface);

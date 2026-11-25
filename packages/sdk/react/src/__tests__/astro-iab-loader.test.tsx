@@ -62,12 +62,11 @@ test('reveals the cold Astro IAB island when its module is ready', async () => {
 		).toBeNull();
 		gate.release();
 		await vi.dynamicImportSettled();
-		await new Promise(requestAnimationFrame);
-		await new Promise(requestAnimationFrame);
-		await new Promise(requestAnimationFrame);
-		expect(
-			document.querySelector('[data-testid="iab-consent-dialog-root"]')
-		).not.toBeNull();
+		await vi.waitFor(() =>
+			expect(
+				document.querySelector('[data-testid="iab-consent-dialog-root"]')
+			).not.toBeNull()
+		);
 	} finally {
 		gate.release();
 		root.unmount();

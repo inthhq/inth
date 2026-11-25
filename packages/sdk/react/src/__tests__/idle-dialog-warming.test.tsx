@@ -184,7 +184,11 @@ test('does not load the dialog when the banner closed before idle time', async (
 		</InthProvider>
 	);
 	await vi.waitFor(() => expect(idleCallbacks).toHaveLength(1));
-	button('consent-banner-accept-button')?.click();
+	// The banner's chunk can still be loading once the idle period is asked.
+	const accept = await vi.waitUntil(() =>
+		button('consent-banner-accept-button')
+	);
+	accept.click();
 	await vi.waitFor(() =>
 		expect(button('consent-banner-customize-button')).toBeNull()
 	);

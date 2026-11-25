@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
@@ -34,6 +35,14 @@ test('the split dialog and widget entries load nothing until they are needed', a
 	// Idle-time preloading, where the provider supports it, would load the
 	// dialog on its own. This test is about what importing the entries loads.
 	vi.stubGlobal('requestIdleCallback', () => 0);
+	// An earlier test can leave the pointer where the link or a banner button
+	// renders, and Chromium then reports a pointer enter, which loads the
+	// dialog on intent. Park it on a corner nothing here renders under.
+	const parking = document.createElement('div');
+	parking.style.cssText =
+		'position:fixed;top:0;right:0;width:4px;height:4px;z-index:2147483647';
+	document.body.append(parking);
+	await userEvent.hover(parking);
 	try {
 		const { ConsentDialog } = await import('../panel');
 		await import('../preferences');
@@ -77,6 +86,7 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		modules.stop();
 		root.unmount();
 		container.remove();
+		parking.remove();
 		vi.unstubAllGlobals();
 	}
 });

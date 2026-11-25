@@ -46,18 +46,28 @@ const topDialog = () => document.querySelector('[data-testid="top-dialog"]');
 
 describe('Escape with stacked dialogs', () => {
 	test('closes the dialog on top and leaves the consent dialog open', async () => {
-		const view = await render(
-			<InthProvider
-				options={{
-					initialUI: 'dialog',
-					mode: testing(),
-					prefetch: policyFixture(),
-				}}
-			>
+		const options = {
+			initialUI: 'dialog',
+			mode: testing(),
+			prefetch: policyFixture(),
+		} as const;
+		const page = (withTop: boolean) => (
+			<InthProvider options={options}>
 				<ConsentDialog disableAnimation />
-				<TopDialog />
+				{withTop ? <TopDialog /> : null}
 			</InthProvider>
 		);
+		// The dialog on top opens over a consent dialog that is already up
+		// and holds focus.
+		const view = await render(page(false));
+		await vi.waitFor(() =>
+			expect(
+				document
+					.querySelector('[data-testid="consent-dialog-root"]')
+					?.contains(document.activeElement)
+			).toBe(true)
+		);
+		await view.rerender(page(true));
 		await vi.waitFor(() => {
 			expect(activeUI()).toBe('dialog');
 			expect(topDialog()).toBeInstanceOf(HTMLElement);

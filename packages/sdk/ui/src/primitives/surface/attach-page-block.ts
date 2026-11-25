@@ -23,10 +23,19 @@ interface DocumentBlocks {
 	surfaces: HTMLElement[];
 	/** Elements this module made inert, so it never clears a page's own `inert`. */
 	inerted: Set<Element>;
+	/** Modal dialogs the page opened over the surface while it blocks. */
+	layered: Set<Element>;
 	observer: MutationObserver | null;
 }
 
 const blocks = new WeakMap<Document, DocumentBlocks>();
+
+const MODAL_SELECTOR = '[aria-modal="true"], dialog[open]';
+
+/** Whether `element` is, or holds, a modal dialog. */
+const holdsModal = (element: Element): boolean =>
+	element.matches(MODAL_SELECTOR) ||
+	element.querySelector(MODAL_SELECTOR) !== null;
 
 /**
  * The elements to make inert for `surface`: every sibling of every node on
@@ -65,9 +74,16 @@ const outsideOf = function outsideOf(surface: HTMLElement): {
 const apply = function apply(doc: Document, state: DocumentBlocks): void {
 	const top = state.surfaces[state.surfaces.length - 1];
 	const next = top ? outsideOf(top) : { outside: [], parents: [] };
+	for (const element of state.layered) {
+		if (!element.isConnected) {
+			state.layered.delete(element);
+		}
+	}
 	const wanted = new Set(
 		next.outside.filter(
-			(element) => state.inerted.has(element) || !element.hasAttribute('inert')
+			(element) =>
+				!state.layered.has(element) &&
+				(state.inerted.has(element) || !element.hasAttribute('inert'))
 		)
 	);
 	for (const element of state.inerted) {
@@ -86,8 +102,16 @@ const apply = function apply(doc: Document, state: DocumentBlocks): void {
 	state.observer = null;
 	if (top && typeof MutationObserver !== 'undefined') {
 		// A node the page adds beside the surface while it blocks is outside
-		// it too.
-		const observer = new MutationObserver(() => {
+		// it too, unless it opens a modal dialog over the surface: that is
+		// the top layer now, and must take focus and keys.
+		const observer = new MutationObserver((records) => {
+			for (const record of records) {
+				for (const added of record.addedNodes) {
+					if (added instanceof Element && holdsModal(added)) {
+						state.layered.add(added);
+					}
+				}
+			}
 			apply(doc, state);
 		});
 		for (const parent of next.parents) {
@@ -114,7 +138,12 @@ export const attachPageBlock = function attachPageBlock(
 	const doc = surface.ownerDocument;
 	let state = blocks.get(doc);
 	if (!state) {
-		state = { inerted: new Set(), observer: null, surfaces: [] };
+		state = {
+			inerted: new Set(),
+			layered: new Set(),
+			observer: null,
+			surfaces: [],
+		};
 		blocks.set(doc, state);
 	}
 	const current = state;

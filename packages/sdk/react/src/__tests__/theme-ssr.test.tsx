@@ -6,6 +6,7 @@ import { renderToString } from 'react-dom/server';
 import {
 	afterEach,
 	assert,
+	beforeAll,
 	beforeEach,
 	expect,
 	test,
@@ -13,10 +14,16 @@ import {
 } from 'vite-plus/test';
 import { cdp } from 'vite-plus/test/browser';
 
-import { ConsentBanner } from '../components/prompt';
+import { ConsentBanner, preloadContainers } from '../components/prompt';
 import { InthProvider, ConsentTheme } from '../index';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
+
+// `renderToString` cannot wait for a chunk: the banner's containers load
+// first, as a custom server render does.
+beforeAll(async () => {
+	await preloadContainers();
+});
 
 beforeEach(() => {
 	vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
