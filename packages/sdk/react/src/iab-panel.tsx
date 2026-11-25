@@ -14,6 +14,7 @@
  */
 
 import type * as CoreTypes from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 
@@ -36,8 +37,12 @@ const DEFAULT_MODELS: readonly CoreTypes.Model[] = ['iab'];
 
 // Vite derives the chunk name from this path; keep it neutral so URL filters
 // do not block the UI.
-const iabDialogModule = createDeferredModule(
-	() => import('./components/iab-panel')
+const iabDialogModule = createDeferredModule(() =>
+	importChunk(
+		() => import('./components/iab-panel'),
+		(module) =>
+			typeof module.IABConsentDialog === 'function' ? module : undefined
+	)
 );
 
 /**
@@ -60,8 +65,12 @@ const LazyIABConsentDialogComponent = iabDialogModule.component(
 	(module) => module.IABConsentDialog
 );
 // The trigger alone, for a model the dialog does not open under.
-const LazyConsentDialogTrigger = createDeferredModule(
-	() => import('./components/panel-trigger')
+const LazyConsentDialogTrigger = createDeferredModule(() =>
+	importChunk(
+		() => import('./components/panel-trigger'),
+		(module) =>
+			typeof module.ConsentDialogTrigger === 'function' ? module : undefined
+	)
 ).component((module) => module.ConsentDialogTrigger);
 
 const resolveTriggerProps = (

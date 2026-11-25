@@ -3,7 +3,7 @@ import {
 	recipeRejects,
 	recipeRenders,
 } from '@inth/conformance/play/docs-recipes';
-import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
+import ConsentDialog from '@inth/vue/runtime/components/consent-dialog.vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import type { Component } from 'vue';
 
@@ -31,11 +31,11 @@ const recipe =
 		options?: Parameters<typeof useStorybookConsent>[1]
 	): Story['render'] =>
 	() => ({
-		components: { Banner: banner, ConsentManager, RecipePage },
+		components: { Banner: banner, ConsentDialog, RecipePage },
 		setup() {
 			useStorybookConsent('banner', options);
 		},
-		template: '<RecipePage><Banner /><ConsentManager /></RecipePage>',
+		template: '<RecipePage><Banner /><ConsentDialog /></RecipePage>',
 	});
 
 const bottomBar = recipe(BottomBar);

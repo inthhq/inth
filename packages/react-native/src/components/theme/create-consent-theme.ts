@@ -91,8 +91,20 @@ export interface ConsentThemeColors {
 	readonly primaryBorder: string;
 	/** Focus and selected outline. */
 	readonly focus: string;
-	/** Off-state switch track. Web: `--inth-switch-track`. */
+	/**
+	 * The quiet chrome tone the web calls `--inth-switch-track`, which the sheet's
+	 * grab handle draws. The off switch itself is
+	 * {@link ConsentThemeColors.switchTrackOff}.
+	 */
 	readonly switchTrack: string;
+	/**
+	 * Off-state switch track. Web: `--inth-switch-track-off`.
+	 *
+	 * Its own colour because `switchTrack` is only about 1.4:1 on the surface and
+	 * an off switch has to reach 3:1 (WCAG 1.4.11). A theme that sets
+	 * `switchTrack` and not this keeps the stock off-track, as on the web.
+	 */
+	readonly switchTrackOff: string;
 	/** On-state switch track. Web: `--inth-switch-track-active`. */
 	readonly switchTrackActive: string;
 	/** Switch thumb. Web: `--inth-switch-thumb`. */
@@ -464,6 +476,7 @@ const lightColors: ConsentThemeColors = {
 	switchThumb: '#FFFFFF',
 	switchTrack: '#D9D9D9',
 	switchTrackActive: '#2563EB',
+	switchTrackOff: '#8492A6',
 	text: '#1A1A1A',
 	textMuted: '#666666',
 	textOnPrimary: '#FFFFFF',
@@ -483,6 +496,7 @@ const darkColors: ConsentThemeColors = {
 	switchThumb: '#EDEDED',
 	switchTrack: '#404040',
 	switchTrackActive: '#2F66DF',
+	switchTrackOff: '#64748B',
 	text: '#EDEDED',
 	textMuted: '#999999',
 	textOnPrimary: '#FFFFFF',

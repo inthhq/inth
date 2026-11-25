@@ -24,6 +24,11 @@ const PARTS_LOADER = `${ROOT}/browser/src/ui/parts/load-script.ts`;
 const PARTS_ENGINE = `${ROOT}/browser/src/ui/parts/engine.ts`;
 const CHOICES_FILE = `${ROOT}/browser/src/ui/load-choices-file.ts`;
 const DIALOG = `${ROOT}/browser/dist/ui/dialog/dialog.js`;
+const DIALOG_SOURCE = `${ROOT}/browser/src/ui/dialog/dialog.ts`;
+const OPT_IN_CONFIRMATION = `${ROOT}/browser/src/ui/opt-in-confirmation.ts`;
+const RIGHTS_RECEIPT = `${ROOT}/browser/src/ui/parts/create-rights-receipt.ts`;
+const DIALOG_CHUNK_ENTRY = `${ROOT}/browser/src/entries/cdn-choices-dialog.ts`;
+const PANEL = `${ROOT}/browser/src/ui/prompt/panel.ts`;
 const MORPH = `${ROOT}/browser/src/ui/parts/morph.ts`;
 const CARD_CLASSES = `${ROOT}/browser/src/generated/ui/card.ts`;
 const STOCK_CLASSES = `${ROOT}/browser/src/generated/styles.ts`;
@@ -39,11 +44,21 @@ const DRAWER_SHEET = `${ROOT}/ui/dist/styles/sheets/drawer.js`;
 const BANNER_SHEET = `${ROOT}/ui/dist/styles/sheets/banner.js`;
 const PARTS_SHEET = `${ROOT}/ui/dist/styles/sheets/parts.js`;
 
-/** Runs the plugin over one chunk holding `modules`. */
+interface Chunk {
+	modules: string[];
+	names?: string[];
+	initial?: boolean;
+}
+
+/** Runs the plugin over one chunk holding `modules`, or over `chunks`. */
 const check = function check(
 	mode: Parameters<typeof modeBundleBoundary>[0],
-	modules: string[]
+	modules: string[] | Chunk[]
 ): void {
+	const chunks: Chunk[] =
+		typeof modules[0] === 'string' || modules.length === 0
+			? [{ initial: true, modules: modules as string[] }]
+			: (modules as Chunk[]);
 	let done: ((stats: unknown) => void) | undefined;
 	const compiler = {
 		hooks: {
@@ -57,7 +72,11 @@ const check = function check(
 	modeBundleBoundary(mode).apply(compiler as never);
 	done?.({
 		toJson: () => ({
-			chunks: [{ modules: modules.map((id) => ({ nameForCondition: id })) }],
+			chunks: chunks.map((chunk) => ({
+				initial: chunk.initial,
+				modules: chunk.modules.map((id) => ({ nameForCondition: id })),
+				names: chunk.names,
+			})),
 		}),
 	});
 };
@@ -160,12 +179,62 @@ describe('modeBundleBoundary', () => {
 		expect(() =>
 			check('choices', [
 				PROMPT_SURFACE,
-				DIALOG,
+				PANEL,
 				MORPH,
 				DRAWER_SHEET,
 				COPY_RESOLVER,
 				VENDOR_DENIAL,
 			])
 		).not.toThrow();
+		// Nor may its dialog chunk carry that state.
+		expect(() =>
+			check('choices', [
+				{ initial: true, modules: [PROMPT_SURFACE] },
+				{
+					initial: false,
+					modules: [DIALOG_SOURCE, SURFACE_SESSION],
+					names: ['inth.choices-dialog'],
+				},
+			])
+		).toThrow(/Unexpected implementation in choices/u);
+	});
+
+	it('keeps the dialog out of inth.choices.js, in its on-demand chunk', () => {
+		for (const id of [
+			DIALOG,
+			DIALOG_SOURCE,
+			OPT_IN_CONFIRMATION,
+			RIGHTS_RECEIPT,
+			DIALOG_CHUNK_ENTRY,
+		]) {
+			expect(() => check('choices', [PROMPT_SURFACE, id])).toThrow(
+				/Unexpected implementation in choices/u
+			);
+		}
+		expect(() =>
+			check('choices', [
+				{ initial: true, modules: [PROMPT_SURFACE, PANEL, MORPH] },
+				{
+					initial: false,
+					modules: [
+						DIALOG_CHUNK_ENTRY,
+						DIALOG_SOURCE,
+						OPT_IN_CONFIRMATION,
+						RIGHTS_RECEIPT,
+					],
+					names: ['inth.choices-dialog'],
+				},
+			])
+		).not.toThrow();
+	});
+
+	it('lets inth.choices.js load only its dialog chunk on demand', () => {
+		// The runtime gives every chunk the dialog's URL.
+		expect(() =>
+			check('choices', [
+				{ initial: true, modules: [PROMPT_SURFACE] },
+				{ initial: false, modules: [PANEL], names: ['panel'] },
+			])
+		).toThrow(/Unexpected chunk in choices browser bundle: panel/u);
 	});
 });

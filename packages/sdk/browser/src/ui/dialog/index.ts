@@ -27,6 +27,7 @@ import {
 	importDialog,
 	importOptInConfirmation,
 	importPanel,
+	warmsDialogWithBanner,
 } from '../parts/load';
 import { requestReceiptFocus } from '../parts/receipt-focus';
 import type { Surface, SurfaceContext } from '../surface.model';
@@ -141,26 +142,51 @@ export const createDialog = function createDialog(
 					'@inth/sdk: the preference centre failed to load.',
 					error
 				);
+				// Opening the dialog sent the banner away, and without the
+				// dialog the visitor has nothing to answer. Close it: the banner
+				// comes back while a choice is owed, and the next open tries the
+				// load again.
+				const { kernel } = ctx.client;
+				if (!destroyed && kernel.getSnapshot().activeUI === 'dialog') {
+					showConsentSurface(kernel, 'none');
+				}
 			}
 		);
+	};
+
+	let warmingPanel = false;
+
+	const warmPanel = function warmPanel(): void {
+		if (warmingPanel) {
+			return;
+		}
+		warmingPanel = true;
+		whenIdle(() => {
+			importPanel().catch(() => {
+				/* Customize retries */
+			});
+		});
 	};
 
 	/**
 	 * A shown banner can open the dialog, or its options, at any moment, and
 	 * so can the trigger: warm both in idle time, as React warms them
-	 * together.
+	 * together. Where the dialog is a file of its own (the script tag), a
+	 * shown banner warms only its options, so a visitor who only answers
+	 * the banner never downloads the dialog.
+	 *
+	 * @param banner - Whether a banner is shown.
 	 */
-	const warm = function warm(): void {
+	const warm = function warm(banner: boolean): void {
 		if (warming) {
 			return;
 		}
+		warmPanel();
+		if (banner && !warmsDialogWithBanner) {
+			return;
+		}
 		warming = true;
-		whenIdle(() => {
-			load();
-			importPanel().catch(() => {
-				/* Customize retries */
-			});
-		});
+		whenIdle(load);
 	};
 
 	return {
@@ -194,7 +220,7 @@ export const createDialog = function createDialog(
 				snapshot.policyRule.model !== 'iab' &&
 				(snapshot.activeUI === 'banner' || warmOnMount)
 			) {
-				warm();
+				warm(snapshot.activeUI === 'banner');
 			}
 		},
 	};

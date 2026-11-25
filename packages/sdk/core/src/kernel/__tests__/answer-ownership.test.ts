@@ -6,6 +6,10 @@
  *   answer for the previous account must not move the new account's
  *   subject, and a `409 subject_conflict` for the previous account must not
  *   give the new one a fresh subject ID.
+ * - The stored reassignment, the queued entries and the visitor's subject
+ *   move in one step. An account identified, or a sign-out, right after
+ *   the storage transaction ran can no longer leave the stored entries
+ *   moved and the visitor's subject behind.
  * - Signing in and out again while a save or init is out leaves the user
  *   `null` as it was. The save's opt-out answer and init's records still
  *   belong to the earlier anonymous visit and must not be applied.
@@ -79,10 +83,13 @@ const subjectConflict = () =>
 	});
 
 type HoldPhase = 'before the move runs' | 'after the move ran';
-const PHASES: readonly HoldPhase[] = [
-	'before the move runs',
-	'after the move ran',
-];
+/**
+ * Holds in which the move has not run yet when B is identified. Once it
+ * ran, the visitor's subject moved in the same step as the stored entries,
+ * so an account identified after it inherits the moved subject (see
+ * "a subject move that ran before the account changed").
+ */
+const PHASES: readonly HoldPhase[] = ['before the move runs'];
 
 /**
  * A memory outbox store that can hold the transaction moving a subject
@@ -361,6 +368,149 @@ describe('a subject move waiting for storage while B is identified', () => {
 			expect(subjects).not.toHaveBeenCalled();
 			// No resend under a fresh id for A.
 			expect(liftOptOut).toHaveBeenCalledTimes(1);
+			kernel.dispose();
+		}
+	);
+});
+
+type AccountChange = 'B is identified' | 'the user signs out';
+const ACCOUNT_CHANGES: readonly AccountChange[] = [
+	'B is identified',
+	'the user signs out',
+];
+
+const changeAccount = async function changeAccount(
+	kernel: InternalKernel,
+	change: AccountChange
+): Promise<void> {
+	if (change === 'B is identified') {
+		await kernel.commands.identify({ ...USER_B });
+	} else {
+		kernel.clearIdentity();
+	}
+};
+
+/** The stored reassignments and the subject of every queued entry. */
+const storedMoves = function storedMoves(store: SaveOutboxStore) {
+	return store.transact((tx) => {
+		const list = (value: unknown): Record<string, unknown>[] =>
+			Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+		const subjectOf = (entry: Record<string, unknown>) =>
+			(entry.payload as { subjectId?: unknown } | undefined)?.subjectId;
+		return {
+			queued: [
+				...list(tx.read('saves')).map(subjectOf),
+				...list(tx.read('optOuts')).map(subjectOf),
+			],
+			reassignments: list(tx.read('reassignments')).map(({ from, to }) => ({
+				from,
+				to,
+			})),
+		};
+	});
+};
+
+describe('a subject move that ran before the account changed', () => {
+	test.each(ACCOUNT_CHANGES)(
+		'A’s link answer moves the stored entries and the subject together (%s)',
+		async (change) => {
+			const hold = holdingStore();
+			const linkA = deferred<{ subjectId?: string }>();
+			const identify = vi.fn((user: KernelUser) =>
+				user.externalId === 'user-a' ? linkA.promise : Promise.resolve({})
+			);
+			const save = vi.fn(() =>
+				Promise.reject<SaveResult>(new Error('offline'))
+			);
+			const kernel = kernelOn(
+				{ identify, save },
+				{
+					initialRecords: {
+						now: NOW,
+						subject: { subjectId: LEGACY_SUBJECT },
+					},
+					initialUser: undefined,
+				},
+				hold.store
+			);
+			const subjects = vi.fn();
+			kernel.events.on('subject:resolved', subjects);
+			// A save queued under the c15t id, before anyone signed in.
+			await kernel.commands.save({ marketing: true }, { uiSource: 'dialog' });
+			expect((await storedMoves(hold.store)).queued).toEqual([LEGACY_SUBJECT]);
+
+			const identifiedA = kernel.commands.identify({ ...USER_A });
+			await vi.waitFor(() => expect(identify).toHaveBeenCalledTimes(1));
+			hold.hold('after the move ran');
+			linkA.resolve({ subjectId: CANONICAL_SUBJECT });
+			await vi.waitFor(() => expect(hold.isHeld()).toBe(true));
+			// The storage transaction ran; the caller has not resumed.
+			await changeAccount(kernel, change);
+			hold.release();
+			await identifiedA;
+			await flushMacrotasks();
+
+			expect(kernel.getSnapshot().subject?.subjectId).toBe(CANONICAL_SUBJECT);
+			expect(subjects).toHaveBeenCalledTimes(1);
+			expect(await storedMoves(hold.store)).toEqual({
+				queued: [CANONICAL_SUBJECT],
+				reassignments: [{ from: LEGACY_SUBJECT, to: CANONICAL_SUBJECT }],
+			});
+			kernel.dispose();
+		}
+	);
+
+	test.each(ACCOUNT_CHANGES)(
+		'A’s 409 subject_conflict moves the queued lift and the subject together (%s)',
+		async (change) => {
+			const hold = holdingStore();
+			const lift = deferred<LiftOptOutTransportResult>();
+			// The resend under the new id fails offline, so the lift stays
+			// queued where the move put it.
+			const liftOptOut = vi
+				.fn(() =>
+					Promise.reject<LiftOptOutTransportResult>(new Error('offline'))
+				)
+				.mockReturnValueOnce(lift.promise);
+			const kernel = kernelOn(
+				{
+					identify: () => Promise.resolve({ optOut: HELD_B }),
+					liftOptOut,
+					optOut: () => Promise.resolve({ ok: true }),
+				},
+				{
+					initialRecords: {
+						now: NOW,
+						optOut: HELD_A,
+						subject: { subjectId: SUBJECT },
+					},
+				},
+				hold.store
+			);
+
+			const pending = kernel.commands.optIn({ uiSource: 'dialog' });
+			await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+			expect((await storedMoves(hold.store)).queued).toEqual([SUBJECT]);
+			hold.hold('after the move ran');
+			lift.reject(subjectConflict());
+			await vi.waitFor(() => expect(hold.isHeld()).toBe(true));
+			// The storage transaction ran; the caller has not resumed.
+			await changeAccount(kernel, change);
+			const { optOut } = kernel.getSnapshot();
+			hold.release();
+			await pending;
+			await flushMacrotasks();
+
+			const moved = kernel.getSnapshot().subject?.subjectId;
+			expect(moved).not.toBe(SUBJECT);
+			// Resent once under the new id, as the act of A it still is.
+			expect(liftOptOut).toHaveBeenCalledTimes(2);
+			expect(await storedMoves(hold.store)).toEqual({
+				queued: [moved],
+				reassignments: [{ from: SUBJECT, to: moved }],
+			});
+			// A's lift is still A's: its answers never reach the account now.
+			expect(kernel.getSnapshot().optOut).toEqual(optOut);
 			kernel.dispose();
 		}
 	);

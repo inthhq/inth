@@ -86,6 +86,14 @@ This component re-renders on every consent change, so remove it after debugging.
 
 **Fix.** No change is required for consent gating to work. See [Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps) for available options.
 
+## The banner or dialog fails to load
+
+**Check.** Open the console. A warning or error from Inth that says the banner, the dialog or the engine failed to load means the browser could not download one of Inth's chunks, for example during a dropped connection or a deploy that removed old files.
+
+After a failure the page stays as it is: Inth never reloads it, because a reload would discard what the visitor typed into your page. Nothing is recorded, and the banner stays or shows again. The next tap, open or snapshot tries the download again. How the retry reaches the network depends on your bundler: webpack and rspack forget a failed chunk, so every retry sends a new request. With Vite or another bundler that uses native `import()`, Firefox 155 or later, Chrome 156 or later, and Safari send a new request; earlier Chromium and Firefox keep the failure, and Inth loads the chunk again from its URL with `inth-retry=<n>` added, which works unless another chunk imports it by its plain URL.
+
+**Fix.** Nothing on the page. The next page load downloads the chunk again. If the failures follow a deploy, keep the previous build's chunk files available until cached pages that link to them expire. See [a consent chunk fails to load](/docs/guides/troubleshooting#a-consent-chunk-fails-to-load) for which browsers and builds can retry on the same page.
+
 ## More help
 
 See [Troubleshoot consent](/docs/guides/troubleshooting) for cross-framework issues including missing banners, early analytics, lost choices on reload, hydration mismatches, and content blockers.

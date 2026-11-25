@@ -3,14 +3,14 @@
 import {
 	ConsentBanner,
 	ConsentDialogTrigger,
-	ConsentManager,
+	ConsentDialog,
 } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
 	<!-- Render these in place of InthProvider, not next to it. -->
 	<ConsentBanner :container="{ type: 'banner', edge: 'bottom' }" />
-	<ConsentManager />
+	<ConsentDialog />
 	<ConsentDialogTrigger />
 </template>
 <!-- #endregion docs:consent-surfaces -->

@@ -84,6 +84,8 @@ Every layout shows the same copy, partner link, and equal Accept all and Reject 
 
 Privacy Settings opened from Customize always fills the screen. At accessibility font sizes, every layout becomes `page` so decisions follow text in one scroll. Under an IAB TCF policy on wide windows such as tablets, `sheet` and `prompt` expand to `page`.
 
+A policy rule's `surface` (container, edge style and blocking) does not choose this layout. `inth-core` reads it and publishes it as `snapshot.resolution.surface`, with the phone layout it resolves to as `snapshot.resolution.layout` (a `PolicyLayout`, including whether the prompt should block the app). Every native first layer is modal, so a rule that forbids blocking still gets one. Read `resolution.layout` if you present your own UI.
+
 `appearance` picks the stock palette. `system` (default) uses platform backgrounds and text colors with your app theme's `colorPrimary` accent, centers the page, and falls back to your app name and icon whenever `brand` fields are unset. Accept all and Reject all darken your accent until white text reaches 5:1 contrast. `c15t` applies the warm paper and ink palette. `sheet` and `prompt` always use system colors and draw Accept all and Reject all as tinted surfaces rather than `ButtonPrimary` fills. Explicit colors always win.
 
 ## Separate app identity from attribution

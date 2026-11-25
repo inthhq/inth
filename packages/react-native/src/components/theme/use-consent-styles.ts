@@ -1434,7 +1434,7 @@ export const useConsentStyles = function useConsentStyles(
 				padding: 8,
 			},
 			switch: {
-				backgroundColor: colors.switchTrack,
+				backgroundColor: colors.switchTrackOff,
 				borderRadius: switchGeometry.height / 2,
 				height: switchGeometry.height,
 				justifyContent: 'center',

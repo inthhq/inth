@@ -124,14 +124,19 @@ data class ConsentTheme(
         internal val statusTagText: ConsentThemeColor get() = primary.blended(toward = text, fraction = 0.3f)
 
         companion object {
-            /** Warm paper, ink decisions, and the c15t blue for links and switches. */
+            /**
+             * Warm paper, ink decisions, and the web's blue for links and switches. [primary] is the
+             * web's `--inth-primary` (`#2563EB`) in light. In dark it is the web's dark
+             * `--inth-primary-text` (`#8AB4FF`), not the dark `--inth-primary` fill (`#2F66DF`):
+             * native draws links in [primary], and the fill is only about 3.3:1 on the dark surface.
+             */
             val default = Colors(
                 canvas = ConsentThemeColor(0xF8F4EE, 0x171411),
                 surface = ConsentThemeColor(0xFFFFFF, 0x211D18),
                 surfaceMuted = ConsentThemeColor(0xEFE9DF, 0x2B2620),
                 text = ConsentThemeColor(0x1E1B17, 0xF3EEE6),
                 textMuted = ConsentThemeColor(0x6B655D, 0xA49D93),
-                primary = ConsentThemeColor(0x335CFF, 0x8CA2FF),
+                primary = ConsentThemeColor(0x2563EB, 0x8AB4FF),
                 textOnPrimary = ConsentThemeColor(0xFFFFFF, 0x0A1033),
                 decision = ConsentThemeColor(0x1E1B17, 0xF3EEE6),
                 textOnDecision = ConsentThemeColor(0xF8F4EE, 0x171411),

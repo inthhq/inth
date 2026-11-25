@@ -1,10 +1,11 @@
 // Keep lazy module filenames neutral: Vite derives chunk URLs from them.
 import type { Component, InjectionKey } from 'vue';
 
-/** Loads one container's component, with its stylesheet. */
-export type PromptContainerLoader = () => Promise<
-	Component | { default: Component }
->;
+/**
+ * Loads one container's chunk, with its stylesheet. The banner imports it
+ * with `importComponent`, so it must resolve to the chunk's module.
+ */
+export type PromptContainerLoader = () => Promise<{ default: Component }>;
 
 /** The prompt loader for each container type. */
 export interface PromptContainers {

@@ -48,3 +48,10 @@ export const importDialog = (): Promise<typeof dialog> =>
 /** Load the opt-in confirmation, which the dialog host shows. */
 export const importOptInConfirmation = (): Promise<typeof optInConfirmation> =>
 	import('../opt-in-confirmation');
+
+/**
+ * Whether the dialog host warms the dialog in idle time while a banner is
+ * shown. Here it is a chunk of its own, warmed as React warms it, so it
+ * opens without a wait.
+ */
+export const warmsDialogWithBanner = true;

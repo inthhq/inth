@@ -35,6 +35,8 @@ group: reference
   | Prop | Type | Default | Behavior |
   | --- | --- | --- | --- |
   | `primaryButton` | `'reject' \| 'accept' \| 'customize'` | `'customize'` | Sets which action receives the primary button style. |
+  | `scrollLock`, `trapFocus` | `boolean` | the config's `scrollLock` and `trapFocus`, then `presentation` | Block the page while the banner is up: backdrop, scroll lock and focus trap. `false` in either turns blocking off. `presentation.prompt.blockUntilChoice` wins over both. |
+  | `disableAnimation` | `boolean` | the config's `disableAnimation` | Skips enter and exit animations. |
 
   Keep Accept All and Reject All at equal prominence unless legal review
   specifies otherwise.

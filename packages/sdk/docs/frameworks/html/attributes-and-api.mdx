@@ -29,7 +29,8 @@ manifest). Load files not served per project, such as `inth.devtools.js` or
 | --- | --- |
 | `inth.js` | Default hosted tag. Small loader that starts `/v1/consent/init` and loads `inth.hosted.js`. Requires a project URL. |
 | `inth.hosted.js` | Full consent engine and the stock trigger. Loaded automatically by `inth.js`. |
-| `inth.choices.js` | The consent banner in each container, its options and the "Your Privacy Choices" dialog. Loaded by `inth.hosted.js` the first time the page shows one of them; `inth.js` starts fetching it beside the engine when a banner is due. A returning visitor who sees no banner never loads it. |
+| `inth.choices.js` | The consent banner in each container and its options. Loaded by `inth.hosted.js` the first time the page shows one of them; `inth.js` starts fetching it beside the engine when a banner is due. A returning visitor who sees no banner never loads it. |
+| `inth.choices-dialog.js` | The "Your Privacy Choices" dialog and the opt-in confirmation. Loaded by `inth.choices.js` the first time the dialog opens, or in idle time while only the trigger can open it. A visitor who only answers the banner never loads it. |
 | `inth.records.js` | Reads stored consent for returning visitors to start permitted scripts immediately. Loaded automatically by `inth.js`. |
 | `inth.testing.js` | Test pages only. Stock UI with `testing()` and built-in policy presets, with no network requests. |
 | `inth.headless.js` | Runtime and `window.inth` API without stock UI or CSS; see [headless](/docs/frameworks/html/headless). |
@@ -70,9 +71,22 @@ it (`experiment`, `storageConfig`, `persistence`, `consentSource`, `vendors`,
 
 `inth.js` resolves `inth.hosted.js` and `inth.records.js` beside its own URL
 with `?v=<version>`, and `inth.hosted.js` resolves `inth.choices.js` beside
-its own. If copying files to your own server, copy all four together, or
-point to custom URLs with `data-hosted-src`, `data-records-src` and
-`data-choices-src`. Allow all of them in `script-src` under CSP.
+its own. `inth.choices-dialog.js` sits beside `inth.choices.js`: when that
+file has its standard name, the dialog's URL keeps its query. If copying
+files to your own server, copy all five together, or point to custom URLs
+with `data-hosted-src`, `data-records-src`, `data-choices-src` and
+`data-choices-dialog-src`. Allow all of them in `script-src` under CSP.
+
+A file that fails to load is tried again at a URL of its own, with
+`inth-retry=<n>` added to its query, so a failure the browser cached does
+not answer the retry. `inth.hosted.js` is tried three times. `inth.choices.js`
+and `inth.choices-dialog.js` are tried again the next time the page needs
+them: the next banner, Customize, or dialog open. A dialog that fails to
+load closes, and the banner comes back while a choice is still owed. See
+[troubleshooting](/docs/frameworks/html/troubleshooting#why-does-the-banner-or-dialog-fail-to-load).
+
+These are classic scripts, not module scripts, so the browser's module map
+plays no part: a retry always sends a new request.
 
 `dist/inth.css` and `dist/inth.iab.css` are the standalone stylesheets when
 using `data-shadow="false"` and `styles: false`.
@@ -99,7 +113,7 @@ Attributes are read once on startup. `inth.js` uses hosted mode and requires
 | `data-opt-out-link` | `do-not-sell` (default), `privacy-choices` ("Your Privacy Choices") or `california-privacy-choices` ("Your California Privacy Choices"). With `do-not-sell`, clicking the opt-out link records an opt-out in one click. With either "Privacy Choices" form, the California Privacy Protection Agency opt-out icon renders beside the label and clicking opens the preference dialog without recording an opt-out; see [Choose the opt-out link title](/docs/frameworks/html/components/banner#choose-the-opt-out-link-title). |
 | `data-shadow="false"` | Render into the page DOM so page CSS applies; see [style it with your own stylesheet](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Run without stock UI (load `inth.headless.js` instead to omit UI bytes). |
-| `data-hosted-src`, `data-records-src`, `data-choices-src` | Custom URLs for the companion files `inth.js` and `inth.hosted.js` load. |
+| `data-hosted-src`, `data-records-src`, `data-choices-src`, `data-choices-dialog-src` | Custom URLs for the companion files `inth.js`, `inth.hosted.js` and `inth.choices.js` load. |
 | `data-manual` | Wait for `inth.init()` instead of starting automatically; see [start Inth yourself](/docs/frameworks/html/api#start-inth-yourself). |
 | `data-nonce` | CSP nonce for stock UI `<style>` and loaded scripts (overrides tag's `nonce`); see [Content Security Policy](/docs/frameworks/html/content-security-policy). |
 

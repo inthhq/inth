@@ -17,7 +17,7 @@ import { useMounted } from '../composables/use-mounted';
 import { symbolConfirmationHosted } from '../utils/consent-symbols.model';
 import { LazyIabConsentDialog } from './lazy-iab-panel';
 import { LazyIabConsentBanner } from './lazy-iab-prompt';
-import { LazyConsentManager } from './lazy-manager';
+import { LazyConsentDialog } from './lazy-manager';
 import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
 import { OptInConfirmationHost } from './opt-in-confirmation-host';
 import { useAdoptOptOutConfirmation } from './parts/use-adopt-opt-out-confirmation';
@@ -85,11 +85,11 @@ watch(
 			v-if="(init?.gvl || init?.gvlReference) && activeUI === 'banner'"
 		/>
 		<LazyIabConsentDialog
-			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
+			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'dialog'"
 		/>
 		<template v-else-if="!(init?.gvl || init?.gvlReference)">
 			<ConsentBanner v-if="activeUI === 'banner' || bannerShown" />
-			<LazyConsentManager v-if="activeUI === 'manager'" />
+			<LazyConsentDialog v-if="activeUI === 'dialog'" />
 			<!-- The banner and the dialog each host the opt-in confirmation.
 			     With neither on the page, the root hosts it. -->
 			<OptInConfirmationHost v-else-if="!bannerShown" />

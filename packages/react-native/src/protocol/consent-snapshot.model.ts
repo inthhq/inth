@@ -53,6 +53,83 @@ export interface SnapshotResolution {
 	readonly fingerprint: string | null;
 	/** Why the resolution failed. Present only when `status` is `failed`. */
 	readonly reason?: PolicyResolutionFailure;
+	/**
+	 * The matched rule's `surface`, in the canonical form `@inth/sdk-schema`
+	 * reads: the container's position, edge or side filled in, a card's edge
+	 * style dropped, and a blocking constraint the rule already implies
+	 * dropped. Absent when the rule has none.
+	 */
+	readonly surface?: SnapshotPolicySurface;
+	/**
+	 * The phone layout {@link SnapshotResolution.surface} resolves to with no
+	 * host presentation, as `resolveLayout` in `@inth/sdk-core` answers it.
+	 * Present exactly when `surface` is. The stock native presenters do not
+	 * draw it yet: their first layer is always a modal screen.
+	 */
+	readonly layout?: SnapshotPolicyLayout;
+}
+
+/** Corners a card may sit in. `start` and `end` follow the writing direction. */
+export const POLICY_CARD_POSITIONS = ['start', 'end', 'center'] as const;
+/** Edges a banner may occupy. */
+export const POLICY_BANNER_EDGES = ['bottom', 'top'] as const;
+/** Sides a drawer may slide in from. */
+export const POLICY_DRAWER_SIDES = ['bottom', 'top', 'start', 'end'] as const;
+/** Container types, as `ConsentContainerType` in `@inth/sdk-schema`. */
+export const POLICY_CONTAINER_TYPES = ['card', 'banner', 'drawer'] as const;
+/** Edge styles, as `ConsentEdgeStyle` in `@inth/sdk-schema`. */
+export const POLICY_EDGE_STYLES = ['inset', 'flush'] as const;
+/** Blocking constraints, as `ConsentBlockingConstraint` in `@inth/sdk-schema`. */
+export const POLICY_BLOCKING_CONSTRAINTS = [
+	'forbidden',
+	'allowed',
+	'required',
+] as const;
+/** Resolved placements, as `ConsentPlacement` in `@inth/sdk-core`. */
+export const POLICY_PLACEMENTS = [
+	'card-start',
+	'card-end',
+	'card-center',
+	'banner-bottom',
+	'banner-top',
+	'drawer-bottom',
+	'drawer-top',
+	'drawer-start',
+	'drawer-end',
+] as const;
+/** Resolved flows, as `ConsentFlow` in `@inth/sdk-core`. */
+export const POLICY_FLOWS = ['expand-in-place', 'all-in-one'] as const;
+
+/** A policy rule's `surface`, as `ResolvedPolicySurface` in `@inth/sdk-schema`. */
+export interface SnapshotPolicySurface {
+	/** Container the prompt uses when the host picks none. */
+	readonly container?:
+		| {
+				readonly type: 'card';
+				readonly position: (typeof POLICY_CARD_POSITIONS)[number];
+		  }
+		| {
+				readonly type: 'banner';
+				readonly edge: (typeof POLICY_BANNER_EDGES)[number];
+		  }
+		| {
+				readonly type: 'drawer';
+				readonly side: (typeof POLICY_DRAWER_SIDES)[number];
+		  };
+	/** Edge style when the host picks none. Never beside a card. */
+	readonly edgeStyle?: (typeof POLICY_EDGE_STYLES)[number];
+	/** Hard constraint on blocking the app until a choice is made. */
+	readonly blocking?: (typeof POLICY_BLOCKING_CONSTRAINTS)[number];
+}
+
+/** A resolved layout, as `ResolvedConsentLayout` in `@inth/sdk-core` less its diagnostics. */
+export interface SnapshotPolicyLayout {
+	readonly type: (typeof POLICY_CONTAINER_TYPES)[number];
+	readonly placement: (typeof POLICY_PLACEMENTS)[number];
+	readonly flow: (typeof POLICY_FLOWS)[number];
+	/** Whether the prompt blocks the app until a choice is made. */
+	readonly blocking: boolean;
+	readonly edgeStyle: (typeof POLICY_EDGE_STYLES)[number];
 }
 
 /** Why a policy resolution failed, as the kernel's `PolicyResolutionFailure` names it. */

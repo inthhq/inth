@@ -222,3 +222,71 @@ test('reveals the first lazy export after its module was fully preloaded', async
 		container.remove();
 	}
 });
+
+test('imports again for the next mount after a rendered import failed', async () => {
+	const load = vi
+		.fn<() => Promise<typeof exports>>()
+		.mockRejectedValueOnce(new TypeError('Failed to fetch chunk'))
+		.mockResolvedValue(exports);
+	const module = createDeferredModule(load);
+	const Deferred = module.component((loaded) => loaded.Content);
+	const container = document.createElement('div');
+	document.body.append(container);
+	const root = createRoot(container);
+	const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	try {
+		root.render(
+			<Boundary key="first">
+				<Deferred label="Dialog" />
+			</Boundary>
+		);
+		await vi.waitFor(() => expect(container.textContent).toBe('Import failed'));
+		expect(load).toHaveBeenCalledOnce();
+		// The visitor opens it again: a new mount, as a reopened dialog is.
+		root.render(
+			<Boundary key="second">
+				<Deferred label="Dialog" />
+			</Boundary>
+		);
+		await vi.waitFor(() => expect(container.textContent).toBe('Dialog: 0'));
+		expect(load).toHaveBeenCalledTimes(2);
+	} finally {
+		root.unmount();
+		container.remove();
+		error.mockRestore();
+	}
+});
+
+test('a mount after a failure reports a second failure to its own boundary', async () => {
+	const load = vi
+		.fn<() => Promise<typeof exports>>()
+		.mockRejectedValue(new TypeError('Failed to fetch chunk'));
+	const module = createDeferredModule(load);
+	const Deferred = module.component((loaded) => loaded.Content);
+	const container = document.createElement('div');
+	document.body.append(container);
+	const root = createRoot(container);
+	const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	try {
+		root.render(
+			<Boundary key="first">
+				<Deferred label="Dialog" />
+			</Boundary>
+		);
+		await vi.waitFor(() => expect(container.textContent).toBe('Import failed'));
+		root.render(
+			<Boundary key="second">
+				<Deferred label="Dialog" />
+			</Boundary>
+		);
+		await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+		await vi.waitFor(() => expect(container.textContent).toBe('Import failed'));
+		await frame();
+		await frame();
+		expect(load).toHaveBeenCalledTimes(2);
+	} finally {
+		root.unmount();
+		container.remove();
+		error.mockRestore();
+	}
+});

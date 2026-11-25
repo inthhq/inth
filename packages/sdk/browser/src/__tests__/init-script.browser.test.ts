@@ -5,8 +5,8 @@
  * (`fixtures/init-script-server.ts`).
  *
  * The init script renders no UI and records no choice: the engine renders
- * the banner and the dialog from `inth.choices.js`, and runs every consent
- * call made before it.
+ * the banner from `inth.choices.js` and the dialog from its chunk
+ * `inth.choices-dialog.js`, and runs every consent call made before it.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
@@ -477,7 +477,7 @@ describe('inth.records.js', () => {
 });
 
 describe('inth.choices.js', () => {
-	it('carries the banner and dialog for the engine, at its version [BNR-04]', async () => {
+	it('carries the banner, and loads the dialog beside it, at its version [BNR-04]', async () => {
 		const win = await open({});
 		await expect.poll(() => bannerOf(win), { timeout: 4000 }).not.toBeNull();
 		const [src] = requested(win, 'inth.choices.js');
@@ -496,6 +496,71 @@ describe('inth.choices.js', () => {
 		win.inth.openDialog();
 		await expect.poll(() => dialogOf(win), { timeout: 4000 }).not.toBeNull();
 		expect(requested(win, 'inth.choices.js')).toHaveLength(1);
+		expect(requested(win, 'inth.choices-dialog.js')).toEqual([
+			src?.replace('inth.choices.js', 'inth.choices-dialog.js'),
+		]);
+	});
+
+	it('never fetches the dialog for a first visit that only answers the banner', async () => {
+		const win = await open({});
+		await expect
+			.poll(() => buttonOf(win, 'accept'), { timeout: 4000 })
+			.not.toBeNull();
+		// The banner's options still warm in idle time; the dialog does not.
+		buttonOf(win, 'customize')?.click();
+		await expect
+			.poll(() => bannerOf(win)?.getAttribute('data-expanded'))
+			.toBe('true');
+		await wait(600);
+		bannerOf(win)
+			?.querySelector<HTMLButtonElement>(
+				'[data-testid="consent-banner-accept-button"]'
+			)
+			?.click();
+		await expect.poll(savesSoFar, { timeout: 4000 }).toBe(1);
+		await wait(600);
+		expect(requested(win, 'inth.choices.js')).toHaveLength(1);
+		expect(requested(win, 'inth.choices-dialog.js')).toEqual([]);
+		expect(added(win, 'inth.choices-dialog.js')).toBe(false);
+	});
+
+	it('loads the dialog from data-choices-dialog-src', async () => {
+		const win = await open({ 'choices-dialog': 0 });
+		await expect.poll(() => bannerOf(win), { timeout: 4000 }).not.toBeNull();
+		win.inth.openDialog();
+		await expect.poll(() => dialogOf(win), { timeout: 4000 }).not.toBeNull();
+		expect(requested(win, 'inth.choices-dialog.js')).toEqual([
+			new URL(
+				'/__inth-dist__/inth.choices-dialog.js?delay=0',
+				win.location.href
+			).href,
+		]);
+	});
+
+	it('tries the dialog again at a URL of its own after a failed load', async () => {
+		const win = await open({ 'choices-dialog': 'fail-once' });
+		const errors: string[] = [];
+		win.console.error = (...args: unknown[]) => {
+			errors.push(String(args[0]));
+		};
+		await expect.poll(() => bannerOf(win), { timeout: 4000 }).not.toBeNull();
+		win.inth.openDialog();
+		await expect
+			.poll(() => errors, { timeout: 4000 })
+			.toContainEqual(
+				expect.stringContaining('the preference centre failed to load')
+			);
+		expect(dialogOf(win)).toBeNull();
+		// The banner is still there to answer.
+		expect(bannerOf(win)).not.toBeNull();
+
+		win.inth.openDialog();
+		await expect.poll(() => dialogOf(win), { timeout: 4000 }).not.toBeNull();
+		const dialogRequests = requested(win, 'inth.choices-dialog.js');
+		expect(dialogRequests).toHaveLength(2);
+		expect(
+			new URL(dialogRequests[1] ?? '').searchParams.get('inth-retry')
+		).toBe('1');
 	});
 
 	it('reports a failed load, with no banner and no choice', async () => {

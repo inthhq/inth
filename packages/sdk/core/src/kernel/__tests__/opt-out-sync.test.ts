@@ -2839,6 +2839,243 @@ describe('opt-out network sync and queue', () => {
 	});
 });
 
+describe('a queued lift and a newer refusal', () => {
+	const accountOptOut: OptOutRecord = {
+		heldBy: 'person',
+		method: 'api',
+		recordedAt: NOW - 1000,
+		rights: ['sale', 'share'],
+	};
+	const deviceOptOut: OptOutRecord = {
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW - 1000,
+		rights: ['sale', 'share'],
+	};
+	const user = { externalId: 'user_123', identityToken: 'tok_1' };
+
+	/**
+	 * A backend that holds one opt-out for the subject, refuses every
+	 * opt-out request while `offline`, and logs what reached it.
+	 */
+	const createBackend = (initial: OptOutRecord) => {
+		const backend = {
+			delivered: [] as ('lift' | 'record')[],
+			offline: true,
+			optOut: initial as OptOutRecord | null,
+		};
+		const transport: KernelTransport = {
+			liftOptOut(payload) {
+				if (backend.offline) {
+					return Promise.reject(new Error('offline'));
+				}
+				backend.delivered.push('lift');
+				backend.optOut = null;
+				return Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				});
+			},
+			optOut(payload) {
+				if (backend.offline) {
+					return Promise.reject(new Error('offline'));
+				}
+				backend.delivered.push('record');
+				backend.optOut ??= {
+					heldBy: initial.heldBy,
+					method: 'button',
+					recordedAt: payload.givenAt,
+					rights: ['sale', 'share'],
+				};
+				return Promise.resolve({
+					ok: true,
+					optOut: backend.optOut,
+					subjectId: payload.subjectId,
+				});
+			},
+			save: (payload) =>
+				Promise.resolve({ ok: true, subjectId: payload.subjectId }),
+		};
+		return { backend, transport };
+	};
+
+	type OptBackIn = 'optIn' | 'granting save';
+	const optBackIn = async (kernel: InternalKernel, how: OptBackIn) => {
+		await (how === 'optIn'
+			? kernel.commands.optIn()
+			: kernel.commands.save({ marketing: true }));
+		await flushMacrotasks();
+	};
+
+	const cases: {
+		held: string;
+		initial: OptOutRecord;
+		how: OptBackIn;
+	}[] = [
+		{ held: 'account-held', how: 'optIn', initial: accountOptOut },
+		{ held: 'account-held', how: 'granting save', initial: accountOptOut },
+		{ held: 'device-held', how: 'optIn', initial: deviceOptOut },
+		{ held: 'device-held', how: 'granting save', initial: deviceOptOut },
+	];
+
+	test.each(cases)(
+		'$held opt-out: a refusing save after a queued $how lift keeps the visitor opted out once the queue replays',
+		async ({ initial, how }) => {
+			const { backend, transport } = createBackend(initial);
+			const kernel = kernelOn({
+				initialRecords: {
+					now: NOW,
+					optOut: initial,
+					subject: { subjectId: SUBJECT },
+				},
+				initialUser: user,
+				transport,
+			});
+
+			await optBackIn(kernel, how);
+			expect((await queuedOptOuts()).map((entry) => entry.kind)).toContain(
+				'lift'
+			);
+
+			await kernel.commands.save({ marketing: false });
+			await flushMacrotasks();
+			expect(kernel.getSnapshot().optOut).not.toBeNull();
+
+			backend.offline = false;
+			window.dispatchEvent(new Event('online'));
+			await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
+			await flushMacrotasks();
+
+			expect(backend.optOut).not.toBeNull();
+			expect(backend.delivered.at(-1) ?? 'nothing').not.toBe('lift');
+			expect(kernel.getSnapshot().optOut).not.toBeNull();
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+			kernel.dispose();
+		}
+	);
+
+	test.each(cases)(
+		'$held opt-out: a refusing save after a queued $how lift keeps the visitor opted out when a reload replays the queue',
+		async ({ initial, how }) => {
+			const browserStore = createBrowserOutboxStore();
+			const { backend, transport } = createBackend(initial);
+			const first = kernelOn(
+				{
+					initialRecords: {
+						now: NOW,
+						optOut: initial,
+						subject: { subjectId: SUBJECT },
+					},
+					initialUser: user,
+					transport,
+				},
+				browserStore
+			);
+
+			await optBackIn(first, how);
+			await first.commands.save({ marketing: false });
+			await flushMacrotasks();
+			const held = first.getSnapshot().optOut;
+			expect(held).not.toBeNull();
+			first.dispose();
+
+			backend.offline = false;
+			const reloaded = kernelOn(
+				{
+					initialRecords: {
+						now: NOW,
+						optOut: held,
+						subject: { subjectId: SUBJECT },
+					},
+					initialUser: user,
+					transport,
+				},
+				createBrowserOutboxStore()
+			);
+			await reloaded.commands.init();
+			await vi.waitFor(async () =>
+				expect(await queuedOptOuts(browserStore)).toEqual([])
+			);
+			await flushMacrotasks();
+
+			expect(backend.optOut).not.toBeNull();
+			expect(backend.delivered.at(-1) ?? 'nothing').not.toBe('lift');
+			expect(reloaded.getSnapshot().optOut).not.toBeNull();
+			reloaded.dispose();
+		}
+	);
+
+	test('optOut() on a held account opt-out drops the lift still queued for it', async () => {
+		const { backend, transport } = createBackend(accountOptOut);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: user,
+			transport,
+		});
+
+		expect(await kernel.commands.optIn()).toEqual({
+			ok: false,
+			reason: 'held-by-account',
+		});
+		expect(await queuedOptOuts()).toHaveLength(1);
+
+		const result = await kernel.commands.optOut();
+		expect(result).toMatchObject({ changed: false, ok: true });
+		expect(await queuedOptOuts()).toEqual([]);
+
+		backend.offline = false;
+		window.dispatchEvent(new Event('online'));
+		await flushMacrotasks();
+
+		expect(backend.delivered).toEqual([]);
+		expect(backend.optOut).toEqual(accountOptOut);
+		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
+		kernel.dispose();
+	});
+
+	test('a refusal drops only the lifts its own account queued for its subject', async () => {
+		const otherAccountLift: PendingOptOutEntry = {
+			attempts: 0,
+			idempotencyKey: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2e',
+			kind: 'lift',
+			payload: {
+				givenAt: NOW - 500,
+				idempotencyKey: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2e',
+				subjectId: SUBJECT,
+				user: { externalId: 'user_999' },
+			},
+			queuedAt: NOW - 500,
+		};
+		await store.transact((tx) => tx.write('optOuts', [otherAccountLift]));
+		const { transport } = createBackend(accountOptOut);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: user,
+			transport,
+		});
+
+		await kernel.commands.optIn();
+		expect(await queuedOptOuts()).toHaveLength(2);
+
+		await kernel.commands.save({ marketing: false });
+		await flushMacrotasks();
+
+		expect(
+			(await queuedOptOuts()).map((entry) => entry.idempotencyKey)
+		).toEqual([otherAccountLift.idempotencyKey]);
+		kernel.dispose();
+	});
+});
+
 describe('opt-out receipt local data', () => {
 	test('click records a reference equal to the POST /v1/consent/opt-outs idempotency key and preserves it across answer, GPC report, reload, and second tab', async () => {
 		const { fetch, calls } = stubFetch(

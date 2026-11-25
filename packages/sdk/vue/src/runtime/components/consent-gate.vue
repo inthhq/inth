@@ -76,7 +76,7 @@ const actionLabel = computed(() =>
 );
 
 const openPreferences = function openPreferences() {
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 </script>
 

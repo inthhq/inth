@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig, rspack } from '@rslib/core';
+import type { Rspack } from '@rslib/core';
 
 import {
 	getRsdoctorPlugins,
@@ -24,11 +25,14 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  * - `dist/inth.records.js` — what the init script fetches at once for a
  *   returning visitor: the stored-record reader. Served next to
  *   `dist/inth.hosted.js`.
- * - `dist/inth.choices.js` — the consent UI: the prompt in each container,
- *   the in-place options, the dialog and the opt-in confirmation. The
- *   engine fetches it the first time the page needs one of them, and
- *   shares its per-kernel state with it. Served next to
- *   `dist/inth.hosted.js`.
+ * - `dist/inth.choices.js` — the consent UI a banner needs: the prompt in
+ *   each container and the in-place options. The engine fetches it the
+ *   first time the page needs one of them, and shares its per-kernel state
+ *   with it. Served next to `dist/inth.hosted.js`.
+ * - `dist/inth.choices-dialog.js` — the dialog and the opt-in
+ *   confirmation: a chunk of `dist/inth.choices.js`, which loads it the
+ *   first time the engine needs one of them and shares its runtime with it.
+ *   Served next to `dist/inth.choices.js`.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the banner and
  *   dialog hosts, the trigger, the stock stylesheet, and auto-init from the
  *   `<script>` tag's `data-*` attributes. It also works as a tag of its
@@ -94,6 +98,32 @@ const CHOICES_ENGINE_MODULES = [
 	),
 ];
 
+/**
+ * `inth.choices.js` loads the dialog as a chunk of its own,
+ * `inth.choices-dialog.js`, on the file's runtime, so the chunk carries
+ * only what the banner does not use. rslib builds `iife` files without
+ * chunks; this turns chunk loading back on for that file, with classic
+ * `<script>` elements: a module script's failed fetch could stay in the
+ * document's module map, and a retry would fail without a request. The
+ * URL is set at run time (`src/entries/cdn-choices.ts`), so the default
+ * public path's lookup is left out.
+ */
+const choicesDialogChunk = function choicesDialogChunk(
+	config: Rspack.Configuration
+): Rspack.Configuration {
+	config.output = {
+		...config.output,
+		asyncChunks: true,
+		chunkFilename: '[name].js',
+		chunkFormat: 'array-push',
+		chunkLoading: 'jsonp',
+		chunkLoadingGlobal: '__inthChoicesChunks',
+		publicPath: '',
+		scriptType: false,
+	};
+	return config;
+};
+
 /** Script builds that run hosted or manifest mode: no testing transport. */
 const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
 
@@ -147,53 +177,56 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 		// browserslist.
 		syntax: 'es2020' as const,
 		tools: {
-			rspack: {
-				plugins: [
-					// One file has no chunk to load on demand, and an inlined
-					// `import()` only adds bytes: mount every module statically.
-					new rspack.NormalModuleReplacementPlugin(
-						/^\.\/create-runtime$/u,
-						'./create-runtime-static'
-					),
-					partsModule(name),
-					// The write code is in the file already: no loader, no preload.
-					new rspack.NormalModuleReplacementPlugin(
-						/^\.\/writer-loader(?:\.js)?$/u,
-						(resource) => {
-							resource.request = resource.request.replace(
-								'writer-loader',
-								'writer-loader-static'
-							);
-						}
-					),
-					...(IAB_BUNDLES.has(name) ? [] : [iabBundleBoundary()]),
-					...(HOSTED_BUNDLES.has(name)
-						? [modeBundleBoundary(INIT_BUNDLES.has(name) ? 'init' : 'hosted')]
-						: []),
-					...(name === 'inth.choices' ? [modeBundleBoundary('choices')] : []),
-					// The init script reads copy only through core's snapshot
-					// code, and carries no translations of its own
-					// (`src/init/snapshot-translations.ts`).
-					...(name === 'inth'
-						? [
-								new rspack.NormalModuleReplacementPlugin(
-									/^\.\.\/translations\/index\.js$/u,
-									(resource) => {
-										if (
-											/[\\/]core[\\/]dist[\\/]kernel$/u.test(resource.context)
-										) {
-											resource.request = INIT_SNAPSHOT_TRANSLATIONS;
+			rspack: [
+				{
+					plugins: [
+						// One file has no chunk to load on demand, and an inlined
+						// `import()` only adds bytes: mount every module statically.
+						new rspack.NormalModuleReplacementPlugin(
+							/^\.\/create-runtime$/u,
+							'./create-runtime-static'
+						),
+						partsModule(name),
+						// The write code is in the file already: no loader, no preload.
+						new rspack.NormalModuleReplacementPlugin(
+							/^\.\/writer-loader(?:\.js)?$/u,
+							(resource) => {
+								resource.request = resource.request.replace(
+									'writer-loader',
+									'writer-loader-static'
+								);
+							}
+						),
+						...(IAB_BUNDLES.has(name) ? [] : [iabBundleBoundary()]),
+						...(HOSTED_BUNDLES.has(name)
+							? [modeBundleBoundary(INIT_BUNDLES.has(name) ? 'init' : 'hosted')]
+							: []),
+						...(name === 'inth.choices' ? [modeBundleBoundary('choices')] : []),
+						// The init script reads copy only through core's snapshot
+						// code, and carries no translations of its own
+						// (`src/init/snapshot-translations.ts`).
+						...(name === 'inth'
+							? [
+									new rspack.NormalModuleReplacementPlugin(
+										/^\.\.\/translations\/index\.js$/u,
+										(resource) => {
+											if (
+												/[\\/]core[\\/]dist[\\/]kernel$/u.test(resource.context)
+											) {
+												resource.request = INIT_SNAPSHOT_TRANSLATIONS;
+											}
 										}
-									}
-								),
-							]
-						: []),
-					...(PRODUCTION_BUNDLES.has(name)
-						? [modeBundleBoundary('production')]
-						: []),
-					...(name === 'inth.testing' ? [modeBundleBoundary('testing')] : []),
-				],
-			},
+									),
+								]
+							: []),
+						...(PRODUCTION_BUNDLES.has(name)
+							? [modeBundleBoundary('production')]
+							: []),
+						...(name === 'inth.testing' ? [modeBundleBoundary('testing')] : []),
+					],
+				},
+				...(name === 'inth.choices' ? [choicesDialogChunk] : []),
+			],
 		},
 	};
 };

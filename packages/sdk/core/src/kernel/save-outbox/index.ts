@@ -32,7 +32,10 @@
  *   current state still holds ({@link withoutSuperseded}). Opt-out entries
  *   are never narrowed, superseded or dropped because the policy, the
  *   fingerprint or the policy snapshot changed, and replay in the exact order
- *   they were queued.
+ *   they were queued. The one act that removes another is a refusal that
+ *   keeps an opt-out the visitor holds (`discardQueuedLifts()`): it queues
+ *   nothing of its own to replay after a waiting lift, so it drops the lifts
+ *   its account still has queued for the subject instead.
  * - A `404` on an opt-out route means the backend does not store opt-outs.
  *   The outbox removes every queued opt-out entry, fills empty local `rights`
  *   with all three rights through `opt-out:synced`, stops sending further
@@ -55,6 +58,7 @@ import type { OptOutRecord } from '@inth/sdk-schema/types';
 import type {
 	ConsentSnapshot,
 	KernelTransport,
+	KernelUser,
 	LiftOptOutPayload,
 	OptOutPayload,
 	SavePayload,
@@ -160,6 +164,15 @@ export interface SaveOutbox {
 	liftAccountOptOut: (
 		payload: LiftOptOutPayload
 	) => Promise<AccountLiftOutcome>;
+	/**
+	 * Drop the lifts `user`'s account still has queued for `subjectId`. The
+	 * kernel calls it when a refusal keeps an opt-out it holds, so a lift
+	 * that replays later cannot undo the newer refusal.
+	 */
+	discardQueuedLifts: (
+		subjectId: string,
+		user: Readonly<KernelUser> | null
+	) => Promise<void>;
 	/**
 	 * Replay queued saves and opt-out acts, one entry at a time. Overlapping
 	 * calls share one run. Asks for an online retry while anything is left.
@@ -479,6 +492,15 @@ export const createSaveOutbox = function createSaveOutbox({
 	): Promise<void> {
 		if (await hasQueued('optOuts')) {
 			await (await loadWorker())?.discardOptOut(idempotencyKey);
+		}
+	};
+
+	const discardQueuedLifts = async function discardQueuedLifts(
+		subjectId: string,
+		user: Readonly<KernelUser> | null
+	): Promise<void> {
+		if (await hasQueued('optOuts')) {
+			await (await loadWorker())?.discardOptOutLifts(subjectId, user);
 		}
 	};
 
@@ -1194,6 +1216,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		adoptSubject,
 		areOptOutsUnsupported: () => optOutsUnsupported,
 		clear,
+		discardQueuedLifts,
 		getHold: () => held,
 		getOptOutRequestsInFlight: () => optOutRequestsInFlight,
 		hold(until) {

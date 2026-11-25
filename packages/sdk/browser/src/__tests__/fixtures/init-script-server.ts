@@ -9,9 +9,9 @@
  *   loads get a 404.
  * - `/__inth-init__/page?<query>`: a page whose `inth.js` tag uses the
  *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`,
- *   `hosted-fail` (that many 404s for `inth.hosted.js`), `records` and
- *   `choices` (a delay for that file in ms, `fail` for a 404, or
- *   `fail-once` for a 404 then the file),
+ *   `hosted-fail` (that many 404s for `inth.hosted.js`), `records`,
+ *   `choices` and `choices-dialog` (a delay for that file in ms, `fail`
+ *   for a 404, or `fail-once` for a 404 then the file),
  *   `queue` (a `window.inth` queue before the tag that records `ready`) and
  *   `hero` (a `fetchpriority="high"` image held back that many ms, so the
  *   engine waits for it).
@@ -25,7 +25,7 @@
  * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
  *   last read.
  * - `/__inth-init__/hosted-requests`: how many `fail=<n>` requests (for
- *   `inth.hosted.js` or `inth.choices.js`) arrived since the last read.
+ *   `inth.hosted.js` or a file it loads) arrived since the last read.
  * - `/__inth-init__/gated.js?name=<name>`: pushes `name` onto
  *   `window.__ran`.
  */
@@ -84,10 +84,11 @@ const page = (query: URLSearchParams): string => {
 	const queue = query.has('queue')
 		? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
 		: '';
-	// `records` and `choices`: a delay in ms, `fail` for a 404, or
-	// `fail-once` for a 404 then the file. Without either, the file is found
-	// next to `inth.js` (`records`) or `inth.hosted.js` (`choices`).
-	const part = (name: 'records' | 'choices'): string => {
+	// `records`, `choices` and `choices-dialog`: a delay in ms, `fail` for a
+	// 404, or `fail-once` for a 404 then the file. Without one, the file is
+	// found next to `inth.js` (`records`), `inth.hosted.js` (`choices`) or
+	// `inth.choices.js` (`choices-dialog`).
+	const part = (name: 'records' | 'choices' | 'choices-dialog'): string => {
 		const value = query.get(name);
 		if (value === null) {
 			return '';
@@ -100,7 +101,7 @@ const page = (query: URLSearchParams): string => {
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('records')}${part('choices')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('records')}${part('choices')}${part('choices-dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>

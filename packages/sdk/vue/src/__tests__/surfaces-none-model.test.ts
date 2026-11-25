@@ -7,7 +7,7 @@ import type { ComponentPublicInstance } from 'vue';
 import { defineComponent, h } from 'vue';
 
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentDialog from '../runtime/components/dialog/manager.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
@@ -48,7 +48,7 @@ const AllSurfaces = defineComponent({
 	name: 'AllSurfaces',
 	render: () => [
 		h(ConsentBanner),
-		h(ConsentManager),
+		h(ConsentDialog),
 		h(ConsentDialogTrigger),
 		h(ConsentDialogLink),
 		h(ConsentWidget),
@@ -125,7 +125,7 @@ describe('consent surfaces under a none rule', () => {
 		expect(snapshot.effectivePermissions.marketing).toBe(true);
 
 		// Even an explicit request to open the preference center shows nothing.
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		await flushPromises();
 
 		for (const testId of SURFACES) {

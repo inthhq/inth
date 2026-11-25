@@ -210,7 +210,7 @@ enum PolicyWireReader {
     private static let ruleKeys: Set<String> = [
         "id", "model", "prompt", "scope", "scopeMode", "preselectedCategories",
         "actions", "rights", "validity", "privacySignals", "copyRevision", "i18n",
-        "proof",
+        "proof", "surface",
     ]
 
     private static let actionKeys: Set<String> = ["allowed", "required", "equivalent"]
@@ -221,9 +221,11 @@ enum PolicyWireReader {
         "storeIp", "storeUserAgent", "storeLanguage",
     ]
 
+    private static let surfaceKeys: Set<String> = ["container", "edgeStyle", "blocking"]
+
     private static let i18nKeys: Set<String> = ["language", "messageProfile"]
     private static let fingerprintKeys: Set<String> = [
-        "policy", "choice", "notice", "legacyMaterial",
+        "policy", "choice", "notice", "legacyMaterial", "presentation",
     ]
 
     private static let statuses: Set<String> = [
@@ -330,11 +332,20 @@ enum PolicyWireReader {
             throw problem(.invalidPayload, "policyId must equal policy.id")
         }
         let fingerprints = try readFingerprints(input["fingerprints"])
+        // `isPolicySurfaceUnfingerprinted` in `@inth/sdk-schema`: caches keyed on what a subject
+        // sees compare the presentation fingerprint, so a layout must never travel without it.
+        if rule.surface != nil, fingerprints.presentation == nil {
+            throw problem(.invalidPayload, "fingerprints.presentation is required when policy.surface is set")
+        }
         return ResolvedPolicy(
             resolution: PolicyResolutionInfo(
                 status: .matched,
                 policyId: policyId,
-                fingerprint: fingerprints.policy
+                fingerprint: fingerprints.policy,
+                surface: rule.surface,
+                layout: rule.surface.map {
+                    PolicyLayout.resolve($0, model: rule.policy.model, prompt: rule.policy.prompt)
+                }
             ),
             policy: rule.policy,
             choiceFingerprint: fingerprints.choice,
@@ -345,6 +356,8 @@ enum PolicyWireReader {
     private struct RuleDigest {
         let id: String
         let policy: EvaluationPolicy
+        /// Canonical, so an empty surface or one the rule already implies is `nil`.
+        let surface: PolicySurface?
     }
 
     private struct FingerprintDigest {
@@ -352,6 +365,7 @@ enum PolicyWireReader {
         let choice: String
         let notice: String
         let legacyMaterial: String?
+        let presentation: String?
     }
 
     private static func readFingerprints(
@@ -371,11 +385,22 @@ enum PolicyWireReader {
             }
             legacyMaterial = text
         }
+        var presentation: String?
+        if let candidate = raw["presentation"] {
+            guard case let .string(text) = candidate else {
+                throw problem(.invalidPayload, "fingerprints.presentation must be a string")
+            }
+            guard !text.isEmpty else {
+                throw problem(.invalidPayload, "fingerprints.presentation must be a non-empty string")
+            }
+            presentation = text
+        }
         return FingerprintDigest(
             policy: try required("policy"),
             choice: try required("choice"),
             notice: try required("notice"),
-            legacyMaterial: legacyMaterial
+            legacyMaterial: legacyMaterial,
+            presentation: presentation
         )
     }
 
@@ -521,6 +546,16 @@ enum PolicyWireReader {
             }
         }
 
+        // Read strictly, then made canonical, as `readSurface` and `canonicalizePolicySurface` do.
+        // `collectPolicySurfaceRuleIssues` then refuses `required` on a rule that can never block.
+        let surface = try readSurface(raw["surface"])?.canonical(model: model, prompt: prompt)
+        if surface?.blocking == .required, !PolicySurface.canBlock(model: model, prompt: prompt) {
+            throw problem(
+                .invalidPayload,
+                "surface.blocking \"required\" needs prompt \"choice\" outside the opt-out model"
+            )
+        }
+
         return RuleDigest(
             id: id,
             policy: EvaluationPolicy(
@@ -532,8 +567,66 @@ enum PolicyWireReader {
                 choiceMaxAgeMs: choiceMs,
                 noticeMaxAgeMs: noticeMs,
                 rights: rightValues.compactMap(PolicyRight.init(rawValue:))
-            )
+            ),
+            surface: surface
         )
+    }
+
+    /// `policy.surface`: absent when the rule sets no layout. Strict like every other field: an
+    /// unknown key, container type, position, edge, side, edge style or blocking constraint is
+    /// `unsupportedContract`, and a value of the wrong JSON type is `invalidPayload`.
+    private static func readSurface(_ value: JSONValue?) throws -> PolicySurface? {
+        guard let value else { return nil }
+        let surface = try object(value, field: "policy.surface", allowed: surfaceKeys)
+        let container = try surface["container"].map(readContainer)
+        let edgeStyle = try member(
+            surface["edgeStyle"], field: "policy.surface.edgeStyle", as: PolicySurface.EdgeStyle.self)
+        let blocking = try member(
+            surface["blocking"], field: "policy.surface.blocking", as: PolicySurface.Blocking.self)
+        return PolicySurface(container: container, edgeStyle: edgeStyle, blocking: blocking)
+    }
+
+    /// `policy.surface.container`, with its default position, edge or side filled in.
+    private static func readContainer(_ value: JSONValue) throws -> PolicySurface.Container {
+        let field = "policy.surface.container"
+        guard let fields = value.objectValue else {
+            throw problem(.invalidPayload, "\(field) must be a plain object")
+        }
+        let type = try member(fields["type"], field: "\(field).type", as: ContainerType.self)
+        switch type {
+        case .card?:
+            _ = try object(value, field: field, allowed: ["type", "position"])
+            let position = try member(
+                fields["position"], field: "\(field).position", as: PolicySurface.CardPosition.self)
+            return .card(position ?? .start)
+        case .banner?:
+            _ = try object(value, field: field, allowed: ["type", "edge"])
+            let edge = try member(fields["edge"], field: "\(field).edge", as: PolicySurface.BannerEdge.self)
+            return .banner(edge ?? .bottom)
+        case .drawer?:
+            _ = try object(value, field: field, allowed: ["type", "side"])
+            let side = try member(fields["side"], field: "\(field).side", as: PolicySurface.DrawerSide.self)
+            return .drawer(side ?? .bottom)
+        case nil:
+            throw problem(.invalidPayload, "\(field).type is required")
+        }
+    }
+
+    private enum ContainerType: String { case card, banner, drawer }
+
+    /// An optional string naming one case of `Member`: absent is `nil`, a non-string is
+    /// `invalidPayload`, and a string `Member` does not name is `unsupportedContract`.
+    private static func member<Member: RawRepresentable>(
+        _ value: JSONValue?, field: String, as _: Member.Type
+    ) throws -> Member? where Member.RawValue == String {
+        guard let value else { return nil }
+        guard case let .string(text) = value else {
+            throw problem(.invalidPayload, "\(field) must be a string")
+        }
+        guard let member = Member(rawValue: text) else {
+            throw problem(.unsupportedContract, "\(field) has unknown value \"\(text)\"")
+        }
+        return member
     }
 
     private static func readActions(_ value: JSONValue?, prompt: PolicyPrompt) throws {

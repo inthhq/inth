@@ -109,6 +109,32 @@ and run `config` before the tag (or pass options to `inth.init()` with
 **Fix.** Pin an exact `@inth/sdk@<version>` in the CDN URL so updates happen
 only when you deploy.
 
+## Why does the banner or dialog fail to load?
+
+**Check.** Open the console. `@inth/sdk: the consent banner failed to load`
+or `@inth/sdk: the preference centre failed to load` means the browser could
+not download `inth.choices.js` or `inth.choices-dialog.js`, for example
+during a dropped connection, or because the file is not served where
+`inth.hosted.js` looks for it. In DevTools Network, look for the file's
+request and its status.
+
+After a failed download the page stays as it is and nothing is recorded. A
+dialog that failed closes, and the banner comes back while a choice is still
+owed. The next time the page needs the file (the next banner, Customize, or
+dialog open) Inth requests it again at a URL of its own, with
+`inth-retry=<n>` in its query, so an error response the browser cached does
+not answer the retry. These files are classic scripts, so every retry is a
+new request in every browser. `inth.hosted.js` itself is tried three times,
+the same way. Inth never reloads the page to recover, because a reload would
+discard what the visitor typed into your page.
+
+**Fix.** If every request fails, serve `inth.choices.js` and
+`inth.choices-dialog.js` next to `inth.hosted.js`, or set
+`data-choices-src` and `data-choices-dialog-src`; see
+[load the files from your own server](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
+Allow the files in `script-src` under CSP. A server or CDN that rejects
+unknown query parameters must accept `v` and `inth-retry`.
+
 ## More help
 
 See [troubleshoot consent](/docs/guides/troubleshooting) for cross-framework

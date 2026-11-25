@@ -9,6 +9,7 @@
  * @internal
  */
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	afterPriorityImages,
 	EARLY_TAP_NOTIFY_KEY,
@@ -28,13 +29,22 @@ import type * as DialogModule from './dialog';
  * per call site, as Turbopack does, would otherwise give each its own copy
  * of the panel, and a hover on Customize followed by the tap downloaded
  * both. It lives in this module, which both already import, so it adds no
- * file to the first load.
+ * file to the first load. A failed import imports again on the next call
+ * (`importChunk`).
  *
  * @returns The dialog wrapper and the dialog's own module.
  * @internal
  */
 export const importDialog = (): Promise<typeof DialogModule> =>
-	import('./dialog');
+	importChunk(
+		() => import('./dialog'),
+		(module) =>
+			typeof module.ConsentDialog === 'function' &&
+			typeof module.dialog === 'object' &&
+			typeof module.dialog.ConsentDialogBody === 'function'
+				? module
+				: undefined
+	);
 
 /**
  * Input anywhere on the page that wakes the engine at once. The browser

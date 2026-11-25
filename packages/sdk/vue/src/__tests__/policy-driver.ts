@@ -61,7 +61,7 @@ import type { IABHandle } from '../../../iab/src/index';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
 import ConsentGate from '../runtime/components/consent-gate.vue';
-import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentDialog from '../runtime/components/dialog/manager.vue';
 import OptOutConfirmation from '../runtime/components/opt-out-confirmation.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
@@ -474,7 +474,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				});
 				return () => [
 					h(ConsentBanner),
-					context.activeUI.value === 'manager' ? h(ConsentManager) : null,
+					context.activeUI.value === 'dialog' ? h(ConsentDialog) : null,
 					confirmationOpen.value ? h(OptOutConfirmation) : null,
 					h(ConsentDialogTrigger),
 					h(ConsentDialogLink),

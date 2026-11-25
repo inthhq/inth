@@ -52,7 +52,7 @@ const props = withDefaults(
 		/** Skip enter and exit animations. Defaults to the config's. */
 		disableAnimation?: boolean;
 		/**
-		 * Marks an embedded host inside `InthProvider` or `ConsentManager`.
+		 * Marks an embedded host inside `InthProvider` or `ConsentDialog`.
 		 *
 		 * @internal
 		 */
@@ -121,7 +121,7 @@ const isOpen = computed(() => {
 	}
 	return (
 		confirmationOpen.value &&
-		activeUI.value !== 'manager' &&
+		activeUI.value !== 'dialog' &&
 		snapshot.value.policyRule.model !== 'iab' &&
 		optOutState.value.honored
 	);
@@ -170,7 +170,7 @@ const close = function close() {
 
 const openPreferences = function openPreferences(event: MouseEvent) {
 	event.preventDefault();
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 
 const doneButtonAttrs = computed(() =>

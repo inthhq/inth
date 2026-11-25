@@ -2,6 +2,7 @@
  * A failed engine import is not kept: the next render imports it again,
  * with the engine loading with the page and on a deferred root.
  */
+import { setChunkImportForTest } from '@inth/sdk/runtime/import-chunk';
 import { Component } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, expect, test, vi } from 'vite-plus/test';
@@ -49,6 +50,7 @@ const failingOnce = () =>
 		.mockImplementation(() => import('../client-engine'));
 
 afterEach(() => {
+	setChunkImportForTest();
 	vi.unstubAllGlobals();
 	Reflect.deleteProperty(window, PREFETCH_WINDOW_KEY);
 	document.cookie = 'inth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
@@ -69,6 +71,36 @@ test('the engine renders after one failed import of its chunk', async () => {
 
 	await expect.element(screen.getByTestId('page')).toBeVisible();
 	expect(importEngine).toHaveBeenCalledTimes(2);
+	await screen.unmount();
+});
+
+test('the engine renders on the first try when the browser keeps its failed chunk', async () => {
+	// Chromium before 156 and Firefox before 155 fail every later import of
+	// the chunk at once, without a request.
+	const importEngine = vi
+		.fn<() => Promise<typeof ClientEngine>>()
+		.mockRejectedValue(
+			new TypeError(
+				'Failed to fetch dynamically imported module: http://localhost/assets/client-engine.js'
+			)
+		);
+	const importUrl = vi.fn((_url: string) => import('../client-engine'));
+	setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
+	const InthProvider = createConsentProvider(importEngine);
+
+	const screen = await render(
+		<Boundary>
+			<InthProvider options={{ mode: testing() }}>
+				<p data-testid="page">page</p>
+			</InthProvider>
+		</Boundary>
+	);
+
+	await expect.element(screen.getByTestId('page')).toBeVisible();
+	expect(importEngine).toHaveBeenCalledOnce();
+	expect(importUrl).toHaveBeenCalledExactlyOnceWith(
+		'http://localhost/assets/client-engine.js?inth-retry=1'
+	);
 	await screen.unmount();
 });
 

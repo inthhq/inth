@@ -36,6 +36,7 @@
 	"type": "module",
 	"sideEffects": [
 		"**/*.css",
+		"./lib/browser/dist/inth.choices-dialog.js",
 		"./lib/browser/dist/inth.choices.js",
 		"./lib/browser/dist/inth.devtools.js",
 		"./lib/browser/dist/inth.gpp.js",
@@ -81,6 +82,7 @@
 		"./inth.hosted.js": "./lib/browser/dist/inth.hosted.js",
 		"./inth.records.js": "./lib/browser/dist/inth.records.js",
 		"./inth.choices.js": "./lib/browser/dist/inth.choices.js",
+		"./inth.choices-dialog.js": "./lib/browser/dist/inth.choices-dialog.js",
 		"./inth.testing.js": "./lib/browser/dist/inth.testing.js",
 		"./inth.headless.js": "./lib/browser/dist/inth.headless.js",
 		"./inth.devtools.js": "./lib/browser/dist/inth.devtools.js",
@@ -271,6 +273,11 @@
 			"types": "./lib/core/dist-types/runtime/deferred-snapshot.d.ts",
 			"import": "./lib/core/dist/runtime/deferred-snapshot.js",
 			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
+		},
+		"./runtime/import-chunk": {
+			"types": "./lib/core/dist-types/runtime/import-chunk.d.ts",
+			"import": "./lib/core/dist/runtime/import-chunk.js",
+			"default": "./lib/core/dist/runtime/import-chunk.js"
 		},
 		"./runtime/page-globals": {
 			"types": "./lib/core/dist-types/libs/page-globals.d.ts",

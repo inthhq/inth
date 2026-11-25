@@ -43,6 +43,7 @@
 
 import type { ConsentSnapshot, ResolvedVendor } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	EARLY_TAP_NOTIFY_KEY,
 	EARLY_TAP_ROOT,
@@ -239,6 +240,12 @@ export const startDeferredClient = function startDeferredClient(
 	if (existing) {
 		return existing;
 	}
+	// Each try imports again, past a failure the browser kept
+	// (`importChunk`).
+	const importEngine = (): Promise<EngineModule> =>
+		importChunk(loadEngine, (module) =>
+			typeof module.boot === 'function' ? module : undefined
+		);
 	attachBannerActions();
 	const boot = readConsentBoot();
 
@@ -253,7 +260,7 @@ export const startDeferredClient = function startDeferredClient(
 		// Nothing to stand in with: the engine's client is the page's.
 		void (async () => {
 			try {
-				const module = await loadEngine();
+				const module = await importEngine();
 				if (!getWindow()?.[GLOBAL_KEY]) {
 					module.boot(options, extension, {});
 				}
@@ -339,7 +346,7 @@ export const startDeferredClient = function startDeferredClient(
 		stopTrigger();
 		loading ??= (async () => {
 			try {
-				const module = await loadEngine();
+				const module = await importEngine();
 				// The engine starts from what a commit in flight stores, and
 				// takes over a dialog that is still mounting.
 				let settled: Promise<void>;
@@ -424,7 +431,12 @@ export const startDeferredClient = function startDeferredClient(
 		})();
 	};
 
-	const loadCommit = () => import('./complete-commit');
+	const loadCommit = () =>
+		importChunk(
+			() => import('./complete-commit'),
+			(module) =>
+				typeof module.completeCommit === 'function' ? module : undefined
+		);
 
 	// Whether a choice may be recorded without the engine: the server found
 	// it a short case (see `canDeferEngine`) and nothing the browser adds,
@@ -524,9 +536,25 @@ export const startDeferredClient = function startDeferredClient(
 		loadDialog(options.ui, kind, nonce);
 
 	let standInModule: Promise<typeof StandInModule> | undefined;
-	const loadStandIn = (): Promise<typeof StandInModule> => {
-		standInModule ??= import('./create-dialog-stand-in');
-		return standInModule;
+	const loadStandIn = async (): Promise<typeof StandInModule> => {
+		if (!standInModule) {
+			const attempt = importChunk(
+				() => import('./create-dialog-stand-in'),
+				(module) =>
+					typeof module.createDialogStandIn === 'function' ? module : undefined
+			);
+			standInModule = attempt;
+			try {
+				await attempt;
+			} catch (error) {
+				// A failed load is forgotten, so the next open tries again.
+				if (standInModule === attempt) {
+					standInModule = undefined;
+				}
+				throw error;
+			}
+		}
+		return await standInModule;
 	};
 
 	/** Load the engine once the early dialog is on screen. */

@@ -38,6 +38,7 @@ import type {
 	ConsentRuntimeOptions,
 	RuntimeIABOptions,
 } from '@inth/sdk/runtime';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
 import {
 	EARLY_TAP_NOTIFY_KEY,
@@ -1150,7 +1151,10 @@ const ensureIABPromptRendered = function ensureIABPromptRendered(
 type PromptChunk = typeof PromptModule;
 
 const loadDefaultPrompt = (): Promise<PromptChunk> =>
-	import('./browser/mount-prompt');
+	importChunk(
+		() => import('./browser/mount-prompt'),
+		(module) => (typeof module.mountPrompt === 'function' ? module : undefined)
+	);
 
 let loadPrompt = loadDefaultPrompt;
 
@@ -1234,10 +1238,11 @@ const armPromptRetry = function armPromptRetry(
  *
  * Without the prompt the visitor has no way to choose, so a failed
  * download is forgotten and the next snapshot tries again. A load a newer
- * one replaced, for a client that was disposed, is ignored. Chromium and
- * WebKit keep a failed chunk for the life of the page, so there a retry
- * fails again: the banner shows again and the choice waits for the next
- * page load (see `recover-chunk-load.ts`).
+ * one replaced, for a client that was disposed, is ignored. Each try
+ * imports the chunk again (`importChunk`), past a failure older Chromium
+ * and Firefox keep for the life of the page. A retry that still fails
+ * shows the banner again, and the choice waits for the next page load
+ * (see `recover-chunk-load.ts`).
  *
  * @param tapChoice - The choice that tap asked for, when no early-tap
  * script holds it for the prompt to replay.

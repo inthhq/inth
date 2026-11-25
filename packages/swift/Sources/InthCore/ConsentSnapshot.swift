@@ -87,17 +87,27 @@ public struct PolicyResolutionInfo: Sendable, Codable, Equatable {
     /// distinct from the client's `error`: a `failed` resolution is a valid wire
     /// the backend reported, while an unparseable wire never becomes a resolution.
     public let reason: String?
+    /// The matched rule's ``PolicySurface``, in canonical form. Absent when the rule has none,
+    /// so a snapshot under such a rule reads exactly as it did before `surface` existed.
+    public let surface: PolicySurface?
+    /// The `phone` layout ``surface`` resolves to with no host presentation. Present exactly when
+    /// ``surface`` is. The stock native presenters do not draw it yet; see ``PolicyLayout``.
+    public let layout: PolicyLayout?
 
     public init(
         status: Status,
         policyId: String?,
         fingerprint: String?,
-        reason: String? = nil
+        reason: String? = nil,
+        surface: PolicySurface? = nil,
+        layout: PolicyLayout? = nil
     ) {
         self.status = status
         self.policyId = policyId
         self.fingerprint = fingerprint
         self.reason = reason
+        self.surface = surface
+        self.layout = layout
     }
 
     /// The shape a snapshot carries before any policy has been read.

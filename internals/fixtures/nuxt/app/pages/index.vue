@@ -13,7 +13,7 @@ const reopenBanner = () => {
 };
 
 const openPreferences = () => {
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 </script>
 

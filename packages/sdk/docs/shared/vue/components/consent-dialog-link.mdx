@@ -9,7 +9,7 @@ group: reference
 <section id="behavior">
   ## What ConsentDialogLink renders
 
-  `ConsentDialogLink` renders a `button` that sets `activeUI` to `'manager'`
+  `ConsentDialogLink` renders a `button` that sets `activeUI` to `'dialog'`
   to open the preference dialog. With `right="opt-out"` under an opt-out
   policy, the action follows the resolved `presentation.optOutLink` title:
   `'do-not-sell'` (the default) records an opt-out in one click and opens
@@ -31,7 +31,7 @@ group: reference
   - It stays hidden when the policy requires no consent UI (no prompt and no
     rights).
 
-  Opening the dialog requires `ConsentManager` to be mounted, which
+  Opening the dialog requires `ConsentDialog` to be mounted, which
   `InthProvider` handles automatically.
 </section>
 

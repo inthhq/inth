@@ -7,6 +7,7 @@ import com.inth.core.model.sameOwner
 import com.inth.core.SubjectIdGenerator
 import com.inth.core.model.ConsentSnapshot
 import com.inth.core.model.ConsentSubject
+import com.inth.core.model.OptOutActKind
 import com.inth.core.model.QueuedOptOut
 import com.inth.core.model.QueuedSave
 import com.inth.core.spi.KeyValueStore
@@ -240,6 +241,7 @@ class InthStore(
 		supersedeGrants: Boolean,
 		publishBus: Boolean,
 		optOutEntry: QueuedOptOut? = null,
+		dropQueuedLifts: Boolean = false,
 	): Boolean {
 		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
 		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) && entry.covers(it) }
@@ -247,10 +249,10 @@ class InthStore(
 		if (withdrawals.size >= capacity) return false
 		val grants = if (supersedeGrants) emptyList() else
 			current.filterNot { it.isWithdrawal() }.takeLast(capacity - withdrawals.size - 1)
-		val nextOptOuts = if (optOutEntry != null) {
-			appendOptOut(readPendingOptOuts(), optOutEntry, capacity)
-		} else {
-			readEnvelope()?.pendingOptOuts
+		val nextOptOuts = when {
+			optOutEntry != null -> appendOptOut(readPendingOptOuts(), optOutEntry, capacity)
+			dropQueuedLifts -> withoutTrailingLifts(readPendingOptOuts())
+			else -> readEnvelope()?.pendingOptOuts
 		}
 		return writeAtomic(
 			envelope.copy(pendingSaves = withdrawals + grants + entry, pendingOptOuts = nextOptOuts),
@@ -288,6 +290,15 @@ class InthStore(
 				pendingOptOuts = if (clearOptOuts) emptyList() else readEnvelope()?.pendingOptOuts,
 			),
 		)
+
+	/**
+	 * The queue without the lifts queued after its last recorded opt-out: a save that reaffirms
+	 * a held opt-out is the newer choice, so a lift still waiting to be sent must not undo it.
+	 */
+	private fun withoutTrailingLifts(current: List<QueuedOptOut>): List<QueuedOptOut> {
+		val lastRecord = current.indexOfLast { it.kind == OptOutActKind.RECORD }
+		return current.filterIndexed { index, entry -> index <= lastRecord || entry.kind != OptOutActKind.LIFT }
+	}
 
 	private fun appendOptOut(
 		current: List<QueuedOptOut>,

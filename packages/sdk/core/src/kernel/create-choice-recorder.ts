@@ -645,7 +645,11 @@ export interface ChoiceRecorderOptions {
 	/** Takes each recorded action from here on. */
 	outbox: Pick<
 		SaveOutbox,
-		'liftAccountOptOut' | 'send' | 'sendOptOut' | 'sendOptOutLift'
+		| 'discardQueuedLifts'
+		| 'liftAccountOptOut'
+		| 'send'
+		| 'sendOptOut'
+		| 'sendOptOutLift'
 	>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
@@ -894,6 +898,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				defaultOptOutRights()
 			);
 			if (nextOptOut === null) {
+				// Already opted out: a lift still queued would undo this.
+				const heldSubjectId = before.subject?.subjectId;
+				if (heldSubjectId !== undefined) {
+					await outbox.discardQueuedLifts(heldSubjectId, before.user);
+				}
 				const result: OptOutResult = {
 					changed: false,
 					ok: true,
@@ -1248,6 +1257,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					buildLiftOptOutPayload(after, subjectId, actionAt, uiSource),
 					{ actVersion: optOutActVersion, generation }
 				);
+			} else if (keepsOptOut) {
+				// The refusal keeps the held opt-out and queues no act of its
+				// own, so a lift still queued (an account lift waits for the
+				// backend before clearing) would undo it when it replays.
+				void outbox.discardQueuedLifts(subjectId, after.user);
 			}
 
 			const result = await outbox.send(payload, {

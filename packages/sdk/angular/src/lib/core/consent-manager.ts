@@ -40,6 +40,7 @@ import type {
 	PreferenceDraft,
 	PreferenceDraftState,
 } from '@inth/sdk/preference-draft';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import {
 	getOptOutReceiptData,
@@ -90,14 +91,24 @@ import { isIABConfigured } from './lazy-create-iab';
 import { SERVER_STATE_KEY, SERVER_STATE_GATE } from './server-state-gate';
 
 /**
- * Loads the consent engine's chunk. Provide another to test a failed load.
+ * Loads the consent engine's chunk. Each call imports it again, so the
+ * engine's next try after a failed download fetches it again
+ * (`importChunk`). Provide another to test a failed load.
  *
  * @internal
  */
 export const CONSENT_ENGINE_MODULE = new InjectionToken<
 	() => Promise<typeof EngineModule>
 >('INTH_CONSENT_ENGINE_MODULE', {
-	factory: () => () => import('./deferred/create-engine'),
+	factory: () => () =>
+		importChunk(
+			() => import('./deferred/create-engine'),
+			(module) =>
+				typeof module.createEngine === 'function' &&
+				typeof module.preloadSavePath === 'function'
+					? module
+					: undefined
+		),
 });
 
 /** How long after a failed draft import its readers try again, doubling. */

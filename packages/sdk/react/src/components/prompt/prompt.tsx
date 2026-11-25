@@ -6,6 +6,7 @@ import type {
 	PresentationAction,
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import { Suspense, createContext, useContext, useState } from 'react';
 import type { ComponentType, FC, ReactNode } from 'react';
@@ -22,8 +23,12 @@ import { StreamedConsentSurface } from '../shared/streamed-consent-surface';
 import { ErrorBoundary } from './error-boundary';
 import type { PromptSurfaceOptions } from './prompt-surface';
 
-const LazyOptInConfirmation = createDeferredModule(
-	() => import('~/components/opt-in-confirmation')
+const LazyOptInConfirmation = createDeferredModule(() =>
+	importChunk(
+		() => import('~/components/opt-in-confirmation'),
+		(module) =>
+			typeof module.OptInConfirmation === 'function' ? module : undefined
+	)
 ).component((module) => module.OptInConfirmation);
 
 /** Loads of a container's chunk in the browser before its failure stays. */
@@ -34,7 +39,8 @@ const CONTAINER_LOADS = 3;
  * banner the early-tap script hid again, and loads again a second later,
  * up to `CONTAINER_LOADS` loads: until then the banner waits on the chunk,
  * so a hydrating banner keeps the server's markup and the taps the script
- * holds, which it replays once the chunk is in.
+ * holds, which it replays once the chunk is in. Each load calls
+ * `importModule` again.
  */
 const importContainer = async function importContainer<Module>(
 	importModule: () => Promise<Module>,
@@ -73,8 +79,14 @@ export const deferredContainer = function deferredContainer<Module>(
 	retryMs = 1000
 ) {
 	let loaded: ComponentType<PromptSurfaceOptions> | undefined;
+	// A browser that keeps a failed import loads the chunk again from its
+	// URL (`importChunk`), as long as that URL exports the container.
+	const importAgain = () =>
+		importChunk(importModule, (module) =>
+			typeof pick(module) === 'function' ? module : undefined
+		);
 	const deferred = createDeferredModule(async () => {
-		const module = await importContainer(importModule, retryMs);
+		const module = await importContainer(importAgain, retryMs);
 		loaded = pick(module);
 		return module;
 	});

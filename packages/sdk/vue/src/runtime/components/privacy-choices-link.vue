@@ -47,7 +47,7 @@ const link = computed(() =>
 );
 
 const onClick = function onClick() {
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 </script>
 

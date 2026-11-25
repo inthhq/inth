@@ -3,7 +3,7 @@ import { triggerOpensDialog } from '@inth/conformance/play/consent-dialog-trigge
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import ConsentDialog from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import ConsentDialogTrigger from '../../../packages/sdk/vue/src/runtime/components/panel-trigger.vue';
 import { useStorybookConsent as setupStorybookConsent } from './storybook-consent-fixtures';
 
@@ -22,28 +22,28 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: triggerOpensDialog,
 	render: () => ({
-		components: { ConsentDialogTrigger, ConsentManager },
+		components: { ConsentDialog, ConsentDialogTrigger },
 		setup() {
 			setupStorybookConsent(null, {
 				triggerIcon: 'branding',
 				triggerShowWhen: 'always',
 			});
 		},
-		template: '<ConsentManager /><ConsentDialogTrigger />',
+		template: '<ConsentDialog /><ConsentDialogTrigger />',
 	}),
 };
 
 export const DialogFocusManagement: Story = {
 	play: dialogFocusManagement,
 	render: () => ({
-		components: { ConsentDialogTrigger, ConsentManager },
+		components: { ConsentDialog, ConsentDialogTrigger },
 		setup() {
 			setupStorybookConsent(null, {
 				triggerIcon: 'branding',
 				triggerShowWhen: 'always',
 			});
 		},
-		template: '<ConsentManager /><ConsentDialogTrigger />',
+		template: '<ConsentDialog /><ConsentDialogTrigger />',
 	}),
 };
 

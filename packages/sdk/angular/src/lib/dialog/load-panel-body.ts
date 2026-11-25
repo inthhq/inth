@@ -11,15 +11,25 @@
  */
 
 import type { Type } from '@angular/core';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 
 import type { ConsentDialogBody } from './dialog';
 
 /**
- * Loads the dialog's body, a chunk of its own with its stylesheets.
+ * Loads the dialog's body, a chunk of its own with its stylesheets. Each
+ * call imports the chunk again, so the next open after a failed download
+ * fetches it again (`importChunk`).
  *
  * @internal
  */
-export const loadConsentDialogBody =
-	async function loadConsentDialogBody(): Promise<Type<ConsentDialogBody>> {
-		return (await import('./dialog')).ConsentDialogBody;
-	};
+export const loadConsentDialogBody = function loadConsentDialogBody(): Promise<
+	Type<ConsentDialogBody>
+> {
+	return importChunk(
+		() => import('./dialog'),
+		(module) =>
+			typeof module.ConsentDialogBody === 'function'
+				? module.ConsentDialogBody
+				: undefined
+	);
+};

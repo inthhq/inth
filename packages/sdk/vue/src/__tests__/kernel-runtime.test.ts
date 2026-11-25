@@ -632,7 +632,7 @@ describe('@inth/vue kernel runtime', () => {
 		const activeUI = wrapper.vm.$.appContext.provides[
 			symbolActiveUI as symbol
 		] as { value: unknown };
-		activeUI.value = 'manager';
+		activeUI.value = 'dialog';
 		await flushPromises();
 
 		// The dialog is an async component; its first import on a cold CI

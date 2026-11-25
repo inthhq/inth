@@ -2,7 +2,7 @@
  * The engine's loader for `inth.choices.js` (`ui/load-choices-file.ts`):
  * it publishes the engine's shared functions first, carries the nonce,
  * accepts only a file from its own release, and tries again after a
- * failed load. The built files run in Chromium in
+ * failed load, at a URL of its own. The built files run in Chromium in
  * `init-script.browser.test.ts`.
  */
 import { afterEach, describe, expect, it } from 'vite-plus/test';
@@ -68,10 +68,17 @@ describe('loadChoicesFile', () => {
 		const first = loadChoicesFile(params);
 		// Calls while it loads share the request.
 		expect(loadChoicesFile(params)).toBe(first);
-		pendingScript().dispatchEvent(new Event('error'));
+		const failed = pendingScript();
+		const tried = Number(
+			new URL(failed.src).searchParams.get('inth-retry') ?? 0
+		);
+		failed.dispatchEvent(new Event('error'));
 		await expect(first).rejects.toThrow(/did not load/u);
 		const second = loadChoicesFile(params);
 		expect(second).not.toBe(first);
+		// At a URL of its own, so an error response the browser cached does
+		// not answer it.
+		expect(pendingScript().src).toBe(`${params.src}&inth-retry=${tried + 1}`);
 		target[CHOICES_KEY] = file('1.0.0');
 		pendingScript().dispatchEvent(new Event('load'));
 		await expect(second).resolves.toBe(target[CHOICES_KEY]);

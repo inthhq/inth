@@ -1,0 +1,1724 @@
+{
+	"cases": [
+		{
+			"expected": {
+				"layout": null,
+				"status": "matched",
+				"surface": null
+			},
+			"id": "no-surface",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A rule without a surface reads as it did before surface existed."
+		},
+		{
+			"expected": {
+				"layout": null,
+				"status": "matched",
+				"surface": null
+			},
+			"id": "empty-surface",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An empty surface is no surface, and needs no presentation fingerprint."
+		},
+		{
+			"expected": {
+				"layout": null,
+				"status": "matched",
+				"surface": null
+			},
+			"id": "presentation-without-surface",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A presentation fingerprint alone is readable and asks for nothing."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "banner-bottom",
+					"type": "banner"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"edge": "bottom",
+						"type": "banner"
+					}
+				}
+			},
+			"id": "banner-default-edge",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"type": "banner"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A banner with no edge sits at the bottom."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "flush",
+					"flow": "expand-in-place",
+					"placement": "banner-top",
+					"type": "banner"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"edge": "top",
+						"type": "banner"
+					},
+					"edgeStyle": "flush"
+				}
+			},
+			"id": "banner-top-flush",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"edge": "top",
+								"type": "banner"
+							},
+							"edgeStyle": "flush"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A banner takes the edge style the policy names."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "card-start",
+					"type": "card"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"position": "start",
+						"type": "card"
+					}
+				}
+			},
+			"id": "card-default-position-drops-edge-style",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"type": "card"
+							},
+							"edgeStyle": "flush"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A card sits at start and is always inset, so its edge style is dropped."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": true,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "card-center",
+					"type": "card"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"position": "center",
+						"type": "card"
+					}
+				}
+			},
+			"id": "card-center-blocks",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"position": "center",
+								"type": "card"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A centred card always blocks."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "card-start",
+					"type": "card"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"position": "center",
+						"type": "card"
+					},
+					"blocking": "forbidden"
+				}
+			},
+			"id": "card-center-blocking-forbidden",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "forbidden",
+							"container": {
+								"position": "center",
+								"type": "card"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A centred card cannot sit where blocking is forbidden, so it moves to start and does not block."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "drawer-bottom",
+					"type": "drawer"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"side": "end",
+						"type": "drawer"
+					}
+				}
+			},
+			"id": "drawer-end-on-phone",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"side": "end",
+								"type": "drawer"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A side drawer has no room on a phone and becomes a bottom drawer that expands in place."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": false,
+					"edgeStyle": "flush",
+					"flow": "expand-in-place",
+					"placement": "drawer-top",
+					"type": "drawer"
+				},
+				"status": "matched",
+				"surface": {
+					"container": {
+						"side": "top",
+						"type": "drawer"
+					},
+					"edgeStyle": "flush"
+				}
+			},
+			"id": "drawer-top-flush-on-notice",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["dismiss"],
+							"equivalent": [],
+							"required": ["dismiss"]
+						},
+						"copyRevision": null,
+						"id": "us_notice",
+						"model": "opt-out",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": ["marketing"]
+							}
+						},
+						"prompt": "notice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "opt-out", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "permissive",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"side": "top",
+								"type": "drawer"
+							},
+							"edgeStyle": "flush"
+						}
+					},
+					"policyId": "us_notice",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A top drawer stays on top, and a notice never blocks."
+		},
+		{
+			"expected": {
+				"layout": {
+					"blocking": true,
+					"edgeStyle": "inset",
+					"flow": "expand-in-place",
+					"placement": "card-start",
+					"type": "card"
+				},
+				"status": "matched",
+				"surface": {
+					"blocking": "required"
+				}
+			},
+			"id": "blocking-required",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "required"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "Required blocking on a rule that can block keeps the default card and blocks."
+		},
+		{
+			"expected": {
+				"layout": null,
+				"status": "matched",
+				"surface": null
+			},
+			"id": "blocking-allowed-is-implied",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "allowed"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "Allowed is the default, so it is dropped and the surface is empty."
+		},
+		{
+			"expected": {
+				"layout": null,
+				"status": "matched",
+				"surface": null
+			},
+			"id": "blocking-forbidden-implied-by-notice",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["dismiss"],
+							"equivalent": [],
+							"required": ["dismiss"]
+						},
+						"copyRevision": null,
+						"id": "us_notice",
+						"model": "opt-out",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": ["marketing"]
+							}
+						},
+						"prompt": "notice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "opt-out", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "permissive",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "forbidden"
+						}
+					},
+					"policyId": "us_notice",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A notice can never block, so forbidden is implied and dropped."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "blocking-required-on-notice",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["dismiss"],
+							"equivalent": [],
+							"required": ["dismiss"]
+						},
+						"copyRevision": null,
+						"id": "us_notice",
+						"model": "opt-out",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": ["marketing"]
+							}
+						},
+						"prompt": "notice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "opt-out", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "permissive",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "required"
+						}
+					},
+					"policyId": "us_notice",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "Required blocking needs a choice prompt outside the opt-out model."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "surface-without-presentation",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"type": "banner"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A surface with anything in it needs the presentation fingerprint."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "presentation-empty",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": ""
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"type": "banner"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "The presentation fingerprint must be a non-empty string."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "presentation-not-a-string",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": 7
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "The presentation fingerprint must be a string."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "surface-not-an-object",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": "banner"
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A surface must be a plain object."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "surface-unknown-field",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"animation": "slide"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An unknown surface field is a newer contract."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "container-unknown-type",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"type": "modal"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An unknown container type is a newer contract."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "container-missing-type",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"edge": "top"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A container must name its type."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "container-field-of-another-type",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"edge": "top",
+								"type": "card"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A card has a position, not an edge."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "container-unknown-position",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": {
+								"position": "middle",
+								"type": "card"
+							}
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An unknown card position is a newer contract."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "container-not-an-object",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"container": "banner"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "A container must be a plain object."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "edge-style-unknown",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"edgeStyle": "rounded"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An unknown edge style is a newer contract."
+		},
+		{
+			"expected": {
+				"reason": "invalid-payload",
+				"status": "failed"
+			},
+			"id": "edge-style-not-a-string",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"edgeStyle": 1
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An edge style must be a string."
+		},
+		{
+			"expected": {
+				"reason": "unsupported-contract",
+				"status": "failed"
+			},
+			"id": "blocking-unknown",
+			"input": {
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+						"policy": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"presentation": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
+						},
+						"copyRevision": null,
+						"id": "eu_opt_in",
+						"model": "opt-in",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "choice",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "strict",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						},
+						"surface": {
+							"blocking": "sometimes"
+						}
+					},
+					"policyId": "eu_opt_in",
+					"status": "matched",
+					"version": 1
+				}
+			},
+			"why": "An unknown blocking constraint is a newer contract."
+		}
+	],
+	"description": "A policy rule's surface block: whether the policyResolution wire that carries it is readable, the canonical surface the reader keeps, and the phone layout that surface resolves to when the host sets no presentation.",
+	"generatedBy": "INTH_WRITE_POLICY_SURFACE_FIXTURE=1 vp test run src/libs/__tests__/policy-surface-native-fixture.test.ts (in packages/sdk/core)",
+	"oracle": [
+		"packages/sdk/schema/src/shared/policy-resolution-wire.ts",
+		"packages/sdk/schema/src/shared/policy/policy-surface.ts",
+		"packages/sdk/core/src/libs/consent-layout.model.ts"
+	]
+}

@@ -107,7 +107,7 @@ const isOpen = computed(() => {
 		!models?.length ||
 		(model !== undefined && model !== 'none' && models.includes(model));
 	return (
-		activeUI.value === 'manager' &&
+		activeUI.value === 'dialog' &&
 		snapshot.value.policyRule.model === 'iab' &&
 		Boolean(gvl.value || initValue.value?.gvlReference) &&
 		matchesModel
@@ -125,8 +125,23 @@ const props = withDefaults(
 		initialTab?: 'purposes' | 'vendors';
 		/** Skip the enter and exit animations. Defaults to the config's. */
 		disableAnimation?: boolean;
+		/**
+		 * Locks page scroll while the dialog is open. With `trapFocus`, it
+		 * sets one blocking mode (backdrop, scroll lock and focus trap), and
+		 * `false` in either turns blocking off. Defaults to the config's
+		 * `scrollLock` and `trapFocus`, then the presentation's. An explicit
+		 * `presentation.preferences.blocking` wins over both.
+		 */
+		scrollLock?: boolean;
+		/** Traps keyboard focus in the dialog. See `scrollLock`. */
+		trapFocus?: boolean;
 	}>(),
-	{ disableAnimation: undefined, initialTab: undefined }
+	{
+		disableAnimation: undefined,
+		initialTab: undefined,
+		scrollLock: undefined,
+		trapFocus: undefined,
+	}
 );
 
 const disableAnimation = computed(() =>
@@ -320,14 +335,17 @@ const handleVendorClick = function handleVendorClick(vendorId: IabVendorId) {
 	activeTab.value = 'vendors';
 };
 
-const focusBlocking = useFocusBlocking('preferences');
+const focusBlocking = useFocusBlocking('preferences', () => ({
+	scrollLock: props.scrollLock,
+	trapFocus: props.trapFocus,
+}));
 const { presentation } = useConsentPolicyActions('preferences', () => ({
 	blocking: focusBlocking.value,
 	layout: IAB_DIALOG_LAYOUT,
 }));
-const scrollLock = computed(() => presentation.value.blocking);
+const blocksPage = computed(() => presentation.value.blocking);
 
-useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
+useConsentScrollLock(computed(() => Boolean(isOpen.value && blocksPage.value)));
 
 const shouldTrapFocus = computed(() =>
 	Boolean(isOpen.value && presentation.value.blocking)
@@ -351,7 +369,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 			:leave-to-class="dialogStyles.overlayHidden"
 		>
 			<div
-				v-if="showDialog && scrollLock"
+				v-if="showDialog && blocksPage"
 				v-bind="
 					slotAttrs(config.components?.['iab-dialog']?.overlay, [
 						dialogStyles.overlay,

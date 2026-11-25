@@ -50,7 +50,7 @@ test('Vue plugin options own one external authority and share script lifecycle',
 						'button',
 						{
 							onClick: () => {
-								activeUI.value = 'manager';
+								activeUI.value = 'dialog';
 							},
 						},
 						'Preferences'

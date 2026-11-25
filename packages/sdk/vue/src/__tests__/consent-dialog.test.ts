@@ -146,7 +146,7 @@ describe('opening', () => {
 	test('[FOC-03] an unmounted opener with a hidden link hands focus to a visible trigger', async () => {
 		const current = await mount({ page: trigger });
 		pageAction().focus();
-		current.activeUI.value = 'manager';
+		current.activeUI.value = 'dialog';
 		await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
 		pageAction().remove();
 		cannotTakeFocus(link());
@@ -170,7 +170,7 @@ describe('opening', () => {
 		try {
 			opener.focus();
 			expect(shadow.activeElement).toBe(opener);
-			current.activeUI.value = 'manager';
+			current.activeUI.value = 'dialog';
 			await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
 			must('consent-dialog-done').click();
 			await waitFor(() => expect($('consent-dialog-card')).toBeNull());
@@ -762,7 +762,7 @@ describe('wave B round 1', () => {
 	test('[FOC-03] with the opener gone, focus returns to Your Privacy Choices', async () => {
 		const current = await mount({ link: 'stock' });
 		pageAction().focus();
-		current.activeUI.value = 'manager';
+		current.activeUI.value = 'dialog';
 		await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
 		pageAction().remove();
 		must('consent-dialog-close').click();

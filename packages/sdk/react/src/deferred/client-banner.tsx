@@ -18,6 +18,7 @@
  * @internal
  */
 
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import type { ComponentType, ReactNode } from 'react';
 import {
 	createElement,
@@ -57,13 +58,19 @@ const listeners = new Set<() => void>();
 
 /**
  * Starts loading the banner's code once per page, retrying a failed import
- * as `recordOnce` does.
+ * as `recordOnce` does. Each try calls `bannerChunk.load` again
+ * (`importChunk`).
  *
  * @returns The module, recorded for `read`.
  * @internal
  */
 export const loadClientBanner = recordOnce(async (): Promise<BannerModule> => {
-	const module = await bannerChunk.load();
+	const module = await importChunk(bannerChunk.load, (chunk) =>
+		typeof chunk.ConsentBanner === 'function' &&
+		typeof chunk.preloadServerContainer === 'function'
+			? chunk
+			: undefined
+	);
 	// The container the server rendered loads with it, so hydration keeps
 	// the server's markup without waiting on a second chunk.
 	await module.preloadServerContainer();

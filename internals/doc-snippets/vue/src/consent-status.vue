@@ -23,7 +23,7 @@ const activeUI = useConsentActiveUI();
 		</p>
 		<button
 			type="button"
-			@click="activeUI = 'manager'"
+			@click="activeUI = 'dialog'"
 		>
 			Change your choices
 		</button>

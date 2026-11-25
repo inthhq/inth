@@ -55,10 +55,22 @@ const props = withDefaults(
 		primaryButton?: 'reject' | 'accept' | 'customize';
 		/** Skip the enter and exit animations. Defaults to the config's. */
 		disableAnimation?: boolean;
+		/**
+		 * Locks page scroll while the banner is open. With `trapFocus`, it
+		 * sets one blocking mode (backdrop, scroll lock and focus trap), and
+		 * `false` in either turns blocking off. Defaults to the config's
+		 * `scrollLock` and `trapFocus`, then the presentation's. An explicit
+		 * `presentation.prompt.blockUntilChoice` wins over both.
+		 */
+		scrollLock?: boolean;
+		/** Traps keyboard focus in the banner. See `scrollLock`. */
+		trapFocus?: boolean;
 	}>(),
 	{
 		disableAnimation: undefined,
 		primaryButton: 'customize',
+		scrollLock: undefined,
+		trapFocus: undefined,
 	}
 );
 
@@ -140,7 +152,7 @@ const bannerCopy = computed(() =>
 const onAction = async function onAction(action: PresentationAction) {
 	if (action === 'customize') {
 		preferenceTab.value = 'purposes';
-		activeUI.value = 'manager';
+		activeUI.value = 'dialog';
 		return;
 	}
 	if (action === 'accept') {
@@ -154,7 +166,7 @@ const onAction = async function onAction(action: PresentationAction) {
 
 const openVendors = function openVendors() {
 	preferenceTab.value = 'vendors';
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 
 // The footer *is* the action root, the way it is in React: one element
@@ -167,15 +179,18 @@ const footerAttrs = computed(() => ({
 		| undefined) ?? {}),
 }));
 
-const focusBlocking = useFocusBlocking('prompt');
+const focusBlocking = useFocusBlocking('prompt', () => ({
+	scrollLock: props.scrollLock,
+	trapFocus: props.trapFocus,
+}));
 const { presentation } = useConsentPolicyActions('prompt', () => ({
 	blockUntilChoice: focusBlocking.value,
 	layout: IAB_BANNER_LAYOUT,
 	primaryActions: [props.primaryButton],
 }));
-const scrollLock = computed(() => presentation.value.blocking);
+const blocksPage = computed(() => presentation.value.blocking);
 
-useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
+useConsentScrollLock(computed(() => Boolean(isOpen.value && blocksPage.value)));
 
 const shouldTrapFocus = computed(() =>
 	Boolean(isOpen.value && presentation.value.blocking)
@@ -196,7 +211,7 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 			:leave-to-class="bannerStyles.overlayHidden"
 		>
 			<div
-				v-if="showBanner && scrollLock"
+				v-if="showBanner && blocksPage"
 				v-bind="
 					slotAttrs(config.components?.['iab-banner']?.overlay, [
 						bannerStyles.overlay,

@@ -142,16 +142,29 @@ object SnapshotWire {
 	}
 
 	/**
-	 * The resolution with `reason` only where the kernel writes one.
+	 * The resolution with `reason`, `surface` and `layout` only where they have a value, and a
+	 * surface with only the fields its policy set.
 	 *
 	 * `@inth/sdk-core` puts `reason` on a failed resolution and on no other, and Swift encodes an
-	 * absent reason as no key. The model serialises it as an explicit `null`, which the
-	 * bridge schema in `packages/native-protocol/bridge/payloads.json` does not allow.
+	 * absent reason, surface, layout or surface field as no key, as the policy wire does. The
+	 * model serialises each as an explicit `null`, which the bridge schema in
+	 * `packages/native-protocol/bridge/payloads.json` does not allow.
 	 */
 	private fun resolutionOf(encoded: JsonElement): JsonElement {
 		val resolution = encoded as? JsonObject ?: return encoded
-		return if (resolution[REASON] is JsonNull) JsonObject(resolution - REASON) else resolution
+		return JsonObject(
+			resolution
+				.filterNot { (key, value) -> key in OPTIONAL_RESOLUTION_KEYS && value is JsonNull }
+				.mapValues { (key, value) ->
+					if (key == SURFACE && value is JsonObject) JsonObject(value.filterValues { it !is JsonNull }) else value
+				}
+		)
 	}
+
+	private const val SURFACE = "surface"
+
+	/** Resolution keys the bridge carries only when they have a value. */
+	private val OPTIONAL_RESOLUTION_KEYS = setOf(REASON, SURFACE, "layout")
 
 	/**
 	 * [toJsonElement] as the string a synchronous module method returns.
