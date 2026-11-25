@@ -591,6 +591,13 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('packages/android/gradle/wrapper/gradle-wrapper.properties', 'packages/android/gradle/libs.versions.toml', 'packages/react-native/android/gradle.properties') }}
+      # The Robolectric version and the android-all jar per SDK level are listed in
+      # this build file; the tests run offline against the restored directory.
+      - name: Restore the Robolectric android-all jars
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: packages/android/inth-consent-ui/build/robolectric-runtime
+          key: robolectric-android-all-${{ hashFiles('packages/android/inth-consent-ui/build.gradle.kts') }}
       - name: Test the Kotlin core and stage the Android libraries
         working-directory: packages/android
         run: |

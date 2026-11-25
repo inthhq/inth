@@ -50,6 +50,34 @@ dokka {
     }
 }
 
+// Robolectric 4.16's own downloader has no retry, so its android-all jars come
+// through Gradle instead and the tests run offline against this directory. List
+// one jar per SDK level the tests' @Config names (34 and 35); CI caches the
+// directory keyed on this file.
+val robolectricAndroidAll = listOf(
+    "14-robolectric-10818077-i7",
+    "15-robolectric-13954326-i7",
+)
+// One configuration per jar: in a shared one, Gradle keeps only the newest version.
+val robolectricRuntime = robolectricAndroidAll.map { version ->
+    configurations.create("robolectricAndroidAll$version".filter { it.isLetterOrDigit() }) {
+        isTransitive = false
+        dependencies.add(project.dependencies.create("org.robolectric:android-all-instrumented:$version"))
+    }
+}
+val robolectricRuntimeDir = layout.buildDirectory.dir("robolectric-runtime")
+val fetchRobolectricRuntime by tasks.registering(Sync::class) {
+    val jars = robolectricAndroidAll.map { "android-all-instrumented-$it.jar" }
+    val dir = robolectricRuntimeDir.get().asFile
+    from(robolectricRuntime)
+    into(dir)
+    // A directory restored from CI's cache already holds every jar; skip before
+    // Gradle resolves (and downloads) them again.
+    onlyIf { jars.any { !dir.resolve(it).isFile } }
+}
+
 tasks.withType<Test>().configureEach {
-    systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
+    dependsOn(fetchRobolectricRuntime)
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", robolectricRuntimeDir.get().asFile.absolutePath)
 }
