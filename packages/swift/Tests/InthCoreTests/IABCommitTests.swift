@@ -120,10 +120,12 @@ final class IABCommitTests: XCTestCase {
         let http = StubHTTP()
         http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
         http.setSavesFail(true)
+        http.holdsInit = true
         cold.bootstrap(CoreConfig(store: store, transport: Fixture.transport(http),
             iab: vector.cases[0].configuration, iabListMaxAgeMs: 1000, now: clock.reading,
             initRetry: .disabled, flushPendingOnBootstrap: false))
         XCTAssertEqual(cold.iabStatus().availability, .cached)
+        http.releaseInit()
         await cold.waitUntilIdle()
         XCTAssertEqual(cold.iabStatus().availability, .offline)
         XCTAssertNotNil(cold.openIABDraft())
