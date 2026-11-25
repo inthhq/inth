@@ -76,7 +76,7 @@ const isVisible = computed(
 	() =>
 		mounted.value &&
 		isTriggerVisible({
-			dialogOpen: activeUI.value === 'manager' || confirmationOpen.value,
+			dialogOpen: activeUI.value === 'dialog' || confirmationOpen.value,
 			hasConsentPreferences: hasConsentPreferences.value,
 			promptOwed: promptRequirement.value.kind !== 'none',
 			showWhen: config.value.triggerShowWhen ?? 'after-consent',
@@ -167,7 +167,7 @@ const openDialog = function openDialog(event: MouseEvent) {
 		if (isOptOut.value) {
 			void activateOptOutLink(kernel, optOutLink.value.variant);
 		} else {
-			activeUI.value = 'manager';
+			activeUI.value = 'dialog';
 		}
 	}
 };

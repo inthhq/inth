@@ -164,7 +164,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 				'[data-inth-trigger-action="preferences"]'
 			)
 			?.click();
-		expect(context.activeUI.value).toBe('manager');
+		expect(context.activeUI.value).toBe('dialog');
 	});
 
 	test('the floating launcher returns when the trigger unmounts', async () => {

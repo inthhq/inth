@@ -474,7 +474,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				});
 				return () => [
 					h(ConsentBanner),
-					context.activeUI.value === 'manager' ? h(ConsentManager) : null,
+					context.activeUI.value === 'dialog' ? h(ConsentManager) : null,
 					confirmationOpen.value ? h(OptOutConfirmation) : null,
 					h(ConsentDialogTrigger),
 					h(ConsentDialogLink),

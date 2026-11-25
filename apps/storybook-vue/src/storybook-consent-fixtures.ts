@@ -36,7 +36,7 @@ import {
 	storybookPresentation,
 } from '../../storybook-consent-policy';
 
-type StoryActiveUI = 'banner' | 'manager' | null;
+type StoryActiveUI = 'banner' | 'dialog' | null;
 
 export const storybookInit: InitOutput = {
 	branding: 'inth',
@@ -291,7 +291,7 @@ export const useStorybookConsent = function useStorybookConsent(
 /**
  * Provide an IAB kernel context to a story.
  *
- * @param activeUI - Which surface to open: `'banner'` or `'manager'`.
+ * @param activeUI - Which surface to open: `'banner'` or `'dialog'`.
  * @param configOverrides - Config fields to override for this story.
  * @returns The kernel context, disposed when the story unmounts.
  */

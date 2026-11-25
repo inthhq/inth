@@ -176,7 +176,7 @@ const Page = defineComponent({
 							'data-testid': 'privacy-choices-link',
 							onClick: () => {
 								if (mounted) {
-									mounted.context.activeUI.value = 'manager';
+									mounted.context.activeUI.value = 'dialog';
 								}
 							},
 							type: 'button',

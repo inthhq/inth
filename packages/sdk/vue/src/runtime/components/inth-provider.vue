@@ -85,11 +85,11 @@ watch(
 			v-if="(init?.gvl || init?.gvlReference) && activeUI === 'banner'"
 		/>
 		<LazyIabConsentDialog
-			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
+			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'dialog'"
 		/>
 		<template v-else-if="!(init?.gvl || init?.gvlReference)">
 			<ConsentBanner v-if="activeUI === 'banner' || bannerShown" />
-			<LazyConsentManager v-if="activeUI === 'manager'" />
+			<LazyConsentManager v-if="activeUI === 'dialog'" />
 			<!-- The banner and the dialog each host the opt-in confirmation.
 			     With neither on the page, the root hosts it. -->
 			<OptInConfirmationHost v-else-if="!bannerShown" />

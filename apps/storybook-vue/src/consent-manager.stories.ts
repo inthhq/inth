@@ -41,7 +41,7 @@ export const Default: Story = {
 	render: () => ({
 		components: { ConsentManager },
 		setup() {
-			setupStorybookConsent('manager');
+			setupStorybookConsent('dialog');
 		},
 		template: '<ConsentManager />',
 	}),
@@ -77,7 +77,7 @@ export const OptOutNotOptedOut: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('none', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
@@ -93,7 +93,7 @@ export const OptOutHonoredByRequest: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('request', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
@@ -112,7 +112,7 @@ export const OptOutConfirmedSaleAndShare: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('request', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
@@ -133,7 +133,7 @@ export const OptOutGpcLocked: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('gpc', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'privacy-choices' },
 				},
@@ -150,7 +150,7 @@ export const OptInConfirmation: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('request', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
@@ -170,7 +170,7 @@ export const OptInConfirmationConfirmedRights: Story = {
 		components: { ConsentManager },
 		setup() {
 			setupStorybookOptOutConsent('request', {
-				activeUI: 'manager',
+				activeUI: 'dialog',
 				configOverrides: {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
@@ -224,7 +224,7 @@ const dialogStory = function dialogStory(
 				// Open the dialog once the page renders, as the page link would.
 				if (!options.flow) {
 					onMounted(() => {
-						context.activeUI.value = 'manager';
+						context.activeUI.value = 'dialog';
 					});
 				}
 				return { region };

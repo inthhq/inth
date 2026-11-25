@@ -46,7 +46,7 @@ test('offline() gives the dialog its English title without a request', async () 
 	try {
 		await context.kernel.commands.init();
 		await flushPromises();
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		await vi.waitFor(() => {
 			expect(
 				document.querySelector('[data-testid="consent-dialog-title"]')

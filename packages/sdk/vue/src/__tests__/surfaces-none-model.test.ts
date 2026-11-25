@@ -125,7 +125,7 @@ describe('consent surfaces under a none rule', () => {
 		expect(snapshot.effectivePermissions.marketing).toBe(true);
 
 		// Even an explicit request to open the preference center shows nothing.
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		await flushPromises();
 
 		for (const testId of SURFACES) {

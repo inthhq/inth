@@ -53,7 +53,7 @@ const onClick = function onClick() {
 		void activateOptOutLink(kernel, optOutLink.value.variant);
 		return;
 	}
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 </script>
 

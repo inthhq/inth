@@ -77,7 +77,7 @@ const iabDialogNeeded = ref(false);
 watch(
 	activeUI,
 	(ui) => {
-		if (ui === 'manager') {
+		if (ui === 'dialog') {
 			if (init.value?.gvl || init.value?.gvlReference) {
 				iabDialogNeeded.value = true;
 			} else {

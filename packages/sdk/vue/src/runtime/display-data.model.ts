@@ -24,34 +24,23 @@ export type VueConsentDisplayData = Pick<
 >;
 
 /**
- * `'manager'` and `null` are the Vue config's names for the kernel's
- * `'dialog'` and `'none'`, kept so `useConsentActiveUI()` reads as before.
+ * `null` is the Vue config's name for the kernel's `'none'`, kept so
+ * `useConsentActiveUI()` reads as before. `'banner'` and `'dialog'` are
+ * the kernel's own names.
  *
  * @internal
  */
 export const toKernelActiveUI = function toKernelActiveUI(
 	ui: ConsentActiveUI
 ): KernelActiveUI {
-	if (ui === 'manager') {
-		return 'dialog';
-	}
-	if (ui === null) {
-		return 'none';
-	}
-	return ui;
+	return ui ?? 'none';
 };
 
 /** @internal */
 export const toVueActiveUI = function toVueActiveUI(
 	ui: KernelActiveUI
 ): ConsentActiveUI {
-	if (ui === 'dialog') {
-		return 'manager';
-	}
-	if (ui === 'none') {
-		return null;
-	}
-	return ui;
+	return ui === 'none' ? null : ui;
 };
 
 const DISPLAY_DATA_KEYS = [

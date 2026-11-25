@@ -39,9 +39,9 @@ const LazyOptInConfirmation = defineAsyncComponent(
 const activeUI = useConsentActiveUI();
 // Mounted once first opened, then kept, so its exit and the focus return
 // outlive the open state.
-const needed = ref(activeUI.value === 'manager');
+const needed = ref(activeUI.value === 'dialog');
 watch(activeUI, (ui) => {
-	if (ui === 'manager') {
+	if (ui === 'dialog') {
 		needed.value = true;
 	}
 });

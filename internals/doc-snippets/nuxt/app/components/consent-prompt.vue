@@ -38,13 +38,13 @@ const savePreferences = () => {
 		</button>
 		<button
 			type="button"
-			@click="activeUI = 'manager'"
+			@click="activeUI = 'dialog'"
 		>
 			Customize
 		</button>
 	</section>
 	<section
-		v-else-if="activeUI === 'manager'"
+		v-else-if="activeUI === 'dialog'"
 		class="consent-prompt"
 		aria-label="Privacy settings"
 	>

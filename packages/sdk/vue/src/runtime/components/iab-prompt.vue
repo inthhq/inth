@@ -140,7 +140,7 @@ const bannerCopy = computed(() =>
 const onAction = async function onAction(action: PresentationAction) {
 	if (action === 'customize') {
 		preferenceTab.value = 'purposes';
-		activeUI.value = 'manager';
+		activeUI.value = 'dialog';
 		return;
 	}
 	if (action === 'accept') {
@@ -154,7 +154,7 @@ const onAction = async function onAction(action: PresentationAction) {
 
 const openVendors = function openVendors() {
 	preferenceTab.value = 'vendors';
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 };
 
 // The footer *is* the action root, the way it is in React: one element

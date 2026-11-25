@@ -13,7 +13,7 @@ const activeUI = useConsentActiveUI();
 		<button
 			v-if="route.meta.headlessConsent"
 			type="button"
-			@click="activeUI = 'manager'"
+			@click="activeUI = 'dialog'"
 		>
 			Privacy settings
 		</button>

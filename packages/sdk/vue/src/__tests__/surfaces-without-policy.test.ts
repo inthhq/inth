@@ -143,7 +143,7 @@ describe('consent surfaces without a resolved policy', () => {
 		expect(context.snapshot.value.resolution.status).toBe('failed');
 
 		// Even an explicit request to open the preference center shows nothing.
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		await flushPromises();
 
 		for (const testId of SURFACES) {

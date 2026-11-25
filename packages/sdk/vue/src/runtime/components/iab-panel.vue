@@ -107,7 +107,7 @@ const isOpen = computed(() => {
 		!models?.length ||
 		(model !== undefined && model !== 'none' && models.includes(model));
 	return (
-		activeUI.value === 'manager' &&
+		activeUI.value === 'dialog' &&
 		snapshot.value.policyRule.model === 'iab' &&
 		Boolean(gvl.value || initValue.value?.gvlReference) &&
 		matchesModel

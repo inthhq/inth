@@ -430,8 +430,8 @@ test('the dialog opens from the stand-in, and its save commits at once', async (
 	const harness = createHarness();
 	const { context } = harness;
 	context.start();
-	context.activeUI.value = 'manager';
-	expect(context.activeUI.value).toBe('manager');
+	context.activeUI.value = 'dialog';
+	expect(context.activeUI.value).toBe('dialog');
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
 	// The stock dialog saves through the provided kernel.

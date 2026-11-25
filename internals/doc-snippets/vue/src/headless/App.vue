@@ -14,7 +14,7 @@ const activeUI = useConsentActiveUI();
 	<footer>
 		<button
 			type="button"
-			@click="activeUI = 'manager'"
+			@click="activeUI = 'dialog'"
 		>
 			Privacy settings
 		</button>

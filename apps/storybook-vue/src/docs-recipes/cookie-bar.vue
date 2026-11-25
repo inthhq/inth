@@ -58,7 +58,7 @@ const run = (action: string) => {
 			<button
 				type="button"
 				class="cookie-bar__link"
-				@click="activeUI = 'manager'"
+				@click="activeUI = 'dialog'"
 			>
 				Preferences
 			</button>

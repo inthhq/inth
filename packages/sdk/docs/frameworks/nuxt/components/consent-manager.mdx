@@ -18,14 +18,13 @@ programmatically via auto-imported `useConsentActiveUI()`.
 
 ## Open the dialog from your code
 
-Set `activeUI` to `'manager'` using auto-imported `useConsentActiveUI()` (Vue
-components use `'manager'` where React uses `'dialog'`):
+Set `activeUI` to `'dialog'` using auto-imported `useConsentActiveUI()`:
 
 {/* example: fragment */}
 
 ```ts
 const activeUI = useConsentActiveUI();
-activeUI.value = 'manager';
+activeUI.value = 'dialog';
 ```
 
 For a footer button that automatically hides when the policy offers no

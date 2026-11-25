@@ -52,7 +52,7 @@ const query = (selector: string) =>
 
 const render = async function render(
 	component: Component,
-	activeUI: 'banner' | 'manager' | null,
+	activeUI: 'banner' | 'dialog' | null,
 	configDisableAnimation: boolean,
 	disableAnimation: boolean | undefined
 ) {
@@ -122,7 +122,7 @@ describe('the disableAnimation prop', () => {
 	])(
 		'on ConsentManager: $prop over config $config stops the motion: $expected',
 		async ({ config, expected, prop }) => {
-			await render(ConsentManager, 'manager', config, prop);
+			await render(ConsentManager, 'dialog', config, prop);
 			const root = () => query('[data-testid="consent-dialog-root"]');
 			await vi.waitFor(() => expect(root()).not.toBeNull());
 			expect(root()?.getAttribute('data-animation') === 'off').toBe(expected);

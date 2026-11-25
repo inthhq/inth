@@ -4,7 +4,7 @@ export type ButtonVariant = 'primary' | 'neutral';
 
 export type ButtonMode = 'filled' | 'stroke' | 'lighter' | 'ghost';
 
-export type ConsentActiveUI = 'banner' | 'manager' | null;
+export type ConsentActiveUI = 'banner' | 'dialog' | null;
 
 export type ConsentLegalLinkKey =
 	| 'privacyPolicy'

@@ -17,14 +17,14 @@ from `@inth/vue/vue-plugin` only when composing surfaces in place of
 
 ## Open the dialog from your code
 
-Set `activeUI` to `'manager'` using `useConsentActiveUI()` from
-`@inth/vue/vue-plugin` (Vue uses `'manager'` where React uses `'dialog'`):
+Set `activeUI` to `'dialog'` using `useConsentActiveUI()` from
+`@inth/vue/vue-plugin`:
 
 {/* example: fragment */}
 
 ```ts
 const activeUI = useConsentActiveUI();
-activeUI.value = 'manager';
+activeUI.value = 'dialog';
 ```
 
 For a footer button that automatically hides when the policy offers no

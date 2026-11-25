@@ -20,7 +20,7 @@ export const Overview: Story = {
 	render: () => ({
 		components: { IabConsentDialog },
 		setup() {
-			setupStorybookIABConsent('manager');
+			setupStorybookIABConsent('dialog');
 		},
 		template: '<IabConsentDialog />',
 	}),
@@ -35,7 +35,7 @@ export const TabSwitchFlow: Story = {
 	render: () => ({
 		components: { IabConsentDialog },
 		setup() {
-			setupStorybookIABConsent('manager');
+			setupStorybookIABConsent('dialog');
 		},
 		template: '<IabConsentDialog />',
 	}),
