@@ -353,6 +353,22 @@ const createReach = function createReach(
 		}
 		return found;
 	};
+	/**
+	 * Whether a module may export one of `wanted`: one whose exports the scan
+	 * finds none of, or that has an `export *`, may.
+	 */
+	const providesAny = (
+		id: string,
+		own: readonly Statement[],
+		wanted: ReadonlySet<string>
+	): boolean => {
+		const exported = ownExportsOf(id);
+		return (
+			exported.size === 0 ||
+			own.some((statement) => statement.exports === 'star') ||
+			[...wanted].some((name) => exported.has(name))
+		);
+	};
 	return function reach(roots: Iterable<string>): Set<string> {
 		// A root is a chunk's entry, even when it only re-exports.
 		const included = new Set<string>(roots);
@@ -384,6 +400,11 @@ const createReach = function createReach(
 			const [id, wanted] = queue.pop() as [string, Wanted];
 			const imported = info(id)?.importedIds ?? [];
 			const own = statementsOf(id);
+			if (wanted !== 'all' && !providesAny(id, own, wanted)) {
+				// An `export *` asks each of its targets for every name: one
+				// that exports none of them is dropped.
+				continue;
+			}
 			const isBarrelModule = barrel(id);
 			if (!isBarrelModule) {
 				included.add(id);
@@ -508,7 +529,9 @@ const GROUP_NAMES: Record<string, string> = {
  * What each loader includes is worked out from the modules' imports,
  * following bindings through files that only re-export, as Rolldown does
  * for packages without side effects (`createReach`). Whatever that cannot
- * tell counts as included.
+ * tell counts as included. A loader whose every `import()` runs in code that
+ * already holds a module doesn't count for it, as Rolldown leaves such a
+ * module with that code (`avoidRedundantChunkLoads`).
  *
  * `includeDependenciesRecursively` is off: with it, Rolldown moves every
  * dependency of the dialog, the first load's included, into the group, and
@@ -641,6 +664,37 @@ export const createDialogChunkGroup =
 				}
 			}
 		};
+		// The chunk roots that include a module, from the roots known so far.
+		const holdersOf = (id: string): string[] => {
+			discover(id);
+			return [...loaderOfRoot.keys()].filter((root) =>
+				includedBy(root).has(id)
+			);
+		};
+		/**
+		 * Whether every `import()` of each of the loader's roots that include
+		 * `id` runs in code whose chunk roots all include `id`: Rolldown then
+		 * counts it as loaded already (`avoidRedundantChunkLoads`).
+		 */
+		const loadedBefore = (loader: Loader, id: string): boolean => {
+			const own = [...roots[loader]].filter((root) => includedBy(root).has(id));
+			return (
+				own.length > 0 &&
+				own.every((root) => {
+					const importers = info(root)?.dynamicImporters ?? [];
+					return (
+						importers.length > 0 &&
+						importers.every((importer) => {
+							const holders = holdersOf(importer);
+							return (
+								holders.length > 0 &&
+								holders.every((holder) => includedBy(holder).has(id))
+							);
+						})
+					);
+				})
+			);
+		};
 		return {
 			debugName: 'inth-dialog',
 			includeDependenciesRecursively: false,
@@ -665,7 +719,14 @@ export const createDialogChunkGroup =
 				const pages = [...roots.page]
 					.filter((root) => !entries.has(root) && includedBy(root).has(id))
 					.sort();
-				const loaded = loaders.filter((loader) => loader !== 'page');
+				const loaded = loaders.filter(
+					(loader) => loader !== 'page' && !loadedBefore(loader, id)
+				);
+				if (!loaded.includes('dialog')) {
+					// Already there when the dialog loads: it stays with the code
+					// that loads it first.
+					return null;
+				}
 				if (STYLE_MODULE.test(id)) {
 					// Only sheets nothing but the dialog loads: the banner keeps
 					// its own.
