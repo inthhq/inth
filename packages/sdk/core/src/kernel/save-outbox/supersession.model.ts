@@ -56,9 +56,9 @@ export const withoutSuperseded = function withoutSuperseded(
 	);
 	const kept = keys.filter((category) => !by.category(category));
 	let selected = payload;
-	if (kept.length === 0 && keys.length > 0) {
-		return null;
-	}
+	// Every category decided again can still leave vendors nothing newer
+	// decided, so the vendor map is narrowed before the save can go.
+	const categoriesGone = kept.length === 0 && keys.length > 0;
 	if (kept.length < keys.length) {
 		const categories: Partial<Record<OptionalConsentCategory, boolean>> = {};
 		const receipts: SavePayload['choice']['categories'] = {};
@@ -85,12 +85,12 @@ export const withoutSuperseded = function withoutSuperseded(
 	}
 	const { vendorChoice, ...remaining } = selected;
 	if (vendorChoice === undefined) {
-		return selected;
+		return categoriesGone ? null : selected;
 	}
 	const ids = Object.keys(vendorChoice.grants);
 	const keptIds = ids.filter((id) => !by.vendor(id));
 	if (keptIds.length === ids.length) {
-		return selected;
+		return categoriesGone && ids.length === 0 ? null : selected;
 	}
 	if (keptIds.length > 0) {
 		const grants = Object.fromEntries(
