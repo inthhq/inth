@@ -144,6 +144,7 @@ export {
 	OPT_OUT_HOLDERS,
 	OPT_OUT_METHODS,
 	OPT_OUT_RIGHTS,
+	type OptOutDeviceRow,
 	type OptOutHolder,
 	type OptOutMethod,
 	type OptOutRecord,

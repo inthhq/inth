@@ -39,7 +39,7 @@ Without them, a call returns `forbidden`.
 
 | Method | Returns | What it does |
 | --- | --- | --- |
-| `consents.check({ externalId, property? })` | `InthConsent` | Each category the user answered, and whether they grant it now. Pass `property`, a host name or app bundle ID, to count only answers given there. |
+| `consents.check({ externalId, property? })` | `UserConsent` | The full consent check document: `categories`, `optOut`, and `sync`. Pass `property`, a host name or app bundle ID, to count only answers given there. |
 
 ## Users
 

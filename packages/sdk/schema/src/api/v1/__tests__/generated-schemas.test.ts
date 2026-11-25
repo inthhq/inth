@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+	consentCheckResponseSchema,
 	consentRecordRequestSchema,
 	documentPublishRequestSchema,
 	getV1ConsentInitQuerySchema,
@@ -128,6 +129,74 @@ describe('generated /v1 schemas', () => {
 		expect(v.is(identityTokenResponseSchema, token)).toBe(true);
 		expect(
 			v.is(identityTokenResponseSchema, { ...token, expiresAt: 'tomorrow' })
+		).toBe(false);
+	});
+
+	it('validate the /v1/consent/check response with optOut and sync', () => {
+		const full = {
+			categories: { marketing: false, measurement: true },
+			optOut: {
+				advertising: true,
+				limitSensitive: false,
+				recordedAt: 1_763_467_100_000,
+				rights: ['sale', 'share', 'targeted_ads'],
+				sale: true,
+			},
+			sync: {
+				checkedAt: 1_763_467_200_000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'fp', kind: 'choice-v1' },
+						confirmedAt: 1_763_467_100_000,
+						value: false,
+					},
+					measurement: {
+						basis: { kind: 'legacy-v2', materialFingerprint: 'fp2' },
+						confirmedAt: 1_763_467_000_000,
+						expiresAt: 1_795_003_000_000,
+						value: true,
+					},
+				},
+				externalId: 'user_1',
+				optIn: { sale: 1_763_467_150_000 },
+				optOut: {
+					method: 'button',
+					recordedAt: 1_763_467_100_000,
+					rights: ['sale', 'share', 'targeted_ads'],
+				},
+				vendors: {
+					'meta-pixel': { confirmedAt: 1_763_467_100_000, value: false },
+				},
+			},
+		};
+		expect(v.parse(consentCheckResponseSchema, full)).toEqual(full);
+		const { optIn: _optIn, ...olderSync } = full.sync;
+		expect(
+			v.parse(consentCheckResponseSchema, { ...full, sync: olderSync })
+		).toEqual({ ...full, sync: olderSync });
+		expect(
+			v.is(consentCheckResponseSchema, {
+				...full,
+				sync: { ...full.sync, optIn: { sale: 'yesterday' } },
+			})
+		).toBe(false);
+		expect(
+			v.is(consentCheckResponseSchema, { categories: { marketing: false } })
+		).toBe(false);
+		expect(
+			v.is(consentCheckResponseSchema, {
+				...full,
+				sync: {
+					...full.sync,
+					choices: {
+						marketing: {
+							basis: { kind: 'choice-v1' },
+							confirmedAt: 1_763_467_100_000,
+							value: false,
+						},
+					},
+				},
+			})
 		).toBe(false);
 	});
 });

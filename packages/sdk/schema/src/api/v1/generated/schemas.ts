@@ -23,6 +23,138 @@ export const consentCheckResponseSchema = /* @__PURE__ */ jsonObject(
 				'Each consent category the person answered, and whether they grant it now. A category they never answered, or whose grant has run out, is left out: your policy’s default applies to it.'
 			)
 		),
+		optOut: v.pipe(
+			v.nullable(
+				/* @__PURE__ */ jsonObject(
+					v.object({
+						advertising: v.boolean(),
+						limitSensitive: v.boolean(),
+						recordedAt: v.pipe(
+							v.number(),
+							v.integer(),
+							v.minValue(0),
+							v.maxValue(8640000000000000)
+						),
+						rights: v.array(v.string()),
+						sale: v.boolean(),
+					})
+				)
+			),
+			v.description(
+				'Effective opt-out state across the person and their linked devices, or null when no opt-out is held.'
+			)
+		),
+		sync: v.pipe(
+			/* @__PURE__ */ jsonObject(
+				v.object({
+					checkedAt: v.pipe(
+						v.number(),
+						v.integer(),
+						v.minValue(0),
+						v.maxValue(8640000000000000),
+						v.description(
+							'Server clock when this snapshot was read, in epoch milliseconds.'
+						)
+					),
+					choices: /* @__PURE__ */ jsonRecord(
+						v.string(),
+						/* @__PURE__ */ jsonObject(
+							v.object({
+								basis: /* @__PURE__ */ jsonVariant(
+									v.variant('kind', [
+										v.object({
+											fingerprint: v.pipe(
+												v.string(),
+												v.check(
+													(value: string) => characters(value) >= 1,
+													'Invalid length: Expected >=1 characters'
+												)
+											),
+											kind: v.literal('choice-v1'),
+										}),
+										v.object({
+											kind: v.literal('legacy-v2'),
+											materialFingerprint: v.optional(
+												v.pipe(
+													v.string(),
+													v.check(
+														(value: string) => characters(value) >= 1,
+														'Invalid length: Expected >=1 characters'
+													)
+												)
+											),
+										}),
+									])
+								),
+								confirmedAt: v.pipe(
+									v.number(),
+									v.integer(),
+									v.minValue(0),
+									v.maxValue(8640000000000000)
+								),
+								expiresAt: v.optional(
+									v.pipe(
+										v.number(),
+										v.integer(),
+										v.minValue(0),
+										v.maxValue(8640000000000000)
+									)
+								),
+								value: v.boolean(),
+							})
+						)
+					),
+					externalId: v.string(),
+					optIn: v.optional(
+						v.pipe(
+							/* @__PURE__ */ jsonRecord(
+								v.string(),
+								v.pipe(
+									v.number(),
+									v.integer(),
+									v.minValue(0),
+									v.maxValue(8640000000000000)
+								)
+							),
+							v.description(
+								'The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out.'
+							)
+						)
+					),
+					optOut: v.nullable(
+						/* @__PURE__ */ jsonObject(
+							v.object({
+								method: v.string(),
+								recordedAt: v.pipe(
+									v.number(),
+									v.integer(),
+									v.minValue(0),
+									v.maxValue(8640000000000000)
+								),
+								rights: v.array(v.string()),
+							})
+						)
+					),
+					vendors: /* @__PURE__ */ jsonRecord(
+						v.string(),
+						/* @__PURE__ */ jsonObject(
+							v.object({
+								confirmedAt: v.pipe(
+									v.number(),
+									v.integer(),
+									v.minValue(0),
+									v.maxValue(8640000000000000)
+								),
+								value: v.boolean(),
+							})
+						)
+					),
+				})
+			),
+			v.description(
+				'Cross-domain sync snapshot for the person, passed to the browser provider as userConsent.'
+			)
+		),
 	})
 );
 

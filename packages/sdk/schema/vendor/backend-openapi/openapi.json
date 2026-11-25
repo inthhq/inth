@@ -3294,10 +3294,204 @@
 							"type": "boolean"
 						},
 						"description": "Each consent category the person answered, and whether they grant it now. A category they never answered, or whose grant has run out, is left out: your policy’s default applies to it."
+					},
+					"optOut": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"advertising": {
+										"type": "boolean"
+									},
+									"limitSensitive": {
+										"type": "boolean"
+									},
+									"recordedAt": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 8640000000000000
+									},
+									"rights": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"sale": {
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"advertising",
+									"limitSensitive",
+									"recordedAt",
+									"rights",
+									"sale"
+								]
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Effective opt-out state across the person and their linked devices, or null when no opt-out is held."
+					},
+					"sync": {
+						"type": "object",
+						"properties": {
+							"checkedAt": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 8640000000000000,
+								"description": "Server clock when this snapshot was read, in epoch milliseconds."
+							},
+							"choices": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string"
+								},
+								"additionalProperties": {
+									"type": "object",
+									"properties": {
+										"basis": {
+											"oneOf": [
+												{
+													"type": "object",
+													"properties": {
+														"fingerprint": {
+															"type": "string",
+															"minLength": 1
+														},
+														"kind": {
+															"const": "choice-v1"
+														}
+													},
+													"required": [
+														"fingerprint",
+														"kind"
+													]
+												},
+												{
+													"type": "object",
+													"properties": {
+														"kind": {
+															"const": "legacy-v2"
+														},
+														"materialFingerprint": {
+															"type": "string",
+															"minLength": 1
+														}
+													},
+													"required": [
+														"kind"
+													]
+												}
+											]
+										},
+										"confirmedAt": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 8640000000000000
+										},
+										"expiresAt": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 8640000000000000
+										},
+										"value": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"basis",
+										"confirmedAt",
+										"value"
+									]
+								}
+							},
+							"externalId": {
+								"type": "string"
+							},
+							"optIn": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string"
+								},
+								"additionalProperties": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 8640000000000000
+								},
+								"description": "The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out."
+							},
+							"optOut": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"method": {
+												"type": "string"
+											},
+											"recordedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000
+											},
+											"rights": {
+												"type": "array",
+												"items": {
+													"type": "string"
+												}
+											}
+										},
+										"required": [
+											"method",
+											"recordedAt",
+											"rights"
+										]
+									},
+									{
+										"type": "null"
+									}
+								]
+							},
+							"vendors": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string"
+								},
+								"additionalProperties": {
+									"type": "object",
+									"properties": {
+										"confirmedAt": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 8640000000000000
+										},
+										"value": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"confirmedAt",
+										"value"
+									]
+								}
+							}
+						},
+						"required": [
+							"checkedAt",
+							"choices",
+							"externalId",
+							"optOut",
+							"vendors"
+						],
+						"description": "Cross-domain sync snapshot for the person, passed to the browser provider as userConsent."
 					}
 				},
 				"required": [
-					"categories"
+					"categories",
+					"optOut",
+					"sync"
 				]
 			},
 			"ConsentInitResponse": {

@@ -23,6 +23,7 @@ export {
 	type V1ErrorBody,
 	type V1ValidationDetails,
 	v1CanonicalSubjectIdSchema,
+	v1EffectiveOptOutDeviceSchema,
 	v1EffectiveOptOutSchema,
 	v1EpochMillisecondsSchema,
 	v1ErrorBodySchema,
@@ -37,8 +38,10 @@ export {
 } from './v1-common.model';
 
 export {
+	type UserConsent,
 	type V1AnswerCategory,
 	type V1ConsentAnswer,
+	type V1ConsentCheckOutput,
 	type V1ConsentInitOutput,
 	type V1ConsentInitQuery,
 	type V1ConsentManifest,
@@ -55,6 +58,7 @@ export {
 	type V1ConsentSessionReport,
 	V1_ANSWER_CATEGORIES,
 	v1ConsentAnswerSchema,
+	v1ConsentCheckOutputSchema,
 	v1ConsentInitOutputSchema,
 	v1ConsentInitQuerySchema,
 	v1ConsentManifestQuerySchema,

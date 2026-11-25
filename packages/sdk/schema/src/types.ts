@@ -54,8 +54,10 @@ export type {
 	VendorChoiceWire,
 } from './api/subject';
 export type {
+	UserConsent,
 	V1AnswerCategory,
 	V1ConsentAnswer,
+	V1ConsentCheckOutput,
 	V1ConsentInitOutput,
 	V1ConsentInitQuery,
 	V1ConsentManifest,

@@ -216,6 +216,53 @@ export interface components {
 			categories: {
 				[key: string]: boolean;
 			};
+			/** @description Effective opt-out state across the person and their linked devices, or null when no opt-out is held. */
+			optOut: {
+				advertising: boolean;
+				limitSensitive: boolean;
+				recordedAt: number;
+				rights: string[];
+				sale: boolean;
+			} | null;
+			/** @description Cross-domain sync snapshot for the person, passed to the browser provider as userConsent. */
+			sync: {
+				/** @description Server clock when this snapshot was read, in epoch milliseconds. */
+				checkedAt: number;
+				choices: {
+					[key: string]: {
+						basis:
+							| {
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									materialFingerprint?: string;
+							  };
+						confirmedAt: number;
+						expiresAt?: number;
+						value: boolean;
+					};
+				};
+				externalId: string;
+				/** @description The latest time this person opted back in to each opt-out right, in epoch milliseconds on the server clock. A right with no opt-in is left out. */
+				optIn?: {
+					[key: string]: number;
+				};
+				optOut: {
+					method: string;
+					recordedAt: number;
+					rights: string[];
+				} | null;
+				vendors: {
+					[key: string]: {
+						confirmedAt: number;
+						value: boolean;
+					};
+				};
+			};
 		};
 		ConsentInitResponse: {
 			adTechProviders?: {

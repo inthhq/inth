@@ -15,8 +15,8 @@ every device the user signed in on.
   2. Install `@inth/node` and `@inth/sdk`, on the same release as the app's other Inth packages. Read `node_modules/@inth/node/AGENTS.md`, then follow the Node.js quickstart it links to, in order. Do not guess the API from memory.
   3. Set `INTH_SECRET_KEY` and `INTH_PROJECT_URL` in the server environment. Ask me for both. Never put the secret key in a variable the browser bundle can read, such as one starting with `NEXT_PUBLIC_` or `VITE_`.
   4. In the sign-in handler, read the subject ID with `readRequestConsent` from `@inth/sdk/server` and call `inth.users.identify`. Skip the call when there is no subject ID. Log a failure; do not fail the sign-in.
-  5. Where the app sends marketing, call `inth.consents.check`. Check `error` before `data`. A missing category gets the policy's default, which is refused under opt-in.
-  6. Run the app. Reject marketing in the banner, sign in, and confirm the check returns `marketing: false`.
+  5. Where the app sends marketing, call `inth.consents.check`. Check `error` before `data`. Read categories from `data.categories`. A missing category gets the policy's default, which is refused under opt-in.
+  6. Run the app. Reject marketing in the banner, sign in, and confirm the check returns `data.categories.marketing === false`.
 
   List the files you changed and what the check returned.
 </Prompt>
@@ -70,12 +70,13 @@ const { data, error } = await inth.consents.check({ externalId: user.id });
 if (error) {
 	throw error;
 }
-if (data.marketing === true) {
+if (data.categories.marketing === true) {
 	await sendNewsletter(user);
 }
 ```
 
-`data` holds each category the user answered, such as
+`data` holds `categories`, `optOut`, and `sync`. `data.categories` maps each
+category the user answered to a boolean, such as
 `{ marketing: false, measurement: true }`. A category they never answered is
 absent. Under an opt-in policy, treat absent as refused.
 
@@ -83,9 +84,9 @@ absent. Under an opt-in policy, treat absent as refused.
 
 1. Open your site in a private window and click **Reject All** in the banner.
 2. Sign in. The `identify` call returns a `data.subjectId` UUID.
-3. Call `consents.check` for that user. It returns `marketing: false`.
+3. Call `consents.check` for that user. It returns `data.categories.marketing === false`.
 4. Open **Privacy settings**, turn on **Marketing**, save, and sign in again.
-   The check returns `marketing: true`.
+   The check returns `data.categories.marketing === true`.
 
 If a call fails, look up its `error.code` in
 [Troubleshooting](/docs/node/troubleshooting).

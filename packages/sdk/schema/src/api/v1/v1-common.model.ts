@@ -16,7 +16,7 @@ import {
 	OPT_OUT_METHODS,
 	OPT_OUT_RIGHTS,
 } from '../../shared/opt-out.model';
-import type { OptOutRecord } from '../../shared/opt-out.model';
+import type { OptOutDeviceRow, OptOutRecord } from '../../shared/opt-out.model';
 import {
 	consentRecordRequestSchema,
 	consentRecordResponseSchema,
@@ -100,9 +100,17 @@ export const v1OptOutRightsSchema = v.pipe(
 	v.description('Opt-out rights refused by this record.')
 );
 
+/** This device's own opt-out row on a `/v1` effective opt-out answer. */
+export const v1EffectiveOptOutDeviceSchema = jsonObject(
+	v.object({
+		rights: v1OptOutRightsSchema,
+	})
+);
+
 /** Effective opt-out state returned by `/v1` consent and subject routes. */
 export const v1EffectiveOptOutSchema = jsonObject(
 	v.object({
+		device: v.optional(v1EffectiveOptOutDeviceSchema),
 		heldBy: v.picklist(OPT_OUT_HOLDERS),
 		method: v.picklist(OPT_OUT_METHODS),
 		recordedAt: v1EpochMillisecondsSchema,
@@ -141,7 +149,13 @@ export const v1ErrorBodySchema = jsonObject(
 );
 
 /** The backend's opt-out record. `categories` is browser-only and never on the wire. */
-export type V1EffectiveOptOut = Omit<OptOutRecord, 'categories'>;
+export type V1EffectiveOptOut = Omit<OptOutRecord, 'categories'> & {
+	/**
+	 * This device's own opt-out row when `heldBy` is `'device'` or `'both'`.
+	 * Omitted when `heldBy` is `'person'`.
+	 */
+	device?: OptOutDeviceRow;
+};
 export type V1ErrorBody = v.InferOutput<typeof v1ErrorBodySchema>;
 export type V1ValidationDetails = v.InferOutput<
 	typeof v1ValidationDetailsSchema

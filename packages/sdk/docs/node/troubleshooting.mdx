@@ -94,7 +94,7 @@ consent cookie, or have identity tokens enabled for the project.
 **Confirm.** `users.identify` returns `data.subjectId`, or, once tokens are
 enabled, `users.createIdentityToken` returns `data.token`.
 
-## `consents.check` returns an empty object
+## `consents.check` returns empty `categories`
 
 **Cause.** No browser is linked to that `externalId`, or the user has not
 saved a choice in a linked browser.
@@ -103,4 +103,4 @@ saved a choice in a linked browser.
 Check that you pass the same `externalId` to both calls.
 
 **Confirm.** After a save and a sign-in, `consents.check` returns the
-categories the user answered.
+categories the user answered under `data.categories`.

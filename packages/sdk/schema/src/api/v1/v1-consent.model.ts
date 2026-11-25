@@ -16,6 +16,7 @@ import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy/policy-rule-inva
 import { initOutputSchema } from '../init-output.model';
 import type { InitOutput } from '../init-output.model';
 import {
+	consentCheckResponseSchema,
 	consentRecordRequestSchema,
 	consentRecordResponseSchema,
 	consentSessionRequestSchema,
@@ -37,6 +38,13 @@ import {
 	v1SubjectIdSchema,
 } from './v1-common.model';
 import type { V1EffectiveOptOut } from './v1-common.model';
+
+// ---------------------------------------------------------------------------
+// GET /v1/consent/check
+// ---------------------------------------------------------------------------
+
+/** Answer of `GET /v1/consent/check`. */
+export const v1ConsentCheckOutputSchema = consentCheckResponseSchema;
 
 // ---------------------------------------------------------------------------
 // GET /v1/consent/init and GET /v1/consent/manifest
@@ -276,6 +284,14 @@ export const v1ConsentSessionReportSchema = consentSessionRequestSchema;
 // Types
 // ---------------------------------------------------------------------------
 
+export type V1ConsentCheckOutput = v.InferOutput<
+	typeof v1ConsentCheckOutputSchema
+>;
+/**
+ * Signed-in user consent document from `GET /v1/consent/check` and
+ * `@inth/node` `consents.check()`.
+ */
+export type UserConsent = V1ConsentCheckOutput;
 export type V1ConsentInitQuery = v.InferOutput<typeof v1ConsentInitQuerySchema>;
 export type V1ConsentManifestQuery = v.InferOutput<
 	typeof v1ConsentManifestQuerySchema

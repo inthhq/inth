@@ -153,12 +153,12 @@ export const renderPackageSkill = function renderPackageSkill(
 			'- ALWAYS check `error` before reading `data`. A failed call says nothing about the user: NEVER treat it as a refusal, re-prompt for documents or record anything because of it.',
 			'- Branch on `error.retryable` to decide whether to try again later. NEVER resend `documents.publish` blindly: a failed publish may have been stored, so call `documents.current` first.',
 			'- Read the subject ID with `readRequestConsent` from `@inth/sdk/server`. NEVER parse the consent cookie: its format changes between releases.',
-			'- A category absent from `consents.check` was never answered or has expired. Apply the policy default; under opt-in, treat it as refused.',
+			'- `consents.check` returns the full `UserConsent` document (`categories`, `optOut`, `sync`). Read category booleans from `data.categories`. A category absent from `data.categories` was never answered or has expired; apply the policy default (refused under opt-in).',
 			"- Record acceptance with the `hash` that `documents.current` gave when the form was shown, and the visitor's IP address and user agent from the request. NEVER take the first entry of `x-forwarded-for`: the visitor writes it.",
 			'',
 			'## Finish with a check',
 			'',
-			'Run the app. Reject marketing in the banner, sign in, and confirm `consents.check` returns `marketing: false` for that user.',
+			'Run the app. Reject marketing in the banner, sign in, and confirm `consents.check` returns `data.categories.marketing === false` for that user.',
 			'',
 		].join('\n');
 	}

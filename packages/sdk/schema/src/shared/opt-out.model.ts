@@ -24,6 +24,12 @@ export const OPT_OUT_HOLDERS = ['device', 'person', 'both'] as const;
 /** One of {@link OPT_OUT_HOLDERS}. */
 export type OptOutHolder = (typeof OPT_OUT_HOLDERS)[number];
 
+/** This device's own stored opt-out row on a `/v1` effective opt-out answer. */
+export interface OptOutDeviceRow {
+	/** Refused rights on this device's own row, in canonical order. */
+	rights: OptOutRight[];
+}
+
 /**
  * Durable opt-out record, separate from per-category consent choices.
  *

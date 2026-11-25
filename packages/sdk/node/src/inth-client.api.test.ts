@@ -18,6 +18,7 @@ import type {
 	InthDocumentType,
 	InthOptions,
 	InthRequestOptions,
+	UserConsent,
 } from './inth-client.api';
 import { version } from './version';
 
@@ -151,13 +152,66 @@ describe('what each call sends', () => {
 	});
 
 	it('checks consent on the /v1 check route, for one property or for all', async () => {
+		const fullDocument: UserConsent = {
+			categories: { marketing: false, measurement: true },
+			optOut: {
+				advertising: true,
+				limitSensitive: false,
+				recordedAt: 1_763_467_100_000,
+				rights: ['sale', 'share', 'targeted_ads'],
+				sale: true,
+			},
+			sync: {
+				checkedAt: 1_763_467_200_000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'fp_choice_1', kind: 'choice-v1' },
+						confirmedAt: 1_763_467_100_000,
+						value: false,
+					},
+					measurement: {
+						basis: {
+							kind: 'legacy-v2',
+							materialFingerprint: 'fp_legacy_1',
+						},
+						confirmedAt: 1_763_467_050_000,
+						expiresAt: 1_795_003_050_000,
+						value: true,
+					},
+				},
+				externalId: 'user 1',
+				optIn: { sale: 1_763_467_150_000 },
+				optOut: {
+					method: 'button',
+					recordedAt: 1_763_467_100_000,
+					rights: ['sale', 'share', 'targeted_ads'],
+				},
+				vendors: {
+					'meta-pixel': {
+						confirmedAt: 1_763_467_100_000,
+						value: false,
+					},
+				},
+			},
+		};
+		const emptyDocument: UserConsent = {
+			categories: {},
+			optOut: null,
+			sync: {
+				checkedAt: 1_763_467_200_000,
+				choices: {},
+				externalId: 'user 1',
+				optOut: null,
+				vendors: {},
+			},
+		};
 		const { inth, sent } = stubbed([
-			() => Response.json({ categories: { marketing: false } }),
-			() => Response.json({ categories: {} }),
+			() => Response.json(fullDocument),
+			() => Response.json(emptyDocument),
 		]);
 
 		const everywhere = await inth.consents.check({ externalId: 'user 1' });
-		await inth.consents.check({
+		const scoped = await inth.consents.check({
 			externalId: 'user 1',
 			property: 'com.example.app',
 		});
@@ -171,9 +225,70 @@ describe('what each call sends', () => {
 		);
 		assert.deepStrictEqual(sent[0]?.headers, KEYED);
 		assert.deepStrictEqual(everywhere, {
-			data: { marketing: false },
+			data: fullDocument,
 			error: null,
 		});
+		assert.deepStrictEqual(scoped, {
+			data: emptyDocument,
+			error: null,
+		});
+		expectTypeOf(everywhere.data).toEqualTypeOf<UserConsent | null>();
+	});
+
+	it('rejects a consent check answer missing sync or carrying invalid sync fields', async () => {
+		const valid: UserConsent = {
+			categories: { marketing: false },
+			optOut: null,
+			sync: {
+				checkedAt: 1_763_467_200_000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'fp_1', kind: 'choice-v1' },
+						confirmedAt: 1_763_467_100_000,
+						value: false,
+					},
+				},
+				externalId: 'user_1',
+				optOut: null,
+				vendors: {},
+			},
+		};
+		for (const malformed of [
+			{ categories: { marketing: false } },
+			{ ...valid, optOut: undefined },
+			{
+				...valid,
+				sync: {
+					...valid.sync,
+					choices: {
+						marketing: {
+							basis: { kind: 'choice-v2' },
+							confirmedAt: 1_763_467_100_000,
+							value: false,
+						},
+					},
+				},
+			},
+			{
+				...valid,
+				sync: {
+					...valid.sync,
+					checkedAt: 1.5,
+				},
+			},
+			{
+				...valid,
+				sync: {
+					...valid.sync,
+					optIn: { sale: -1 },
+				},
+			},
+		]) {
+			const { inth } = stubbed([() => Response.json(malformed)]);
+			// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
+			const answer = await inth.consents.check({ externalId: 'user_1' });
+			assert.strictEqual(answer.error?.code, 'unexpected_response');
+		}
 	});
 
 	it('mints an identity token on the /v1 route', async () => {
@@ -1279,7 +1394,18 @@ describe('documents', () => {
 
 	it('sends a dot as a query value, where it moves nothing', async () => {
 		const { inth, sent } = stubbed([
-			() => Response.json({ categories: { marketing: true } }),
+			() =>
+				Response.json({
+					categories: { marketing: true },
+					optOut: null,
+					sync: {
+						checkedAt: 1_763_467_200_000,
+						choices: {},
+						externalId: '..',
+						optOut: null,
+						vendors: {},
+					},
+				}),
 		]);
 		const consent = await inth.consents.check({ externalId: '..' });
 		assert.isNull(consent.error);
