@@ -38,7 +38,7 @@ const custom = (
 
 /** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =
-	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
+	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored|manifestLevel)=/u;
 
 /** A request URL without the parameters a client adds to `/v1/consent/init`. */
 const pathOf = (url: unknown): string => {

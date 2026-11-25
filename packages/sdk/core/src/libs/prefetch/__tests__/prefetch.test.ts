@@ -17,6 +17,8 @@ import {
 } from 'vite-plus/test';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';
+import { MANIFEST_RUNTIME_LEVEL } from '../../../manifest-runtime/level';
+import { findPrefetchedInitFor } from '../../../runtime/deferred-boot';
 import {
 	buildPrefetchScript,
 	getMatchingPrefetchedInitialData,
@@ -108,6 +110,7 @@ describe('prefetch utilities', () => {
 					credentials: 'same-origin',
 					gpc: true,
 					language: 'de',
+					manifestLevel: MANIFEST_RUNTIME_LEVEL,
 					projectUrl: `${window.location.origin}/api/inth`,
 					region: null,
 				},
@@ -115,6 +118,9 @@ describe('prefetch utilities', () => {
 		});
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		expect(new URL(url).pathname).toBe('/api/inth/v1/consent/init');
+		expect(new URL(url).searchParams.get('manifestLevel')).toBe(
+			String(MANIFEST_RUNTIME_LEVEL)
+		);
 		expect(new URL(url).searchParams.has('v')).toBe(false);
 		// A cross-origin backend answers this without a CORS preflight.
 		expect(corsPreflightReasons(init)).toEqual([]);
@@ -139,6 +145,51 @@ describe('prefetch utilities', () => {
 		expect(query.get('country')).toBe('DE');
 		expect(query.get('region')).toBe('BE');
 		expect(query.get('gpc')).toBe('0');
+		expect(query.get('manifestLevel')).toBe(String(MANIFEST_RUNTIME_LEVEL));
+	});
+
+	it('adopts no early answer made for another manifest runtime level', () => {
+		Object.defineProperty(window.navigator, 'globalPrivacyControl', {
+			configurable: true,
+			value: false,
+		});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(() => Promise.resolve(new Response('{}')))
+		);
+		// The inline script records the level it sent, and the runtime takes it.
+		window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+		const entries = (
+			window as Window & {
+				__inthInitialDataPromises?: Record<
+					string,
+					{ requestContext: Record<string, unknown> }
+				>;
+			}
+		).__inthInitialDataPromises;
+		const [entry] = Object.values(entries ?? {});
+		expect(entry?.requestContext.manifestLevel).toBe(MANIFEST_RUNTIME_LEVEL);
+		expect(
+			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })
+		).toBeDefined();
+		expect(findPrefetchedInitFor('/api/inth')).toBeDefined();
+
+		// A script from a release that runs another level lists other scripts.
+		if (entry) {
+			entry.requestContext.manifestLevel = MANIFEST_RUNTIME_LEVEL + 1;
+		}
+		expect(
+			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })
+		).toBeUndefined();
+		expect(findPrefetchedInitFor('/api/inth')).toBeUndefined();
+
+		// One from a release before levels sent none, which is level 1.
+		if (entry) {
+			delete entry.requestContext.manifestLevel;
+		}
+		expect(
+			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })
+		).toBeDefined();
 	});
 
 	it('builds the same request as the runtime prefetch', () => {
@@ -493,7 +544,7 @@ describe('prefetch utilities', () => {
 				'http://localhost:3000/api/third/v1/consent/init'
 			);
 			expect(readJourneyParams(third)).toBeNull();
-			expect([...third.searchParams.keys()]).toEqual([]);
+			expect([...third.searchParams.keys()]).toEqual(['manifestLevel']);
 		});
 
 		it('primePrefetchedInitialData sends the same journey as the script', () => {

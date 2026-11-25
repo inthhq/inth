@@ -111,7 +111,7 @@ describe('fetchSSRData', () => {
 		});
 
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(
-			'https://consent.example.com/api/inth/v1/consent/init'
+			'https://consent.example.com/api/inth/v1/consent/init?manifestLevel=1'
 		);
 		const sent = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
 		expect(sent.has('x-inth-version')).toBe(false);
@@ -193,7 +193,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/v1/consent/init',
+			'https://example.com/api/inth/v1/consent/init?manifestLevel=1',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -217,7 +217,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/v1/consent/init',
+			'https://example.com/api/inth/v1/consent/init?manifestLevel=1',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<

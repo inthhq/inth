@@ -1,3 +1,4 @@
+import { MANIFEST_RUNTIME_LEVEL } from '../manifest-runtime/level';
 import type { Overrides } from '../options/overrides';
 import type { SSRInitRequestContext } from '../options/ssr';
 import { hasGlobalPrivacyControlSignal } from './global-privacy-control';
@@ -69,10 +70,22 @@ export const createBrowserRequestContext =
 			gpc:
 				options.gpc ?? (typeof detectedGpc === 'boolean' ? detectedGpc : false),
 			language: options.overrides?.language ?? null,
+			manifestLevel: MANIFEST_RUNTIME_LEVEL,
 			projectUrl: normalizedProjectUrl,
 			region: options.overrides?.region ?? null,
 		};
 	};
+
+/**
+ * Whether a response to a request made with `context` lists the remote
+ * scripts this SDK runs: one made for another manifest runtime level may
+ * list scripts it cannot run, or leave out some it can.
+ */
+export const matchesManifestLevel = function matchesManifestLevel(
+	context: { manifestLevel?: unknown } | null | undefined
+): boolean {
+	return (context?.manifestLevel ?? 1) === MANIFEST_RUNTIME_LEVEL;
+};
 
 export const createRuntimeRequestContextMatcher =
 	function createRuntimeRequestContextMatcher(options: {
@@ -104,7 +117,10 @@ export const matchesStoredRequestContext = function matchesStoredRequestContext(
 	stored: SSRInitRequestContext,
 	matcher: RuntimeRequestContextMatcher
 ): boolean {
-	if (stored.projectUrl !== matcher.projectUrl) {
+	if (
+		stored.projectUrl !== matcher.projectUrl ||
+		!matchesManifestLevel(stored)
+	) {
 		return false;
 	}
 

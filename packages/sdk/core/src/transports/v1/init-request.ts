@@ -12,6 +12,7 @@ import {
 	buildRequestContextSentHeaders,
 	DEFAULT_INIT_CREDENTIALS,
 } from '../../libs/request-context-headers';
+import { MANIFEST_RUNTIME_LEVEL } from '../../manifest-runtime/level';
 import type { InitContext } from '../../types';
 import { trimTrailingSlash, V1_ROUTES } from './paths';
 
@@ -66,6 +67,7 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	const params = appendInitParams(base, {
 		...buildRequestContextParams(overrides),
 		experiment: options.experiment,
+		manifestLevel: MANIFEST_RUNTIME_LEVEL,
 	});
 	const url = options.journey
 		? appendJourneyParams(params, {

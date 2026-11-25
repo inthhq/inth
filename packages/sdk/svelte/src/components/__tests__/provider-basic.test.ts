@@ -114,7 +114,9 @@ describe('InthProvider Basic Request Behavior', () => {
 		await vi.waitFor(() => {
 			// The query carries the protocol inputs and the consent journey.
 			expect(mockFetch).toHaveBeenCalledWith(
-				expect.stringMatching(/^\/api\/inth\/v1\/consent\/init\?journey=/u),
+				expect.stringMatching(
+					/^\/api\/inth\/v1\/consent\/init\?manifestLevel=1&journey=/u
+				),
 				expect.objectContaining({ method: 'GET' })
 			);
 		});

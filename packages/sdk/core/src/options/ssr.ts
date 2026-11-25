@@ -13,6 +13,11 @@ export interface SSRInitRequestContext {
 	language: string | null;
 	gpc: boolean;
 	credentials?: RequestCredentials;
+	/**
+	 * The manifest runtime level the request sent as `manifestLevel`. Absent
+	 * means level 1, as the Inth server reads a request without one.
+	 */
+	manifestLevel?: number;
 }
 
 /**

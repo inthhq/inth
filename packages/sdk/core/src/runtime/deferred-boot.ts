@@ -18,6 +18,7 @@ import { hasStoredConsentRecord } from '../libs/journey';
 import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/types';
+import { matchesManifestLevel } from '../libs/request-context';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
 import type { SSRInitialData } from '../options/ssr';
 import { readHostedMode } from '../transports/hosted-modes';
@@ -78,6 +79,7 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 		Boolean(
 			requestContext &&
 			requestContext.projectUrl === projectUrl &&
+			matchesManifestLevel(requestContext) &&
 			(requestContext.credentials ?? DEFAULT_INIT_CREDENTIALS) ===
 				DEFAULT_INIT_CREDENTIALS &&
 			requestContext.gpc === gpc &&

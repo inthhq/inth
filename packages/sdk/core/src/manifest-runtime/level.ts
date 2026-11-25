@@ -1,3 +1,5 @@
+import { appendInitParams } from '@inth/sdk-schema/types';
+
 /**
  * The highest manifest runtime level this SDK runs.
  *
@@ -8,3 +10,10 @@
  * above it from a list no server filtered for it.
  */
 export const MANIFEST_RUNTIME_LEVEL = 1;
+
+/**
+ * `url` with this SDK's level as its `manifestLevel` query parameter, for a
+ * request to the Inth server that returns a script registry.
+ */
+export const withManifestLevel = (url: string): string =>
+	appendInitParams(url, { manifestLevel: MANIFEST_RUNTIME_LEVEL });
