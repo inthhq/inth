@@ -1,4 +1,4 @@
-import type { ConsentSnapshot } from '../consent-kernel.model';
+import type { ConsentSnapshot, UserConsent } from '../consent-kernel.model';
 /**
  * The runtime a framework provider renders: a consent runtime whose
  * options follow the component's props.
@@ -49,6 +49,7 @@ import { afterModuleLoaded } from './lazy-runtime-module';
 import type * as ProviderUpdateModule from './provider-update';
 import type { ProviderUpdateHost } from './provider-update';
 import { scriptRegistry } from './script-registry';
+import { isUserConsentPromise } from './user-consent-sync';
 
 type Callbacks = NonNullable<ConsentRuntimeUpdate['callbacks']>;
 
@@ -63,6 +64,7 @@ const LIVE_OPTION_NAMES = [
 	'scriptLoader',
 	'scripts',
 	'user',
+	'userConsent',
 	'vendors',
 ] as const satisfies readonly (keyof ConsentRuntimeUpdate)[];
 
@@ -268,6 +270,36 @@ export const createConsentProviderRuntime =
 		// `start()` then treats the kernel as built from it, as it would a
 		// ready prefetch.
 		let adoptedPrefetch: RuntimePrefetch | undefined;
+		const stripPrefetchUserConsent = (
+			config: RuntimePrefetch
+		): RuntimePrefetch => {
+			const {
+				initialUser: _user,
+				initialUserConsent: _consent,
+				initialRecords,
+				...rest
+			} = config;
+			if (!initialRecords?.accountLayer) {
+				return initialRecords === undefined
+					? rest
+					: { ...rest, initialRecords };
+			}
+			const { accountLayer: _accountLayer, ...restRecords } = initialRecords;
+			return { ...rest, initialRecords: restRecords };
+		};
+		// One monotonic identity epoch (owned by `main`) fences streamed SSR
+		// user/consent adoption against clear, logout, user switch, `userConsent: null`
+		// (at construction or later), and dispose. When the stream adopts its own
+		// user/consent, `streamEpoch` advances to the epoch that adoption produced
+		// so the stream does not fence its own records.
+		const mainEpochRef: { read?: () => number } = {};
+		let streamEpoch = initial.userConsent === null ? -1 : 0;
+		let pendingStreamPersist:
+			| { readonly doc: UserConsent | null; readonly epoch: number }
+			| undefined;
+		const isStreamEpochCurrent = (): boolean =>
+			streamEpoch >= 0 &&
+			(mainEpochRef.read === undefined || mainEpochRef.read() === streamEpoch);
 		let overridesChanged = false;
 		const listeners = new Set<() => void>();
 		const notify = function notify() {
@@ -304,7 +336,8 @@ export const createConsentProviderRuntime =
 							selectedMode,
 							initial.prefetch as PromiseLike<RuntimePrefetch>,
 							initial,
-							() => built.runtime?.kernel
+							() => built.runtime?.kernel,
+							isStreamEpochCurrent
 						)
 					: selectedMode;
 			const view = new Proxy({} as ConsentRuntimeOptions, {
@@ -320,15 +353,21 @@ export const createConsentProviderRuntime =
 					}
 					if (key === 'prefetch') {
 						if (on && adoptedPrefetch) {
-							return adoptedPrefetch;
+							return isStreamEpochCurrent()
+								? adoptedPrefetch
+								: stripPrefetchUserConsent(adoptedPrefetch);
 						}
 						// A pending prefetch is streamed into the first init. Once
 						// overrides or the language changed before start or while
 						// disabled, the prefetch answers for other inputs: start
 						// asks the backend instead.
-						return knownPrefetch && overridesChanged
-							? { ...knownPrefetch, initialPolicyPending: true }
-							: knownPrefetch;
+						const resolvedKnown =
+							knownPrefetch && overridesChanged
+								? { ...knownPrefetch, initialPolicyPending: true }
+								: knownPrefetch;
+						return resolvedKnown && !isStreamEpochCurrent()
+							? stripPrefetchUserConsent(resolvedKnown)
+							: resolvedKnown;
 					}
 					const source = LIVE_OPTIONS.has(key) ? current : initial;
 					return source[key as keyof ConsentRuntimeUpdate];
@@ -368,7 +407,75 @@ export const createConsentProviderRuntime =
 		type Built = ReturnType<typeof build>;
 
 		const main = build(true);
+		mainEpochRef.read = main.getIdentityEpoch;
 		main.runtime.subscribe(notify);
+		let permissive: Built | null = null;
+		if (!enabled) {
+			// The main runtime stays detached until it runs, and holds nothing
+			// meanwhile: a disabled provider grants every category.
+			main.stop();
+			main.releaseHold();
+			permissive = build(false);
+		}
+		let streamedApplied = false;
+		const queueStreamPersist = (doc: UserConsent | null | undefined): void => {
+			if (!started) {
+				pendingStreamPersist = {
+					doc: doc ?? null,
+					epoch: main.getIdentityEpoch(),
+				};
+			}
+		};
+		const adoptStreamedUserConsent = function adoptStreamedUserConsent(
+			config: RuntimePrefetch | undefined
+		): void {
+			if (
+				streamedApplied ||
+				disposed ||
+				permissive ||
+				!config ||
+				!isStreamEpochCurrent()
+			) {
+				return;
+			}
+			const streamedUser = normalizeKernelUser(config.initialUser) ?? null;
+			const shouldSetUser =
+				streamedUser !== null &&
+				current.user === undefined &&
+				main.runtime.kernel.getSnapshot().user === null;
+			const applyConsent =
+				config.initialUserConsent !== undefined &&
+				current.userConsent === undefined;
+			if (!shouldSetUser && !applyConsent) {
+				return;
+			}
+			streamedApplied = true;
+			if (shouldSetUser) {
+				if (isUserConsentPromise(current.userConsent)) {
+					main.setUser(streamedUser, { pending: true });
+					streamEpoch = main.getIdentityEpoch();
+					main.runtime.syncUserConsent(current.userConsent);
+				} else if (applyConsent) {
+					main.setUser(streamedUser, {
+						userConsent: config.initialUserConsent,
+					});
+					if (config.initialUserConsent !== null) {
+						streamEpoch = main.getIdentityEpoch();
+					}
+					queueStreamPersist(config.initialUserConsent);
+				} else {
+					main.setUser(streamedUser);
+					streamEpoch = main.getIdentityEpoch();
+				}
+				return;
+			}
+			main.runtime.syncUserConsent(config.initialUserConsent);
+			if (config.initialUserConsent !== null) {
+				streamEpoch = main.getIdentityEpoch();
+			}
+			queueStreamPersist(config.initialUserConsent);
+		};
+
 		// Only a prefetch the runtime streams into its first init: without
 		// `streamPrefetch` the promise is ignored, the runtime's own init
 		// carries its own journey, and the save must carry that one too.
@@ -387,18 +494,11 @@ export const createConsentProviderRuntime =
 					main.adoptJourney(
 						streamed?.journey === null ? null : streamed?.journey?.id
 					);
+					adoptStreamedUserConsent(streamed);
 				} catch {
 					// The stream failed; the runtime keeps its own journey.
 				}
 			})();
-		}
-		let permissive: Built | null = null;
-		if (!enabled) {
-			// The main runtime stays detached until it runs, and holds nothing
-			// meanwhile: a disabled provider grants every category.
-			main.stop();
-			main.releaseHold();
-			permissive = build(false);
 		}
 		const active = (): Built => permissive ?? main;
 
@@ -432,7 +532,10 @@ export const createConsentProviderRuntime =
 							) {
 								return;
 							}
-							const response = kernelConfigToInitResponse(config);
+							const effectiveConfig = isStreamEpochCurrent()
+								? config
+								: stripPrefetchUserConsent(config);
+							const response = kernelConfigToInitResponse(effectiveConfig);
 							if (!response) {
 								return;
 							}
@@ -454,13 +557,19 @@ export const createConsentProviderRuntime =
 							}
 							initApplied = true;
 							if (!started) {
-								adoptedPrefetch = config;
+								adoptedPrefetch = effectiveConfig;
 							}
 							// Before the banner is interactive: a choice made on it
 							// carries the journey the server started.
 							main.adoptJourney(
-								config.journey === null ? null : config.journey?.id
+								effectiveConfig.journey === null
+									? null
+									: effectiveConfig.journey?.id
 							);
+							// Apply streamed user/account consent while `policyPending` is
+							// still true so clearing `policyPending` in `adoptInit` never
+							// publishes a permissive opt-out state before the paired denial.
+							adoptStreamedUserConsent(effectiveConfig);
 							(main.runtime.kernel as InternalKernel).adoptInit(
 								response,
 								started
@@ -485,7 +594,10 @@ export const createConsentProviderRuntime =
 										mode: Object.assign(() => ({}), {
 											kind: selectedMode.kind,
 										}),
-										prefetch: config,
+										prefetch:
+											streamEpoch < 0
+												? stripPrefetchUserConsent(config)
+												: config,
 									}).getServerSnapshot(),
 								};
 							}
@@ -609,6 +721,59 @@ export const createConsentProviderRuntime =
 		const runtime: ConsentRuntime = main.runtime;
 		// Records, identity, IAB, iframes and storage belong to the main
 		// runtime whatever `enabled` is; those members come from it unchanged.
+		const syncIdentityAndUserConsent = function syncIdentityAndUserConsent(
+			previous: ConsentRuntimeUpdate,
+			next: ConsentRuntimeUpdate
+		): void {
+			const prevUser = normalizeKernelUser(previous.user);
+			const nextUser = normalizeKernelUser(next.user);
+			const kernelUser = main.runtime.kernel.getSnapshot().user;
+			// When both previous and next `user` options are omitted, the user
+			// did not change: keep any identity supplied by SSR or `identify()`.
+			const bothOmitted = prevUser === undefined && nextUser === undefined;
+			const prevExternalId =
+				prevUser?.externalId ?? kernelUser?.externalId ?? null;
+			const nextExternalId = nextUser?.externalId ?? null;
+			const userChanged = !bothOmitted && prevExternalId !== nextExternalId;
+			if (userChanged) {
+				if (isUserConsentPromise(next.userConsent)) {
+					main.setUser(nextUser ?? null, { pending: true });
+					runtime.syncUserConsent(next.userConsent);
+				} else if (next.userConsent === undefined) {
+					main.setUser(nextUser ?? null, { pending: false });
+				} else {
+					main.setUser(nextUser ?? null, { userConsent: next.userConsent });
+				}
+				return;
+			}
+			if (
+				nextUser !== undefined &&
+				(prevUser === undefined ||
+					nextUser.identityToken !== prevUser.identityToken ||
+					nextUser.identityProvider !== prevUser.identityProvider)
+			) {
+				main.setUser(nextUser);
+			}
+			if (next.userConsent !== previous.userConsent) {
+				runtime.syncUserConsent(next.userConsent);
+			}
+		};
+
+		const holdForNewRules = function holdForNewRules(
+			previous: ConsentRuntimeUpdate,
+			next: ConsentRuntimeUpdate
+		): NetworkHold | undefined {
+			const before = previous.networkBlocker || undefined;
+			const after = next.networkBlocker || undefined;
+			return started &&
+				enabled &&
+				after &&
+				after.enabled !== false &&
+				(after.rules !== before?.rules || before?.enabled === false)
+				? holdNetworkRequests(after.rules)
+				: undefined;
+		};
+
 		const provider: Omit<
 			ConsentProviderRuntime,
 			| 'clearRecords'
@@ -617,6 +782,7 @@ export const createConsentProviderRuntime =
 			| 'identify'
 			| 'processIframes'
 			| 'reconcileStorage'
+			| 'syncUserConsent'
 		> = {
 			get consentCategories() {
 				return active().runtime.consentCategories;
@@ -669,6 +835,16 @@ export const createConsentProviderRuntime =
 				started = true;
 				active().runtime.start();
 				streamedRecordsGeneration = main.runtime.kernel.getRecordsGeneration();
+				if (pendingStreamPersist) {
+					const pending = pendingStreamPersist;
+					pendingStreamPersist = undefined;
+					if (pending.epoch === main.getIdentityEpoch()) {
+						(main.runtime.kernel as InternalKernel).settleUserConsent(
+							pending.doc,
+							{ clearPending: true, forceClientSync: true }
+						);
+					}
+				}
 				// The kernel already carries these owners from construction;
 				// registering them keeps them when another module re-declares.
 				declareOwnedVendors(runtime.kernel, ownersOf(current), ownerSource);
@@ -703,6 +879,10 @@ export const createConsentProviderRuntime =
 						overridesChanged = true;
 					}
 				}
+				// Apply user and `userConsent` updates BEFORE re-enabling mounts
+				// modules (script loader, blockers), so re-enabling with a new user's
+				// denial never runs scripts under the prior account's permissions.
+				syncIdentityAndUserConsent(previous, current);
 				// Mounts every module again from the new options.
 				setEnabled(current.enabled ?? true);
 				// Categories decide what is granted, so they apply now too.
@@ -715,17 +895,7 @@ export const createConsentProviderRuntime =
 				// New or wider network rules reach the blocker with the update
 				// module. Until then, hold what they match, as the runtime holds
 				// requests from construction until the blocker loads.
-				const before = previous.networkBlocker || undefined;
-				const after = current.networkBlocker || undefined;
-				const hold =
-					started &&
-					enabled &&
-					after &&
-					after.enabled !== false &&
-					(after.rules !== before?.rules || before?.enabled === false)
-						? holdNetworkRequests(after.rules)
-						: undefined;
-				return applyUpdate(hold);
+				return applyUpdate(holdForNewRules(previous, current));
 			},
 		};
 		return Object.setPrototypeOf(provider, runtime) as ConsentProviderRuntime;

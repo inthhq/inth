@@ -185,6 +185,8 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		}
 	};
 	let engine: LoadedEngine | undefined;
+	// The account consent document the engine has yet to apply.
+	let { userConsent } = options.options();
 	let mounted = false;
 	let active = true;
 	let stopSchedule: (() => void) | undefined;
@@ -568,8 +570,20 @@ export const createDeferredRuntime = function createDeferredRuntime(
 				listeners.delete(listener);
 			};
 		},
+		syncUserConsent: forward('syncUserConsent'),
 		async update(next) {
-			// Before the engine, it reads the options when it is created.
+			// Before the engine, it reads the options when it is created. Only
+			// the engine applies an account's consent document, so a new one
+			// loads it; one that did not load stays new for the next update.
+			const { userConsent: nextUserConsent } = next;
+			if (!engine && mounted && nextUserConsent !== userConsent) {
+				const previous = userConsent;
+				userConsent = nextUserConsent;
+				await later(() => undefined);
+				if (!engine) {
+					userConsent = previous;
+				}
+			}
 			if (engine) {
 				await engine.runtime.update(engine.updateOptions(next));
 			}

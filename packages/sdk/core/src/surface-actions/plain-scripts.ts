@@ -236,7 +236,7 @@ export const scriptsNeedEngine = function scriptsNeedEngine(
 export interface RootEngineInputs {
 	clearOnRevocation?: unknown;
 	networkBlocker?: { enabled?: boolean } | false;
-	options?: { enabled?: boolean; experiment?: unknown };
+	options?: { enabled?: boolean; experiment?: unknown; userConsent?: unknown };
 }
 
 /**
@@ -260,6 +260,7 @@ export const rootNeedsEngine = function rootNeedsEngine({
 		clearOnRevocation ||
 		options?.experiment ||
 		options?.enabled === false ||
+		options?.userConsent !== undefined ||
 		(networkBlocker && networkBlocker.enabled !== false)
 	);
 };

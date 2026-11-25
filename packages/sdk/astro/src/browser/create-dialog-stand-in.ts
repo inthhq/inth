@@ -152,6 +152,7 @@ export const createDialogStandIn = function createDialogStandIn(
 				runtimeListeners.delete(listener);
 			};
 		},
+		syncUserConsent: forward('syncUserConsent'),
 	} as unknown as ConsentRuntime;
 
 	const notifyRuntime = (): void => {

@@ -438,4 +438,37 @@ describe('createDeferredRuntime', () => {
 		runtime.dispose();
 		error.mockRestore();
 	});
+
+	test('#21: updating userConsent on a deferred runtime loads the engine and forwards the option', async () => {
+		const base = options();
+		const forwarded: unknown[] = [];
+		const engine = createConsentProviderRuntime(
+			{ mode: testLocal(), persistence: false },
+			defaultRuntimeModules
+		);
+		const updateSpy = vi.spyOn(engine, 'update').mockImplementation((next) => {
+			forwarded.push(next.userConsent);
+			return Promise.resolve();
+		});
+		const loadEngine = vi.fn(() =>
+			Promise.resolve(() => ({
+				preloadSavePath: () => Promise.resolve(),
+				runtime: engine,
+				updateOptions: (next: unknown) => next as never,
+			}))
+		);
+		const runtime = createDeferredRuntime({
+			boot: { d: 1, s: snapshotFor('none', false) },
+			loadEngine,
+			options: () => base,
+			schedule: () => () => undefined,
+		});
+		runtime.start();
+
+		await runtime.update({ ...base, userConsent: null });
+		expect(loadEngine).toHaveBeenCalledTimes(1);
+		expect(forwarded).toContain(null);
+		updateSpy.mockRestore();
+		runtime.dispose();
+	});
 });

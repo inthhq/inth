@@ -36,6 +36,7 @@ import type {
 } from '../transports/mode';
 import type { ConsentRuntimeOptions } from './consent-runtime.model';
 import { isIABConfigured } from './is-iab-configured';
+import { isUserConsentPromise } from './user-consent-sync';
 
 const DEFAULT_TRANSLATIONS: KernelTranslations = {
 	language: 'en',
@@ -327,6 +328,21 @@ export const createRuntimeKernel = function createRuntimeKernel(
 			)
 		: {};
 
+	const initialUser = normalizeKernelUser(options.user) ?? prefetch.initialUser;
+	const rawUserConsent = options.userConsent;
+	const userConsentIsPromise = isUserConsentPromise(rawUserConsent);
+	let initialUserConsent: KernelConfig['initialUserConsent'];
+	if (enabled && !options.consentSource && !userConsentIsPromise) {
+		initialUserConsent =
+			rawUserConsent === undefined
+				? prefetch.initialUserConsent
+				: rawUserConsent;
+	}
+	const initialUserConsentPending =
+		enabled && !options.consentSource
+			? Boolean(userConsentIsPromise && initialUser?.externalId)
+			: false;
+
 	return createKernel({
 		...prefetch,
 		consentCategories: options.consentCategories,
@@ -366,7 +382,9 @@ export const createRuntimeKernel = function createRuntimeKernel(
 		initialRecords:
 			enabled && !options.consentSource ? prefetch.initialRecords : undefined,
 		initialTranslations: prefetch.initialTranslations ?? i18nTranslations,
-		initialUser: normalizeKernelUser(options.user) ?? prefetch.initialUser,
+		initialUser,
+		initialUserConsent,
+		initialUserConsentPending,
 		initialVendors:
 			declaredVendors.length > 0 || vendorListVersion !== null
 				? { declared: declaredVendors, listVersion: vendorListVersion }

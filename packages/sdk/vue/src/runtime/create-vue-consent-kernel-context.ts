@@ -192,6 +192,8 @@ const toRuntimeOptions = function toRuntimeOptions(
 		scripts: config.scripts,
 		storageConfig: config.storageConfig,
 		theme: config.theme,
+		user: config.user,
+		userConsent: config.userConsent,
 		vendors: config.vendors,
 	};
 };

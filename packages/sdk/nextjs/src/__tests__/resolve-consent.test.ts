@@ -372,4 +372,33 @@ describe('resolveConsent wiring', () => {
 		expect(headers.has('cookie')).toBe(false);
 		expect(state.experiment).toBe(experiment);
 	});
+
+	test('folds user and userConsent into the server boot state', async () => {
+		const userConsent = {
+			categories: { marketing: false },
+			optOut: null,
+			sync: {
+				checkedAt: 1_800_000_000_000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'fp_1', kind: 'choice-v1' as const },
+						confirmedAt: 1_799_999_999_000,
+						value: false,
+					},
+				},
+				externalId: 'user_next',
+				optOut: null,
+				vendors: {},
+			},
+		};
+		const state = await resolveConsent({
+			config: hostedAt('https://consent.example.com'),
+			fetch: backend(),
+			request: requestOf({}),
+			user: { externalId: 'user_next' },
+			userConsent,
+		});
+		expect(state.initialUser).toEqual({ externalId: 'user_next' });
+		expect(state.initialUserConsent).toEqual(userConsent);
+	});
 });

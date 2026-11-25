@@ -31,13 +31,15 @@ export const streamPrefetch = function streamPrefetch(
 	mode: ProviderTransportFactory,
 	prefetch: PromiseLike<RuntimePrefetch>,
 	options: Pick<ConsentProviderRuntimeOptions, 'experiment' | 'overrides'>,
-	getKernel: () => ConsentKernel | undefined
+	getKernel: () => ConsentKernel | undefined,
+	isStreamAllowed?: () => boolean
 ): ProviderTransportFactory {
 	return createStreamedMode(
 		mode,
 		prefetch,
 		options,
 		getKernel,
-		() => resolveStreamedInit
+		() => resolveStreamedInit,
+		isStreamAllowed
 	);
 };

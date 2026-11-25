@@ -1,0 +1,25 @@
+{/* Generated from internals/doc-snippets/tanstack-start/src/rendering/cross-domain-root.tsx (docs:cross-domain-root) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```tsx title="src/routes/__root.tsx"
+import { Inth } from '@inth/node';
+import { resolveConsent } from '@inth/tanstack-start/server';
+
+const inth = new Inth();
+
+// Inside your server loader:
+const sessionUser = await getSessionUser();
+const consentResult = sessionUser
+	? await inth.consents.check({ externalId: sessionUser.id })
+	: null;
+const userConsent =
+	sessionUser === null
+		? null
+		: consentResult?.error
+			? undefined
+			: consentResult?.data;
+
+const consentState = await resolveConsent({
+	user: sessionUser ? { externalId: sessionUser.id } : undefined,
+	userConsent,
+});
+```

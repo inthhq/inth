@@ -1,7 +1,11 @@
-// The part of Vite's `import.meta.env` that `ConsentDevTools.vue` reads. A
-// Vite app gets the full type from `vite/client`.
+// The part of Vite's `import.meta.env` that `ConsentDevTools.vue` and
+// `cross-domain-main.ts` read. A Vite app gets the full type from
+// `vite/client`.
 interface ImportMeta {
-	readonly env: { readonly DEV: boolean };
+	readonly env: {
+		readonly DEV: boolean;
+		readonly VITE_INTH_PROJECT_URL: string;
+	};
 }
 
 declare module '*.vue' {

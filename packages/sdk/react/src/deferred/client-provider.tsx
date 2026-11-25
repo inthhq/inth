@@ -49,7 +49,7 @@ import type {
 	InthProviderProps,
 	OwnedRuntimeProviderProps,
 } from '../provider';
-import { awaitsChoice, rootNeedsEngine } from './boot';
+import { awaitsChoice, liveRootKey, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
 import type { DeferredKernelHandle } from './create-deferred-kernel';
 import type { DeferredCommitConfig } from './deferred-committed.model';
@@ -73,6 +73,7 @@ const needsEngine = function needsEngine(
 		rootNeedsEngine({ networkBlocker: options.networkBlocker, options }) ||
 		options.prefetch ||
 		options.consentSource ||
+		options.userConsent !== undefined ||
 		options.scripts?.length ||
 		options.vendors?.length ||
 		options.__resolveStreamedInit
@@ -339,6 +340,9 @@ export const createConsentProvider = function createConsentProvider(
 				boot={{ s: deferred.pending }}
 				commit={commitConfig(options)}
 				defer={!deferred.now}
+				// Only the engine applies an account's consent document, so a
+				// new one loads it at once.
+				live={liveRootKey({ options: { userConsent: options.userConsent } })}
 				loadEngine={loadEngine}
 				options={options}
 				prefetch={undefined}

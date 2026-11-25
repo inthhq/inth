@@ -150,7 +150,6 @@ export const canDeferEngineAfterChoice = function canDeferEngineAfterChoice(
 	return (
 		snapshot.activeUI === 'none' &&
 		snapshot.model !== 'iab' &&
-		!snapshot.policyPending &&
 		!snapshot.userConsentPending &&
 		!snapshot.hasAccountLayer &&
 		!snapshot.externalPermissions &&

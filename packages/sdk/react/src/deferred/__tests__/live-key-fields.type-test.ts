@@ -48,5 +48,6 @@ export const OPTIONS: Record<keyof InthProviderOptions, 'display' | 'key'> = {
 	theme: 'display',
 	trapFocus: 'display',
 	user: 'key',
+	userConsent: 'key',
 	vendors: 'key',
 };

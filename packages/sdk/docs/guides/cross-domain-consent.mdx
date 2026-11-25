@@ -1,0 +1,191 @@
+---
+title: Cross-domain consent
+description: Sync signed-in users' consent across domains with @inth/node consents.check() and the userConsent provider option.
+group: guides
+---
+
+Share consent choices, vendor denials, and account opt-outs for signed-in users across domains in one Inth project without a second browser read from Inth.
+
+Your server's `GET /user` endpoint reads the user's consent document with `@inth/node` and mints an identity token. Your app passes both `user` and `userConsent` to the Inth provider. Inth applies the newest decision per category and vendor, keeps account state separate from browser-made records, and persists it locally.
+
+## Fetch `userConsent` and an identity token on your server
+
+Call `inth.consents.check()` without `property` so choices from every domain in your project are included. Mint a short-lived identity token alongside it so the browser can link itself and lift account-held opt-outs.
+
+<include src="../shared/examples/node/node-user-consent-route.mdx" />
+
+Omit `property` on `consents.check()`. Passing `property` restricts the answer to one host name and hides decisions made on your other domains.
+
+Send `Cache-Control: private, no-store` on this response. See [Don't cache `userConsent`](#dont-cache-userconsent).
+
+You don't need a separate endpoint. Any server response you already send works, such as an existing session endpoint or the page HTML itself. See [Without a `GET /user` endpoint](#without-a-get-user-endpoint).
+
+## Pass `user` and `userConsent` to your framework
+
+Always pass `user` alongside `userConsent`. Inth ignores `userConsent` when `user` is missing or when `user.externalId` differs from `userConsent.sync.externalId`.
+
+### React
+
+Pass either the resolved `UserConsent` document or a memoized `Promise<UserConsent | null | undefined>`.
+
+<include src="../shared/examples/react/cross-domain-app.mdx" />
+
+Keep `userConsent` as `undefined` when `/api/user` or `consents.check()` fails so the browser keeps its stored account consent layer. Pass `null` only when the visitor is signed out, which clears any stored account layer.
+
+### Next.js
+
+Fold `user` and `userConsent` on the server in `resolveConsent()` so server HTML, hydration, and `serverStart` scripts match without a flash. Pass the full `user` (with `identityToken`) on the client.
+
+<include src="../shared/examples/nextjs/cross-domain-layout.mdx" />
+
+On reload, if you omit `userConsent` (`undefined`) and still pass `user: { externalId }`, `resolveConsent()` reads the visitor's account cookies gated by `user.externalId`.
+
+### TanStack Start
+
+<include src="../shared/examples/tanstack-start/cross-domain-root.mdx" />
+
+Pass `consentState` to `<InthProvider state={consentState} options={{ user, userConsent }}>`.
+
+### Vue and Nuxt
+
+Pass `user` and `userConsent` in the plugin options or reactive config:
+
+<include src="../shared/examples/vue/cross-domain-main.mdx" />
+
+### Svelte
+
+<include src="../shared/examples/svelte/cross-domain-layout.mdx" />
+
+### Angular
+
+<include src="../shared/examples/angular/cross-domain-config.mdx" />
+
+### Astro
+
+Pass `user` and `userConsent` from your `clientEntrypoint` extension:
+
+<include src="../shared/examples/astro/cross-domain-client.mdx" />
+
+### Plain HTML and script tag
+
+Pass `userConsent` in `window.inth.init()` / `config`, or sync later with `window.inth.syncUserConsent()`:
+
+```html
+<script>
+	window.inth = window.inth || [];
+	fetch('/api/user')
+		.then((res) => res.json())
+		.then(({ user, userConsent }) => {
+			if (user) {
+				window.inth.push(['identify', user]);
+			}
+			window.inth.push(['syncUserConsent', userConsent]);
+		});
+</script>
+```
+
+### Without a `GET /user` endpoint
+
+The browser can't read a user's consent from Inth by itself. `consents.check()` and `users.createIdentityToken()` both need your secret key, so your server always makes these two calls. What you can skip is the extra browser request: render `user` and `userConsent` into the page your server already sends.
+
+```ts title="Server: render the page"
+const [consentResult, tokenResult] = await Promise.all([
+	inth.consents.check({ externalId: user.id }),
+	inth.users.createIdentityToken({ externalId: user.id }),
+]);
+
+const inthConfig = {
+	user: {
+		externalId: user.id,
+		identityToken: tokenResult.error ? undefined : tokenResult.data.token,
+	},
+	userConsent: consentResult.error ? undefined : consentResult.data,
+};
+
+// Escape `<` so the JSON can't close the script tag
+const inthAccount = JSON.stringify(inthConfig).replaceAll('<', '\\u003c');
+
+return new Response(renderPage({ inthAccount }), {
+	headers: {
+		'cache-control': 'private, no-store',
+		'content-type': 'text/html',
+	},
+});
+```
+
+Write `inthAccount` into a JSON script tag, then merge it into your Inth config:
+
+```html title="Page HTML"
+<script type="application/json" id="inth-account">
+	<!-- inthAccount goes here -->
+</script>
+<script>
+	var account = JSON.parse(document.getElementById('inth-account').textContent);
+	window.inth = window.inth || [];
+	window.inth.push(['config', Object.assign({ consentCategories: ['measurement', 'marketing'] }, account)]);
+</script>
+<script src="/inth.js" defer></script>
+```
+
+For a signed-out visitor, render `{ "userConsent": null }` and leave out `user`.
+
+Inth applies the account's consent before it decides on the banner and scripts, so the page never waits on a network request for it. The page HTML now carries one user's consent and identity token, so it must not be cached for other users. See [Don't cache `userConsent`](#dont-cache-userconsent).
+
+## `undefined` vs `null`
+
+- **`undefined`** means the consent document is unknown or was not fetched on this pass. Inth makes no change to any stored account layer. On SSR, `resolveConsent()` reads the account cookies for `user.externalId`.
+- **`null`** means the user is signed out. Inth drops the account layer, deletes the account cookies and localStorage entry synchronously, and leaves browser-made choices intact.
+
+Changing `user.externalId` or removing `user` also drops the previous user's account layer and deletes its storage synchronously.
+
+## How opt-outs and opt-ins combine across domains
+
+An opt-out of sale or sharing follows the user to every domain. An opt-in made on another domain counts only while Inth knows who the user is.
+
+- **An opt-out on any device applies to the account.** When a signed-in user opts out on one domain, your other domains treat them as opted out once they receive that user's `userConsent`.
+- **An account with no opt-out never clears a device's opt-out.** If this browser opted out and the account shows no opt-out, this browser stays opted out.
+- **A newer confirmed opt-in on the account wins on other domains while the user is signed in.** If the user opts back in on another domain after this browser opted out, this domain follows the opt-in for the rights it covers.
+- **GPC always wins on its browser.** An opt-out recorded from the browser's Global Privacy Control signal stays in force, whatever the account says.
+- **After sign-out, the device's own opt-out applies again.** Inth never deletes a device's opt-out because of the account. When the user signs out, or another user signs in, it applies again.
+
+An opt-in made in this browser, with `optIn()`, clears this browser's own opt-out as before.
+
+## Memoize a `Promise`
+
+When you pass a `Promise<UserConsent | null>`, memoize it per user (for example with `useMemo` keyed on `user?.externalId`).
+
+- Each new user's first `Promise` holds optional permissions at `false` and pauses scripts, network requests, iframes, and clear-on-revocation until the `Promise` settles or a 3-second timeout fires.
+- Passing a new `Promise` identity for the same user starts a new generation without re-arming the hold, and older Promises that resolve late are dropped.
+- A `Promise` `userConsent` disables `serverScriptStart` for that render.
+- Resolved values are compared by content, so re-rendering with an equal object is a no-op.
+
+## Don't cache `userConsent`
+
+Inth can only apply decisions that reach it. A cached response that carries `userConsent`, whether from `GET /user` or a rendered page, hides changes made on your other domains until the cache expires.
+
+- **Shared caches leak between users.** A CDN or proxy that caches the response can serve one user's consent and identity token to another user. Inth can't catch this, because the cached `user` and `userConsent` match each other.
+- **Long caches delay revocations.** If a user denies marketing on `shop.example`, a cached response on `checkout.example` still says granted until it expires, so marketing scripts keep loading there.
+- **Don't cache `consents.check()` on your server either.** If you must, keep the cache to a few seconds.
+
+Send `Cache-Control: private, no-store` on every response that carries `userConsent`.
+
+Client-side caches such as TanStack Query or SWR are fine. Pass the fresh value to the provider when it arrives, and Inth applies the newest decision. A stale document never overrides a newer decision this browser already holds.
+
+## Clock trade-off
+
+Inth stores raw server timestamps with a backward-only clock shift (`skew = max(0, checkedAt - localNow)`). This keeps a cached document or a server clock ahead of the browser from outranking a newer local click.
+
+If a visitor's browser clock runs ahead of the server's, synced account choices look older by that difference. Local clicks still win in that browser; this is an accepted trade-off.
+
+## Cookie budget and dropped cookie parts
+
+Account state is stored apart from browser-made records in three compact cookies plus localStorage under a shared revision:
+
+- `<key>-acct-c`: category choices with a shared basis table, raw times, and optional expiry.
+- `<key>-acct-v`: denied vendor IDs only (with raw times).
+- `<key>-acct-o`: person-held opt-out record, and the time of the account's latest opt-in for each right.
+- `<key>-acct` (localStorage): full account layer, including category grants and the complete vendor map.
+
+Keeping granted vendors in localStorage keeps the cookies small even with large vendor lists. Empty parts are written explicitly so an empty list differs from a failed cookie write.
+
+If a part carries a revision that differs from the other parts, Inth treats that part as missing. If a browser drops an account cookie part, a server render runs without that part and the client corrects from localStorage after hydration, which can cause a brief banner flash.

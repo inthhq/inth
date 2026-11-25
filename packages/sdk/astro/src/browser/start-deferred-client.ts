@@ -124,6 +124,21 @@ export interface EngineModule {
 }
 
 /**
+ * Whether a signed-in user's account consent is on its way or applied. Only
+ * the engine applies it, so the page neither waits nor commits early.
+ */
+const usesAccountConsent = function usesAccountConsent(
+	snapshot: ConsentBoot['s'],
+	extension: InthClientOptionsExtension
+): boolean {
+	return (
+		Boolean(snapshot.userConsentPending) ||
+		Boolean(snapshot.hasAccountLayer) ||
+		extension.userConsent !== undefined
+	);
+};
+
+/**
  * Whether this page can wait for the engine, given what only the browser
  * knows: the `clientEntrypoint` additions and the page's inline gated
  * scripts.
@@ -146,6 +161,7 @@ const canWait = function canWait(
 		// and they are the engine's and the panel's, so neither waits.
 		!document.querySelector(`${EARLY_TAP_ROOT}[data-flow="all-in-one"]`) &&
 		snapshot.activeUI === 'banner' &&
+		!usesAccountConsent(snapshot, extension) &&
 		!extension.consentSource &&
 		!(blocker && blocker.enabled !== false) &&
 		!scripts.some((script) => isRunnableNow(script, snapshot)) &&
@@ -442,7 +458,10 @@ export const startDeferredClient = function startDeferredClient(
 	// it a short case (see `canDeferEngine`) and nothing the browser adds,
 	// such as a consent source or a script naming a vendor, takes it away.
 	const commitsEarly =
-		boot.d && !extension.consentSource && !scripts.some(declaresVendor);
+		boot.d &&
+		!usesAccountConsent(snapshot, extension) &&
+		!extension.consentSource &&
+		!scripts.some(declaresVendor);
 
 	/**
 	 * Commit a choice before the engine, in this task. `null` when only the

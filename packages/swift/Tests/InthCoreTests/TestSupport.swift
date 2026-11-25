@@ -52,6 +52,8 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
     private var saveRequests: [HTTPRequest] = []
     private var identityRequests: [HTTPRequest] = []
     private var _savesFail = false
+    private var _holdsInit = false
+    private var initWaiters: [CheckedContinuation<Void, Never>] = []
     private var _holdsSaves = false
     private var saveWaiters: [CheckedContinuation<Void, Never>] = []
     private var _holdsLinks = false
@@ -108,6 +110,31 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
             lock.lock()
             _holdsSaves = newValue
             lock.unlock()
+        }
+    }
+
+    /// Park init responses so cached state stays observable until release.
+    var holdsInit: Bool {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _holdsInit
+        }
+        set {
+            lock.lock()
+            _holdsInit = newValue
+            lock.unlock()
+        }
+    }
+
+    func releaseInit() {
+        lock.lock()
+        _holdsInit = false
+        let parked = initWaiters
+        initWaiters = []
+        lock.unlock()
+        for waiter in parked {
+            waiter.resume()
         }
     }
 
@@ -203,6 +230,17 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
             initRequests.append(request)
             let canned = pendingInit.isEmpty ? nil : pendingInit.removeFirst()
             lock.unlock()
+            await withCheckedContinuation {
+                (continuation: CheckedContinuation<Void, Never>) in
+                lock.lock()
+                if _holdsInit {
+                    initWaiters.append(continuation)
+                    lock.unlock()
+                } else {
+                    lock.unlock()
+                    continuation.resume()
+                }
+            }
             return canned ?? initResponse
 
         case .post where request.url.path.hasSuffix("/link"):

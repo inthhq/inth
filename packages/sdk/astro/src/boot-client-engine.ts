@@ -582,6 +582,8 @@ const createClient = function createClient(
 			scripts,
 			storageConfig: options.storageConfig,
 			theme: options.theme,
+			user: extension.user,
+			userConsent: extension.userConsent,
 			vendors: options.vendors,
 		},
 		iab

@@ -12,7 +12,11 @@
  * Component or route handler. It is NOT marked `'use server'` because it
  * is a plain async function, not an action.
  */
-import type { ConsentJourneyOption, ServerExperiment } from '@inth/sdk/engine';
+import type {
+	ConsentJourneyOption,
+	ServerExperiment,
+	UserConsent,
+} from '@inth/sdk/engine';
 import { resolveRequestConsent } from '@inth/sdk/server';
 import * as React from 'react';
 
@@ -212,6 +216,23 @@ export interface ResolveConsentOptions
 	experiment?: ServerExperiment;
 
 	/**
+	 * Signed-in user identity for server-side cross-domain consent folding.
+	 * Pass alongside `userConsent` (or alone on reload so account cookies are
+	 * read for this `externalId`).
+	 */
+	user?: {
+		readonly externalId: string;
+		readonly externalIdType?: string;
+		readonly identityProvider?: string;
+	};
+	/**
+	 * Resolved `UserConsent` document from `@inth/node` `consents.check()`, or
+	 * `null` when signed out. Folded into the server boot state so server HTML,
+	 * hydration, and `serverStart` scripts agree.
+	 */
+	userConsent?: UserConsent | null;
+
+	/**
 	 * Receives work that outlives the render (the session report, a manifest
 	 * refresh, or a manifest request `timeoutMs` stopped waiting for) so it
 	 * survives the response on runtimes that stop detached work once a
@@ -318,6 +339,8 @@ export const resolveConsent = async function resolveConsent(
 			: undefined,
 		timeoutMs: options.timeoutMs,
 		trustForwardedHeaders: options.trustForwardedHeaders,
+		user: options.user,
+		userConsent: options.userConsent,
 		waitUntil: options.waitUntil,
 	})) as ConsentState;
 };

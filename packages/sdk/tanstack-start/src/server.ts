@@ -64,6 +64,7 @@ import type {
 	JourneyState,
 	KernelConfig,
 	ServerExperiment,
+	UserConsent,
 } from '@inth/sdk/engine';
 import {
 	projectUrl as generatedProjectUrl,
@@ -308,6 +309,23 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	journey?: ConsentJourneyOption;
 
 	/**
+	 * Signed-in user identity for server-side cross-domain consent folding.
+	 * Pass alongside `userConsent` (or alone on reload so account cookies are
+	 * read for this `externalId`).
+	 */
+	user?: {
+		readonly externalId: string;
+		readonly externalIdType?: string;
+		readonly identityProvider?: string;
+	};
+	/**
+	 * Resolved `UserConsent` document from `@inth/node` `consents.check()`, or
+	 * `null` when signed out. Folded into the server boot state so server HTML,
+	 * hydration, and `serverStart` scripts agree.
+	 */
+	userConsent?: UserConsent | null;
+
+	/**
 	 * The banner experiment with the arm this request runs, from your
 	 * feature flag. While the visitor has no stored choice, the render's
 	 * session report carries the arm, so the backend counts the visitors
@@ -416,6 +434,8 @@ const resolveConsentState = async function resolveConsentState(
 			: undefined,
 		timeoutMs: options.timeoutMs,
 		trustForwardedHeaders: options.trustForwardedHeaders,
+		user: options.user,
+		userConsent: options.userConsent,
 		waitUntil: options.onBackgroundRevalidate,
 	});
 	return { ...state, ...client };

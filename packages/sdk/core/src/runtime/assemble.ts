@@ -1,4 +1,3 @@
-import type { HydrationRecords } from '../consent-kernel.model';
 /**
  * The consent runtime: a kernel plus every opt-in module, wired, with a
  * lifecycle hosts drive and do not re-derive.
@@ -14,6 +13,9 @@ import type { HydrationRecords } from '../consent-kernel.model';
  * props and stop and start the runtime around the same kernel. A host that
  * configures once never loads that code.
  */
+import type { UserConsent } from '@inth/sdk-schema/types';
+
+import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
 import { displayedCategories } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { clearKernelRecords } from '../kernel/clear-records.model';
@@ -48,6 +50,7 @@ import {
 import { afterModuleLoaded } from './lazy-runtime-module';
 import { mountRuntimeGPP } from './mount-runtime-gpp';
 import { scriptRegistry } from './script-registry';
+import { createUserConsentSyncController } from './user-consent-sync';
 import {
 	stringifyRuntimeError,
 	wireRuntimeCallbacks,
@@ -66,6 +69,24 @@ export interface AssembledRuntime {
 	 * `JourneyController.adopt`.
 	 */
 	adoptJourney: (id: string | null | undefined) => void;
+	/**
+	 * Monotonic identity epoch bumped on real user change/sign-out,
+	 * `userConsent: null`, `clearRecords()`, and `dispose()`.
+	 */
+	getIdentityEpoch: () => number;
+	/**
+	 * Atomically update the user, drop any mismatched account layer, optionally
+	 * arm/release `userConsentPending` or apply a resolved `userConsent` in one
+	 * kernel commit, and bump the identity epoch whenever `externalId` changes
+	 * or `userConsent` is `null`.
+	 */
+	setUser: (
+		user: KernelUser | null,
+		options?: {
+			readonly pending?: boolean;
+			readonly userConsent?: UserConsent | null;
+		}
+	) => void;
 	runtime: ConsentRuntime;
 	/**
 	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
@@ -187,6 +208,46 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		await kernel.commands.init();
 	};
 
+	let identityEpoch = 0;
+	const getIdentityEpoch = (): number => identityEpoch;
+	// Value of `userConsent` in force when `records:cleared`, imperative
+	// `syncUserConsent(null)`, or a `null`-resolving Promise ran: applies until
+	// the option value changes so `start()` and re-enable never reapply it.
+	let clearedOption: { readonly value: unknown } | null = null;
+	const currentOptionConsent = (): unknown =>
+		options.userConsent === undefined
+			? options.prefetch?.initialUserConsent
+			: options.userConsent;
+	const markClearedAndBumpRef: {
+		run?: (epochOptions?: { readonly preservePending?: boolean }) => void;
+	} = {};
+	const userConsentSync = createUserConsentSyncController(
+		kernel,
+		undefined,
+		getIdentityEpoch,
+		() => {
+			markClearedAndBumpRef.run?.({ preservePending: true });
+		}
+	);
+	const bumpIdentityEpoch = (epochOptions?: {
+		readonly preservePending?: boolean;
+	}): number => {
+		identityEpoch += 1;
+		userConsentSync.onIdentityEpochChanged(epochOptions);
+		return identityEpoch;
+	};
+	const markOptionClearedAndBump = (epochOptions?: {
+		readonly preservePending?: boolean;
+	}): void => {
+		clearedOption = { value: currentOptionConsent() };
+		bumpIdentityEpoch(epochOptions);
+	};
+	markClearedAndBumpRef.run = markOptionClearedAndBump;
+	const stopRecordsClearedWatch = kernel.events.on('records:cleared', () => {
+		markOptionClearedAndBump();
+	});
+	let hasStartedOnce = false;
+
 	const stop = function stop(): void {
 		started = false;
 		for (const dispose of disposers.reverse()) {
@@ -209,7 +270,10 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		dispose() {
 			disposed = true;
+			stopRecordsClearedWatch();
 			stop();
+			bumpIdentityEpoch({ preservePending: true });
+			userConsentSync.dispose();
 			kernel.dispose();
 			// No blocker took the hold over, so nothing else ends it, and
 			// nothing checked consent for what it held: those requests fail
@@ -224,11 +288,23 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		async identify(user) {
 			const nextUser = normalizeKernelUser(user);
+			const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (!nextUser) {
+				if (prevExternalId !== null) {
+					bumpIdentityEpoch({ preservePending: true });
+				}
 				// Signing out: no one is identified from here on, and an answer
 				// to a request the previous account started no longer applies.
 				kernel.clearIdentity();
+				if (prevExternalId !== null) {
+					// The hold ends only once the account layer has dropped.
+					kernel.setUserWithPending(null, { pending: false });
+				}
 				return;
+			}
+			if (prevExternalId !== nextUser.externalId) {
+				bumpIdentityEpoch({ preservePending: true });
+				kernel.setUserWithPending(nextUser, { pending: false });
 			}
 			try {
 				await kernel.commands.identify(nextUser);
@@ -304,6 +380,26 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 						? persistenceOption.storageConfig
 						: undefined) ?? options.storageConfig
 				);
+			}
+			// After hydrating both browser and stored account layers, sync the
+			// initial `userConsent` value or Promise (converting raw SSR docs
+			// with the client clock and persisting them), unless that exact value
+			// was cleared by `clearRecords()`, `syncUserConsent(null)`, or a
+			// `null`-resolving Promise. Only the first `start()` passes `initialStart`.
+			const isFirstStart = !hasStartedOnce;
+			hasStartedOnce = true;
+			if (enabled && !consentSource) {
+				const initialUserConsent =
+					options.userConsent === undefined
+						? options.prefetch?.initialUserConsent
+						: options.userConsent;
+				const isClearedValue =
+					clearedOption !== null && initialUserConsent === clearedOption.value;
+				if (initialUserConsent !== undefined && !isClearedValue) {
+					userConsentSync.apply(initialUserConsent, {
+						initialStart: isFirstStart,
+					});
+				}
 			}
 			// Persistence gives a browser runtime its subject ID at startup.
 			// Without it the ID lives in memory for the page.
@@ -490,11 +586,75 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				iabListeners.delete(listener);
 			};
 		},
+		syncUserConsent(value) {
+			if (!enabled || consentSource) {
+				return;
+			}
+			if (value === null) {
+				markOptionClearedAndBump({ preservePending: true });
+				userConsentSync.apply(null);
+				return;
+			}
+			if (
+				clearedOption !== null &&
+				value !== undefined &&
+				value !== clearedOption.value
+			) {
+				clearedOption = null;
+			}
+			userConsentSync.apply(value);
+		},
 	};
 	const releaseHold = function releaseHold(): void {
 		const held = hold;
 		hold = null;
 		held?.release()();
 	};
-	return { adoptJourney: journey.adopt, releaseHold, runtime, stop };
+	const setUser = function setUser(
+		user: KernelUser | null,
+		setOptions?: {
+			readonly pending?: boolean;
+			readonly userConsent?: UserConsent | null;
+		}
+	): void {
+		const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
+		const nextExternalId = user?.externalId ?? null;
+		const allowUserConsent = enabled && !consentSource;
+		const nextUserConsent = allowUserConsent
+			? setOptions?.userConsent
+			: undefined;
+		const nextPending =
+			prevExternalId === nextExternalId
+				? undefined
+				: Boolean(
+						allowUserConsent &&
+						nextExternalId &&
+						nextUserConsent === undefined &&
+						setOptions?.pending
+					);
+		if (nextUserConsent === null) {
+			clearedOption = { value: currentOptionConsent() };
+		} else if (
+			clearedOption !== null &&
+			nextUserConsent !== undefined &&
+			nextUserConsent !== clearedOption.value
+		) {
+			clearedOption = null;
+		}
+		kernel.setUserWithPending(user, {
+			pending: nextPending,
+			userConsent: nextUserConsent,
+		});
+		if (prevExternalId !== nextExternalId || nextUserConsent === null) {
+			bumpIdentityEpoch({ preservePending: nextPending === true });
+		}
+	};
+	return {
+		adoptJourney: journey.adopt,
+		getIdentityEpoch,
+		releaseHold,
+		runtime,
+		setUser,
+		stop,
+	};
 };

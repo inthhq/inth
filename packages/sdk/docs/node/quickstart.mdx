@@ -80,6 +80,9 @@ category the user answered to a boolean, such as
 `{ marketing: false, measurement: true }`. A category they never answered is
 absent. Under an opt-in policy, treat absent as refused.
 
+To sync a signed-in user's consent across your domains, omit `property` and
+pass the whole `data` document to the browser provider as `userConsent`.
+
 ## Check it works
 
 1. Open your site in a private window and click **Reject All** in the banner.
@@ -93,6 +96,8 @@ If a call fails, look up its `error.code` in
 
 ## Next steps
 
+- [Cross-domain consent](/docs/guides/cross-domain-consent): sync signed-in
+  users' consent across domains with `userConsent`.
 - [Legal documents](/docs/node/legal-documents): publish your
   terms and record who accepted them at sign-up.
 - [Identity tokens](/docs/node/identity-tokens): link users from a

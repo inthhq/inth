@@ -43,10 +43,32 @@ const warn = function warn(...message: unknown[]): void {
 	}
 };
 
+const stripStreamedAccountData = function stripStreamedAccountData(
+	config: RuntimePrefetch
+): RuntimePrefetch {
+	const {
+		initialUser: _user,
+		initialUserConsent: _consent,
+		initialRecords,
+		...rest
+	} = config;
+	if (!initialRecords?.accountLayer) {
+		return initialRecords === undefined ? rest : { ...rest, initialRecords };
+	}
+	const { accountLayer: _accountLayer, ...restRecords } = initialRecords;
+	return { ...rest, initialRecords: restRecords };
+};
+
 /** Inputs for {@link resolveStreamedInit}. */
 export interface StreamedInitOptions {
 	/** The context the kernel called `init()` with. */
 	context: InitContext;
+	/**
+	 * Whether the stream's identity epoch is still current. When `false`,
+	 * `initialUser`, `initialUserConsent`, and `initialRecords.accountLayer`
+	 * are stripped so a fenced stream installs policy only.
+	 */
+	isStreamAllowed?: () => boolean;
 	/** The kernel being initialized, once it exists. */
 	kernel: ConsentKernel | null;
 	/** Called with the resolved config before it is applied. */
@@ -70,6 +92,31 @@ export interface StreamedInitOptions {
 	toInitResponse: typeof kernelConfigToInitResponse;
 }
 
+const applyStreamedBaseline = function applyStreamedBaseline(
+	kernel: ConsentKernel | null,
+	config: RuntimePrefetch,
+	overrides: KernelOverrides | undefined,
+	recordsGeneration: number | undefined
+): KernelOverrides {
+	const baseline = {
+		...(config.initialOverrides ?? {}),
+		...(overrides ?? {}),
+	};
+	if (!kernel) {
+		return baseline;
+	}
+	if (hasKeys(baseline)) {
+		kernel.set.overrides(baseline);
+	}
+	if (
+		config.initialRecords &&
+		kernel.getRecordsGeneration() === recordsGeneration
+	) {
+		(kernel as InternalKernel).hydrate(config.initialRecords);
+	}
+	return baseline;
+};
+
 /**
  * Wait for a streamed prefetch and turn it into the first init response.
  *
@@ -92,9 +139,13 @@ export const resolveStreamedInit = async function resolveStreamedInit(
 			'inth: the streamed consent state carries an experiment, but the runtime started before it arrived and runs none. Await the server result, or also pass `experiment` to the options.'
 		);
 	}
-	options.onResolved(config);
+	const effectiveConfig =
+		options.isStreamAllowed?.() === false
+			? stripStreamedAccountData(config)
+			: config;
+	options.onResolved(effectiveConfig);
 
-	const response = options.toInitResponse(config);
+	const response = options.toInitResponse(effectiveConfig);
 	if (response) {
 		const resolvedOverrides = {
 			...(response.resolvedOverrides ?? {}),
@@ -106,18 +157,12 @@ export const resolveStreamedInit = async function resolveStreamedInit(
 		return response;
 	}
 
-	const baseline = { ...(config.initialOverrides ?? {}), ...(overrides ?? {}) };
-	if (kernel) {
-		if (hasKeys(baseline)) {
-			kernel.set.overrides(baseline);
-		}
-		if (
-			config.initialRecords &&
-			kernel.getRecordsGeneration() === options.recordsGeneration
-		) {
-			(kernel as InternalKernel).hydrate(config.initialRecords);
-		}
-	}
+	const baseline = applyStreamedBaseline(
+		kernel,
+		effectiveConfig,
+		overrides,
+		options.recordsGeneration
+	);
 	return (
 		transport.init?.({
 			...context,
