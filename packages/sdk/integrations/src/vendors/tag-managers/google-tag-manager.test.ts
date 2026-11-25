@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
+	createCallbackInfo,
 	deniedConsentState,
 	expectGoogleConsentDefault,
 	getTestGlobal,
@@ -146,5 +147,77 @@ describe('googleTagManager', () => {
 			}),
 		]);
 		expect(dataLayer[1]).toMatchObject({ event: 'gtm.js' });
+	});
+
+	it('sends a custom consent mapping in default and update commands', () => {
+		const globalRef = getTestGlobal();
+		const script = googleTagManager({
+			consentMapping: {
+				marketing: ['ad_storage'],
+				measurement: ['analytics_storage', 'ad_user_data'],
+			},
+			id: 'GTM-MAPPED',
+			updateEventName: 'inth-consent',
+		});
+
+		runOnBeforeLoad(script, { consents: deniedConsentState });
+		script.onConsentChange?.(
+			createCallbackInfo({
+				consents: grantedMeasurementConsentState,
+				hasConsent: true,
+				id: script.id,
+			})
+		);
+
+		// gtag pushes `arguments` objects; gtm.js start is a plain object.
+		const dataLayer = (globalRef.dataLayer as unknown[]).map((entry) =>
+			Object.prototype.toString.call(entry) === '[object Arguments]'
+				? toArgumentsArray(entry)
+				: entry
+		);
+		expect(dataLayer).toEqual([
+			[
+				'consent',
+				'default',
+				{
+					ad_storage: 'denied',
+					ad_user_data: 'denied',
+					analytics_storage: 'denied',
+				},
+			],
+			expect.objectContaining({ event: 'gtm.js' }),
+			[
+				'consent',
+				'update',
+				{
+					ad_storage: 'denied',
+					ad_user_data: 'granted',
+					analytics_storage: 'granted',
+				},
+			],
+			['event', 'inth-consent'],
+		]);
+	});
+
+	it('keeps a custom queue name when it waits for consent', () => {
+		const script = googleTagManager({
+			dataLayer: 'siteLayer',
+			id: 'GTM-GATED',
+			loadMode: 'after-consent',
+		});
+
+		expect(script).toMatchObject({
+			alwaysLoad: undefined,
+			attributes: { 'data-inth-layer': 'siteLayer' },
+			category: { or: ['measurement', 'marketing'] },
+			persistAfterConsentRevoked: true,
+			src: 'https://www.googletagmanager.com/gtm.js?id=GTM-GATED&l=siteLayer',
+		});
+	});
+
+	it('names the default queue on the container element', () => {
+		expect(googleTagManager({ id: 'GTM-DEFAULT' }).attributes).toEqual({
+			'data-inth-layer': 'dataLayer',
+		});
 	});
 });

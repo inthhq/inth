@@ -119,4 +119,58 @@ describe('gtag', () => {
 		expect(toArgumentsArray(dataLayer[1])[0]).toBe('js');
 		expect(toArgumentsArray(dataLayer[2])).toEqual(['config', 'G-GATED']);
 	});
+
+	it('sends a custom consent mapping in the default command', () => {
+		const globalRef = getTestGlobal();
+		const script = gtag({
+			category: 'marketing',
+			consentMapping: { marketing: ['ad_storage'] },
+			id: 'AW-MAPPED',
+		});
+
+		runOnBeforeLoad(script, { consents: deniedConsentState });
+
+		const dataLayer = globalRef.dataLayer as unknown[];
+		expect(toArgumentsArray(dataLayer[0])).toEqual([
+			'consent',
+			'default',
+			{ ad_storage: 'denied' },
+		]);
+	});
+
+	it('keeps explicit config when it waits for consent', () => {
+		const globalRef = getTestGlobal();
+		const script = gtag({
+			category: 'marketing',
+			config: { allow_enhanced_conversions: true },
+			id: 'AW-GATED',
+			loadMode: 'after-consent',
+		});
+
+		expect(script.alwaysLoad).toBeUndefined();
+		expect(script.category).toBe('marketing');
+		expect(script.persistAfterConsentRevoked).toBe(true);
+
+		runOnBeforeLoad(script, { consents: deniedConsentState });
+		expect(toArgumentsArray((globalRef.dataLayer as unknown[])[2])).toEqual([
+			'config',
+			'AW-GATED',
+			{ allow_enhanced_conversions: true },
+		]);
+	});
+
+	it('applies deprecated script overrides over the load mode', () => {
+		const script = gtag({
+			category: 'measurement',
+			id: 'G-OVERRIDE',
+			loadMode: 'after-consent',
+			script: { alwaysLoad: true, nonce: 'abc123' },
+		});
+
+		expect(script.alwaysLoad).toBe(true);
+		expect(script.nonce).toBe('abc123');
+		expect(script.src).toBe(
+			'https://www.googletagmanager.com/gtag/js?id=G-OVERRIDE'
+		);
+	});
 });

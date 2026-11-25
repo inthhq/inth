@@ -93,6 +93,27 @@ describe('metaPixel', () => {
 		]);
 	});
 
+	it('passes init options to fbq init alongside data processing options', () => {
+		const globalRef = getTestGlobal();
+		const script = metaPixel({
+			dataProcessingOptions: { options: [] },
+			initOptions: { em: 'hashed-email' },
+			pixelId: '654321',
+		});
+
+		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));
+
+		const fbq = globalRef.fbq as
+			| (((...args: unknown[]) => void) & { queue?: unknown[][] })
+			| undefined;
+		expectStubCommandQueue(fbq, 'queue', [
+			['consent', 'grant'],
+			['dataProcessingOptions', []],
+			['init', '654321', { em: 'hashed-email' }],
+			['track', 'PageView'],
+		]);
+	});
+
 	it('supports explicitly disabling limited data use', () => {
 		const globalRef = getTestGlobal();
 		const script = metaPixel({
