@@ -1,5 +1,5 @@
 import type { ScriptLoaderOptions } from '../modules/script-loader/types';
-import type { ConsentRuntimeOptions } from './types';
+import type { ConsentRuntimeModules, ConsentRuntimeOptions } from './types';
 
 /**
  * The signature settings `experimentalScriptRegistry` asks for, or
@@ -47,4 +47,29 @@ export const scriptRegistry = function scriptRegistry(
 	return signatures && typeof document !== 'undefined'
 		? { waitForInit: callsInit, ...signatures }
 		: undefined;
+};
+
+/**
+ * How the script loader runs the scripts `remoteScripts` turns on, or
+ * `undefined` when it is off, there is no document to load them into, or
+ * the host passed no `loadManifestRuntime` module.
+ *
+ * @internal
+ */
+export const remoteScripts = function remoteScripts(
+	options: Pick<ConsentRuntimeOptions, 'remoteScripts'>,
+	modules: Pick<ConsentRuntimeModules, 'loadManifestRuntime'>
+): ScriptLoaderOptions['remote'] {
+	if (options.remoteScripts !== true || typeof document === 'undefined') {
+		return undefined;
+	}
+	if (!modules.loadManifestRuntime) {
+		if (process.env.NODE_ENV !== 'production') {
+			console.warn(
+				'[inth] remoteScripts is on, but the runtime has no loadManifestRuntime module, so remote scripts do not load. Pass loadManifestRuntime from @inth/sdk/runtime.'
+			);
+		}
+		return undefined;
+	}
+	return { loadRuntime: modules.loadManifestRuntime };
 };

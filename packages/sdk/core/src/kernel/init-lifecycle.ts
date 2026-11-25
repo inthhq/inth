@@ -252,9 +252,12 @@ const foldInitResponse = function foldInitResponse(
 	if (response.hosting !== undefined) {
 		patch.hosting = response.hosting;
 	}
-	// Always set: an init without a list means the backend has none now, so
-	// a list a prefetch or cache carried must not outlive it.
-	patch.scriptRegistry = ownScriptRegistry(response.scriptRegistry);
+	// Set unless the registry was unavailable: an init without a list means
+	// the backend has none now, so a list a prefetch or cache carried must
+	// not outlive it. One the backend could not read keeps the last list.
+	if (response.scriptRegistry?.unavailable !== true) {
+		patch.scriptRegistry = ownScriptRegistry(response.scriptRegistry);
+	}
 
 	const resolution = readInitResolution(response);
 	patch.resolution = resolution;

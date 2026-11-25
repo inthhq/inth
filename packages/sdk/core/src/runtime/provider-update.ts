@@ -139,6 +139,7 @@ const READ_ONCE_OPTIONS = [
 	'persistence',
 	'pkg',
 	'projectUrl',
+	'remoteScripts',
 	'storageConfig',
 ] as const satisfies readonly (keyof ConsentRuntimeUpdate)[];
 

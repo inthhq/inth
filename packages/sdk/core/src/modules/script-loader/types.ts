@@ -25,6 +25,7 @@ import type {
 	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
+import type { ParsedManifest, ResolvedManifest } from '../../manifest-runtime';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -112,6 +113,12 @@ export interface ScriptLoaderDebugEvent extends ScriptDebugEvent {
 	timestamp: number;
 }
 
+/** What the loader needs from the manifest runtime to run remote scripts. */
+export interface RemoteManifestRuntime {
+	parseResolvedManifest: (value: unknown) => ParsedManifest;
+	resolvedManifestToScript: (manifest: ResolvedManifest) => Script;
+}
+
 export interface ScriptLoaderOptions {
 	kernel: ConsentKernel;
 	/** Script configurations. May be empty; `updateScripts` swaps later. */
@@ -154,6 +161,19 @@ export interface ScriptLoaderOptions {
 		requireSignatures?: boolean;
 		/** Whose signing keys to trust. @default 'production' */
 		signingKeys?: RegistrySigningKeys;
+	};
+	/**
+	 * Load the scripts the Inth server sends on
+	 * `snapshot.scriptRegistry.load` next to `scripts`. Each entry's
+	 * category and vendor register as soon as a list arrives; the scripts
+	 * mount once `loadRuntime` resolves. A script in `scripts` whose
+	 * `integration ?? vendor ?? id` is an entry's `id` wins over that entry.
+	 * A list the snapshot carries before init resolves, from a prefetch or a
+	 * cache, is used as it is.
+	 */
+	remote?: {
+		/** Loads the manifest runtime; called once, for the first entry. */
+		loadRuntime: () => Promise<RemoteManifestRuntime>;
 	};
 	/**
 	 * When true, also dispatch debug events to the page's script debug

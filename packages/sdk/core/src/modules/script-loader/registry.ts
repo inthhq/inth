@@ -37,17 +37,20 @@ const parseEntry = (entry: unknown): RegistrySource | null => {
 	if (!isRecord(entry)) {
 		return null;
 	}
-	const { attributes, integrity, signature, src } = entry;
+	const { attributes, integrity, signature, src, upstreamUrl } = entry;
 	if (
 		!(typeof src === 'string' && isHttpsURL(src)) ||
 		!(typeof integrity === 'string' && hasSriHash(integrity))
 	) {
 		return null;
 	}
-	const signed =
-		signature === undefined || signature === null
-			? {}
-			: { signature: parseRegistrySignature(signature) };
+	const signed: Pick<RegistrySource, 'signature' | 'upstreamUrl'> = {};
+	if (signature !== undefined && signature !== null) {
+		signed.signature = parseRegistrySignature(signature);
+	}
+	if (typeof upstreamUrl === 'string') {
+		signed.upstreamUrl = upstreamUrl;
+	}
 	if (attributes === undefined || attributes === null) {
 		return { integrity, src, ...signed };
 	}
@@ -118,6 +121,10 @@ export const readScriptRegistry = function readScriptRegistry(snapshot: {
 			? { status: 'failed' }
 			: { status: 'pending' };
 	}
-	const sources = parseRegistrySources(snapshot.scriptRegistry?.sources);
+	// A list that only carries scripts to load pins nothing.
+	const registry = snapshot.scriptRegistry;
+	const sources = parseRegistrySources(
+		registry?.sources ?? (Array.isArray(registry?.load) ? {} : undefined)
+	);
 	return sources ? { sources, status: 'listed' } : { status: 'failed' };
 };

@@ -1,3 +1,4 @@
+import { loadManifestRuntime } from './manifest-runtime-loader';
 /**
  * Runtime modules a framework provider loads only when the page configures
  * them: the script loader, the network blocker, data clearing and a
@@ -54,6 +55,7 @@ export type OnDemandRuntimeModules = Pick<
 	| 'createClearOnRevocation'
 	| 'createNetworkBlocker'
 	| 'createScriptLoader'
+	| 'loadManifestRuntime'
 >;
 
 /**
@@ -76,4 +78,5 @@ export const onDemandRuntimeModules: OnDemandRuntimeModules = {
 	...loaderAndBlockerOnDemand,
 	connectConsentSource: connectConsentSourceOnDemand,
 	createClearOnRevocation: clearOnRevocationOnDemand,
+	loadManifestRuntime,
 };

@@ -45,6 +45,7 @@ import type {
 	Script,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderHandle,
+	RemoteManifestRuntime,
 	ScriptLoaderOptions,
 } from '../modules/script-loader/types';
 import type {
@@ -333,8 +334,18 @@ export type RuntimePrefetch = Omit<KernelConfig, 'transport' | 'initialDraft'> &
 export interface ConsentRuntimeModules {
 	/** Mounted on `start()` while enabled, unless `persistence: false`. */
 	createPersistence: (options: PersistenceOptions) => PersistenceHandle;
-	/** Mounted on `start()` when `scripts` is not empty, enabled or not. */
+	/**
+	 * Mounted on `start()` when `scripts` is not empty, or `remoteScripts`
+	 * is on, enabled or not.
+	 */
 	createScriptLoader: (options: ScriptLoaderOptions) => ScriptLoaderHandle;
+	/**
+	 * Loads the manifest runtime that runs the scripts `remoteScripts` turns
+	 * on. Pass `loadManifestRuntime` from `@inth/sdk/runtime`, which imports
+	 * it on demand (`defaultRuntimeModules` does). Without it,
+	 * `remoteScripts` loads nothing.
+	 */
+	loadManifestRuntime?: () => Promise<RemoteManifestRuntime>;
 	/** Mounted on `start()` while enabled when `networkBlocker` is set. */
 	createNetworkBlocker: (
 		options: NetworkBlockerOptions
@@ -500,6 +511,16 @@ export interface ConsentRuntimeOptions {
 	 * @default false
 	 */
 	experimentalScriptRegistry?: boolean | ExperimentalScriptRegistryOptions;
+	/**
+	 * Load the `@inth/integrations` scripts the project added on the Inth
+	 * server, next to `scripts`. The server sends each as a manifest, which
+	 * Inth checks before it runs any of it, so only known integrations load,
+	 * with their own consent settings. A script in `scripts` for the same
+	 * integration wins. Separate from `experimentalScriptRegistry`, which
+	 * pins where scripts load from. Initial-only.
+	 * @default false
+	 */
+	remoteScripts?: boolean;
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

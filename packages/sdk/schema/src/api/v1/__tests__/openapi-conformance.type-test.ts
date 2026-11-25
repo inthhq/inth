@@ -261,6 +261,13 @@ type DocumentGaps =
 	// on each source and checks it before the script loads; the document
 	// does not describe it yet.
 	| 'registry sources.*.signature: only in SDK'
+	// For the document to add. The SDK reads scripts the Inth server sends on
+	// `load`, and pins one only when a source's `upstreamUrl` is the URL its
+	// manifest loads. It reads the document's `{ unavailable: true }` variant
+	// as a field of its one registry type, and keeps its last list for it.
+	| 'registry list.load: only in SDK'
+	| 'registry list.unavailable: only in SDK'
+	| 'registry sources.*.upstreamUrl: only in SDK'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

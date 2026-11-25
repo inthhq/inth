@@ -38,7 +38,7 @@ import {
 	normalizeKernelUser,
 	requireTransportFactory,
 } from './runtime-kernel';
-import { scriptRegistry } from './script-registry';
+import { remoteScripts, scriptRegistry } from './script-registry';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeIABHandle,
@@ -368,13 +368,15 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			// would silently drop every consent-gated integration on a site that
 			// turned consent management off.
 			let loader: ScriptLoaderHandle | undefined;
-			if (options.scripts && options.scripts.length > 0) {
+			const remote = remoteScripts(options, modules);
+			if ((options.scripts && options.scripts.length > 0) || remote) {
 				loader = modules.createScriptLoader({
 					kernel,
 					nonce: options.nonce,
 					onDebug: options.scriptLoader?.onDebug,
 					registry: scriptRegistry(options, enabled && !consentSource),
-					scripts: options.scripts,
+					remote,
+					scripts: options.scripts ?? [],
 					sources: options.scriptLoader?.sources,
 				});
 				const mounted = loader;

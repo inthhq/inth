@@ -11,6 +11,8 @@ export type ScriptSources = Readonly<Record<string, ScriptSource>>;
  */
 export interface RegistrySource extends ScriptSource {
 	signature?: RegistrySignature | null;
+	/** The vendor URL the entry copies; see `ScriptSourceWire`. */
+	upstreamUrl?: string;
 }
 
 /**
@@ -223,6 +225,26 @@ const heldReason = (
 };
 
 /**
+ * The registry's entry for `script`. A script the Inth server sent takes an
+ * entry only when its `upstreamUrl` is the URL the script loads; `null`
+ * holds it back either way.
+ */
+const registryEntry = (
+	state: ScriptRegistryState,
+	script: Script,
+	isRemote: ((script: Script) => boolean) | undefined
+): RegistrySource | null | undefined => {
+	const entry =
+		state.status === 'listed' && Object.hasOwn(state.sources, script.id)
+			? state.sources[script.id]
+			: undefined;
+	if (entry && isRemote?.(script) && entry.upstreamUrl !== script.src) {
+		return undefined;
+	}
+	return entry;
+};
+
+/**
  * Point each script with an entry in `sources` at that entry's URL, and
  * each other script an integration built at the source the script
  * registry lists for it.
@@ -246,13 +268,17 @@ const heldReason = (
  * is off.
  * @param verify - Checks a registry entry's signature. Without it, every
  * entry loads.
+ * @param isRemote - Whether the Inth server sent `script` on `load`. A
+ * registry entry pins such a script only when its `upstreamUrl` is the URL
+ * the script loads; `null` still holds it back.
  * @returns A function that resolves a script list.
  * @internal
  */
 export const createScriptSourceResolver = function createScriptSourceResolver(
 	sources: ScriptSources | undefined,
 	registry?: () => ScriptRegistryState,
-	verify?: RegistryEntryCheck
+	verify?: RegistryEntryCheck,
+	isRemote?: (script: Script) => boolean
 ): (scripts: readonly Script[]) => ResolvedScripts {
 	// The same script and source resolve to the same copy, so resolving the
 	// list again when the registry's list arrives does not remount a script
@@ -300,10 +326,7 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 				resolved.held.push({ reason: 'waiting', script });
 				continue;
 			}
-			const entry =
-				state.status === 'listed' && Object.hasOwn(state.sources, script.id)
-					? state.sources[script.id]
-					: undefined;
+			const entry = registryEntry(state, script, isRemote);
 			const reason = heldReason(script, entry, verify);
 			if (reason) {
 				resolved.held.push({ reason, script });

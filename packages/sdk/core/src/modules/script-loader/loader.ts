@@ -23,6 +23,8 @@ import {
 	normalizeScripts,
 } from './normalize';
 import { readScriptRegistry } from './registry';
+import { codeScriptKey, readRemoteEntries, remoteDeclaration } from './remote';
+import type { RemoteEntry } from './remote';
 import {
 	createRegistryVerifier,
 	isRegistrySignatureExpired,
@@ -42,6 +44,7 @@ import type {
 	ScriptLoaderOptions,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderTools,
+	RemoteManifestRuntime,
 } from './types';
 
 const MAX_RECONCILE_PASSES = 100;
@@ -106,12 +109,76 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 
 	const ownerSource = Symbol('script-loader');
 	let replacingScript: Script | undefined;
+	/** Scripts declared in code: `options.scripts`, then `updateScripts`. */
+	let codeScripts: readonly Script[] = options.scripts;
+	/** Entries of the last `load` list, whatever their runtime state. */
+	let remoteEntries: RemoteEntry[] = [];
+	/** Scripts built from `remoteEntries` once the runtime ran them. */
+	let remoteScripts: Script[] = [];
+	/** Every script built from a remote entry, so the resolver can tell. */
+	const remoteObjects = new WeakSet<Script>();
+	/** Ids of the remote scripts in the registered list. */
+	let activeRemoteIds = new Set<string>();
+	/** Whether a code script claims a remote entry's integration. */
+	const claimedByCode = (): Set<string> =>
+		new Set(codeScripts.map(codeScriptKey));
 	const registerCategories = (scripts: Script[]) => {
+		// A remote entry declares its category and vendor from its JSON, before
+		// its script is built, so a choice made meanwhile covers it.
+		const claimed = claimedByCode();
+		const all = [
+			...scripts,
+			...remoteEntries
+				.filter((entry) => !claimed.has(entry.id))
+				.map(remoteDeclaration),
+		];
 		kernel.set.registerConsentCategories(
-			scripts.flatMap((script) => categoriesOf(script.category))
+			all.flatMap((script) => categoriesOf(script.category))
 		);
-		declareOwners(kernel, scripts, ownerSource);
+		declareOwners(kernel, all, ownerSource);
 	};
+	/** The `load` list `remoteEntries` came from. */
+	let lastLoad: unknown;
+	const reportedRemote = new Set<string>();
+	/**
+	 * Report a remote entry the loader skips, once per list. Sent past the
+	 * diagnostics, which describe the scripts that are registered.
+	 */
+	const reportRemote = (
+		action: 'error' | 'skipped',
+		scriptId: string,
+		message: string
+	): void => {
+		const key = `${action}\u0000${scriptId}\u0000${message}`;
+		if (reportedRemote.has(key)) {
+			return;
+		}
+		reportedRemote.add(key);
+		emitDebug({
+			action,
+			message,
+			scope: 'lifecycle',
+			scriptId,
+			source: 'script-loader',
+			timestamp: Date.now(),
+		});
+	};
+	/** Read the snapshot's `load` list; `true` when it changed. */
+	const readLoad = (snapshot: ConsentSnapshot): boolean => {
+		const load = snapshot.scriptRegistry?.load;
+		if (!options.remote || load === lastLoad) {
+			return false;
+		}
+		lastLoad = load;
+		reportedRemote.clear();
+		const { entries, problems } = readRemoteEntries(load);
+		for (const problem of problems) {
+			reportRemote('error', problem.id, problem.message);
+		}
+		remoteEntries = entries;
+		return true;
+	};
+	readLoad(kernel.getSnapshot());
 	// Read once init resolves; a later init's list does not move scripts.
 	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState =>
 		readScriptRegistry(
@@ -164,7 +231,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	const withSources = createScriptSourceResolver(
 		options.sources,
 		options.registry ? () => registryState : undefined,
-		verifyEntry
+		verifyEntry,
+		(script) => remoteObjects.has(script)
 	);
 	/** The list as given, so the registry's list can resolve it again. */
 	let configured: readonly Script[] = options.scripts;
@@ -683,6 +751,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const nextScripts = new Set(next);
 		const nextById = new Map(next.map((script) => [script.id, script]));
+		const nextRemoteIds = new Set(
+			configuredNext
+				.filter((script) => remoteObjects.has(script))
+				.map((script) => script.id)
+		);
 		const previous = new Set(normalized.map(({ script }) => script));
 		const snapshot = kernel.getSnapshot();
 		for (const script of previous) {
@@ -702,8 +775,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			} else if (retainedElements.has(script.id)) {
 				mountedCallbackOnly = false;
 			}
+			// A script that moves between code and the Inth server's list
+			// starts a fresh lifecycle, even when it loads the same file.
 			if (
 				replacement &&
+				activeRemoteIds.has(script.id) === nextRemoteIds.has(script.id) &&
 				script.onDispose === replacement.onDispose &&
 				(!script.onDispose || !mountedCallbackOnly) &&
 				hasSameResource(script, replacement)
@@ -732,6 +808,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			statuses.delete(script.id);
 		}
 		normalized = normalizeScripts(next, isVendorId);
+		activeRemoteIds = nextRemoteIds;
 		if (!disposed) {
 			registerCategories([...next, ...held.map(({ script }) => script)]);
 			reconcileRequested = true;
@@ -800,6 +877,112 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		reconcileRequested = true;
 		drain();
 	});
+	let runtime: RemoteManifestRuntime | undefined;
+	let runtimeLoad: Promise<RemoteManifestRuntime> | undefined;
+	/** The script each entry built, kept while its manifest is unchanged. */
+	let built = new Map<string, { manifest: string; script: Script | null }>();
+	const buildRemote = (loaded: RemoteManifestRuntime): Script[] => {
+		const next = new Map<string, { manifest: string; script: Script | null }>();
+		const scripts: Script[] = [];
+		for (const entry of remoteEntries) {
+			const manifest = JSON.stringify(entry.manifest);
+			const cached = built.get(entry.id);
+			let script: Script | null = null;
+			if (cached?.manifest === manifest) {
+				({ script } = cached);
+			} else {
+				const parsed = loaded.parseResolvedManifest(entry.manifest);
+				if (parsed.ok) {
+					script = loaded.resolvedManifestToScript(parsed.manifest);
+					remoteObjects.add(script);
+				} else {
+					reportRemote(
+						'error',
+						entry.id,
+						`Remote script ${entry.id} (${entry.integration}) does not load: ${parsed.reason}.`
+					);
+				}
+			}
+			next.set(entry.id, { manifest, script });
+			if (script) {
+				scripts.push(script);
+			}
+		}
+		built = next;
+		return scripts;
+	};
+	/** The code scripts, then each remote script no code script claims. */
+	const mergedScripts = (): Script[] => {
+		const claimed = claimedByCode();
+		const merged = [...codeScripts];
+		for (const script of remoteScripts) {
+			if (claimed.has(script.id)) {
+				reportRemote(
+					'skipped',
+					script.id,
+					`Remote script ${script.id} does not load: a script in code loads ${script.id}, and code wins.`
+				);
+				continue;
+			}
+			merged.push(script);
+		}
+		return merged;
+	};
+	const setRemoteScripts = (scripts: Script[]): void => {
+		if (disposed || (scripts.length === 0 && remoteScripts.length === 0)) {
+			return;
+		}
+		remoteScripts = scripts;
+		pendingScripts = mergedScripts();
+		try {
+			drain();
+		} catch (error) {
+			emit({
+				action: 'error',
+				message: `Applying the remote script list failed: ${error instanceof Error ? error.message : String(error)}`,
+				scope: 'phase',
+				scriptId: '',
+				source: 'script-loader',
+				timestamp: Date.now(),
+			});
+		}
+	};
+	const loadRemote = async (
+		remote: NonNullable<ScriptLoaderOptions['remote']>,
+		entries: RemoteEntry[]
+	): Promise<void> => {
+		try {
+			runtimeLoad ??= remote.loadRuntime();
+			runtime = await runtimeLoad;
+		} catch (error) {
+			runtimeLoad = undefined;
+			reportRemote(
+				'error',
+				'',
+				`The manifest runtime for remote scripts failed to load, so they do not load: ${error instanceof Error ? error.message : String(error)}`
+			);
+			return;
+		}
+		// A later list builds itself once the runtime is in.
+		if (!disposed && remoteEntries === entries) {
+			setRemoteScripts(buildRemote(runtime));
+		}
+	};
+	/** Build the current entries, loading the runtime for the first one. */
+	const applyRemote = (): void => {
+		if (remoteEntries.length === 0 || !options.remote) {
+			built = new Map();
+			setRemoteScripts([]);
+			return;
+		}
+		if (runtime) {
+			setRemoteScripts(buildRemote(runtime));
+			return;
+		}
+		void loadRemote(options.remote, remoteEntries);
+	};
+	let stopRemote: (() => void) | undefined;
+
 	const handle: ScriptLoaderHandle = {
 		dispose() {
 			if (disposed) {
@@ -809,6 +992,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			unsubscribe?.();
 			unsubscribe = undefined;
 			stopWaiting?.();
+			stopRemote?.();
 			drain();
 		},
 		getLoadedScriptIds() {
@@ -818,7 +1002,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			if (disposed) {
 				return;
 			}
-			pendingScripts = next;
+			codeScripts = next;
+			pendingScripts = mergedScripts();
 			drain();
 		},
 	};
@@ -872,6 +1057,21 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	} catch (error) {
 		handle.dispose();
 		throw error;
+	}
+	if (options.remote) {
+		stopRemote = kernel.subscribe((snapshot) => {
+			if (!readLoad(snapshot)) {
+				return;
+			}
+			registerCategories([
+				...normalized.map(({ script }) => script),
+				...held.map(({ script }) => script),
+			]);
+			applyRemote();
+		});
+		if (remoteEntries.length > 0) {
+			applyRemote();
+		}
 	}
 	return handle;
 };

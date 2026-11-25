@@ -48,6 +48,7 @@ import { assembleConsentRuntime } from './assemble';
 import { connectConsentSource } from './controls';
 import { mountRuntimeIAB } from './iab-mount';
 import { lazyRuntimeModule } from './lazy-module';
+import { loadManifestRuntime } from './manifest-runtime-loader';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
@@ -96,6 +97,7 @@ export type {
 export { isIABConfigured } from './iab-options';
 export { createLazyIABFactory, iabSurfaceActions } from './lazy-iab';
 export { lazyRuntimeModule } from './lazy-module';
+export { loadManifestRuntime } from './manifest-runtime-loader';
 export { mountRuntimeIAB } from './iab-mount';
 export type { RuntimeIABMountOptions } from './iab-mount';
 export { mountRuntimeGPP } from './gpp-mount';
@@ -146,6 +148,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
 	createScriptLoader,
 	createWindowDebug,
 	hostedMode: (projectUrl) => hosted({ projectUrl }),
+	loadManifestRuntime,
 	mountIAB: mountRuntimeIAB,
 	watchRevocationReload,
 };

@@ -23,6 +23,12 @@ export interface ScriptSourceWire {
 	 * ships with. `null`, like an absent field, means the entry has none.
 	 */
 	signature?: ScriptSignatureWire | null;
+	/**
+	 * The vendor URL this entry is a copy of. A script the Inth server sends
+	 * on `load` takes the entry only when this equals the URL its manifest
+	 * loads; a script declared in code takes it by `id`, as before.
+	 */
+	upstreamUrl?: string;
 }
 
 /**
@@ -67,6 +73,34 @@ export type ScriptSourcesWire = Record<string, ScriptSourceWire | null>;
 export interface ScriptRegistryWire {
 	/** Where the registry serves each script, by script `id`. */
 	sources?: ScriptSourcesWire;
+	/**
+	 * Scripts the project added on the Inth server, to load next to the
+	 * scripts the site declares in code, when the site turns on
+	 * `remoteScripts`. An empty list means there are none, and clears a
+	 * cached one.
+	 */
+	load?: RemoteScriptWire[];
+	/**
+	 * The registry could not be read. Inth keeps the list it last had,
+	 * instead of treating the registry as empty.
+	 */
+	unavailable?: true;
+}
+
+/**
+ * A script the Inth server tells Inth to load, built from an
+ * `@inth/integrations` integration.
+ */
+export interface RemoteScriptWire {
+	/** The vendor slug, which is also the manifest's `vendor` and the script's `id`. */
+	id: string;
+	/** The `@inth/integrations` registry key, such as `metaPixel`, for debugging. */
+	integration: string;
+	/**
+	 * The integration's resolved manifest: plain JSON that Inth checks
+	 * before it runs any of it.
+	 */
+	manifest: unknown;
 }
 
 /**

@@ -1,3 +1,4 @@
+import { isCategoryCondition } from '../modules/script-loader/category-condition';
 import {
 	MANIFEST_STEP_TYPES,
 	VENDOR_MANIFEST_KIND,
@@ -27,30 +28,6 @@ const STEP_LISTS = [
 ] as const satisfies readonly (keyof ResolvedManifest)[];
 
 const CONSENT_SIGNALS = new Set(['gtag', 'rudderstack', 'clarity']);
-
-/** A category name, or an `and` / `or` / `not` condition over them. */
-const isCategoryCondition = (value: unknown, depth = 0): boolean => {
-	if (typeof value === 'string') {
-		return value.length > 0;
-	}
-	if (!isRecord(value) || depth > 16) {
-		return false;
-	}
-	const keys = Object.keys(value);
-	if (keys.length !== 1) {
-		return false;
-	}
-	if (Object.hasOwn(value, 'not')) {
-		return isCategoryCondition(value.not, depth + 1);
-	}
-	const operands = Object.hasOwn(value, 'and') ? value.and : value.or;
-	return (
-		(Object.hasOwn(value, 'and') || Object.hasOwn(value, 'or')) &&
-		Array.isArray(operands) &&
-		operands.length > 0 &&
-		operands.every((operand) => isCategoryCondition(operand, depth + 1))
-	);
-};
 
 const isHttpsUrl = (value: unknown): boolean => {
 	if (typeof value !== 'string') {
@@ -86,7 +63,7 @@ const manifestProblem = (
 		return 'it names no vendor';
 	}
 	if (!isCategoryCondition(manifest.category)) {
-		return 'its category is not a category condition';
+		return 'its category is not a condition over known categories';
 	}
 	for (const list of STEP_LISTS) {
 		const steps = manifest[list];

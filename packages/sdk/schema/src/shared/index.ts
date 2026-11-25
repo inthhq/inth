@@ -7,6 +7,7 @@ export {
 export { parseConsentManifest } from './consent-manifest-schema';
 export { type Hosting, hostingSchema, hostingValues } from './hosting';
 export {
+	type RemoteScriptWire,
 	type ScriptRegistryWire,
 	type ScriptSignatureWire,
 	type ScriptSourceWire,
