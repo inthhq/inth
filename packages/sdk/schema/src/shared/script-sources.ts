@@ -116,3 +116,48 @@ export const scriptRegistrySchema = v.fallback(
 	),
 	undefined
 );
+
+/**
+ * Whether a `load` entry's manifest runs on a manifest runtime of `level`.
+ * A manifest that needs only level 1 carries no `requires`; a newer one
+ * carries the level it needs as a whole number from 1. Anything else, such
+ * as `requires: 2` on a level 1 runtime or a `requires` that is not a whole
+ * number, does not run.
+ */
+export const runsAtManifestLevel = function runsAtManifestLevel(
+	manifest: unknown,
+	level: number
+): boolean {
+	const requires =
+		typeof manifest === 'object' && manifest !== null
+			? (manifest as { requires?: unknown }).requires
+			: undefined;
+	return (
+		requires === undefined ||
+		(Number.isInteger(requires) &&
+			(requires as number) >= 1 &&
+			(requires as number) <= level)
+	);
+};
+
+/**
+ * `registry` without the `load` entries a manifest runtime of `level` cannot
+ * run, for a list no server filtered for this runtime: one copied from a
+ * static manifest, or one kept in a cache. Returns `registry` itself when
+ * nothing is dropped. Malformed entries stay for the loader to report.
+ */
+export const registryForManifestLevel = function registryForManifestLevel<
+	Registry extends ScriptRegistryWire | undefined,
+>(registry: Registry, level: number): Registry {
+	const load = registry?.load;
+	if (!Array.isArray(load)) {
+		return registry;
+	}
+	const kept = load.filter(
+		(entry) =>
+			typeof entry !== 'object' ||
+			entry === null ||
+			runsAtManifestLevel(entry.manifest, level)
+	);
+	return kept.length === load.length ? registry : { ...registry, load: kept };
+};

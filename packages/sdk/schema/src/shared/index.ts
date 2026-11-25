@@ -12,6 +12,8 @@ export {
 	type ScriptSignatureWire,
 	type ScriptSourceWire,
 	type ScriptSourcesWire,
+	registryForManifestLevel,
+	runsAtManifestLevel,
 	scriptRegistrySchema,
 } from './script-sources';
 export {
@@ -63,9 +65,11 @@ export {
 	INIT_COUNTRY_PARAM,
 	INIT_EXPERIMENT_PARAM,
 	INIT_GPC_PARAM,
+	INIT_MANIFEST_LEVEL_PARAM,
 	INIT_PARAM_HEADERS,
 	INIT_REGION_PARAM,
 	type InitRequestParams,
+	readManifestLevelParam,
 } from './init-request-params';
 export { DEFAULT_GVL_ENDPOINT } from './constants';
 export {

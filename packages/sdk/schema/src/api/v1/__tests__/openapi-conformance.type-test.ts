@@ -268,6 +268,11 @@ type DocumentGaps =
 	| 'registry list.load: only in SDK'
 	| 'registry list.unavailable: only in SDK'
 	| 'registry sources.*.upstreamUrl: only in SDK'
+	// For the document to add. The SDK sends its manifest runtime level on
+	// init and the manifest, and the Inth server leaves out the `load`
+	// entries whose manifest needs a higher one.
+	| 'init query.manifestLevel: only in SDK'
+	| 'manifest query.manifestLevel: only in SDK'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

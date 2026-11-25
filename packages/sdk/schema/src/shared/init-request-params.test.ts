@@ -4,6 +4,7 @@ import {
 	appendInitParams,
 	applyInitParamsToHeaders,
 	INIT_PARAM_HEADERS,
+	readManifestLevelParam,
 } from './init-request-params';
 import {
 	CONSENT_EXPERIMENT_HEADER,
@@ -34,6 +35,25 @@ describe('init query parameters', () => {
 			'/api/inth/v1/consent/init?site=shop&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
 		);
 	});
+
+	it('writes the manifest runtime level last, and reads it back', () => {
+		const url = appendInitParams('/v1/consent/init', {
+			country: 'DE',
+			manifestLevel: 1,
+		});
+		expect(url).toBe('/v1/consent/init?country=DE&manifestLevel=1');
+		expect(readManifestLevelParam(url)).toBe(1);
+		expect(readManifestLevelParam(new URL(url, 'https://c.example'))).toBe(1);
+	});
+
+	it.each(['', '0', '-1', '1.5', 'two', '01', '1e3'])(
+		'reads a manifestLevel of %j as none',
+		(value) => {
+			expect(
+				readManifestLevelParam(`/v1/consent/init?manifestLevel=${value}`)
+			).toBeUndefined();
+		}
+	);
 
 	it('leaves out absent inputs, and the URL alone when there are none', () => {
 		expect(appendInitParams('https://c.example/v1/consent/init', {})).toBe(

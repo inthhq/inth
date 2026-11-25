@@ -20,6 +20,7 @@ import type { PolicyRule, ResolvedPolicyRule } from './policy-rule';
 import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
 import type { PolicyFingerprints } from './policy-rule-fingerprint';
 import type { PolicyMatch } from './policy-runtime';
+import { registryForManifestLevel } from './script-sources';
 import type { ScriptRegistryWire } from './script-sources';
 import { getTranslationsData } from './translations-runtime';
 import type { I18nOptions, LoggerLike } from './translations-runtime';
@@ -115,6 +116,12 @@ export interface ResolveInitFromManifestInputs {
 	region?: string | null;
 	language?: string | null;
 	gpc?: boolean;
+	/**
+	 * The manifest runtime level of the SDK that runs the answer. The answer
+	 * keeps only the `scriptRegistry.load` entries it can run. Defaults to 1,
+	 * as the Inth server reads a request that sends no level.
+	 */
+	manifestLevel?: number;
 }
 
 export interface ResolveInitFromManifestOptions {
@@ -345,7 +352,10 @@ export const resolveInitFromManifest = function resolveInitFromManifest(
 			vendorListVersion: manifest.vendorListVersion,
 		}),
 		...(manifest.scriptRegistry !== undefined && {
-			scriptRegistry: manifest.scriptRegistry,
+			scriptRegistry: registryForManifestLevel(
+				manifest.scriptRegistry,
+				inputs.manifestLevel ?? 1
+			),
 		}),
 	};
 };

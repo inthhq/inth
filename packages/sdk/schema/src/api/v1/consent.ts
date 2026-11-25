@@ -34,11 +34,35 @@ import { jsonObject } from './json-schema';
 // GET /v1/consent/init and GET /v1/consent/manifest
 // ---------------------------------------------------------------------------
 
+/**
+ * The SDK's manifest runtime level (`manifestLevel`), which the document
+ * does not describe yet. The Inth server sends only the remote scripts that
+ * level runs.
+ */
+const manifestLevelEntry = {
+	manifestLevel: v.optional(
+		v.pipe(
+			v.string(),
+			v.regex(/^[1-9]\d{0,5}$/u),
+			v.description(
+				'The highest manifest runtime level the SDK runs. Without it, level 1.'
+			)
+		)
+	),
+};
+
 /** Query of `GET /v1/consent/init`. */
-export const v1ConsentInitQuerySchema = getV1ConsentInitQuerySchema;
+export const v1ConsentInitQuerySchema = jsonObject(
+	v.object({ ...getV1ConsentInitQuerySchema.entries, ...manifestLevelEntry })
+);
 
 /** Query of `GET /v1/consent/manifest`. */
-export const v1ConsentManifestQuerySchema = getV1ConsentManifestQuerySchema;
+export const v1ConsentManifestQuerySchema = jsonObject(
+	v.object({
+		...getV1ConsentManifestQuerySchema.entries,
+		...manifestLevelEntry,
+	})
+);
 
 export const v1ConsentInitOutputSchema = initOutputSchema;
 

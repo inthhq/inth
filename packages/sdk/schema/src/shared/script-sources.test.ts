@@ -5,6 +5,11 @@ import { initOutputSchema } from '../api/init';
 import { resolveInitFromManifest } from './consent-manifest';
 import type { ConsentManifest } from './consent-manifest';
 import { parseConsentManifest } from './consent-manifest-schema';
+import {
+	registryForManifestLevel,
+	runsAtManifestLevel,
+} from './script-sources';
+import type { ScriptRegistryWire } from './script-sources';
 
 const scriptSources = {
 	// Inth checks each entry when it loads the script, so the schema keeps
@@ -92,5 +97,76 @@ describe('scriptRegistry', () => {
 			v.parse(initOutputSchema, { ...initOutput, scriptRegistry })
 				.scriptRegistry
 		).toEqual(scriptRegistry);
+	});
+
+	describe('remote scripts by manifest level', () => {
+		const entry = (id: string, requires?: unknown) => ({
+			id,
+			integration: id,
+			manifest: {
+				category: 'measurement',
+				vendor: id,
+				...(requires !== undefined && { requires }),
+			},
+		});
+		const listed = {
+			load: [
+				entry('level-one'),
+				entry('needs-one', 1),
+				entry('needs-two', 2),
+				entry('needs-half', 1.5),
+				entry('needs-text', '1'),
+			],
+		};
+
+		test('init resolved from a manifest keeps only the entries level 1 runs, without a level', () => {
+			const parsed = parseConsentManifest({
+				...manifest,
+				scriptRegistry: listed,
+			});
+
+			expect(
+				resolveInitFromManifest(parsed, {}).scriptRegistry?.load?.map(
+					({ id }) => id
+				)
+			).toEqual(['level-one', 'needs-one']);
+		});
+
+		test('a higher level keeps the entries it runs', () => {
+			expect(
+				resolveInitFromManifest(
+					{ ...manifest, scriptRegistry: listed },
+					{ manifestLevel: 2 }
+				).scriptRegistry?.load?.map(({ id }) => id)
+			).toEqual(['level-one', 'needs-one', 'needs-two']);
+		});
+
+		test('a registry with nothing to drop is passed on as it is', () => {
+			const registry = { load: [entry('level-one')], sources: scriptSources };
+			expect(registryForManifestLevel(registry, 1)).toBe(registry);
+			expect(registryForManifestLevel(undefined, 1)).toBeUndefined();
+		});
+
+		test('a malformed entry stays for the loader to report', () => {
+			const registry = { load: [null, 'x', entry('needs-two', 2)] };
+			expect(
+				registryForManifestLevel(registry as unknown as ScriptRegistryWire, 1)
+					.load
+			).toEqual([null, 'x']);
+		});
+
+		test.each([
+			[undefined, 1, true],
+			[1, 1, true],
+			[2, 1, false],
+			[2, 2, true],
+			[0, 1, false],
+			[-1, 1, false],
+			[1.5, 2, false],
+			['1', 1, false],
+			[null, 1, false],
+		])('requires %j at level %i runs: %s', (requires, level, runs) => {
+			expect(runsAtManifestLevel({ requires }, level)).toBe(runs);
+		});
 	});
 });

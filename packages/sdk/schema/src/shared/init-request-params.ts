@@ -41,6 +41,14 @@ export const INIT_GPC_PARAM = 'gpc';
  */
 export const INIT_EXPERIMENT_PARAM = 'experiment';
 
+/**
+ * The highest manifest runtime level the SDK runs, a whole number from 1.
+ * The Inth server sends only the remote scripts whose manifest needs that
+ * level or lower; a request without it gets level 1 manifests. It has no
+ * header: only the SDK sends it. Also sent on `GET /v1/consent/manifest`.
+ */
+export const INIT_MANIFEST_LEVEL_PARAM = 'manifestLevel';
+
 /** Each init query parameter and the header with the same meaning. */
 export const INIT_PARAM_HEADERS: readonly (readonly [string, string])[] = [
 	[INIT_COUNTRY_PARAM, 'x-inth-country'],
@@ -59,6 +67,8 @@ export interface InitRequestParams {
 	gpc?: boolean;
 	/** Experiment arm, while the visitor has no stored choice. */
 	experiment?: SessionExperiment;
+	/** The SDK's manifest runtime level. */
+	manifestLevel?: number;
 }
 
 /**
@@ -90,7 +100,25 @@ export const appendInitParams = function appendInitParams(
 			formatExperimentHeader(params.experiment)
 		);
 	}
+	if (params.manifestLevel !== undefined) {
+		search.set(INIT_MANIFEST_LEVEL_PARAM, String(params.manifestLevel));
+	}
 	return appendSearchParams(url, search);
+};
+
+const MANIFEST_LEVEL = /^[1-9]\d{0,5}$/u;
+
+/**
+ * The manifest runtime level a request URL carries, or `undefined` when it
+ * carries none or one that is not a whole number from 1.
+ *
+ * @param url - The request URL, absolute or relative.
+ */
+export const readManifestLevelParam = function readManifestLevelParam(
+	url: string | URL
+): number | undefined {
+	const value = readSearchParams(url).get(INIT_MANIFEST_LEVEL_PARAM);
+	return value && MANIFEST_LEVEL.test(value) ? Number(value) : undefined;
 };
 
 /**
