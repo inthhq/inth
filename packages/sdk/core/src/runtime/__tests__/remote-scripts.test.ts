@@ -306,6 +306,47 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('runs the new setup when a later init changes a manifest but not its file', async () => {
+		const withAccount = (account: string) =>
+			load(
+				acmeManifest({
+					alwaysLoad: true,
+					setupSteps: [
+						{
+							queue: 'acmeQueue',
+							type: 'pushToQueue',
+							value: ['init', account],
+						},
+					],
+				})
+			);
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
+				initialScriptRegistry: { load: withAccount('ACME-OLD') },
+			},
+			remoteScripts: true,
+		});
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+
+		answer.resolve({ scriptRegistry: { load: withAccount('ACME-NEW') } });
+
+		await vi.waitFor(() =>
+			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toContainEqual([
+				'init',
+				'ACME-NEW',
+			])
+		);
+		expect(tags()).toHaveLength(1);
+		runtime.dispose();
+	});
+
 	test('keeps the list it had when init says the registry is unavailable', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({
@@ -412,78 +453,115 @@ describe('remoteScripts', () => {
 		other.dispose();
 	});
 
-	test('never runs an entry that the answer granting its category also removes', async () => {
-		const answer = Promise.withResolvers<Record<string, unknown>>();
-		const runtime = createConsentRuntime({
-			mode: initMode(() => answer.promise),
-			persistence: false,
-			prefetch: {
-				initialPolicyPending: true,
-				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
-				initialScriptRegistry: { load: load() },
+	const otherEntry = {
+		id: 'other-pixel',
+		integration: 'otherPixel',
+		manifest: acmeManifest({
+			bootstrapSteps: [],
+			loadScript: {
+				async: true,
+				src: 'https://cdn.other.example/pixel.js',
+				type: 'loadScript',
 			},
-			remoteScripts: true,
-		});
-		runtime.start();
-		// The cached entry is built, and waits for marketing.
-		await new Promise((resolve) => {
-			setTimeout(resolve, 20);
-		});
-		expect(tags()).toHaveLength(0);
-
-		// One answer grants marketing (opt-out) and drops the entry.
-		answer.resolve({
-			policyResolution: {
-				...matchedResolution(optOutRule({ id: 'opt-out' })),
-				version: 1,
+			setupSteps: [],
+			vendor: 'other-pixel',
+			vendorDetails: {
+				name: 'Other Pixel',
+				privacyPolicyUrl: 'https://other.example/privacy',
 			},
-			scriptRegistry: { load: [] },
-		});
-		await vi.waitFor(() =>
-			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
-		);
-		await new Promise((resolve) => {
-			setTimeout(resolve, 20);
-		});
-		expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
-		expect(tags()).toHaveLength(0);
-		runtime.dispose();
-	});
+		}),
+	};
 
-	test('never runs a cached entry the registry waits on when init drops it', async () => {
-		const answer = Promise.withResolvers<Record<string, unknown>>();
-		const runtime = createConsentRuntime({
-			experimentalScriptRegistry: true,
-			mode: initMode(() => answer.promise),
-			persistence: false,
-			prefetch: {
-				initialPolicyPending: true,
-				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
-				initialScriptRegistry: {
-					load: load(acmeManifest({ alwaysLoad: true })),
+	test.each([
+		['drops it', []],
+		// Declaring the new vendor commits a snapshot of its own, which
+		// reconciles before the new list is applied unless it already is.
+		['swaps it for another', [otherEntry]],
+	])(
+		'never runs an entry that the answer granting its category %s',
+		async (_label, nextLoad) => {
+			const answer = Promise.withResolvers<Record<string, unknown>>();
+			const runtime = createConsentRuntime({
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: load() },
 				},
-			},
-			remoteScripts: true,
-		});
-		runtime.start();
-		await new Promise((resolve) => {
-			setTimeout(resolve, 20);
-		});
-		// It waits for the registry's list.
-		expect(tags()).toHaveLength(0);
+				remoteScripts: true,
+			});
+			runtime.start();
+			// The cached entry is built, and waits for marketing.
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			expect(tags()).toHaveLength(0);
 
-		answer.resolve({ scriptRegistry: { load: [] } });
+			// One answer grants marketing (opt-out) and drops the entry.
+			answer.resolve({
+				policyResolution: {
+					...matchedResolution(optOutRule({ id: 'opt-out' })),
+					version: 1,
+				},
+				scriptRegistry: { load: nextLoad },
+			});
+			await vi.waitFor(() =>
+				expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+			);
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
+			expect(tags()).toHaveLength(0);
+			runtime.dispose();
+		}
+	);
 
-		await vi.waitFor(() =>
-			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
-		);
-		await new Promise((resolve) => {
-			setTimeout(resolve, 20);
-		});
-		expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
-		expect(tags()).toHaveLength(0);
-		runtime.dispose();
-	});
+	test.each([
+		['drops it', []],
+		['swaps it for another', [otherEntry]],
+	])(
+		'never runs a cached entry the registry waits on when init %s',
+		async (_label, nextLoad) => {
+			const answer = Promise.withResolvers<Record<string, unknown>>();
+			const runtime = createConsentRuntime({
+				experimentalScriptRegistry: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: load(acmeManifest({ alwaysLoad: true })),
+					},
+				},
+				remoteScripts: true,
+			});
+			runtime.start();
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			// It waits for the registry's list.
+			expect(tags()).toHaveLength(0);
+
+			answer.resolve({ scriptRegistry: { load: nextLoad } });
+
+			await vi.waitFor(() =>
+				expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+			);
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
+			expect(tags()).toHaveLength(0);
+			runtime.dispose();
+		}
+	);
 
 	test('skips an entry whose id a code script uses, whatever its vendor', async () => {
 		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();

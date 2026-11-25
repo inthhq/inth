@@ -117,8 +117,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	let remoteScripts: Script[] = [];
 	/** Every script built from a remote entry, so the resolver can tell. */
 	const remoteObjects = new WeakSet<Script>();
-	/** Ids of the remote scripts in the registered list. */
-	let activeRemoteIds = new Set<string>();
+	/** The remote scripts in the registered list, by id. */
+	let activeRemote = new Map<string, Script>();
 	/** Whether a code script claims a remote entry's integration. */
 	/**
 	 * What code scripts claim: each one's `integration ?? vendor ?? id`, and
@@ -762,10 +762,10 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const nextScripts = new Set(next);
 		const nextById = new Map(next.map((script) => [script.id, script]));
-		const nextRemoteIds = new Set(
+		const nextRemote = new Map(
 			configuredNext
 				.filter((script) => remoteObjects.has(script))
-				.map((script) => script.id)
+				.map((script) => [script.id, script])
 		);
 		const previous = new Set(normalized.map(({ script }) => script));
 		const snapshot = kernel.getSnapshot();
@@ -786,11 +786,12 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			} else if (retainedElements.has(script.id)) {
 				mountedCallbackOnly = false;
 			}
-			// A script that moves between code and the Inth server's list
-			// starts a fresh lifecycle, even when it loads the same file.
+			// A script that moves between code and the Inth server's list, or
+			// whose server manifest changed, starts a fresh lifecycle, even
+			// when it loads the same file.
 			if (
 				replacement &&
-				activeRemoteIds.has(script.id) === nextRemoteIds.has(script.id) &&
+				activeRemote.get(script.id) === nextRemote.get(script.id) &&
 				script.onDispose === replacement.onDispose &&
 				(!script.onDispose || !mountedCallbackOnly) &&
 				hasSameResource(script, replacement)
@@ -819,7 +820,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			statuses.delete(script.id);
 		}
 		normalized = normalizeScripts(next, isVendorId);
-		activeRemoteIds = nextRemoteIds;
+		activeRemote = nextRemote;
 		if (!disposed) {
 			registerCategories([...next, ...held.map(({ script }) => script)]);
 			reconcileRequested = true;
@@ -1000,11 +1001,14 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		if (!readLoad(snapshot)) {
 			return;
 		}
+		// Replace the built scripts first: declaring a new entry's vendor
+		// commits a snapshot of its own, and the reconcile it starts must not
+		// see an entry this list removed.
+		applyRemote();
 		registerCategories([
 			...normalized.map(({ script }) => script),
 			...held.map(({ script }) => script),
 		]);
-		applyRemote();
 	};
 
 	const handle: ScriptLoaderHandle = {
