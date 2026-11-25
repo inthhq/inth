@@ -710,8 +710,9 @@ export interface QueueWorker {
 	 * Move the visitor off a subject id: to a new one when the backend
 	 * refused it, or to the canonical one it answered for a `sub_` id.
 	 * `owned`, when given, must still hold inside the storage transaction
-	 * and again just before the subject is committed: an answer for one
-	 * account never moves the subject of the account identified since.
+	 * that moves the stored entries and commits the subject in one step: an
+	 * answer for one account never moves the subject, the stored
+	 * reassignment or the queued entries of the account identified since.
 	 */
 	reassignSubject: (
 		from: string,
@@ -1006,6 +1007,33 @@ export const createQueueWorker = function createQueueWorker({
 	// -- Subject reassignment --------------------------------------------------
 
 	/**
+	 * Commit `to` as the visitor's subject when it is still `from`, like a
+	 * subject the server resolved, so persistence writes it over the stored
+	 * one. Called from inside the transaction that moved the stored entries:
+	 * committing after the transaction resolved would leave a gap in which
+	 * another account is identified, and the stored move would then belong
+	 * to a subject the visitor never took. Listeners run inside the
+	 * transaction; the store's lists are already written, and a transaction
+	 * a listener starts runs after this one (or, without a lock, sees every
+	 * write this one made).
+	 */
+	const moveVisitor = function moveVisitor(from: string, to: string): void {
+		const current = getSnapshot().subject;
+		if (current?.subjectId !== from || from === to) {
+			return;
+		}
+		const subject: ConsentSubject = { ...current, subjectId: to };
+		batch(() => {
+			commit({ subject });
+			emit({
+				previousSubjectId: from,
+				snapshot: getSnapshot(),
+				type: 'subject:resolved',
+			});
+		});
+	};
+
+	/**
 	 * The subject id that replaces `from` in this browser, shared by every
 	 * kernel on the store. The first caller records `proposed`; any later
 	 * one gets the id already recorded. Two tabs refused at the same moment
@@ -1021,6 +1049,13 @@ export const createQueueWorker = function createQueueWorker({
 	 * be cleared or switched; then nothing is recorded or moved and this
 	 * resolves to `null`, so saves that no longer belong to the visitor stay
 	 * where they were.
+	 *
+	 * A visitor still on `from` moves to the returned id in the same
+	 * transaction, after the writes ({@link moveVisitor}). The check, the
+	 * stored move and the subject commit are one synchronous step, so no
+	 * `identify()`, sign-out or clear can land between them: the stored
+	 * reassignment, the queued entries and the visitor's subject move
+	 * together for the identity that was checked, or none of them moves.
 	 */
 	const claimReassignment = function claimReassignment(
 		from: string,
@@ -1057,6 +1092,7 @@ export const createQueueWorker = function createQueueWorker({
 				);
 				tx.write('optOuts', normalizePendingOptOuts(movedOptOuts, now));
 			}
+			moveVisitor(from, to);
 			return to;
 		});
 	};
@@ -1112,8 +1148,9 @@ export const createQueueWorker = function createQueueWorker({
 	 * same browser subject outlives an `identify()` or a sign-out, so the
 	 * subject alone cannot tell a late answer for the previous account from
 	 * one for the current. It is asked inside the storage transaction, with
-	 * the subject check, and again just before the subject is committed;
-	 * when it fails, nothing moves and this resolves to `null`.
+	 * the subject check, in the same synchronous step that moves the stored
+	 * entries and commits the subject; when it fails, nothing moves and this
+	 * resolves to `null`.
 	 */
 	const reassignSubject = async function reassignSubject(
 		from: string,
@@ -1156,34 +1193,18 @@ export const createQueueWorker = function createQueueWorker({
 				? null
 				: reassignSubject(from, proposed, owned);
 		}
-		// Moves saves queued under `from` since the first claim.
+		// Moves saves queued under `from` since the first claim, and the
+		// visitor when it is on `from` again.
 		if (
 			earlier !== undefined &&
 			(await claimReassignment(from, to, unchanged(to))) === null
 		) {
 			return null;
 		}
-
-		// The account can change between the transaction and this commit.
-		if (!owned()) {
-			return null;
-		}
-		const current = getSnapshot().subject;
-		if (current?.subjectId === to) {
-			return to;
-		}
-		if (current?.subjectId !== from) {
-			return null;
-		}
-		const subject: ConsentSubject = { ...current, subjectId: to };
-		batch(() => {
-			commit({ subject });
-			emit({
-				previousSubjectId: from,
-				snapshot: getSnapshot(),
-				type: 'subject:resolved',
-			});
-		});
+		// The claim moved the visitor inside its transaction, for the account
+		// `owned` checked there. An account identified since inherits the
+		// moved subject with its stored entries, as when the answer had
+		// arrived before the switch.
 		return to;
 	};
 
