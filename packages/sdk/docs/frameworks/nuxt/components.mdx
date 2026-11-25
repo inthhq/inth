@@ -18,7 +18,7 @@ component ships its own styles.
 | [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger) | Global | Floating, draggable button that reopens preferences. |
 | [`ConsentGate`](/docs/frameworks/nuxt/components/consent-gate) | Global | Default slot while a category is allowed, otherwise its `placeholder` slot. |
 | [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | `@inth/nuxt/components/consent-banner` | First-layer banner on its own. |
-| [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) | `@inth/nuxt/components/consent-manager` | Preference dialog on its own. |
+| [`ConsentDialog`](/docs/frameworks/nuxt/components/consent-dialog) | `@inth/nuxt/components/consent-dialog` | Preference dialog on its own. |
 | [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | `@inth/nuxt/components/iab-consent-banner` | IAB TCF first layer. |
 | [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) | `@inth/nuxt/components/iab-consent-dialog` | IAB TCF preference center. |
 | [`ConsentDevTools`](/docs/frameworks/nuxt/components/dev-tools) | `@inth/nuxt/devtools` | Development inspection panel. |
@@ -33,7 +33,7 @@ import ConsentBanner from '@inth/nuxt/components/consent-banner';
 
 ## InthProvider or the parts
 
-`InthProvider` renders `ConsentBanner` and `ConsentManager` (or the IAB
+`InthProvider` renders `ConsentBanner` and `ConsentDialog` (or the IAB
 components when `iab` is enabled) automatically for each visitor's policy.
 Mount either `InthProvider` or individual surfaces, never both, so visitors do
 not see two banners. Always use the global Nuxt `InthProvider` rather than the

@@ -144,7 +144,7 @@ const SettingsLink = defineComponent({
 				{
 					'data-testid': 'consent-dialog-trigger',
 					onClick: () => {
-						activeUI.value = 'manager';
+						activeUI.value = 'dialog';
 					},
 					style: {
 						background: 'none',

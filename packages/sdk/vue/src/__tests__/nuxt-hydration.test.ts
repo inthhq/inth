@@ -360,7 +360,7 @@ test('Nuxt external authority skips server fetch and records, then connects only
 				context.kernel.getSnapshot().effectivePermissions.measurement
 			).toBe(true)
 		);
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		expect(openPreferences).toHaveBeenCalledTimes(1);
 		expect(context.kernel.getSnapshot().activeUI).toBe('none');
 	} finally {

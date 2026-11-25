@@ -149,12 +149,12 @@ describe('ConsentDialogTrigger corner', () => {
 
 		button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
 		await flushPromises();
-		expect(context.activeUI.value).not.toBe('manager');
+		expect(context.activeUI.value).not.toBe('dialog');
 
 		// A keyboard click after the drag still opens it.
 		button.click();
 		await flushPromises();
-		expect(context.activeUI.value).toBe('manager');
+		expect(context.activeUI.value).toBe('dialog');
 	});
 
 	test('keeps the corner to itself without triggerPersistPosition', async () => {

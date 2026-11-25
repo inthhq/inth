@@ -9,7 +9,7 @@ import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import type { Component, ComponentPublicInstance } from 'vue';
 
-import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentDialog from '../runtime/components/dialog/manager.vue';
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
@@ -52,7 +52,7 @@ const query = (selector: string) =>
 
 const render = async function render(
 	component: Component,
-	activeUI: 'banner' | 'manager' | null,
+	activeUI: 'banner' | 'dialog' | null,
 	configDisableAnimation: boolean,
 	disableAnimation: boolean | undefined
 ) {
@@ -120,9 +120,9 @@ describe('the disableAnimation prop', () => {
 		{ config: false, expected: true, prop: true },
 		{ config: true, expected: false, prop: false },
 	])(
-		'on ConsentManager: $prop over config $config stops the motion: $expected',
+		'on ConsentDialog: $prop over config $config stops the motion: $expected',
 		async ({ config, expected, prop }) => {
-			await render(ConsentManager, 'manager', config, prop);
+			await render(ConsentDialog, 'dialog', config, prop);
 			const root = () => query('[data-testid="consent-dialog-root"]');
 			await vi.waitFor(() => expect(root()).not.toBeNull());
 			expect(root()?.getAttribute('data-animation') === 'off').toBe(expected);

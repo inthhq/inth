@@ -5,6 +5,6 @@ import { defineAsyncComponent } from 'vue';
  * The stock consent dialog, with the opt-in confirmation it hosts. Its
  * chunk loads when the dialog first opens.
  */
-export const LazyConsentManager = defineAsyncComponent(
+export const LazyConsentDialog = defineAsyncComponent(
 	() => import('./dialog/manager.vue')
 );

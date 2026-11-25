@@ -17,7 +17,7 @@ Import every component except `ConsentDevTools` by name from
 | --- | --- |
 | [`InthProvider`](/docs/frameworks/vue/components/inth-provider) | Banner and preference dialog (switching to IAB surfaces under an IAB policy when `iab` is set). |
 | [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | First-layer banner on its own. |
-| [`ConsentManager`](/docs/frameworks/vue/components/consent-manager) | Preference dialog on its own. |
+| [`ConsentDialog`](/docs/frameworks/vue/components/consent-dialog) | Preference dialog on its own. |
 | [`ConsentWidget`](/docs/frameworks/vue/components/consent-widget) | Inline category switches and save buttons for a privacy page. |
 | [`ConsentDialogLink`](/docs/frameworks/vue/components/consent-dialog-link) | Button that reopens preferences. |
 | [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) | Floating, draggable button that reopens preferences. |
@@ -38,7 +38,7 @@ Because the components ship as `.vue` files, keep
 
 ## InthProvider or the parts
 
-`InthProvider` renders `ConsentBanner` and `ConsentManager` (or the IAB
+`InthProvider` renders `ConsentBanner` and `ConsentDialog` (or the IAB
 components when `iab` is enabled) automatically for each visitor's policy.
 Mount either `InthProvider` or the individual surfaces, never both, so visitors
 do not see two banners. Compose the individual components only when you need

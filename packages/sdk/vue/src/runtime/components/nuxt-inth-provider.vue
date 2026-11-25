@@ -19,7 +19,7 @@ import {
 } from '../utils/consent-symbols.model';
 import { LazyIabConsentDialog } from './lazy-iab-panel';
 import { LazyIabConsentBanner } from './lazy-iab-prompt';
-import { LazyConsentManager } from './lazy-manager';
+import { LazyConsentDialog } from './lazy-manager';
 import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
 import { useAdoptOptOutConfirmation } from './parts/use-adopt-opt-out-confirmation';
 import { prefetchIabConsentDialog } from './prefetch-iab-panel';
@@ -77,7 +77,7 @@ const iabDialogNeeded = ref(false);
 watch(
 	activeUI,
 	(ui) => {
-		if (ui === 'manager') {
+		if (ui === 'dialog') {
 			if (init.value?.gvl || init.value?.gvlReference) {
 				iabDialogNeeded.value = true;
 			} else {
@@ -102,7 +102,7 @@ onMounted(() => {
 		<LazyIabConsentDialog
 			v-if="(init?.gvl || init?.gvlReference) && iabDialogNeeded"
 		/>
-		<LazyConsentManager
+		<LazyConsentDialog
 			v-else-if="!(init?.gvl || init?.gvlReference) && managerNeeded"
 		/>
 		<LazyConsentDialogTrigger v-if="showTrigger && mounted" />

@@ -28,10 +28,10 @@ const savePreferences = () => {
 		<p>We use cookies for measurement and marketing.</p>
 		<button type="button" @click="choose('none')">Reject all</button>
 		<button type="button" @click="choose('all')">Accept all</button>
-		<button type="button" @click="activeUI = 'manager'">Customize</button>
+		<button type="button" @click="activeUI = 'dialog'">Customize</button>
 	</section>
 	<section
-		v-else-if="activeUI === 'manager'"
+		v-else-if="activeUI === 'dialog'"
 		class="consent-prompt"
 		aria-label="Privacy settings"
 	>

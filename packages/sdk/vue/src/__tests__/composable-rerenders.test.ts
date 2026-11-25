@@ -124,7 +124,7 @@ describe('composable re-renders', () => {
 		const { context, updates, wrapper } = mountSubscribers();
 		try {
 			await flushPromises();
-			context.activeUI.value = 'manager';
+			context.activeUI.value = 'dialog';
 			await flushPromises();
 
 			expect(updates).toEqual({

@@ -133,7 +133,7 @@ describe('ConsentGate default placeholder', () => {
 
 		await wrapper.get('[data-testid="consent-gate-button"]').trigger('click');
 
-		expect(context.activeUI.value).toBe('manager');
+		expect(context.activeUI.value).toBe('dialog');
 		// Opening the preferences grants nothing by itself.
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
 	});

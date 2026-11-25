@@ -43,7 +43,7 @@ import { renderToString } from 'vue/server-renderer';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createIAB } from '../../../iab/src/index';
-import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentDialog from '../runtime/components/dialog/manager.vue';
 import IabConsentDialog from '../runtime/components/iab-panel.vue';
 import IabConsentBanner from '../runtime/components/iab-prompt.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
@@ -364,12 +364,12 @@ const componentFor = function componentFor(
 				setup() {
 					return () => [
 						h(ConsentBanner, { blockUntilChoice }),
-						h(ConsentManager),
+						h(ConsentDialog),
 					];
 				},
 			});
 		case 'consent-dialog':
-			return ConsentManager;
+			return ConsentDialog;
 		case 'consent-widget':
 			return ConsentWidget;
 		case 'iab-consent-banner':

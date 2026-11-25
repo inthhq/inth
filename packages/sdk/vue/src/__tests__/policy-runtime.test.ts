@@ -290,7 +290,7 @@ test('onSurfaceShown fires for the server-rendered banner and an opened dialog',
 		expect(surfaceShown.mock.calls[0]?.[0]).not.toHaveProperty('type');
 
 		vi.spyOn(Date, 'now').mockReturnValue(now + 2000);
-		context.activeUI.value = 'manager';
+		context.activeUI.value = 'dialog';
 		expect(surfaceShown).toHaveBeenCalledTimes(2);
 		expect(surfaceShown.mock.calls[1]?.[0]).toMatchObject({
 			shownAt: now + 2000,

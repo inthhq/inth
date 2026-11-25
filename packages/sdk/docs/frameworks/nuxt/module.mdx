@@ -145,6 +145,7 @@ See [rendering and deployment](/docs/frameworks/nuxt/rendering).
 | `hideBranding` and per-surface forms | `false` | Hides the "Consent by" tag. |
 | `showTrigger` and `trigger*` | `false` | Configures the floating trigger. See [ConsentDialogTrigger](/docs/frameworks/nuxt/components/consent-dialog-trigger). |
 | `disableAnimation` | `false` | Disables banner and dialog transitions. |
+| `scrollLock`, `trapFocus` | From `presentation` | Block the page (backdrop, scroll lock and focus trap) while the IAB banner or dialog is open. `false` in either turns blocking off. A component's own props win, and `presentation.prompt.blockUntilChoice` or `presentation.preferences.blocking` wins over both. |
 | `models`, `bannerModels`, `iabBannerModels`, `iabDialogModels` | Every model | Limits which policy models render each surface. |
 
 ## Verify

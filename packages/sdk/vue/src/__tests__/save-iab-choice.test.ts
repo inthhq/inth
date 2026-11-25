@@ -16,7 +16,7 @@ test('the Vue activeUI setter is explicit navigation: it supersedes a pending IA
 	const onError = vi.fn();
 	const save = saveIABConsentSurface(kernel, () => pending.promise, onError);
 
-	activeUI.value = 'manager';
+	activeUI.value = 'dialog';
 	activeUI.value = null;
 	pending.reject(new Error('offline'));
 	await expect(save).resolves.toEqual({ ok: false });

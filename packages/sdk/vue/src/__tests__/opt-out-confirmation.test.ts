@@ -31,7 +31,7 @@ import * as publicExports from '../index';
 import {
 	ConsentDialogLink,
 	ConsentDialogTrigger,
-	ConsentManager,
+	ConsentDialog,
 	OptOutConfirmation,
 	useOptOut,
 	useOptOutState,
@@ -230,7 +230,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -342,7 +342,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -391,7 +391,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(ConsentDialogTrigger),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -451,7 +451,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(CustomButton),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -524,7 +524,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(OptOutButton),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -559,7 +559,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		const second = await mountTree(
 			defineComponent({
 				render: () => [
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -593,7 +593,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		await mountTree(
 			defineComponent({
 				render: () => [
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -619,7 +619,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 					render: () => [
 						h(ConsentDialogLink, { right: 'opt-out' }),
 						h(ConsentDialogTrigger),
-						h(ConsentManager, { disableAnimation: true }),
+						h(ConsentDialog, { disableAnimation: true }),
 						h(OptOutConfirmation, { disableAnimation: true }),
 					],
 				}),
@@ -676,7 +676,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(CustomButton),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -710,7 +710,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(OptOutButton),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -764,7 +764,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
@@ -828,7 +828,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 				render: () => [
 					h(StateProbe),
 					h(OptOutButton),
-					h(ConsentManager, { disableAnimation: true }),
+					h(ConsentDialog, { disableAnimation: true }),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),

@@ -34,7 +34,7 @@ In React, Vue and Svelte, set `container` to `{ type: 'banner', edge: 'bottom' }
   </Tab>
 
   <Tab value="Vue">
-    Mount `CookieBanner.vue` with `ConsentManager` from `@inth/vue/runtime/components/consent-manager.vue` instead of `InthProvider`, or set `presentation.prompt` in `inth` options.
+    Mount `CookieBanner.vue` with `ConsentDialog` from `@inth/vue/runtime/components/consent-dialog.vue` instead of `InthProvider`, or set `presentation.prompt` in `inth` options.
 
     <include src="../shared/examples/storybook-vue/bottom-bar.mdx" />
   </Tab>
@@ -114,7 +114,7 @@ The headless bar pairs your own HTML and CSS with Inth's headless API while the 
   </Tab>
 
   <Tab value="Vue">
-    Composables from `@inth/vue/vue-plugin` provide policy actions and active UI state. Mount `CookieBar.vue` and `ConsentManager` instead of `InthProvider`.
+    Composables from `@inth/vue/vue-plugin` provide policy actions and active UI state. Mount `CookieBar.vue` and `ConsentDialog` instead of `InthProvider`.
 
     <include src="../shared/examples/storybook-vue/headless-bar.mdx" />
   </Tab>

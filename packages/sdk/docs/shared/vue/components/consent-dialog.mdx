@@ -1,17 +1,17 @@
 ---
-title: "ConsentManager"
-description: "Shared ConsentManager reference for the Inth Vue plugin and Nuxt module."
+title: "ConsentDialog"
+description: "Shared ConsentDialog reference for the Inth Vue plugin and Nuxt module."
 group: reference
 ---
 
-{/* This file is NOT rendered directly. Sections are imported by the Vue and Nuxt ConsentManager pages. */}
+{/* This file is NOT rendered directly. Sections are imported by the Vue and Nuxt ConsentDialog pages. */}
 
 <section id="behavior">
-  ## What ConsentManager renders
+  ## What ConsentDialog renders
 
-  `ConsentManager` is the consent dialog, "Your Privacy Choices"
-  (equivalent to `ConsentDialog` in React). It opens while `activeUI` is
-  `'manager'`, set by `PrivacyChoicesLink`, `ConsentDialogLink`,
+  `ConsentDialog` is the consent dialog, "Your Privacy Choices", as in
+  React. It opens while `activeUI` is
+  `'dialog'`, set by `PrivacyChoicesLink`, `ConsentDialogLink`,
   `ConsentDialogTrigger`, a `ConsentGate` button, or your own code. The
   banner's Customize button does not open it: Customize opens the choices
   inside the banner. It renders nothing until the visitor's policy resolves

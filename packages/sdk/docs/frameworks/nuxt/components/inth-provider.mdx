@@ -29,7 +29,7 @@ during SSR.
 
 | Policy | Banner | Preferences |
 | --- | --- | --- |
-| Standard, opt-in, or opt-out | [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) |
+| Standard, opt-in, or opt-out | [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | [`ConsentDialog`](/docs/frameworks/nuxt/components/consent-dialog) |
 | IAB TCF with vendor list | [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) |
 
 It also renders [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger)
@@ -69,7 +69,7 @@ See [translations](/docs/frameworks/nuxt/translations).
 
 ## Compose the surfaces yourself
 
-To place or configure `ConsentBanner`, `ConsentManager`, and IAB components
+To place or configure `ConsentBanner`, `ConsentDialog`, and IAB components
 directly, render them instead of `InthProvider`. See
 [ConsentBanner](/docs/frameworks/nuxt/components/consent-banner#import-the-banner-in-place-of-inthprovider).
 Never mount both `InthProvider` and individual surfaces together, or visitors

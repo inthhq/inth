@@ -26,7 +26,7 @@ Install `inth` with `consentManifest()` and your `scripts`, just like the
 ## Write the consent UI
 
 Render a banner while `activeUI` is `'banner'` and a preference form while it
-is `'manager'`:
+is `'dialog'`:
 
 <include src="../../shared/examples/vue/headless-prompt.mdx" />
 
@@ -42,7 +42,7 @@ Add focus trapping, a close button, and styles before shipping.
 ## Mount it instead of InthProvider
 
 Render your component where `InthProvider` would go and keep a button that sets
-`activeUI` to `'manager'` so visitors can reopen preferences:
+`activeUI` to `'dialog'` so visitors can reopen preferences:
 
 <include src="../../shared/examples/vue/headless-app.mdx" />
 
