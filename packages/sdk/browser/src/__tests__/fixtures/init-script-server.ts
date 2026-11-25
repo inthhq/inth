@@ -20,6 +20,8 @@
  * - `/__inth-init__/stale-dialog.js`: a `inth.dialog.js` from another
  *   release.
  * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/v1/consent/init` answers.
+ * - `/__inth-init__/registry-unavailable?on=<0|1>`: answer every
+ *   `backend-remote-<mode>` init with `scriptRegistry: { unavailable: true }`.
  * - `/__inth-init__/backend/v1/consent/init`: the init answer, an opt-in policy for
  *   measurement and marketing with English copy.
  * - `/__inth-init__/backend-remote-<mode>/v1/consent/init`: the same, with a
@@ -74,9 +76,15 @@ const remoteManifest = (alwaysLoad: boolean) => ({
 	},
 });
 
-const remoteRegistry = (mode: string | undefined) =>
-	mode === 'always' || mode === 'gated'
-		? {
+let registryUnavailable = false;
+
+const remoteRegistry = (mode: string | undefined) => {
+	if (!(mode === 'always' || mode === 'gated')) {
+		return {};
+	}
+	return registryUnavailable
+		? { scriptRegistry: { unavailable: true } }
+		: {
 				scriptRegistry: {
 					load: [
 						{
@@ -86,8 +94,8 @@ const remoteRegistry = (mode: string | undefined) =>
 						},
 					],
 				},
-			}
-		: {};
+			};
+};
 
 const initBody = (remote?: string) =>
 	JSON.stringify({
@@ -129,6 +137,17 @@ let inits = 0;
 let initDelay = 0;
 let hostedRequests = 0;
 let failsSincePage = 0;
+
+/** Routes that change how the next answers behave. */
+const settings: Record<string, ((query: URLSearchParams) => void) | undefined> =
+	{
+		'/__inth-init__/init-delay': (query) => {
+			initDelay = Number(query.get('ms') ?? 0);
+		},
+		'/__inth-init__/registry-unavailable': (query) => {
+			registryUnavailable = query.get('on') === '1';
+		},
+	};
 
 const page = (query: URLSearchParams): string => {
 	const queue = query.has('queue')
@@ -256,8 +275,9 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		response.end(page(url.searchParams));
 		return;
 	}
-	if (url.pathname === '/__inth-init__/init-delay') {
-		initDelay = Number(url.searchParams.get('ms') ?? 0);
+	const setting = settings[url.pathname];
+	if (setting) {
+		setting(url.searchParams);
 		response.end('{}');
 		return;
 	}

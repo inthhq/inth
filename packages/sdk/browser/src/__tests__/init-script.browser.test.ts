@@ -84,6 +84,10 @@ const setInitDelay = async (ms: number): Promise<void> => {
 	await fetch(`/__inth-init__/init-delay?ms=${ms}`);
 };
 
+const setRegistryUnavailable = async (on: boolean): Promise<void> => {
+	await fetch(`/__inth-init__/registry-unavailable?on=${on ? 1 : 0}`);
+};
+
 const initsSoFar = async (): Promise<number> =>
 	(await (await fetch('/__inth-init__/inits')).json()) as number;
 
@@ -96,6 +100,7 @@ const hostedRequestsSoFar = async (): Promise<number> =>
 beforeEach(async () => {
 	clearStorage();
 	await setInitDelay(0);
+	await setRegistryUnavailable(false);
 	await savesSoFar();
 	await initsSoFar();
 	await hostedRequestsSoFar();
@@ -923,6 +928,32 @@ describe('scripts the Inth server lists', () => {
 		await expect
 			.poll(() => win.localStorage.getItem('inth-init-policy') ?? '')
 			.toContain('remote-pixel');
+	});
+
+	it('starts an engine that sends its own init from the cached list when the registry is unavailable', async () => {
+		// First visit: an accept keeps the policy and the list.
+		const first = await open({ remote: 'gated' });
+		await expect.poll(() => buttonOf(first, 'accept')).not.toBeNull();
+		buttonOf(first, 'accept')?.click();
+		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
+		await expect
+			.poll(() => first.localStorage.getItem('inth-init-policy') ?? '')
+			.toContain('remote-pixel');
+
+		// Second visit: options the init script cannot start early with, so
+		// the engine sends its own init, and the server cannot read the list.
+		await setRegistryUnavailable(true);
+		const second = await open({ manual: true, remote: 'gated' });
+		(second.inth.init as (options: unknown) => void)({
+			networkBlocker: { rules: [] },
+		});
+
+		await expect
+			.poll(() => second.__ran, { timeout: 10_000 })
+			.toContain('remote');
+		expect(second.inth.client?.getSnapshot().scriptRegistry?.load).toHaveLength(
+			1
+		);
 	});
 
 	it('loads nothing the server lists with data-remote-scripts="false"', async () => {

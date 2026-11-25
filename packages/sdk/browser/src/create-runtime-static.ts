@@ -23,7 +23,9 @@ import {
 	createConsentRuntimeWith,
 	mountRuntimeIAB,
 } from '@inth/sdk-core/runtime/on-demand';
+import type { ScriptRegistryWire } from '@inth/sdk-schema/types';
 
+import { adoptedBoot } from './init/adopt';
 import { loadManifestsFile } from './init/manifests-import';
 
 /**
@@ -49,6 +51,9 @@ export const createBrowserRuntime = function createBrowserRuntime(
 			// `remoteScripts` runs manifests from `inth.manifests.js`.
 			loadManifestRuntime: loadManifestsFile,
 			mountIAB: mountRuntimeIAB,
+			// The list the init script cached, for an unavailable registry.
+			readCachedScriptRegistry: () =>
+				adoptedBoot()?.cachedRegistry?.() as ScriptRegistryWire | undefined,
 			watchRevocationReload,
 		}
 	);

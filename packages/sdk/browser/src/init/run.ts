@@ -296,6 +296,13 @@ export const runInitScript = function runInitScript(
 				});
 			});
 		},
+		cachedRegistry() {
+			const projectUrl =
+				options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
+			return projectUrl
+				? readPolicyCache(projectUrl, options?.overrides)?.init?.scriptRegistry
+				: undefined;
+		},
 		calls: [],
 		commit: null,
 		disposed: false,

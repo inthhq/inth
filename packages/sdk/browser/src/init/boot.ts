@@ -148,6 +148,12 @@ export interface InitBoot {
 		config: KernelConfig;
 	} | null;
 	/**
+	 * The script registry the policy cache holds for this page's backend,
+	 * read when called. The engine starts from it when its own
+	 * `/v1/consent/init` says the registry is unavailable and it holds none.
+	 */
+	cachedRegistry?: () => unknown;
+	/**
 	 * The page called `dispose()` on the stand-in before the engine
 	 * attached. The init script stops its listeners and timers, and an
 	 * engine that still arrives installs itself without initialising, until
