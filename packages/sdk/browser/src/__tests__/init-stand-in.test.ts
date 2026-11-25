@@ -5,6 +5,7 @@
  * `init-script.browser.test.ts`.
  */
 import type { SaveResult } from '@inth/sdk-core';
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import {
 	planEarlyCommit,
 	storeEarlyCommit,
@@ -194,6 +195,20 @@ afterEach(() => {
 });
 
 describe('the banner before the engine', () => {
+	it('asks /v1/consent/init for its manifest runtime level, and hands the level to the engine', async () => {
+		const standIn = start();
+		const [url] = vi.mocked(fetch).mock.calls[0] ?? [];
+		expect(new URL(String(url)).searchParams.get('manifestLevel')).toBe(
+			String(MANIFEST_RUNTIME_LEVEL)
+		);
+		await showBanner();
+
+		expect(standIn.__inthBoot.prefetch?.manifestLevel).toBe(
+			MANIFEST_RUNTIME_LEVEL
+		);
+		standIn.dispose();
+	});
+
 	it('announces its impression once, and hands the stamp to the engine', async () => {
 		const onSurfaceShown = vi.fn();
 		const standIn = start([['config', { callbacks: { onSurfaceShown } }]]);

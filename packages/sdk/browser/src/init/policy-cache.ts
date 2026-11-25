@@ -16,7 +16,10 @@
  */
 
 import type { KernelOverrides } from '@inth/sdk-core';
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
+import { registryForManifestLevel } from '@inth/sdk-schema/types';
+import type { ScriptRegistryWire } from '@inth/sdk-schema/types';
 
 /** localStorage key of the cache. */
 export const POLICY_CACHE_KEY = 'inth-init-policy';
@@ -69,16 +72,27 @@ const isUnavailable = (registry: unknown): boolean =>
 
 /**
  * The cached response for this backend and overrides, shaped as a
- * prefetch result `snapshotFromPrefetchedInit` reads, or `undefined`.
+ * prefetch result `snapshotFromPrefetchedInit` reads, or `undefined`. Its
+ * script registry keeps only the remote scripts this SDK's manifest
+ * runtime level runs: a list stored by another release may hold others.
  */
 export const readPolicyCache = function readPolicyCache(
 	projectUrl: string,
 	overrides?: KernelOverrides
 ): SSRInitialData | undefined {
 	const entry = readEntry(keyOf(projectUrl, overrides));
-	return entry && Date.now() - entry.t < MAX_AGE_MS
-		? ({ init: entry.i } as unknown as SSRInitialData)
-		: undefined;
+	if (!entry || Date.now() - entry.t >= MAX_AGE_MS) {
+		return undefined;
+	}
+	const registry = entry.i.scriptRegistry as ScriptRegistryWire | undefined;
+	const scriptRegistry = registryForManifestLevel(
+		registry,
+		MANIFEST_RUNTIME_LEVEL
+	);
+	return {
+		init:
+			scriptRegistry === registry ? entry.i : { ...entry.i, scriptRegistry },
+	} as unknown as SSRInitialData;
 };
 
 /** Keep the policy fields of a `/v1/consent/init` response. */

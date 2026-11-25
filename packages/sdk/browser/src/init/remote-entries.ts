@@ -8,7 +8,9 @@
  */
 
 import type { AllConsentNames, Script } from '@inth/sdk-core';
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
+import { runsAtManifestLevel } from '@inth/sdk-schema/types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -76,8 +78,9 @@ export interface RemoteStandIns {
 
 /**
  * The entries of an init answer's `scriptRegistry.load` that the engine
- * would load: well formed, for a known category, and not claimed by a
- * script in `codeScripts` (by `integration ?? vendor ?? id`, or by `id`).
+ * would load: well formed, for a known category, at a manifest runtime
+ * level the engine runs, and not claimed by a script in `codeScripts` (by
+ * `integration ?? vendor ?? id`, or by `id`).
  */
 export const readRemoteStandIns = function readRemoteStandIns(
 	data: SSRInitialData | undefined,
@@ -107,6 +110,9 @@ export const readRemoteStandIns = function readRemoteStandIns(
 			!(isRecord(entry) && typeof entry.integration === 'string') ||
 			!isRecord(manifest) ||
 			manifest.vendor !== id ||
+			// A list from the cache or a static manifest was not filtered for
+			// this level; the engine refuses the entry, so it asks for nothing.
+			!runsAtManifestLevel(manifest, MANIFEST_RUNTIME_LEVEL) ||
 			!categories ||
 			claimed.has(id)
 		) {

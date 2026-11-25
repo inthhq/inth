@@ -145,6 +145,8 @@ export interface InitBoot {
 	prefetch: {
 		projectUrl: string;
 		overrides: KernelOverrides | undefined;
+		/** The manifest runtime level the request sent as `manifestLevel`. */
+		manifestLevel: number;
 		config: KernelConfig;
 	} | null;
 	/**

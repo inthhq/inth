@@ -1,3 +1,4 @@
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 import { describe, expect, test } from 'vite-plus/test';
 
@@ -60,6 +61,24 @@ describe('readRemoteStandIns', () => {
 		);
 
 		expect(read).toEqual({ categories: [], scripts: [] });
+	});
+
+	test('skips an entry whose manifest requires a later runtime level, and asks for none of its categories', () => {
+		const read = readRemoteStandIns(
+			answer({
+				load: [
+					entry('meta-pixel', { requires: MANIFEST_RUNTIME_LEVEL }),
+					entry('posthog', {
+						category: 'measurement',
+						requires: MANIFEST_RUNTIME_LEVEL + 1,
+					}),
+				],
+			}),
+			[]
+		);
+
+		expect(read.scripts.map(({ id }) => id)).toEqual(['meta-pixel']);
+		expect(read.categories).toEqual(['marketing']);
 	});
 
 	test('skips an entry whose id a code script uses, whatever its vendor', () => {

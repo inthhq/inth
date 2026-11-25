@@ -7,6 +7,8 @@
  * @internal
  */
 
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
+
 import type { ScriptTagClientOptions } from '../types';
 import { version } from '../version';
 import type { InitBoot, InitUI } from './boot';
@@ -107,6 +109,8 @@ export const withInitPrefetch = function withInitPrefetch(
 		options.projectUrl ?? readHostedMarker(options.mode)?.projectUrl;
 	if (
 		projectUrl !== handed.projectUrl ||
+		// The answer lists the remote scripts of the level it asked for.
+		handed.manifestLevel !== MANIFEST_RUNTIME_LEVEL ||
 		!supportsEarlyStart(options, projectUrl) ||
 		JSON.stringify(options.overrides ?? {}) !==
 			JSON.stringify(handed.overrides ?? {})

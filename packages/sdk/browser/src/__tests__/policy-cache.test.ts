@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 import { afterEach, expect, test, vi } from 'vite-plus/test';
 
@@ -47,6 +48,22 @@ const answer = (scriptRegistry: unknown) =>
 const cachedRegistry = () =>
 	(readPolicyCache(PROJECT)?.init as { scriptRegistry?: unknown } | undefined)
 		?.scriptRegistry;
+
+test('reads back only the listed scripts this runtime level runs', () => {
+	// Another release, or an answer made for another level, stored it.
+	const later = {
+		id: 'posthog',
+		integration: 'posthog',
+		manifest: { requires: MANIFEST_RUNTIME_LEVEL + 1 },
+	};
+	writePolicyCache(
+		PROJECT,
+		undefined,
+		answer({ load: [...pixelList.load, later] })
+	);
+
+	expect(cachedRegistry()).toEqual(pixelList);
+});
 
 test('keeps the last list when an answer says the registry is unavailable', () => {
 	writePolicyCache(PROJECT, undefined, answer(pixelList));

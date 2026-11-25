@@ -21,6 +21,7 @@
  */
 
 import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
 import {
 	configFromPrefetchedInit,
 	hasStoredConsent,
@@ -947,7 +948,12 @@ export const runInitScript = function runInitScript(
 				}
 				const config = configFromPrefetchedInit(data, current.overrides);
 				if (config) {
-					boot.prefetch = { config, overrides: current.overrides, projectUrl };
+					boot.prefetch = {
+						config,
+						manifestLevel: MANIFEST_RUNTIME_LEVEL,
+						overrides: current.overrides,
+						projectUrl,
+					};
 				}
 				if (stored) {
 					writePolicyCache(projectUrl, current.overrides, data);
