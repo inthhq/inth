@@ -682,15 +682,20 @@ class OptOutSyncTest {
 		assertNull(secondTransport.liftOptOutRequests.single().second, "no token after restart")
 		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty(), "account lift is never queued")
 
-		// A failed account lift keeps the record, reports held-by-account, and queues nothing.
+		// A failed account lift keeps the record, reports held-by-account, and stays queued for
+		// replay, without its identity token.
 		secondTransport.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
 		val failed = restarted.optIn()
 		assertFalse(failed.ok)
 		assertEquals(OptInRefusalReason.HELD_BY_ACCOUNT, failed.reason)
 		assertEquals(accountOptOut, restarted.snapshot().optOut)
-		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		val queuedLift = InthStore(backend).readPendingOptOuts().single()
+		assertEquals(OptOutActKind.LIFT, queuedLift.kind)
+		assertEquals(secondTransport.liftOptOutRequests.last().first.idempotencyKey, queuedLift.idempotencyKey)
+		assertFalse("tok_" in assertNotNull(backend.read(InthStoreKeys.SNAPSHOT)), "identity token must never be stored on disk")
 
-		// Identify with a fresh token, then lift answered with null -> clears and persists.
+		// Identify with a fresh token, then lift answered with null -> the queued lift replays
+		// first with its own key, then the new one clears and persists.
 		secondTransport.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null))
 		restarted.identify(KernelUser("user_123", identityProvider = "clerk"), identityToken = "tok_fresh")
 		val cleared = restarted.optIn()
@@ -698,9 +703,11 @@ class OptOutSyncTest {
 		assertNull(cleared.reason)
 		assertNull(restarted.snapshot().optOut)
 		assertTrue(restarted.isAllowed(ConsentCategory.MARKETING))
-		assertEquals(3, secondTransport.liftOptOutRequests.size)
+		assertEquals(4, secondTransport.liftOptOutRequests.size)
+		assertEquals(queuedLift.idempotencyKey, secondTransport.liftOptOutRequests[2].first.idempotencyKey)
 		assertEquals("tok_fresh", secondTransport.liftOptOutRequests.last().second)
 		assertNull(assertNotNull(InthStore(backend).readEnvelope()).snapshot.optOut)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
 	}
 
 	@Test
@@ -2546,6 +2553,203 @@ class OptOutSyncTest {
 		assertFalse(lifted.ok)
 		assertEquals(OptInRefusalReason.HELD_BY_ACCOUNT, lifted.reason)
 		assertEquals(bothOptOut, kernel.snapshot().optOut)
+	}
+
+	// -- Queued account lift and account-owned answers ------------------------
+
+	private val accountHeld = OptOutRecord(
+		rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+		method = OptOutMethod.API,
+		recordedAt = NOW - 1_000,
+		heldBy = OptOutHolder.PERSON,
+	)
+
+	@Test
+	fun `an account lift that does not reach the backend stays queued and replays with the same key`() {
+		val backend = InMemoryKeyValueStore()
+		seedOptOut(backend, accountHeld)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null))
+		val kernel = testKernel(store = InthStore(backend), clock = FixedClock(NOW), transport = transport)
+		kernel.bootstrap()
+		kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+		val first = kernel.optIn()
+		assertFalse(first.ok)
+		assertEquals(OptInRefusalReason.HELD_BY_ACCOUNT, first.reason)
+		assertEquals(accountHeld, kernel.snapshot().optOut, "the record stands until the backend answers")
+		val queued = InthStore(backend).readPendingOptOuts().single()
+		assertEquals(OptOutActKind.LIFT, queued.kind)
+		assertEquals("user_123", queued.user?.externalId)
+		assertFalse("tok_1" in assertNotNull(backend.read(InthStoreKeys.SNAPSHOT)), "identity token must never be stored on disk")
+
+		kernel.flushPending()
+
+		assertEquals(2, transport.liftOptOutRequests.size)
+		assertEquals(queued.idempotencyKey, transport.liftOptOutRequests[1].first.idempotencyKey)
+		assertEquals("tok_1", transport.liftOptOutRequests[1].second, "the same account is still identified")
+		assertNull(kernel.snapshot().optOut)
+		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertNull(assertNotNull(InthStore(backend).readEnvelope()).snapshot.optOut)
+	}
+
+	@Test
+	fun `a queued account lift survives a restart and replays before the next lift`() {
+		val backend = InMemoryKeyValueStore()
+		seedOptOut(backend, accountHeld)
+		val offline = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+		val first = testKernel(store = InthStore(backend), clock = FixedClock(NOW), transport = offline)
+		first.bootstrap()
+		first.identify(KernelUser("user_123", identityProvider = "clerk"), identityToken = "tok_1")
+		assertFalse(first.optIn().ok)
+		val queued = InthStore(backend).readPendingOptOuts().single()
+
+		val tasks = ArrayDeque<() -> Unit>()
+		val online = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null))
+		val restarted = testKernel(
+			store = InthStore(backend),
+			clock = FixedClock(NOW),
+			transport = online,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		restarted.bootstrap()
+		restarted.identify(KernelUser("user_123", identityProvider = "clerk"), identityToken = "tok_2")
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertEquals(queued.idempotencyKey, online.liftOptOutRequests.first().first.idempotencyKey)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertNull(restarted.snapshot().optOut, "the replayed lift's answer belongs to the same account")
+	}
+
+	@Test
+	fun `a queued account lift answered after another account signs in changes neither that account's opt-out nor its subject`() {
+		val optOutB = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.TARGETED_ADS),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 500,
+			heldBy = OptOutHolder.PERSON,
+		)
+		val backend = InMemoryKeyValueStore()
+		seedOptOut(backend, accountHeld)
+		val tasks = ArrayDeque<() -> Unit>()
+		fun drain() {
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+		}
+		var online = false
+		val lifts = mutableListOf<Pair<LiftOptOutPayload, String?>>()
+		val transport = object : com.inth.core.transport.InthTransport {
+			override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+			override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+			override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+				LinkOutcome.Linked(subjectId = subject.id, optOut = if (user.externalId == "user_b") optOutB else accountHeld)
+
+			override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+				OptOutOutcome.Delivered(subjectId = payload.subjectId)
+
+			override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+				lifts += payload to identityToken
+				return if (online) {
+					LiftOptOutOutcome.Delivered(subjectId = CANONICAL_TWO, optOut = null, cleared = true)
+				} else {
+					LiftOptOutOutcome.Unavailable("offline")
+				}
+			}
+		}
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = FixedClock(NOW),
+			transport = transport,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		kernel.bootstrap()
+		drain()
+		kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+		drain()
+
+		// User A asks to opt back in while offline: the lift is queued under A.
+		assertFalse(kernel.optIn().ok)
+		assertEquals("user_a", InthStore(backend).readPendingOptOuts().single().user?.externalId)
+
+		// User B signs in on the same device; B's account holds its own opt-out.
+		kernel.identify(KernelUser("user_b"), identityToken = "tok_b")
+		drain()
+		assertEquals(optOutB, kernel.snapshot().optOut)
+
+		// A's lift replays once online. It is recorded for A, and its answer is A's.
+		online = true
+		kernel.flushPending()
+		drain()
+
+		assertEquals(2, lifts.size, "the queued lift replays")
+		assertEquals("user_a", lifts.last().first.user?.externalId)
+		assertNull(lifts.last().second, "A's token is never sent while B is identified")
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertEquals(optOutB, kernel.snapshot().optOut, "a late lift must not change another account's opt-out")
+		assertEquals(SUBJECT, kernel.snapshot().subject?.id, "a late lift must not move another account's subject")
+	}
+
+	@Test
+	fun `a save that reaffirms the opt-out drops a still-queued account lift`() {
+		val backend = InMemoryKeyValueStore()
+		seedOptOut(backend, accountHeld)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null))
+		val kernel = testKernel(store = InthStore(backend), clock = FixedClock(NOW), transport = transport)
+		kernel.bootstrap()
+		kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+		assertFalse(kernel.optIn().ok)
+		assertEquals(OptOutActKind.LIFT, InthStore(backend).readPendingOptOuts().single().kind)
+
+		// The visitor then refuses marketing: the newer choice keeps the opt-out.
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertTrue(InthStore(backend).readPendingOptOuts().none { it.kind == OptOutActKind.LIFT })
+
+		kernel.flushPending()
+		assertEquals(1, transport.liftOptOutRequests.size, "the dropped lift is never sent")
+		assertEquals(accountHeld, kernel.snapshot().optOut)
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+	}
+
+	@Test
+	fun `a queued save answered after another account signs in does not apply its opt-out`() {
+		val answeredForA = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondSave(SaveOutcome.Unavailable("offline"))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT, optOut = answeredForA))
+		val kernel = testKernel(store = InthStore(backend), clock = FixedClock(NOW), transport = transport)
+		kernel.bootstrap()
+		kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.FUNCTIONALITY to true))).ok)
+		assertEquals(1, InthStore(backend).readPending().size)
+
+		kernel.identify(KernelUser("user_b"), identityToken = "tok_b")
+		kernel.flushPending()
+
+		assertTrue(InthStore(backend).readPending().isEmpty(), "the save is recorded")
+		assertNull(kernel.snapshot().optOut, "user A's opt-out must not land on user B")
 	}
 
 	private companion object {

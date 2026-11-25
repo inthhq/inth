@@ -468,12 +468,53 @@ class ConsentCore @InthInternalApi constructor(
 	private val queue = PendingSaveQueue(store, config.maxPendingSaves, queueIdGenerator)
 	private val optOutQueue = PendingOptOutQueue(store, config.maxPendingSaves)
 
-	/** Fencing inputs checked before applying a backend opt-out answer. */
+	/**
+	 * Fencing inputs checked before applying a backend opt-out answer.
+	 *
+	 * [identifyGeneration] is the [identify] / [logout] generation when the request was handed
+	 * over. An answer is the account's that made the request: it applies, and may move the
+	 * subject, only while that account is still the identified one and nobody was identified or
+	 * signed out since. [refusalVersion], when set, also drops a clearing answer after a newer
+	 * save reaffirmed the opt-out.
+	 */
 	private data class OptOutAnswerFence(
 		val actVersion: Long,
 		val generation: Long,
 		val allowClear: Boolean,
+		val identifyGeneration: Long,
+		val refusalVersion: Long? = null,
 	)
+
+	/** The account a request was made for, and the identification generation it was made under. */
+	private data class AnswerOwner(
+		val account: KernelUser?,
+		val identifyGeneration: Long,
+	)
+
+	/** The backend's answer to one queued opt-out act. */
+	private data class OptOutAnswer(
+		val optOut: OptOutRecord?,
+		val cleared: Boolean,
+		val applied: Boolean,
+	)
+
+	/** What a queued account-held opt-out lift came to, for the call that queued it. */
+	private sealed interface AccountLiftOutcome {
+		/** The backend answered. [answer] says whether its answer changed local state. */
+		data class Answered(val answer: OptOutAnswer) : AccountLiftOutcome
+
+		/** Not answered yet: it stays queued and replays in order with the same idempotency key. */
+		data object Queued : AccountLiftOutcome
+
+		/** Never sent: a newer act, refusal, identity change or GPC made it moot. */
+		data object Withdrawn : AccountLiftOutcome
+
+		/** The backend refused it for good, or it ran out of attempts, so it left the queue. */
+		data object Dropped : AccountLiftOutcome
+
+		/** The lift could not be stored, so it was not sent. */
+		data object StorageFailed : AccountLiftOutcome
+	}
 
 	/** A newly recorded automatic GPC opt-out waiting to be delivered. */
 	private data class GpcQueuedAct(
@@ -500,13 +541,6 @@ class ConsentCore @InthInternalApi constructor(
 		val identityToken: String?,
 		val uiSource: ActiveUI?,
 		val now: Long,
-	)
-
-	/** Settled answer from an immediate account-held opt-out lift request. */
-	private data class AccountLiftSettled(
-		val subjectId: String,
-		val optOut: OptOutRecord?,
-		val cleared: Boolean,
 	)
 
 	/**
@@ -1239,6 +1273,7 @@ class ConsentCore @InthInternalApi constructor(
 				supersedeGrants = isIab,
 				publishBus = false,
 				optOutEntry = optOutEntry,
+				dropQueuedLifts = keepsOptOut,
 			)
 		if (!stored) {
 			publishCurrentTcStorageBus(allowConsent = false)
@@ -1291,12 +1326,18 @@ class ConsentCore @InthInternalApi constructor(
 		// settled answer only where the host's executor ran the send before returning.
 		val firstSend = AtomicReference<Delivery>()
 		saveActVersions[entry.id] = actVersion
-		val saveFence = OptOutAnswerFence(actVersion = actVersion, generation = generation, allowClear = false)
+		val saveFence = OptOutAnswerFence(
+			actVersion = actVersion,
+			generation = generation,
+			allowClear = false,
+			identifyGeneration = identifyGen,
+		)
 		val optOutFence = optOutEntry?.let {
 			OptOutAnswerFence(
 				actVersion = actVersion,
 				generation = generation,
 				allowClear = it.kind == OptOutActKind.LIFT,
+				identifyGeneration = identifyGen,
 			)
 		}
 		// Published before the first send, so the response to it -- which can name a canonical
@@ -1499,11 +1540,13 @@ class ConsentCore @InthInternalApi constructor(
 		store.flush()
 		var actVersion: Long
 		var generation: Long
+		var identifyGen: Long
 		synchronized(mutationLock) {
 			optOutActVersion += 1
 			optOutGpcReported = false
 			actVersion = optOutActVersion
 			generation = recordsGeneration
+			identifyGen = identifyGeneration
 			noticeDismissal = plan.second
 			installSnapshot(plan.first)
 		}
@@ -1518,7 +1561,12 @@ class ConsentCore @InthInternalApi constructor(
 				changed = true,
 			)
 		}
-		val fence = OptOutAnswerFence(actVersion = actVersion, generation = generation, allowClear = false)
+		val fence = OptOutAnswerFence(
+			actVersion = actVersion,
+			generation = generation,
+			allowClear = false,
+			identifyGeneration = identifyGen,
+		)
 		try {
 			notifySnapshot()
 		} finally {
@@ -1545,11 +1593,14 @@ class ConsentCore @InthInternalApi constructor(
 	 *
 	 * Refused without changing state when no record is held ([OptInRefusalReason.NOT_OPTED_OUT])
 	 * or when GPC is active under a policy that maps it ([OptInRefusalReason.GPC_ACTIVE]).
-	 * When the record is held by the account (`person` or `both`), sends the lift request and
-	 * waits for the backend's answer (carrying the in-memory identity token if held): a `null`
-	 * answer clears the record and reports success; a non-null answer stores it and reports
-	 * [OptInRefusalReason.HELD_BY_ACCOUNT]; a failed request keeps the record, queues nothing
-	 * and reports [OptInRefusalReason.HELD_BY_ACCOUNT].
+	 * When the record is held by the account (`person` or `both`), stores the lift in the
+	 * opt-out queue, sends it behind any earlier queued act for the subject and waits for the
+	 * backend's answer (carrying the in-memory identity token if held): a `null` answer clears
+	 * the record and reports success; a non-null answer stores it and reports
+	 * [OptInRefusalReason.HELD_BY_ACCOUNT]. A request that does not reach the backend keeps the
+	 * record, reports [OptInRefusalReason.HELD_BY_ACCOUNT] and stays queued: it replays in order
+	 * with the same idempotency key, and its answer applies only while the account that asked
+	 * is still the identified one.
 	 *
 	 * Performs blocking disk I/O, and blocks on the network when the account holds the record.
 	 * Android app code should call `awaitOptIn()` from `inth-android` rather than calling this
@@ -1668,11 +1719,13 @@ class ConsentCore @InthInternalApi constructor(
 			store.flush()
 			var actVersion: Long
 			var generation: Long
+			var identifyGen: Long
 			synchronized(mutationLock) {
 				optOutActVersion += 1
 				optOutGpcReported = false
 				actVersion = optOutActVersion
 				generation = recordsGeneration
+				identifyGen = identifyGeneration
 				installSnapshot(plan.first)
 			}
 			publishCurrentTcStorageBus()
@@ -1681,7 +1734,12 @@ class ConsentCore @InthInternalApi constructor(
 				notifySnapshot()
 				return@mutate OptInResult(ok = true, revision = plan.first.revision)
 			}
-			val fence = OptOutAnswerFence(actVersion = actVersion, generation = generation, allowClear = true)
+			val fence = OptOutAnswerFence(
+				actVersion = actVersion,
+				generation = generation,
+				allowClear = true,
+				identifyGeneration = identifyGen,
+			)
 			try {
 				notifySnapshot()
 			} finally {
@@ -1701,134 +1759,65 @@ class ConsentCore @InthInternalApi constructor(
 	}
 
 	private fun liftAccountOptOut(plan: AccountLiftPlan): OptInResult {
-		if (config.dryRun) {
-			return OptInResult(
-				ok = false,
-				revision = state.get().revision,
-				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
-			)
-		}
-		val subjectId = drainQueuedOptOutsBeforeAccountLift(plan.subjectId ?: resolveSubject().id)
-			?: return OptInResult(
-				ok = false,
-				revision = state.get().revision,
-				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
-			)
-		var gpcBlockedBeforeDispatch = false
-		val canDispatch = {
-			val refusal = accountLiftDispatchRefusal(
+		fun refused(reason: OptInRefusalReason = OptInRefusalReason.HELD_BY_ACCOUNT, error: KernelError? = null) =
+			OptInResult(ok = false, revision = state.get().revision, reason = reason, error = error)
+		if (config.dryRun) return refused()
+		val dispatchRefusal = {
+			accountLiftDispatchRefusal(
 				actVersion = plan.actVersion,
 				refusalVersion = plan.refusalVersion,
 				generation = plan.generation,
 				expectedIdentifyGeneration = plan.identifyGeneration,
 			)
-			if (refusal == OptInRefusalReason.GPC_ACTIVE) {
-				gpcBlockedBeforeDispatch = true
-			}
-			refusal == null
 		}
-		if (!canDispatch()) {
-			return OptInResult(
-				ok = false,
-				revision = state.get().revision,
-				reason = if (gpcBlockedBeforeDispatch) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
-			)
-		}
-		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource, user = plan.user)
-		val settled = sendAccountOptOutLift(
-			payload = payload,
+		dispatchRefusal()?.let { return refused(it) }
+		var gpcBlocked = false
+		val outcome = queueAccountOptOutLift(
+			snapshot = plan.snapshot,
+			subjectId = plan.subjectId ?: resolveSubject().id,
+			user = plan.user,
 			identityToken = plan.identityToken,
-			allowReassign = true,
-			canDispatch = canDispatch,
-		) ?: return OptInResult(
-			ok = false,
-			revision = state.get().revision,
-			reason = if (gpcBlockedBeforeDispatch) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
-		)
-		if (settled.cleared) {
-			return mutate { mutation ->
-				var gpcBlocked = false
-				val prepared = synchronized(mutationLock) {
-					val current = state.get()
-					val fresh = optOutActVersion == plan.actVersion &&
-						optOutRefusalVersion == plan.refusalVersion &&
-						recordsGeneration == plan.generation &&
-						identifyGeneration == plan.identifyGeneration &&
-						current.subject?.owns(settled.subjectId) == true
-					if (!fresh) return@synchronized null
-					if (optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.GPC_ACTIVE) {
-						gpcBlocked = true
-						return@synchronized null
-					}
-					val policy = evaluationPolicy
-					val evaluated = PolicyEvaluator.evaluate(
-						snapshot = current.copy(
-							optOut = null,
-							revision = current.revision + 1,
-							error = null,
-						),
-						policy = policy,
-						noticeDismissal = noticeDismissal,
-						now = clock.nowMillis(),
-						choiceScope = choiceScopeOf(policy),
-					)
-					val next = validateIab(evaluated)
-					val envelope = SnapshotEnvelope(
-						bundledPolicyAuthority = bundledPolicyAuthority,
-						snapshot = next.copy(iab = null, gppString = null),
-						evaluationPolicy = policy,
-						noticeDismissal = noticeDismissal,
-						gvl = next.iab?.gvl,
-						iabConsent = committedIab,
-						additionalConsentList = additionalConsentList,
-						customVendors = customVendors,
-						iabListFetchedAt = iabListFetchedAt,
-						lastIabActionAt = lastIabActionAt,
-					)
-					next to envelope
-				} ?: return@mutate OptInResult(
-					ok = false,
-					revision = state.get().revision,
-					reason = if (gpcBlocked) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
-				)
-				if (!store.writeEnvelope(prepared.second, publishBus = false)) {
-					val error = KernelError("queue-write-failed", "The opt-out lift could not be stored.")
-					emitError(error)
-					return@mutate OptInResult(
-						ok = false,
-						revision = state.get().revision,
-						reason = OptInRefusalReason.STORAGE_FAILED,
-						error = error,
-					)
-				}
-				store.flush()
-				synchronized(mutationLock) {
-					optOutActVersion += 1
-					optOutGpcReported = false
-					installSnapshot(prepared.first)
-				}
-				publishCurrentTcStorageBus()
-				mutation.release()
-				notifySnapshot()
-				OptInResult(ok = true, revision = prepared.first.revision)
-			}
-		}
-		if (settled.optOut != null) {
-			applySyncedOptOut(
-				optOut = settled.optOut,
-				cleared = false,
+			uiSource = plan.uiSource,
+			actionAt = plan.now,
+			fence = OptOutAnswerFence(
 				actVersion = plan.actVersion,
 				generation = plan.generation,
-				subjectId = settled.subjectId,
-				allowClear = false,
-				expectedIdentifyGeneration = plan.identifyGeneration,
-			)
-		}
-		return OptInResult(
-			ok = false,
-			revision = state.get().revision,
-			reason = OptInRefusalReason.HELD_BY_ACCOUNT,
+				allowClear = true,
+				identifyGeneration = plan.identifyGeneration,
+				refusalVersion = plan.refusalVersion,
+			),
+			canDispatch = {
+				val refusal = dispatchRefusal()
+				if (refusal == OptInRefusalReason.GPC_ACTIVE) gpcBlocked = true
+				refusal == null
+			},
 		)
+		return when (outcome) {
+			is AccountLiftOutcome.Answered -> {
+				val current = state.get()
+				when {
+					outcome.answer.cleared && outcome.answer.applied && current.optOut == null ->
+						OptInResult(ok = true, revision = current.revision)
+
+					optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.GPC_ACTIVE ->
+						refused(OptInRefusalReason.GPC_ACTIVE)
+
+					else -> refused()
+				}
+			}
+
+			AccountLiftOutcome.StorageFailed -> refused(
+				OptInRefusalReason.STORAGE_FAILED,
+				KernelError("queue-write-failed", "The opt-out lift could not be stored."),
+			)
+
+			AccountLiftOutcome.Withdrawn -> refused(
+				if (gpcBlocked) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
+			)
+
+			AccountLiftOutcome.Queued,
+			AccountLiftOutcome.Dropped -> refused()
+		}
 	}
 
 	private fun liftAccountOptOutAfterSave(
@@ -1843,20 +1832,6 @@ class ConsentCore @InthInternalApi constructor(
 		expectedIdentifyGeneration: Long,
 	) {
 		if (config.dryRun) return
-		val snapshot = synchronized(mutationLock) {
-			val current = state.get()
-			if (
-				optOutActVersion != actVersion ||
-				optOutRefusalVersion != refusalVersion ||
-				recordsGeneration != generation ||
-				identifyGeneration != expectedIdentifyGeneration ||
-				optOutLiftBlocker(current, evaluationPolicy) != OptInRefusalReason.HELD_BY_ACCOUNT
-			) {
-				return
-			}
-			current
-		}
-		val liftSubjectId = drainQueuedOptOutsBeforeAccountLift(snapshot.subject?.id ?: subjectId) ?: return
 		val canDispatch = {
 			accountLiftDispatchRefusal(
 				actVersion = actVersion,
@@ -1866,22 +1841,22 @@ class ConsentCore @InthInternalApi constructor(
 			) == null
 		}
 		if (!canDispatch()) return
-		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource, user = authorizedUser)
-		val settled = sendAccountOptOutLift(
-			payload = payload,
+		val snapshot = state.get()
+		queueAccountOptOutLift(
+			snapshot = snapshot,
+			subjectId = snapshot.subject?.id ?: subjectId,
+			user = authorizedUser,
 			identityToken = authorizedToken,
-			allowReassign = true,
+			uiSource = uiSource,
+			actionAt = actionAt,
+			fence = OptOutAnswerFence(
+				actVersion = actVersion,
+				generation = generation,
+				allowClear = true,
+				identifyGeneration = expectedIdentifyGeneration,
+				refusalVersion = refusalVersion,
+			),
 			canDispatch = canDispatch,
-		) ?: return
-		applySyncedOptOut(
-			optOut = settled.optOut,
-			cleared = settled.cleared,
-			actVersion = actVersion,
-			generation = generation,
-			subjectId = settled.subjectId,
-			allowClear = true,
-			expectedIdentifyGeneration = expectedIdentifyGeneration,
-			expectedRefusalVersion = refusalVersion,
 		)
 	}
 
@@ -1909,63 +1884,51 @@ class ConsentCore @InthInternalApi constructor(
 	}
 
 	/**
-	 * Send one account-held opt-out lift immediately without queueing on failure.
-	 * Handles `409 subject_conflict` once and adopts a canonical subject ID when named.
+	 * Store one account-held opt-out lift in the opt-out queue, then send it behind any earlier
+	 * queued act for the same subject.
+	 *
+	 * Queue before send, as the web core does: a lift that does not reach the backend, or whose
+	 * answer is lost with the process, stays queued and replays in order with the same
+	 * idempotency key. The identity token is never stored; a replay carries it only while the
+	 * account that asked is still identified in this process. [canDispatch] runs right before
+	 * the request leaves: when it fails, the lift leaves the queue unsent. The answer applies
+	 * under [fence], so an answer that arrives after a newer act, a newer refusal, a reset, or
+	 * an identity change never changes the record or the subject.
 	 */
-	private fun sendAccountOptOutLift(
-		payload: LiftOptOutPayload,
+	private fun queueAccountOptOutLift(
+		snapshot: ConsentSnapshot,
+		subjectId: String,
+		user: KernelUser?,
 		identityToken: String?,
-		allowReassign: Boolean,
-		canDispatch: () -> Boolean = { true },
-	): AccountLiftSettled? {
-		if (!canDispatch()) return null
-		val outcome = try {
-			transport.liftOptOut(payload, identityToken)
-		} catch (error: Exception) {
-			LiftOptOutOutcome.Unavailable("Inth transport: ${error.message ?: error.javaClass.simpleName}")
+		uiSource: ActiveUI?,
+		actionAt: Long,
+		fence: OptOutAnswerFence,
+		canDispatch: () -> Boolean,
+	): AccountLiftOutcome {
+		val entry = buildLiftOptOutEntry(
+			payload = buildLiftOptOutPayload(snapshot, subjectId, actionAt, uiSource, user = user),
+			actionAt = actionAt,
+		)
+		if (!optOutQueue.enqueue(entry)) {
+			emitError(KernelError("queue-write-failed", "The opt-out lift could not be stored."))
+			return AccountLiftOutcome.StorageFailed
 		}
-		return when (outcome) {
-			is LiftOptOutOutcome.Delivered -> {
-				val adopted = adoptCanonicalSubject(payload.subjectId, outcome.subjectId)
-				AccountLiftSettled(
-					subjectId = adopted ?: payload.subjectId,
-					optOut = outcome.optOut,
-					cleared = outcome.cleared,
-				)
-			}
-
-			is LiftOptOutOutcome.Rejected -> {
-				if (allowReassign && outcome.isSubjectConflict) {
-					val newSubjectId = reassignSubject(payload.subjectId)
-					if (newSubjectId != null) {
-						return sendAccountOptOutLift(
-							payload.copy(subjectId = newSubjectId),
-							identityToken,
-							allowReassign = false,
-							canDispatch = canDispatch,
-						)
-					}
-				}
-				emitError(
-					KernelError(
-						code = outcome.failure.code ?: "opt-out-lift-failed",
-						message = "Inth: the backend refused to lift the opt-out for subject ${payload.subjectId} " +
-							"(${outcome.failure.describe()}).",
-					),
-				)
-				null
-			}
-
-			is LiftOptOutOutcome.Unavailable -> {
-				emitError(
-					KernelError(
-						code = "transport-unavailable",
-						message = "Inth: the opt-out lift request for subject ${payload.subjectId} did not reach " +
-							"the backend (${outcome.message}).",
-					),
-				)
-				null
-			}
+		var answer: OptOutAnswer? = null
+		var withdrawn = false
+		requestDeliveryPass {
+			deliverQueuedOptOutInOrder(
+				entry = entry,
+				fence = fence,
+				identityToken = identityToken,
+				beforeSend = { canDispatch().also { if (!it) withdrawn = true } },
+				onAnswered = { answer = it },
+			)
+		}
+		answer?.let { return AccountLiftOutcome.Answered(it) }
+		return when {
+			withdrawn -> AccountLiftOutcome.Withdrawn
+			optOutQueue.isPending(entry.id) -> AccountLiftOutcome.Queued
+			else -> AccountLiftOutcome.Dropped
 		}
 	}
 
@@ -2441,13 +2404,14 @@ class ConsentCore @InthInternalApi constructor(
 		val moved = LinkedHashMap<String, String>()
 		for ((index, queued) in pendingOptOuts.withIndex()) {
 			val entry = moved[queued.subjectId]?.let { queued.withSubjectId(it) } ?: queued
-			val (actVersion, generation) = synchronized(mutationLock) {
-				optOutActVersion to recordsGeneration
+			val (actVersion, generation, identifyGen) = synchronized(mutationLock) {
+				Triple(optOutActVersion, recordsGeneration, identifyGeneration)
 			}
 			val fence = OptOutAnswerFence(
 				actVersion = actVersion,
 				generation = generation,
 				allowClear = entry.kind == OptOutActKind.LIFT,
+				identifyGeneration = identifyGen,
 			)
 			val delivery = deliverOptOutIfOwed(
 				entry = entry,
@@ -2937,14 +2901,18 @@ class ConsentCore @InthInternalApi constructor(
 				actVersion = saveActVersions[entry.id] ?: optOutActVersion,
 				generation = recordsGeneration,
 				allowClear = false,
+				identifyGeneration = identifyGeneration,
 			)
 		}
 		return when (val outcome = transport.save(entry)) {
 			is SaveOutcome.Delivered -> {
 				if (queue.complete(entry.id)) {
 					saveActVersions.remove(entry.id)
-					val adopted = adoptCanonicalSubject(entry.payload.subjectId, outcome.subjectId)
-					if (outcome.optOut != null && optOutQueue.pending().isEmpty()) {
+					// Saved either way; only the account that saved takes the answer's subject and opt-out.
+					val owner = AnswerOwner(entry.payload.user, activeFence.identifyGeneration)
+					val owned = answerOwnedBy(owner)
+					val adopted = if (owned) adoptCanonicalSubject(entry.payload.subjectId, outcome.subjectId) else null
+					if (owned && outcome.optOut != null && optOutQueue.pending().isEmpty()) {
 						applySyncedOptOut(
 							optOut = outcome.optOut,
 							cleared = false,
@@ -2952,6 +2920,7 @@ class ConsentCore @InthInternalApi constructor(
 							generation = activeFence.generation,
 							subjectId = adopted ?: entry.payload.subjectId,
 							allowClear = false,
+							owner = owner,
 						)
 					}
 					Delivery.Reached
@@ -3014,6 +2983,8 @@ class ConsentCore @InthInternalApi constructor(
 		entry: QueuedOptOut,
 		fence: OptOutAnswerFence,
 		identityToken: String? = null,
+		beforeSend: (() -> Boolean)? = null,
+		onAnswered: ((OptOutAnswer) -> Unit)? = null,
 	): Delivery? {
 		val pending = optOutQueue.pending()
 		val index = pending.indexOfFirst { it.id == entry.id }
@@ -3027,18 +2998,21 @@ class ConsentCore @InthInternalApi constructor(
 				identityToken = identityToken,
 				applyAnswer = true,
 				requireQueueEmpty = true,
+				beforeSend = beforeSend,
+				onAnswered = onAnswered,
 			)
 		}
 		val moved = LinkedHashMap<String, String>()
 		for (queued in earlier) {
 			val candidate = moved[queued.subjectId]?.let { queued.withSubjectId(it) } ?: queued
-			val (actVersion, generation) = synchronized(mutationLock) {
-				optOutActVersion to recordsGeneration
+			val (actVersion, generation, identifyGen) = synchronized(mutationLock) {
+				Triple(optOutActVersion, recordsGeneration, identifyGeneration)
 			}
 			val earlierFence = OptOutAnswerFence(
 				actVersion = actVersion,
 				generation = generation,
 				allowClear = candidate.kind == OptOutActKind.LIFT,
+				identifyGeneration = identifyGen,
 			)
 			val delivery = deliverOptOutIfOwed(
 				entry = candidate,
@@ -3061,47 +3035,9 @@ class ConsentCore @InthInternalApi constructor(
 			applyAnswer = true,
 			requireQueueEmpty = true,
 			moved = moved,
+			beforeSend = beforeSend,
+			onAnswered = onAnswered,
 		)
-	}
-
-	/**
-	 * Drain any queued opt-out acts for [subjectId] before an unqueued account lift goes out.
-	 * Returns the subject ID to send under, or `null` if an earlier act still blocks the lift.
-	 */
-	private fun drainQueuedOptOutsBeforeAccountLift(subjectId: String): String? {
-		if (optOutQueue.pending().none { sameOptOutSubject(it.subjectId, subjectId) }) {
-			return subjectId
-		}
-		var resolvedSubjectId: String? = null
-		requestDeliveryPass {
-			val pending = optOutQueue.pending().filter { sameOptOutSubject(it.subjectId, subjectId) }
-			val moved = LinkedHashMap<String, String>()
-			for (queued in pending) {
-				val candidate = moved[queued.subjectId]?.let { queued.withSubjectId(it) } ?: queued
-				val (actVersion, generation) = synchronized(mutationLock) {
-					optOutActVersion to recordsGeneration
-				}
-				val earlierFence = OptOutAnswerFence(
-					actVersion = actVersion,
-					generation = generation,
-					allowClear = candidate.kind == OptOutActKind.LIFT,
-				)
-				val delivery = deliverOptOutIfOwed(
-					entry = candidate,
-					fence = earlierFence,
-					applyAnswer = false,
-					requireQueueEmpty = true,
-					moved = moved,
-				) ?: continue
-				when (delivery) {
-					Delivery.Reached -> Unit
-					is Delivery.Unreachable -> return@requestDeliveryPass
-					is Delivery.Refused -> if (delivery.attempt == FailedAttempt.Retrying) return@requestDeliveryPass
-				}
-			}
-			resolvedSubjectId = moved[subjectId] ?: subjectId
-		}
-		return resolvedSubjectId
 	}
 
 	/**
@@ -3111,6 +3047,10 @@ class ConsentCore @InthInternalApi constructor(
 	 * rekeying queued opt-outs, drops permanent refusals (`413` and `400 invalid_request`),
 	 * and keeps every other failure (including policy snapshot codes and `404`, since the
 	 * native core only talks to the hosted backend) queued for retry.
+	 *
+	 * [beforeSend] runs right before the request leaves; when it answers `false` the act leaves
+	 * the queue unsent and this returns `null`. [onAnswered] hears the backend's answer once the
+	 * act is delivered, and whether that answer changed local state.
 	 */
 	private fun deliverOptOutIfOwed(
 		entry: QueuedOptOut,
@@ -3121,8 +3061,22 @@ class ConsentCore @InthInternalApi constructor(
 		moved: MutableMap<String, String>? = null,
 		allowReassign: Boolean = true,
 		retryWithoutSnapshotToken: Boolean = false,
+		beforeSend: (() -> Boolean)? = null,
+		onAnswered: ((OptOutAnswer) -> Unit)? = null,
 	): Delivery? {
 		val currentEntry = optOutQueue.pending().firstOrNull { it.id == entry.id } ?: return null
+		if (beforeSend != null && !beforeSend()) {
+			if (!optOutQueue.complete(currentEntry.id)) {
+				emitError(
+					KernelError(
+						code = "queue-write-failed",
+						message = "Inth: a queued opt-out lift is no longer wanted but the queue could not " +
+							"release it, so it stays queued",
+					),
+				)
+			}
+			return null
+		}
 		val token = identityToken ?: currentIdentityTokenFor(currentEntry.user)
 
 		when (currentEntry.kind) {
@@ -3141,6 +3095,7 @@ class ConsentCore @InthInternalApi constructor(
 					moved = moved,
 					allowReassign = allowReassign,
 					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
+					onAnswered = onAnswered,
 					delivered = outcome is OptOutOutcome.Delivered,
 					deliveredSubjectId = (outcome as? OptOutOutcome.Delivered)?.subjectId,
 					deliveredOptOut = (outcome as? OptOutOutcome.Delivered)?.optOut,
@@ -3168,6 +3123,7 @@ class ConsentCore @InthInternalApi constructor(
 					moved = moved,
 					allowReassign = allowReassign,
 					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
+					onAnswered = onAnswered,
 					delivered = outcome is LiftOptOutOutcome.Delivered,
 					deliveredSubjectId = (outcome as? LiftOptOutOutcome.Delivered)?.subjectId,
 					deliveredOptOut = (outcome as? LiftOptOutOutcome.Delivered)?.optOut,
@@ -3191,6 +3147,7 @@ class ConsentCore @InthInternalApi constructor(
 		moved: MutableMap<String, String>?,
 		allowReassign: Boolean,
 		retryWithoutSnapshotToken: Boolean,
+		onAnswered: ((OptOutAnswer) -> Unit)?,
 		delivered: Boolean,
 		deliveredSubjectId: String?,
 		deliveredOptOut: OptOutRecord?,
@@ -3202,12 +3159,16 @@ class ConsentCore @InthInternalApi constructor(
 		permanentRejection: Boolean,
 	): Delivery {
 		if (delivered) {
-			val adopted = adoptCanonicalSubject(entry.subjectId, deliveredSubjectId)
+			// The act is recorded either way, but its answer is the account's that made it: after
+			// a sign-out or another identify it must not move the subject or change the record.
+			val owner = AnswerOwner(entry.user, fence.identifyGeneration)
+			val owned = answerOwnedBy(owner)
+			val adopted = if (owned) adoptCanonicalSubject(entry.subjectId, deliveredSubjectId) else null
 			if (adopted != null) {
 				moved?.set(entry.subjectId, adopted)
 			}
 			val effectiveSubjectId = adopted ?: entry.subjectId
-			val canApply = applyAnswer && (!requireQueueEmpty || optOutQueue.pending().none { it.id != entry.id })
+			val canApply = owned && applyAnswer && (!requireQueueEmpty || optOutQueue.pending().none { it.id != entry.id })
 			val applyOutcome = if (canApply && (deliveredOptOut != null || deliveredCleared)) {
 				applySyncedOptOut(
 					optOut = deliveredOptOut,
@@ -3216,6 +3177,8 @@ class ConsentCore @InthInternalApi constructor(
 					generation = fence.generation,
 					subjectId = effectiveSubjectId,
 					allowClear = fence.allowClear,
+					expectedRefusalVersion = fence.refusalVersion,
+					owner = owner,
 					completeOptOutId = entry.id,
 				)
 			} else {
@@ -3235,6 +3198,13 @@ class ConsentCore @InthInternalApi constructor(
 				emitError(error)
 				return Delivery.Refused(FailedAttempt.Retrying, error)
 			}
+			onAnswered?.invoke(
+				OptOutAnswer(
+					optOut = deliveredOptOut,
+					cleared = deliveredCleared,
+					applied = applyOutcome == SyncedOptOutOutcome.APPLIED,
+				),
+			)
 			return Delivery.Reached
 		}
 
@@ -3256,6 +3226,7 @@ class ConsentCore @InthInternalApi constructor(
 					moved = moved,
 					allowReassign = false,
 					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
+					onAnswered = onAnswered,
 				) ?: Delivery.Reached
 			}
 		}
@@ -3272,6 +3243,7 @@ class ConsentCore @InthInternalApi constructor(
 					moved = moved,
 					allowReassign = allowReassign,
 					retryWithoutSnapshotToken = false,
+					onAnswered = onAnswered,
 				) ?: Delivery.Reached
 			}
 		}
@@ -3389,6 +3361,7 @@ class ConsentCore @InthInternalApi constructor(
 		allowClear: Boolean,
 		expectedIdentifyGeneration: Long? = null,
 		expectedRefusalVersion: Long? = null,
+		owner: AnswerOwner? = null,
 		completeOptOutId: String? = null,
 	): SyncedOptOutOutcome {
 		if (optOut == null && (!cleared || !allowClear)) return SyncedOptOutOutcome.SKIPPED
@@ -3407,6 +3380,7 @@ class ConsentCore @InthInternalApi constructor(
 					(expectedRefusalVersion != null && nextOptOut == null && optOutRefusalVersion != expectedRefusalVersion) ||
 					recordsGeneration != generation ||
 					(expectedIdentifyGeneration != null && identifyGeneration != expectedIdentifyGeneration) ||
+					(owner != null && !answerOwnedByLocked(owner, current)) ||
 					current.subject?.owns(subjectId) != true
 				) {
 					return@synchronized null
@@ -3459,6 +3433,20 @@ class ConsentCore @InthInternalApi constructor(
 			SyncedOptOutOutcome.APPLIED
 		}
 	}
+
+	/**
+	 * Whether an answer to a request made for [owner]'s account still belongs to whoever is
+	 * identified now: no [identify] or [logout] happened since, and that account is the current
+	 * user. A stale answer must not change the opt-out or the subject of the account identified now.
+	 */
+	private fun answerOwnedBy(owner: AnswerOwner): Boolean = synchronized(mutationLock) {
+		answerOwnedByLocked(owner, state.get())
+	}
+
+	/** [answerOwnedBy] for a caller that already holds [mutationLock]. */
+	private fun answerOwnedByLocked(owner: AnswerOwner, current: ConsentSnapshot): Boolean =
+		identifyGeneration == owner.identifyGeneration &&
+			sameAccount(owner.account, currentUserFor(current.subject))
 
 	private fun currentUserFor(subject: ConsentSubject?): KernelUser? =
 		subject?.externalId?.let { externalId ->
@@ -4116,6 +4104,7 @@ class ConsentCore @InthInternalApi constructor(
 					actVersion = optOutActVersion,
 					generation = recordsGeneration,
 					allowClear = false,
+					identifyGeneration = identifyGeneration,
 				),
 			)
 		}
@@ -4143,6 +4132,7 @@ class ConsentCore @InthInternalApi constructor(
 				actVersion = optOutActVersion,
 				generation = recordsGeneration,
 				allowClear = false,
+				identifyGeneration = identifyGeneration,
 			),
 		)
 	}
@@ -4255,4 +4245,18 @@ class ConsentCore @InthInternalApi constructor(
 			Thread(runnable, "inth-core").apply { isDaemon = true }
 		}
 	}
+}
+
+/**
+ * Whether two users are the same account: the same external ID and, when both name one, the
+ * same identity provider. `null` (nobody identified) matches only `null`. The provider is
+ * memory-only, so after a relaunch the current user names the external ID alone and still
+ * matches the account that queued an act before it. Properties and tokens never name the account.
+ */
+internal fun sameAccount(left: KernelUser?, right: KernelUser?): Boolean {
+	if (left == null || right == null) return left == null && right == null
+	if (left.externalId != right.externalId) return false
+	val leftProvider = left.identityProvider ?: return true
+	val rightProvider = right.identityProvider ?: return true
+	return leftProvider == rightProvider
 }
