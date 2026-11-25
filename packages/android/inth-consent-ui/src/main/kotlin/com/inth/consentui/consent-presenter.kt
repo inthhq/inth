@@ -8,6 +8,10 @@ import com.inth.consentui.generated.IabCopy
 import com.inth.consentui.headless.ConsentWriteAction
 import com.inth.consentui.headless.ConsentDraft
 import com.inth.consentui.headless.IabDraftHandle
+import com.inth.consentui.headless.OptOutLinkVariant
+import com.inth.consentui.headless.OptOutReceipt
+import com.inth.consentui.headless.PrivacyChoicesLinkAction
+import com.inth.consentui.headless.PrivacyChoicesLinkState
 import com.inth.consentui.headless.initialIabChoices
 import com.inth.core.*
 import com.inth.core.iab.*
@@ -117,6 +121,92 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     val optOutStatus: String? get() = draft.optOutStatus
     /** Opt-out or privacy signal lock reason for [category], or `null`. */
     fun categoryOptOutLock(category: ConsentCategory): OptOutLock? = draft.categoryOptOutLock(category)
+
+    /**
+     * The opt-out title the Privacy Choices link, the confirmation and the settings block show.
+     * The host's choice, as `presentation.optOutLink` on the web; [openPrivacyChoices] sets it.
+     */
+    var optOutLinkVariant by mutableStateOf(OptOutLinkVariant.DO_NOT_SELL)
+    /** The opt-out confirmation (its receipt) is on screen. */
+    var optOutConfirmation by mutableStateOf(false); private set
+    /** The "Opt back in?" step is on screen. Nothing changes until [confirmOptIn]. */
+    var optInConfirmation by mutableStateOf(false); private set
+    /** An opt-out or an opt-back-in is being recorded. */
+    val changingOptOut get() = draft.isChangingOptOut
+    /** The held opt-out as a receipt, or `null` when none is held. */
+    val optOutReceipt: OptOutReceipt? get() = draft.optOutReceipt(optOutLinkVariant)
+    /** Opt-out and Privacy Choices copy in the served language. */
+    internal val optOutCopy get() = draft.optOutCopy
+    /** A save the "Opt back in?" step holds until the person confirms it. */
+    private var deferredCommit: Action? = null
+
+    /** The Privacy Choices link with the [variant] title, or `null` when it shows nothing. */
+    fun privacyChoicesLink(variant: OptOutLinkVariant = optOutLinkVariant): PrivacyChoicesLinkState? =
+        draft.privacyChoicesLink(variant)
+
+    /**
+     * What a tap on the Privacy Choices link does.
+     *
+     * Under an `opt-out` rule it records the opt-out of sale and sharing in one tap and then shows
+     * the confirmation with its receipt; a person already opted out sees the receipt. Under an
+     * `opt-in` rule it opens privacy settings. It never waits on the network.
+     */
+    fun openPrivacyChoices(variant: OptOutLinkVariant = optOutLinkVariant) {
+        optOutLinkVariant = variant
+        draft.sync()
+        val link = privacyChoicesLink(variant) ?: return
+        when (link.action) {
+            PrivacyChoicesLinkAction.OPEN_PREFERENCES -> presentPreferences()
+            PrivacyChoicesLinkAction.OPT_OUT -> {
+                if (pending || changingOptOut || presentationID != null) return
+                if (snapshot.optOut != null) { optOutConfirmation = true; return }
+                draft.optOut { ok -> if (ok) optOutConfirmation = true }
+            }
+        }
+    }
+
+    /** Close the opt-out confirmation. */
+    fun closeOptOutConfirmation() { optOutConfirmation = false }
+
+    /** Close the opt-out confirmation and open privacy settings, where the opt-out can be reviewed. */
+    fun preferencesFromOptOutConfirmation() { optOutConfirmation = false; presentPreferences() }
+
+    /**
+     * Ask to opt back in to sale and sharing: shows the "Opt back in?" step. Nothing changes until
+     * [confirmOptIn]. Does nothing while no opt-out is held or Global Privacy Control holds it.
+     */
+    fun requestOptIn() {
+        if (pending || changingOptOut || optOutReceipt?.canOptBackIn != true) return
+        deferredCommit = null
+        optInConfirmation = true
+    }
+
+    /** The second step: opt back in, or record the save the step held. */
+    fun confirmOptIn() {
+        if (!optInConfirmation) return
+        optInConfirmation = false
+        val held = deferredCommit
+        deferredCommit = null
+        if (held != null) commitNow(held) else draft.optIn()
+    }
+
+    /** Stay opted out: close the "Opt back in?" step. A save it held is not recorded. */
+    fun cancelOptIn() { optInConfirmation = false; deferredCommit = null }
+
+    /**
+     * A save from the stock screens that would lift the held opt-out under an `opt-out` rule waits
+     * for the "Opt back in?" step, as on the web (`saveConsentSurfaceWithOptInCheck`).
+     */
+    private fun commitWouldLiftOptOut(action: Action): Boolean {
+        val state = optOutState
+        if (iab || !state.available || !state.honored || state.lock == OptOutLock.GPC_ACTIVE) return false
+        val deciding = state.decidingCategory ?: return false
+        return when (action) {
+            Action.ACCEPT -> deciding in offeredCategories
+            Action.SAVE -> categories[deciding] == true
+            else -> false
+        }
+    }
     /**
      * What the last refused commit means for the person; the retry is offered beside it. Stays set
      * while a retry is in flight, so the footer does not reflow under the thumb, and clears only on
@@ -198,10 +288,19 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         onOutcome?.invoke(outcome)
         presentIfOwed()
     }
-    fun retry() { lastAction?.let(::commit) }
+    fun retry() { lastAction?.let(::commitNow) }
     fun refresh() = draft.refresh()
-    /** All/necessary go to the core's accepting/withdrawing authority unchanged. */
+    /**
+     * All/necessary go to the core's accepting/withdrawing authority unchanged. A save that would
+     * lift a held opt-out first asks "Opt back in?" ([optInConfirmation]).
+     */
     fun commit(action: Action) {
+        if (pending || stale) return
+        if (commitWouldLiftOptOut(action)) { deferredCommit = action; optInConfirmation = true; return }
+        commitNow(action)
+    }
+
+    private fun commitNow(action: Action) {
         if (pending || stale) return
         if (action == Action.SAVE && !dirty && !snapshot.promptRequirement.acknowledge && !snapshot.promptRequirement.notice) {
             closeSession(ConsentPresenterOutcome.DISMISSED); return

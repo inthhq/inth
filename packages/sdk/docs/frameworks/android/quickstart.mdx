@@ -76,6 +76,20 @@ Add permissions and register your classes in `AndroidManifest.xml`:
 
 Wire each optional SDK to a retained [measurement gate](/docs/frameworks/android/headless#keep-analytics-in-sync) so collection starts on `GRANTED` and stops on withdrawal.
 
+## Add the opt-out link
+
+Under a US state opt-out policy, place `PrivacyChoicesLink` beside **Privacy settings**. Keep `InthConsent` on screen, since it draws the confirmation:
+
+{/* example: fragment */}
+
+```kotlin
+PrivacyChoicesLink(variant = OptOutLinkVariant.PRIVACY_CHOICES)
+```
+
+One tap records a durable opt-out of sale and sharing on the device, queues it for the backend, and shows a confirmation with its receipt. `variant` chooses the title: `DO_NOT_SELL` (the default, "Do Not Sell or Share My Personal Information"), `PRIVACY_CHOICES`, or `CALIFORNIA_PRIVACY_CHOICES`. The two Privacy Choices titles carry the CPPA opt-out icon. Under an opt-in policy the link reads "Your Privacy Choices" and opens **Privacy settings**. It shows nothing before a policy resolves, or under IAB.
+
+Privacy settings then show the honored opt-out. Opting back in takes two steps: **Opt back in…**, then a confirmation (11 CCR §7028(a)). A save in settings that would end the opt-out asks the same question first.
+
 ## Check it works
 
 Launch against an opt-in policy:

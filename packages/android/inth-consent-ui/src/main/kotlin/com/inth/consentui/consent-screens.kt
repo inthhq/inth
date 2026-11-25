@@ -148,6 +148,8 @@ fun InthConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeMod
                 Box(noticeModifier, contentAlignment = Alignment.BottomCenter) { NoticeCard(presenter, privacyPolicyUrl) }
             }
             if (presenter.presentationID != null) ConsentDialog(presenter, privacyPolicyUrl)
+            if (presenter.optOutConfirmation) OptOutConfirmation(presenter)
+            if (presenter.optInConfirmation) OptInConfirmation(presenter)
         }
     }
 }
@@ -1008,7 +1010,10 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                     } else Body(p.copy.preferencesDescription)
                 }
             }
-            p.optOutStatus?.let { status ->
+            // Under an opt-out rule, a direct sale-and-sharing control (11 CCR §7026(a)(4)); elsewhere
+            // only the status line of an opt-out still held.
+            if (!p.iab && p.optOutState.available) item { SaleAndSharing(p) }
+            else p.optOutStatus?.let { status ->
                 item {
                     InfoCallout(Modifier.padding(horizontal = 8.dp, vertical = 8.dp).testTag("inth.prefs.opt-out-status")) {
                         Text(status)
@@ -1085,6 +1090,99 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
         }
         if (page && showsPinnedStatus(p)) item { DecisionGroup(p, first = false, DecisionPart.PINNED_STATUS, Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp)) }
     }
+}
+
+/**
+ * The sale-and-sharing block at the top of settings under an `opt-out` rule. Port of the web
+ * `ConsentWidgetOptOut`: the honored opt-out with its receipt and an "Opt back in…" action, or
+ * "You haven't opted out" with an Opt out button.
+ */
+@Composable private fun SaleAndSharing(p: ConsentPresenter) {
+    val theme = LocalConsentTheme.current
+    val copy = p.optOutCopy
+    val receipt = p.optOutReceipt
+    val enabled = !p.pending && !p.changingOptOut
+    GroupedRow(0, 1, Modifier.padding(top = 8.dp)) {
+        Column(Modifier.padding(16.dp).testTag("inth.prefs.opt-out"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Heading(receipt?.heading ?: copy.linkLabel(p.optOutLinkVariant), "inth.prefs.opt-out.heading", subheadlineStyle())
+            if (receipt != null) {
+                InfoCallout(Modifier.testTag("inth.prefs.opt-out-status")) { Text(receipt.status) }
+                Body(receipt.sentence, Modifier.testTag("inth.prefs.opt-out.description"))
+                RecordedAt(p, receipt.recordedAt, "inth.prefs.opt-out.recorded-at")
+                if (receipt.canOptBackIn) TextButton(onClick = p::requestOptIn, enabled = enabled,
+                    contentPadding = PaddingValues(horizontal = 4.dp), modifier = Modifier.defaultMinSize(minHeight = 48.dp).testTag("inth.prefs.opt-in-link")) {
+                    Text(copy.optInLink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
+                }
+            } else {
+                Body(copy.notOptedOut, Modifier.testTag("inth.prefs.opt-out.description"))
+                ConsentButton(copy.action, "inth.prefs.opt-out.button", enabled, ButtonVariant.ACCENT,
+                    progress = p.changingOptOut, progressLabel = p.copy.saving) { p.openPrivacyChoices() }
+            }
+        }
+    }
+}
+
+/** "Recorded" and when, in the copy's language. */
+@Composable private fun RecordedAt(p: ConsentPresenter, at: Long, id: String) {
+    val theme = LocalConsentTheme.current
+    val text = remember(at, p.copyLanguage) {
+        java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT, Locale.forLanguageTag(p.copyLanguage))
+            .format(java.util.Date(at))
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(p.optOutCopy.recordedLabel, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = theme.colors.textMuted.color())
+        Text(text, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color(), modifier = Modifier.testTag(id))
+    }
+}
+
+/**
+ * What a person sees after the opt-out link recorded their opt-out: the link's title, that the
+ * request was honored, where it holds and when it was recorded. Done closes it; Manage
+ * preferences opens settings. Port of the web `OptOutConfirmation`.
+ */
+@Composable private fun OptOutConfirmation(p: ConsentPresenter) {
+    val theme = LocalConsentTheme.current
+    val copy = p.optOutCopy
+    val receipt = p.optOutReceipt
+    Dialog(onDismissRequest = p::closeOptOutConfirmation, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(Modifier.fillMaxWidth().padding(16.dp).semantics { testTagsAsResourceId = true }, contentAlignment = Alignment.Center) {
+            Surface(color = theme.colors.surface.color(), shape = RoundedCornerShape(theme.radius.resolvedLg),
+                modifier = Modifier.widthIn(max = ContentWidth).testTag("inth.opt-out-confirmation")) {
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Heading(copy.linkLabel(p.optOutLinkVariant), "inth.opt-out-confirmation.title")
+                    if (receipt != null) {
+                        InfoCallout(Modifier.semantics { liveRegion = LiveRegionMode.Polite }.testTag("inth.opt-out-confirmation.status")) { Text(receipt.status) }
+                        Body(receipt.sentence, Modifier.testTag("inth.opt-out-confirmation.description"))
+                        RecordedAt(p, receipt.recordedAt, "inth.opt-out-confirmation.recorded-at")
+                    } else {
+                        Body(copy.notOptedOut, Modifier.testTag("inth.opt-out-confirmation.description"))
+                    }
+                    ConsentButton(copy.done, "inth.opt-out-confirmation.done", enabled = true, ButtonVariant.ACCENT) { p.closeOptOutConfirmation() }
+                    TextButton(onClick = p::preferencesFromOptOutConfirmation, enabled = !p.pending,
+                        modifier = Modifier.align(Alignment.CenterHorizontally).defaultMinSize(minHeight = 48.dp).testTag("inth.opt-out-confirmation.preferences")) {
+                        Text(copy.preferences, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The second step of opting back in (11 CCR §7028(a)): nothing changes until the person
+ * confirms. Port of the web `OptInConfirmation`.
+ */
+@Composable private fun OptInConfirmation(p: ConsentPresenter) {
+    val theme = LocalConsentTheme.current
+    val copy = p.optOutCopy
+    val rights = p.snapshot.optOut?.rights.orEmpty()
+    AlertDialog(onDismissRequest = p::cancelOptIn,
+        modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("inth.opt-in-confirmation"),
+        containerColor = theme.colors.surface.color(), shape = RoundedCornerShape(theme.radius.resolvedLg),
+        title = { Text(copy.optInTitle, modifier = Modifier.semantics { heading() }.testTag("inth.opt-in-confirmation.title")) },
+        text = { Text(copy.optInSentence(rights), modifier = Modifier.testTag("inth.opt-in-confirmation.description")) },
+        confirmButton = { TextButton(onClick = p::confirmOptIn, modifier = Modifier.testTag("inth.opt-in-confirmation.confirm")) { Text(copy.optInConfirm) } },
+        dismissButton = { TextButton(onClick = p::cancelOptIn, modifier = Modifier.testTag("inth.opt-in-confirmation.cancel")) { Text(copy.optInCancel) } })
 }
 
 @Composable private fun Footnote(text: String, modifier: Modifier = Modifier) {
