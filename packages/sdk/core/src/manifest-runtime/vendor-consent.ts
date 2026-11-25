@@ -1,14 +1,17 @@
 import type { ScriptCallbackInfo } from '../libs/script-loader/types';
 import type { ConsentState } from '../types';
 
-/** Every optional category denied, `necessary` granted. */
-export const ALL_DENIED: ConsentState = {
+/**
+ * Every optional category denied, `necessary` granted. Frozen: every
+ * vendor the visitor turned off gets this same object.
+ */
+export const ALL_DENIED: ConsentState = Object.freeze({
 	experience: false,
 	functionality: false,
 	marketing: false,
 	measurement: false,
 	necessary: true,
-};
+});
 
 /**
  * The consent state a vendor's own consent API should carry. A vendor the

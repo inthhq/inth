@@ -1,4 +1,7 @@
-import { isCategoryCondition } from '../modules/script-loader/category-condition';
+import {
+	isCategoryCondition,
+	isCategoryName,
+} from '../modules/script-loader/category-condition';
 import {
 	MANIFEST_STEP_TYPES,
 	VENDOR_MANIFEST_KIND,
@@ -90,6 +93,11 @@ const manifestProblem = (
 					isRecord(step) ? step.type : step
 				)}`;
 			}
+			// A manifest loads its file through its top-level `loadScript`;
+			// one in a step list would never run.
+			if (step.type === 'loadScript') {
+				return `${list} has a loadScript step`;
+			}
 		}
 	}
 	const { loadScript } = manifest;
@@ -121,13 +129,15 @@ const manifestProblem = (
 		return 'alwaysLoad or persistAfterConsentRevoked has the wrong type';
 	}
 	if (
-		!isOptional(manifest.consentMapping, (value) =>
-			isStringRecord(
-				value,
-				(entry) =>
-					Array.isArray(entry) &&
-					entry.every((name) => typeof name === 'string')
-			)
+		!isOptional(
+			manifest.consentMapping,
+			(value) =>
+				isStringRecord(
+					value,
+					(entry) =>
+						Array.isArray(entry) &&
+						entry.every((name) => typeof name === 'string')
+				) && Object.keys(value as object).every(isCategoryName)
 		) ||
 		!isOptional(manifest.consentSignal, (value) =>
 			CONSENT_SIGNALS.has(value as string)

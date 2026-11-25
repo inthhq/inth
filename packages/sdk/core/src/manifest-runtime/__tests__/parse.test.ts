@@ -70,6 +70,18 @@ describe('parseResolvedManifest', () => {
 		});
 	});
 
+	it('rejects a loadScript step in a step list, which would never run', () => {
+		const input = {
+			...manifest(),
+			setupSteps: [{ src: 'https://cdn.example/x.js', type: 'loadScript' }],
+		};
+
+		expect(parseResolvedManifest(input)).toEqual({
+			ok: false,
+			reason: expect.stringContaining('loadScript'),
+		});
+	});
+
 	it.each<[string, unknown]>([
 		['a non-object', 'manifest'],
 		['another kind', { ...manifest(), kind: 'other' }],
@@ -110,10 +122,17 @@ describe('parseResolvedManifest', () => {
 		['a string alwaysLoad', { ...manifest(), alwaysLoad: 'yes' }],
 		['an unknown consent signal', { ...manifest(), consentSignal: 'other' }],
 		[
+			'a consent mapping for a name that is not a category',
+			{ ...manifest(), consentMapping: { toString: ['analytics_storage'] } },
+		],
+		[
 			'a non-string attribute',
 			{
 				...manifest(),
-				loadScript: { ...manifest().loadScript, attributes: { a: 1 } },
+				loadScript: {
+					...manifest().loadScript,
+					attributes: { 'data-inth-layer': 1 },
+				},
 			},
 		],
 	])('rejects %s', (_label, input) => {

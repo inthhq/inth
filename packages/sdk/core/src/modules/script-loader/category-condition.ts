@@ -16,6 +16,14 @@ const CATEGORY_NAMES: ReadonlySet<string> = new Set([
 const MAX_DEPTH = 16;
 
 /**
+ * Whether `value` is one of the known category names.
+ *
+ * @internal
+ */
+export const isCategoryName = (value: string): boolean =>
+	CATEGORY_NAMES.has(value);
+
+/**
  * Whether `value` is a known category name, or an `and` / `or` / `not`
  * condition over them with nothing else in it.
  *
