@@ -192,6 +192,48 @@ Outside a provider, create one long-lived dispatcher with `createEventDispatcher
 
 For a vendor without a helper or an SDK your app already loads, see [custom integrations](/docs/integrations/building-integrations). Test every setup with the [consent verification guide](/docs/guides/verify-consent).
 
+## Resolve integrations on a server
+
+`@inth/integrations/remote` turns an integration key and a few options into a `ResolvedManifest`, plain JSON that the SDK runs as a script. The Inth server uses it to load integrations a project adds without a code change on the site. The module runs without a DOM.
+
+{/* example: fragment */}
+
+```ts
+import {
+	remoteIntegrations,
+	validateRemoteOptions,
+} from '@inth/integrations/remote';
+
+const result = validateRemoteOptions('googleTagManager', {
+	id: 'GTM-ABC1234',
+	loadMode: 'after-consent',
+});
+if (!result.ok) {
+	throw new Error(result.issues.join('\n'));
+}
+
+const manifest = remoteIntegrations.googleTagManager?.resolveRemote(
+	result.options
+);
+```
+
+| Key | Options |
+| --- | --- |
+| `googleTagManager` | `id` (`GTM-`), `loadMode`: `always` or `after-consent` |
+| `gtag` | `id` (`G-`, `GT-`, `AW-` or `DC-`), `category`: `measurement` or `marketing`, `loadMode` |
+| `metaPixel` | `pixelId` |
+| `posthog` | `id` (`phc_`), `region`: `eu` or `us`, `loadMode` |
+| `microsoft-clarity` | `id` |
+| `tiktokPixel` | `pixelId` |
+| `linkedinInsights` | `id` |
+
+- An option is an ID that must match its `pattern`, or one of a closed list of values. No option can set a host, a URL, an object or a function, so script URL overrides, init options and consent mappings stay npm-only.
+- `validateRemoteOptions` rejects unknown keys, missing IDs, pattern mismatches, URLs and values outside a list, and fills in list defaults. `resolveRemote` throws on options that fail validation and returns a new object on every call.
+- A remote entry builds the same script as its npm helper called with the same options, including the helper's consent settings. Google Tag Manager still loads before a choice in the `necessary` category unless `loadMode` is `after-consent`.
+- Each entry's `options` is plain data, so a settings form can render from it.
+
+Integrations that run their own lifecycle code, such as HubSpot and Sentry, stay npm-only.
+
 ## Mobile SDKs
 
 Bundled mobile helpers ship in `InthApple`, `inth-android`, and `@inth/react-native/integrations`. They add no vendor dependencies; install only the vendor SDKs your app uses.
