@@ -187,6 +187,10 @@ export default mergeConfig(
 					__dirname,
 					'../core/src/runtime/streamed-init.ts'
 				),
+				'@inth/sdk/runtime/import-chunk': resolve(
+					__dirname,
+					'../core/src/runtime/import-chunk.ts'
+				),
 				'@inth/sdk/runtime/page-globals': resolve(
 					__dirname,
 					'../core/src/libs/page-globals.ts'

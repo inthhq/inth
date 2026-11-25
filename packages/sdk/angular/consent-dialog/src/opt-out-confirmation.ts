@@ -19,20 +19,29 @@ import {
 } from '@angular/core';
 import type { ComponentRef, Type } from '@angular/core';
 import { ConsentManager } from '@inth/angular';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { claimOptOutConfirmationHost } from '@inth/sdk/surface-actions';
 
 import type { OptOutConfirmationPanel } from './opt-out-confirmation-panel';
 
 /**
- * Loads the opt-out confirmation panel body, a chunk of its own.
+ * Loads the opt-out confirmation panel body, a chunk of its own. Each call
+ * imports the chunk again, so the next open after a failed download
+ * fetches it again (`importChunk`).
  *
  * @internal
  */
 export const OPT_OUT_CONFIRMATION_PANEL = new InjectionToken<
 	() => Promise<Type<OptOutConfirmationPanel>>
 >('INTH_OPT_OUT_CONFIRMATION_PANEL', {
-	factory: () => async () =>
-		(await import('./opt-out-confirmation-panel')).OptOutConfirmationPanel,
+	factory: () => () =>
+		importChunk(
+			() => import('./opt-out-confirmation-panel'),
+			(module) =>
+				typeof module.OptOutConfirmationPanel === 'function'
+					? module.OptOutConfirmationPanel
+					: undefined
+		),
 });
 
 /**

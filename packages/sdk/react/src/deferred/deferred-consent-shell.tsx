@@ -19,6 +19,7 @@
 import type { SaveResult, SaveUISource } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_ROOT,
@@ -530,7 +531,11 @@ const createSession = function createSession<EngineModule>(
 		}
 	};
 
-	const loadCommit = recordOnce(importCommit);
+	const loadCommit = recordOnce(() =>
+		importChunk(importCommit, (module) =>
+			typeof module.commitEarlyTap === 'function' ? module : undefined
+		)
+	);
 	/** Starts `load` in the next task: a tap's own task stays short. */
 	const soon = (load: () => unknown): void => {
 		setTimeout(load, 0);

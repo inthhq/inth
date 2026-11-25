@@ -230,6 +230,11 @@
 			"import": "./dist/runtime/deferred-snapshot.js",
 			"default": "./dist/runtime/deferred-snapshot.js"
 		},
+		"./runtime/import-chunk": {
+			"types": "./dist-types/runtime/import-chunk.d.ts",
+			"import": "./dist/runtime/import-chunk.js",
+			"default": "./dist/runtime/import-chunk.js"
+		},
 		"./runtime/page-globals": {
 			"types": "./dist-types/libs/page-globals.d.ts",
 			"import": "./dist/libs/page-globals.js",

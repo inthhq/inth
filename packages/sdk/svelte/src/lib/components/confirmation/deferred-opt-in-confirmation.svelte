@@ -2,6 +2,8 @@
 	lang="ts"
 	module
 >
+	import { importChunk } from '@inth/sdk/runtime/import-chunk';
+
 	import type OptInConfirmationComponent from './opt-in-confirmation.svelte';
 
 	let pending: Promise<typeof OptInConfirmationComponent> | null = null;
@@ -11,7 +13,11 @@
 	> {
 		pending ??= (async () => {
 			try {
-				return (await import('./opt-in-confirmation.svelte')).default;
+				return await importChunk(
+					() => import('./opt-in-confirmation.svelte'),
+					(module) =>
+						typeof module.default === 'function' ? module.default : undefined
+				);
 			} catch (error) {
 				pending = null;
 				throw error;

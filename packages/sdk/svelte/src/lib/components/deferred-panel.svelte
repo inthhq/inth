@@ -2,6 +2,7 @@
 	lang="ts"
 	module
 >
+	import { importChunk } from '@inth/sdk/runtime/import-chunk';
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
 	import type DialogComponent from './dialog/dialog.svelte';
@@ -20,7 +21,11 @@
 	const loadDialog = function loadDialog(): Promise<typeof DialogComponent> {
 		pending ??= (async () => {
 			try {
-				return (await import('./dialog/dialog.svelte')).default;
+				return await importChunk(
+					() => import('./dialog/dialog.svelte'),
+					(module) =>
+						typeof module.default === 'function' ? module.default : undefined
+				);
 			} catch (error) {
 				pending = null;
 				throw error;
@@ -38,7 +43,11 @@
 	> {
 		pendingTrigger ??= (async () => {
 			try {
-				return (await import('./panel-trigger.svelte')).default;
+				return await importChunk(
+					() => import('./panel-trigger.svelte'),
+					(module) =>
+						typeof module.default === 'function' ? module.default : undefined
+				);
 			} catch (error) {
 				pendingTrigger = null;
 				throw error;

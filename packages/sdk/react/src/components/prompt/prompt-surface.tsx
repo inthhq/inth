@@ -16,6 +16,7 @@ import type {
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
 import {
@@ -93,8 +94,12 @@ import { removeStaticBanner } from './static-banner-shell';
  * The options, loaded when Customize first opens them, or at once in a
  * side Drawer, which shows them from the start.
  */
-const panelModule = createDeferredModule(
-	() => import('./prompt-options-panel')
+const panelModule = createDeferredModule(() =>
+	importChunk(
+		() => import('./prompt-options-panel'),
+		(module) =>
+			typeof module.PromptOptionsPanel === 'function' ? module : undefined
+	)
 );
 const LazyPanel = panelModule.component((module) => module.PromptOptionsPanel);
 

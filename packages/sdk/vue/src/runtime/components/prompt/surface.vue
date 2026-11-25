@@ -68,6 +68,7 @@ import { slotAttrs } from '../../utils/slot-attrs';
 import type { RuntimeConsentConfig } from '../../vue-consent-kernel-context.model';
 import { loadConsentDialog } from '../dialog/load-panel';
 import ChoiceButton from '../parts/choice-button.vue';
+import { importComponent } from '../parts/import-component';
 import InlineLegalLinks from '../parts/inline-legal-links.vue';
 import { provideChoiceDraft } from '../parts/use-choice-draft';
 import { useHydrationHold } from '../parts/use-hydration-hold';
@@ -88,7 +89,7 @@ import type {
 import BannerTag from './tag.vue';
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
-const loadPanel = () => import('./panel.vue');
+const loadPanel = () => importComponent(() => import('./panel.vue'));
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;

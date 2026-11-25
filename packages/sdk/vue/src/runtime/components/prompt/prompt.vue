@@ -20,7 +20,6 @@ import { attachLiveRegion } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import {
 	computed,
-	defineAsyncComponent,
 	inject,
 	onScopeDispose,
 	provide,
@@ -36,6 +35,8 @@ import {
 } from '../../composables/use-consent-kernel';
 import { useConsentPolicyActions } from '../../composables/use-consent-policy-actions';
 import { useMounted } from '../../composables/use-mounted';
+import { defineChunkComponent } from '../parts/define-chunk-component';
+import { importComponent } from '../parts/import-component';
 import { useHydrationHold } from '../parts/use-hydration-hold';
 import { useRetryableComponent } from '../parts/use-retryable-component';
 import type { RetryableComponent } from '../parts/use-retryable-component';
@@ -80,8 +81,9 @@ const props = withDefaults(
 	}
 );
 
-const LazyOptInConfirmation = defineAsyncComponent(
-	() => import('../opt-in-confirmation.vue')
+const LazyOptInConfirmation = defineChunkComponent(
+	'LazyOptInConfirmation',
+	() => importComponent(() => import('../opt-in-confirmation.vue'))
 );
 const optInConfirmationActive = useOptInConfirmationHost();
 
@@ -160,7 +162,10 @@ onScopeDispose(() => stopTapRetry?.());
 
 // A failed one stays failed until the next trigger below.
 const load = (name: keyof PromptContainers): RetryableComponent => {
-	loads[name] ??= useRetryableComponent(loaders[name], onFailed);
+	loads[name] ??= useRetryableComponent(
+		() => importComponent(loaders[name]),
+		onFailed
+	);
 	return loads[name];
 };
 const current = shallowRef(load(type.value));

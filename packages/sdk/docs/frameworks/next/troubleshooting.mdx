@@ -187,3 +187,11 @@ export function ConsentPolicyDebug() {
 	);
 }
 ```
+
+## The banner or dialog fails to load
+
+**Check.** Open the console. A warning or error from Inth that says the banner, the dialog or the engine failed to load means the browser could not download one of Inth's chunks, for example during a dropped connection or a deploy that removed old files.
+
+After a failure the page stays as it is: Inth never reloads it, because a reload would discard what the visitor typed into your page. Nothing is recorded, and the banner stays or shows again. The next tap, open or snapshot tries the download again. With webpack (the Next.js default), the bundler's runtime forgets a failed chunk, so every retry sends a new request in every browser. With Turbopack, or another bundler that loads chunks with native `import()`, the table in [a consent chunk fails to load](/docs/guides/troubleshooting#a-consent-chunk-fails-to-load) applies.
+
+**Fix.** Nothing on the page. The next page load downloads the chunk again. If the failures follow a deploy, keep the previous build's chunk files available until cached pages that link to them expire. See [a consent chunk fails to load](/docs/guides/troubleshooting#a-consent-chunk-fails-to-load) for which browsers and builds can retry on the same page.

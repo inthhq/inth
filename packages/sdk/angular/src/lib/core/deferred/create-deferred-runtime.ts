@@ -32,6 +32,7 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk/runtime';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import type {
 	ConsentProviderRuntime,
@@ -133,13 +134,24 @@ const ENGINE_LIVE_OPTIONS = [
 const DIALOG_SHOWN_MS = 3000;
 
 let commitModule: Promise<typeof CommitModule> | undefined;
-/** Loads the commit chunk once; a failed load is retried next time. */
+/**
+ * Loads the commit chunk once. A failed load is forgotten, so the next
+ * tap imports the chunk again (`importChunk`).
+ */
 const loadCommitModule = async (): Promise<typeof CommitModule> => {
-	commitModule ??= import('@inth/sdk/surface-actions/early-commit');
+	commitModule ??= importChunk(
+		() => import('@inth/sdk/surface-actions/early-commit'),
+		(module) =>
+			typeof module.completeCommit === 'function' ? module : undefined
+	);
+	const attempt = commitModule;
 	try {
-		return await commitModule;
+		return await attempt;
 	} catch (error) {
-		commitModule = undefined;
+		// A newer load started meanwhile is left to settle on its own.
+		if (commitModule === attempt) {
+			commitModule = undefined;
+		}
 		throw error;
 	}
 };

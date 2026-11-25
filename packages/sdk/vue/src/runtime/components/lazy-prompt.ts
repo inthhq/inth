@@ -15,7 +15,8 @@
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */
-import { defineAsyncComponent } from 'vue';
+import { defineChunkComponent } from './parts/define-chunk-component';
+import { importComponent } from './parts/import-component';
 
 /**
  * The banner chunk. Vite's preload helper waits for the chunk's
@@ -25,7 +26,8 @@ import { defineAsyncComponent } from 'vue';
  *
  * @internal
  */
-export const loadConsentBanner = () => import('./prompt/prompt.vue');
+export const loadConsentBanner = () =>
+	importComponent(() => import('./prompt/prompt.vue'));
 
 /**
  * The banner as its own chunk, for Nuxt's root. Its stylesheets then
@@ -33,15 +35,18 @@ export const loadConsentBanner = () => import('./prompt/prompt.vue');
  * paints with the styles Nuxt inlines into the HTML and hydrates once its
  * chunk arrives, and the module turns Nuxt's render-blocking links to
  * those rules into preloads. The browser applies them with the chunk,
- * before a banner it renders itself appears.
+ * before a banner it renders itself appears. A failed load is tried again
+ * on the next consent snapshot.
+ *
+ * The root renders the banner component on every page (it decides its own
+ * visibility), so the chunk starts loading with the app's first render,
+ * not after `/v1/consent/init`. It is outside Nuxt's root `<Suspense>`:
+ * the app mounts and hydrates without waiting for the banner chunk and its
+ * stylesheets. Server-rendered banner markup hydrates once the chunk
+ * arrives.
  */
-export const LazyConsentBanner = defineAsyncComponent({
-	// The root renders the banner component on every page (it decides its
-	// own visibility), so the chunk starts loading with the app's first
-	// render, not after `/v1/consent/init`.
-	loader: loadConsentBanner,
-	// Outside Nuxt's root `<Suspense>`: the app mounts and hydrates without
-	// waiting for the banner chunk and its stylesheets. Server-rendered
-	// banner markup hydrates once the chunk arrives.
-	suspensible: false,
-});
+export const LazyConsentBanner = defineChunkComponent(
+	'LazyConsentBanner',
+	loadConsentBanner,
+	{ suspensible: false }
+);

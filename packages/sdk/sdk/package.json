@@ -274,6 +274,11 @@
 			"import": "./lib/core/dist/runtime/deferred-snapshot.js",
 			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
 		},
+		"./runtime/import-chunk": {
+			"types": "./lib/core/dist-types/runtime/import-chunk.d.ts",
+			"import": "./lib/core/dist/runtime/import-chunk.js",
+			"default": "./lib/core/dist/runtime/import-chunk.js"
+		},
 		"./runtime/page-globals": {
 			"types": "./lib/core/dist-types/libs/page-globals.d.ts",
 			"import": "./lib/core/dist/libs/page-globals.js",

@@ -15,6 +15,7 @@ import {
 	ViewContainerRef,
 } from '@angular/core';
 import type { ComponentRef, Type } from '@angular/core';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import {
 	claimOptInConfirmationHost,
 	isActiveOptInConfirmationHost,
@@ -26,15 +27,23 @@ import { ConsentManager } from '../core/consent-manager';
 import type { OptInConfirmationPanel } from './opt-in-confirmation-panel';
 
 /**
- * Loads the opt-in confirmation panel body in its own chunk.
+ * Loads the opt-in confirmation panel body in its own chunk. Each call
+ * imports the chunk again, so the next open after a failed download
+ * fetches it again (`importChunk`).
  *
  * @internal
  */
 export const OPT_IN_CONFIRMATION_PANEL = new InjectionToken<
 	() => Promise<Type<OptInConfirmationPanel>>
 >('INTH_OPT_IN_CONFIRMATION_PANEL', {
-	factory: () => async () =>
-		(await import('./opt-in-confirmation-panel')).OptInConfirmationPanel,
+	factory: () => () =>
+		importChunk(
+			() => import('./opt-in-confirmation-panel'),
+			(module) =>
+				typeof module.OptInConfirmationPanel === 'function'
+					? module.OptInConfirmationPanel
+					: undefined
+		),
 });
 
 /**

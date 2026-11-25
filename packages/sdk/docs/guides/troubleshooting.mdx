@@ -118,6 +118,27 @@ In Vite SPAs using `manifest({ manifestUrl })` or `manifest({ source: 'runtime' 
 
 **Confirm.** Reload with the blocker on and inspect **Network** to confirm chunks load.
 
+## A consent chunk fails to load
+
+**Cause.** The browser could not download one of Inth's chunks: the banner's container, its options, the dialog, a confirmation, or the deferred engine. A dropped connection, a server error or a deploy that removed old files can cause this. The console shows a warning or error from your Inth package that says the banner, the dialog or the engine failed to load.
+
+After a failure the page stays as it is. Inth never reloads it, because a reload would discard what the visitor typed into your page. Nothing is recorded, and every consent gate stays closed. The banner stays, or shows again, so the visitor can tap again. The next tap, open or snapshot tries the download again.
+
+Whether that retry can succeed on the same page depends on how the chunk loads:
+
+| How the chunk loads | Retry on the same page |
+| --- | --- |
+| Script tag (`inth.hosted.js`, `inth.choices.js`, `inth.choices-dialog.js`) | Always sends a new request. These are classic scripts, and each retry has its own URL (`inth-retry=<n>`), so an error response the browser cached does not answer it. |
+| webpack and rspack builds, including Next.js with webpack | Always sends a new request. The bundler's runtime forgets a failed chunk. |
+| Native `import()`: Vite, Rollup, the Angular CLI, Astro, SvelteKit, Nuxt, TanStack Start, in Firefox 155 or later, Chrome 156 or later, or Safari | Sends a new request for the chunk. |
+| Native `import()` in earlier Chromium or Firefox | These browsers keep a failed module for the life of the page. Inth loads the chunk again from its URL with `inth-retry=<n>` added. That works when nothing else imports the chunk by its plain URL, such as Astro's banner chunk. It does not work when another chunk imports it by its plain URL, such as Astro's engine chunk, or when the bundler renamed the chunk's exports. |
+| A chunk whose own dependency failed, in any browser | Stays failed until the next page load. |
+| A chunk a deploy removed | Stays failed. The file is gone. |
+
+**Fix.** Nothing on the page. The next page load downloads the chunk again, and the visitor's choice is recorded when they choose on that page. If the failures follow a deploy, keep the previous build's chunk files available until cached pages that link to them expire. A server or CDN that rejects unknown query parameters must accept `inth-retry`.
+
+**Confirm.** In DevTools **Network**, throttle to **Offline**, open the banner's options or the dialog, go back online and try again. A request for the chunk, with `inth-retry` in the URL where the table says so, shows that the retry reached the network.
+
 ## Theme tokens or custom styles have no effect
 
 **Cause.** Missing Inth stylesheet (`styles: false`), selector targeting the wrong element (`data-variant` sits on the root, not the card), or Tailwind / CSS layer order.

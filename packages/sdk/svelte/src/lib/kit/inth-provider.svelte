@@ -34,6 +34,7 @@
 -->
 <script lang="ts">
 	import type { ProviderTransportFactory } from '@inth/sdk/engine';
+	import { importChunk } from '@inth/sdk/runtime/import-chunk';
 	import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 	import { BROWSER } from 'esm-env';
 	import type { Snippet } from 'svelte';
@@ -45,6 +46,7 @@
 	import ProviderView from '../components/provider-view.svelte';
 	import { createDeferredRuntime } from '../deferred/create-deferred-runtime';
 	import type { EngineFactory } from '../deferred/create-deferred-runtime';
+	import type * as EngineModule from '../deferred/engine';
 	import { readConsentBoot } from '../deferred/read-consent-boot';
 	import type {
 		ConsentManagerOptions,
@@ -92,9 +94,23 @@
 		preloadMarker: string;
 	}
 
+	/**
+	 * Imports the engine chunk. Each call imports it again, so a failed
+	 * load can be retried on the same page.
+	 */
+	const loadEngineChunk = (): Promise<typeof EngineModule> =>
+		importChunk(
+			() => import('../deferred/engine'),
+			(module) =>
+				typeof module.createRootEngine === 'function' &&
+				typeof module.preloadSavePath === 'function'
+					? module
+					: undefined
+		);
+
 	/** Loads the engine chunk, for the browser. */
 	const loadEngine = async (): Promise<EngineFactory> => {
-		const engine = await import('../deferred/engine');
+		const engine = await loadEngineChunk();
 		return (committed) => {
 			const built = engine.createRootEngine({
 				committed,
@@ -155,7 +171,7 @@
 			active = false;
 		});
 		void (async () => {
-			const engine = await import('../deferred/engine');
+			const engine = await loadEngineChunk();
 			if (!active) {
 				return;
 			}

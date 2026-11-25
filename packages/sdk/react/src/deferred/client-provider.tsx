@@ -34,6 +34,7 @@ import {
 	startPrefetchedInit,
 } from '@inth/sdk/runtime/deferred-boot';
 import type { DeferredSnapshotOptions } from '@inth/sdk/runtime/deferred-snapshot';
+import { importChunk } from '@inth/sdk/runtime/import-chunk';
 import { storageFor } from '@inth/sdk/runtime/storage-for';
 import type { ReactNode } from 'react';
 import { Suspense, useState } from 'react';
@@ -299,13 +300,21 @@ const plan = function plan(
  *
  * @param importEngine - Imports the engine's module. Defaults to
  * `import('./client-engine')`, which keeps it out of the first-load chunk.
+ * Each try calls it again (`importChunk`).
  * @returns The provider. Each loads its engine once per page.
  * @internal
  */
 export const createConsentProvider = function createConsentProvider(
 	importEngine: () => Promise<EngineModule> = () => import('./client-engine')
 ): (props: InthProviderProps) => ReactNode {
-	const loadEngine = recordOnce(importEngine);
+	const loadEngine = recordOnce(() =>
+		importChunk(importEngine, (module) =>
+			typeof module.InthProvider === 'function' &&
+			typeof module.DeferredEngineHost === 'function'
+				? module
+				: undefined
+		)
+	);
 
 	const EngineProvider = (props: InthProviderProps): ReactNode => {
 		const loaded = read(loadEngine());

@@ -5,15 +5,18 @@
  * A tap on the banner after a failed download retries the load. When the
  * retry mounts the prompt, the tapped Accept or Reject is applied here.
  *
- * The retry cannot always succeed. Chromium and WebKit remember a failed
- * module fetch for the life of the document: every later `import()` of
- * that URL, and of every chunk that statically imports it, fails again
- * without a request. A fresh URL (`?retry=1`) does not get past this
- * either, because other chunks import the engine and prompt chunks by
- * their plain URL. The page does not reload itself to recover, because a
- * reload would throw away anything the visitor typed into the host page.
- * The banner shows again, no choice is recorded, and consent gates stay
- * closed. The next page load fetches the chunk again.
+ * The retry cannot always succeed. Chromium before 156 and Firefox before
+ * 155 remember a failed module fetch for the life of the document: every
+ * later `import()` of that URL, and of every chunk that statically imports
+ * it, fails again without a request. `importChunk` loads the failed chunk
+ * again from a URL of its own (`?inth-retry=1`), which gets the prompt
+ * chunk past this; nothing else imports it. It does not get the engine
+ * chunk past it: the prompt chunk imports the engine by its plain URL. In
+ * every browser, a chunk whose own dependency failed stays failed. The
+ * page does not reload itself to recover, because a reload would throw
+ * away anything the visitor typed into the host page. The banner shows
+ * again, no choice is recorded, and consent gates stay closed. The next
+ * page load fetches the chunk again.
  *
  * @internal
  */

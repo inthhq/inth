@@ -127,6 +127,10 @@ const alias = {
 		__dirname,
 		'../core/src/runtime/client-mode.ts'
 	),
+	'@inth/sdk/runtime/import-chunk': resolve(
+		__dirname,
+		'../core/src/runtime/import-chunk.ts'
+	),
 	'@inth/sdk/runtime/page-globals': resolve(
 		__dirname,
 		'../core/src/libs/page-globals.ts'

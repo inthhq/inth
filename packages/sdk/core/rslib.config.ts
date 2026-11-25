@@ -121,7 +121,19 @@ export default defineConfig({
 	],
 	output: {
 		cleanDistPath: true,
-		minify: compactModuleMinify,
+		minify: {
+			...compactModuleMinify,
+			jsOptions: {
+				...(typeof compactModuleMinify === 'object'
+					? compactModuleMinify.jsOptions
+					: {}),
+				// The minifier keeps `@vite-ignore` but drops `webpackIgnore`,
+				// and without it webpack and Turbopack warn about a host's
+				// build: `importChunk`'s `import()` of a URL must reach the
+				// host's bundler with both.
+				exclude: /runtime\/import-chunk\.js$/u,
+			},
+		},
 		target: 'web',
 	},
 	performance: {
