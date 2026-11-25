@@ -17,21 +17,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -48,10 +36,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -88,21 +73,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -119,10 +92,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -161,21 +131,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -192,10 +150,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -244,21 +199,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -275,10 +218,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -333,21 +273,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -364,10 +292,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -423,21 +348,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -454,10 +367,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -512,21 +422,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -543,10 +441,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -602,21 +497,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -633,10 +516,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -692,21 +572,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -723,10 +591,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -782,13 +647,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"dismiss"
-							],
+							"allowed": ["dismiss"],
 							"equivalent": [],
-							"required": [
-								"dismiss"
-							]
+							"required": ["dismiss"]
 						},
 						"copyRevision": null,
 						"id": "us_notice",
@@ -796,9 +657,7 @@
 						"preselectedCategories": [],
 						"privacySignals": {
 							"gpc": {
-								"denyCategories": [
-									"marketing"
-								]
+								"denyCategories": ["marketing"]
 							}
 						},
 						"prompt": "notice",
@@ -807,11 +666,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"opt-out",
-							"preferences"
-						],
+						"rights": ["disclosure", "opt-out", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -864,21 +719,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -895,10 +738,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -938,21 +778,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -969,10 +797,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1012,13 +837,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"dismiss"
-							],
+							"allowed": ["dismiss"],
 							"equivalent": [],
-							"required": [
-								"dismiss"
-							]
+							"required": ["dismiss"]
 						},
 						"copyRevision": null,
 						"id": "us_notice",
@@ -1026,9 +847,7 @@
 						"preselectedCategories": [],
 						"privacySignals": {
 							"gpc": {
-								"denyCategories": [
-									"marketing"
-								]
+								"denyCategories": ["marketing"]
 							}
 						},
 						"prompt": "notice",
@@ -1037,11 +856,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"opt-out",
-							"preferences"
-						],
+						"rights": ["disclosure", "opt-out", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1081,13 +896,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"dismiss"
-							],
+							"allowed": ["dismiss"],
 							"equivalent": [],
-							"required": [
-								"dismiss"
-							]
+							"required": ["dismiss"]
 						},
 						"copyRevision": null,
 						"id": "us_notice",
@@ -1095,9 +906,7 @@
 						"preselectedCategories": [],
 						"privacySignals": {
 							"gpc": {
-								"denyCategories": [
-									"marketing"
-								]
+								"denyCategories": ["marketing"]
 							}
 						},
 						"prompt": "notice",
@@ -1106,11 +915,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"opt-out",
-							"preferences"
-						],
+						"rights": ["disclosure", "opt-out", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1149,21 +954,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1180,10 +973,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1225,21 +1015,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1256,10 +1034,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1301,21 +1076,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1332,10 +1095,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1372,21 +1132,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1403,10 +1151,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1444,21 +1189,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1475,10 +1208,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1518,21 +1248,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1549,10 +1267,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1594,21 +1309,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1625,10 +1328,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1670,21 +1370,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1701,10 +1389,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1747,21 +1432,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1778,10 +1451,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1824,21 +1494,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1855,10 +1513,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1898,21 +1553,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -1929,10 +1572,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -1972,21 +1612,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -2003,10 +1631,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",
@@ -2046,21 +1671,9 @@
 					"matchedBy": "region",
 					"policy": {
 						"actions": {
-							"allowed": [
-								"accept",
-								"customize",
-								"reject"
-							],
-							"equivalent": [
-								[
-									"accept",
-									"reject"
-								]
-							],
-							"required": [
-								"accept",
-								"reject"
-							]
+							"allowed": ["accept", "customize", "reject"],
+							"equivalent": [["accept", "reject"]],
+							"required": ["accept", "reject"]
 						},
 						"copyRevision": null,
 						"id": "eu_opt_in",
@@ -2077,10 +1690,7 @@
 							"storeLanguage": true,
 							"storeUserAgent": true
 						},
-						"rights": [
-							"disclosure",
-							"preferences"
-						],
+						"rights": ["disclosure", "preferences"],
 						"scope": [
 							"experience",
 							"functionality",

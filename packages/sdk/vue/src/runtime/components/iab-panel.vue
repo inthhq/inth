@@ -343,9 +343,9 @@ const { presentation } = useConsentPolicyActions('preferences', () => ({
 	blocking: focusBlocking.value,
 	layout: IAB_DIALOG_LAYOUT,
 }));
-const scrollLock = computed(() => presentation.value.blocking);
+const blocksPage = computed(() => presentation.value.blocking);
 
-useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
+useConsentScrollLock(computed(() => Boolean(isOpen.value && blocksPage.value)));
 
 const shouldTrapFocus = computed(() =>
 	Boolean(isOpen.value && presentation.value.blocking)
@@ -369,7 +369,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 			:leave-to-class="dialogStyles.overlayHidden"
 		>
 			<div
-				v-if="showDialog && scrollLock"
+				v-if="showDialog && blocksPage"
 				v-bind="
 					slotAttrs(config.components?.['iab-dialog']?.overlay, [
 						dialogStyles.overlay,

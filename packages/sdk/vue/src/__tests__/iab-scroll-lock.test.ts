@@ -13,7 +13,14 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import type { InitOutput } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, onTestFinished, test, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	describe,
+	expect,
+	onTestFinished,
+	test,
+	vi,
+} from 'vite-plus/test';
 import { createApp, h } from 'vue';
 import type { Component } from 'vue';
 
@@ -118,9 +125,7 @@ const mountSurface = async (
 		blocking: () => ({
 			modal: card()?.getAttribute('aria-modal') === 'true',
 			overlay: Boolean(
-				document.querySelector(
-					`[data-testid="iab-consent-${surface}-overlay"]`
-				)
+				document.querySelector(`[data-testid="iab-consent-${surface}-overlay"]`)
 			),
 			scrollLocked: document.body.style.overflow === 'hidden',
 		}),

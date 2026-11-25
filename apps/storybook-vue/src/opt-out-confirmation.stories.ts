@@ -96,7 +96,7 @@ export const AccountCovered: Story = {
 export const SignalHonored: Story = {
 	play: signalHonored,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentDialog },
+		components: { ConsentDialog, ConsentDialogLink },
 		setup() {
 			setupStorybookOptOutConsent('gpc', {
 				configOverrides: {
@@ -116,7 +116,7 @@ export const SignalHonored: Story = {
 export const AccountAdopted: Story = {
 	play: accountAdopted,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentDialog },
+		components: { ConsentDialog, ConsentDialogLink },
 		setup() {
 			setupStorybookOptOutConsent('none', {
 				configOverrides: {

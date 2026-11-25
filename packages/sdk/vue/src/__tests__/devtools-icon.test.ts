@@ -18,13 +18,14 @@ const THEME_SOURCE = readFileSync(
 const primaryAfter = (marker: string): string => {
 	const start = THEME_SOURCE.indexOf(marker);
 	expect(start, marker).toBeGreaterThan(-1);
-	const match = /\bprimary: '(#[0-9a-f]{6})'/iu.exec(
+	const match = /\bprimary: '(?<hex>#[0-9a-f]{6})'/iu.exec(
 		THEME_SOURCE.slice(start)
 	);
-	if (!match?.[1]) {
+	const hex = match?.groups?.hex;
+	if (!hex) {
 		throw new Error(`No primary after ${marker}`);
 	}
-	return match[1].toLowerCase();
+	return hex.toLowerCase();
 };
 
 describe('Nuxt DevTools tab icon', () => {

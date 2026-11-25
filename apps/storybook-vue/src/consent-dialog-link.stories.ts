@@ -36,7 +36,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: linkOpensDialog,
 	render: () => ({
-		components: { ConsentDialogLink, ConsentDialog },
+		components: { ConsentDialog, ConsentDialogLink },
 		setup() {
 			const { kernel } = setupStorybookConsent(null);
 			const snapshot = kernel.getSnapshot();

@@ -9,6 +9,12 @@ import {
 } from '../shared/rslib-modules';
 import { getRsdoctorPlugins } from '../shared/rslib-utils';
 
+// `compactModuleMinify` is typed as rsbuild's `Minify`, which may be a boolean.
+const compactJsOptions =
+	typeof compactModuleMinify === 'object'
+		? compactModuleMinify.jsOptions
+		: undefined;
+
 /**
  * Chunks `clientMode()` loads with `import()`, and the server start a
  * framework root imports on the server from a component the browser also
@@ -124,9 +130,7 @@ export default defineConfig({
 		minify: {
 			...compactModuleMinify,
 			jsOptions: {
-				...(typeof compactModuleMinify === 'object'
-					? compactModuleMinify.jsOptions
-					: {}),
+				...compactJsOptions,
 				// The minifier keeps `@vite-ignore` but drops `webpackIgnore`,
 				// and without it webpack and Turbopack warn about a host's
 				// build: `importChunk`'s `import()` of a URL must reach the

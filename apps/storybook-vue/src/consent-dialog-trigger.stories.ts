@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: triggerOpensDialog,
 	render: () => ({
-		components: { ConsentDialogTrigger, ConsentDialog },
+		components: { ConsentDialog, ConsentDialogTrigger },
 		setup() {
 			setupStorybookConsent(null, {
 				triggerIcon: 'branding',
@@ -36,7 +36,7 @@ export const Default: Story = {
 export const DialogFocusManagement: Story = {
 	play: dialogFocusManagement,
 	render: () => ({
-		components: { ConsentDialogTrigger, ConsentDialog },
+		components: { ConsentDialog, ConsentDialogTrigger },
 		setup() {
 			setupStorybookConsent(null, {
 				triggerIcon: 'branding',

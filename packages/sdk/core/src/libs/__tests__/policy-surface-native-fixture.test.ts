@@ -341,7 +341,9 @@ const expectedFor = function expectedFor(wire: Record<string, unknown>) {
 // Every base rule must read on its own, or a case that fails would be
 // failing for a reason that has nothing to do with its surface.
 for (const name of Object.keys(RULES) as RuleName[]) {
-	const read = readPolicyResolutionWire(wireFor({ id: name, rule: name, why: '' }));
+	const read = readPolicyResolutionWire(
+		wireFor({ id: name, rule: name, why: '' })
+	);
 	if (read.status !== 'matched') {
 		throw new Error(`Base rule ${name} does not read: ${JSON.stringify(read)}`);
 	}

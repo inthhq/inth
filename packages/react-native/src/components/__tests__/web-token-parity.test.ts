@@ -757,16 +757,13 @@ const nativeStockPrimary = function nativeStockPrimary(path: string): {
 };
 
 describe('native presenter palette', () => {
-	test.each(NATIVE_THEME_SOURCES)(
-		'%s draws the web accent',
-		(path) => {
-			// Native draws links, switches and the Save button in one `primary`, so
-			// the dark value is the web's dark accent text, not its dark fill: the
-			// fill is too dark to read as a link on the dark surface.
-			expect(nativeStockPrimary(path)).toEqual({
-				dark: asNativeColor(tokenBySuffix('primary-text', true)),
-				light: asNativeColor(tokenBySuffix('primary')),
-			});
-		}
-	);
+	test.each(NATIVE_THEME_SOURCES)('%s draws the web accent', (path) => {
+		// Native draws links, switches and the Save button in one `primary`, so
+		// the dark value is the web's dark accent text, not its dark fill: the
+		// fill is too dark to read as a link on the dark surface.
+		expect(nativeStockPrimary(path)).toEqual({
+			dark: asNativeColor(tokenBySuffix('primary-text', true)),
+			light: asNativeColor(tokenBySuffix('primary')),
+		});
+	});
 });

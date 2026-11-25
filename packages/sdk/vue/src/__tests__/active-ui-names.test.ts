@@ -1,10 +1,7 @@
 import { describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentConfig } from '../runtime/config';
-import {
-	toKernelActiveUI,
-	toVueActiveUI,
-} from '../runtime/display-data.model';
+import { toKernelActiveUI, toVueActiveUI } from '../runtime/display-data.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 describe('activeUI names', () => {
@@ -24,9 +21,7 @@ describe('activeUI names', () => {
 		const context = createVueConsentKernelContext({
 			config: {
 				consentCategories: ['necessary', 'measurement', 'marketing'],
-				customFetch: vi.fn(
-					() => new Response('{}')
-				) as unknown as typeof fetch,
+				customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 				projectUrl: 'https://consent.example',
 			} as ConsentConfig,
 		});

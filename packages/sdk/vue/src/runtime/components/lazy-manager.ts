@@ -7,7 +7,6 @@ import { importComponent } from './parts/import-component';
  * chunk loads when the dialog first opens, and again on the next open
  * after a failed load.
  */
-export const LazyConsentDialog = defineChunkComponent(
-	'LazyConsentDialog',
-	() => importComponent(() => import('./dialog/manager.vue'))
+export const LazyConsentDialog = defineChunkComponent('LazyConsentDialog', () =>
+	importComponent(() => import('./dialog/manager.vue'))
 );

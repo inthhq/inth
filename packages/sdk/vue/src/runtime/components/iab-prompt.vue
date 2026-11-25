@@ -188,9 +188,9 @@ const { presentation } = useConsentPolicyActions('prompt', () => ({
 	layout: IAB_BANNER_LAYOUT,
 	primaryActions: [props.primaryButton],
 }));
-const scrollLock = computed(() => presentation.value.blocking);
+const blocksPage = computed(() => presentation.value.blocking);
 
-useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
+useConsentScrollLock(computed(() => Boolean(isOpen.value && blocksPage.value)));
 
 const shouldTrapFocus = computed(() =>
 	Boolean(isOpen.value && presentation.value.blocking)
@@ -211,7 +211,7 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 			:leave-to-class="bannerStyles.overlayHidden"
 		>
 			<div
-				v-if="showBanner && scrollLock"
+				v-if="showBanner && blocksPage"
 				v-bind="
 					slotAttrs(config.components?.['iab-banner']?.overlay, [
 						bannerStyles.overlay,
