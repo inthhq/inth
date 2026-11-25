@@ -66,7 +66,7 @@ const answer = (body: unknown) =>
 const backend = () =>
 	vi.fn<typeof globalThis.fetch>((input) =>
 		answer(
-			String(input).endsWith('/v1/consent/manifest') ? MANIFEST_FIXTURE : INIT
+			String(input).includes('/v1/consent/manifest') ? MANIFEST_FIXTURE : INIT
 		)
 	);
 
@@ -104,7 +104,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
 		]);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({
 			next: { revalidate: 300 },
@@ -132,7 +132,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
 		]);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -165,7 +165,7 @@ describe('resolveConsent wiring', () => {
 			// The state tells InthProvider this page has no journey.
 			expect(state.journey).toBeNull();
 			expect(String(off.mock.calls[0]?.[0])).toBe(
-				'https://consent.example.com/v1/consent/init'
+				'https://consent.example.com/v1/consent/init?manifestLevel=1'
 			);
 		}
 	});
@@ -183,7 +183,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(manifestFetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
 		]);
 
 		const initFetch = backend();
@@ -298,7 +298,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
 		]);
 		expect(resolved.initialPolicyResolution?.status).toBe('matched');
 	});

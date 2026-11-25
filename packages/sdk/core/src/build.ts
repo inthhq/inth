@@ -23,6 +23,7 @@ import {
 } from './libs/prefetch/placement';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/types';
+import { withManifestLevel } from './manifest-runtime/level';
 import type { ConsentMode } from './modes';
 import { buildSnapshotSkipReason } from './server/server-mode';
 import { loadStaticManifest } from './server/static-manifest';
@@ -64,6 +65,7 @@ const resolveBuildManifestUrl = (
 	}
 	if (options.manifestUrl === undefined) {
 		url.pathname = `${url.pathname.replace(/\/+$/u, '')}${V1_ROUTES.manifest}`;
+		return withManifestLevel(url.href);
 	}
 	return url.href;
 };

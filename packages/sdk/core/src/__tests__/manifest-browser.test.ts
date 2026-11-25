@@ -11,6 +11,7 @@ import { baseTranslations } from '@inth/sdk-translations/all';
 import { translations as germanCopy } from '@inth/sdk-translations/de';
 import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
+import { MANIFEST_RUNTIME_LEVEL } from '../manifest-runtime/level';
 import type { ConsentMode } from '../modes';
 import { earlyInitModes } from '../transports/early-init-modes';
 import {
@@ -313,11 +314,51 @@ describe('createBrowserManifestTransport()', () => {
 		expect(response?.location?.countryCode).toBeNull();
 	});
 
+	test('asks the manifest for its runtime level, and drops listed scripts above it', async () => {
+		const entry = (id: string, requires?: number) => ({
+			id,
+			integration: id,
+			manifest: {
+				category: 'measurement',
+				vendor: id,
+				...(requires !== undefined && { requires }),
+			},
+		});
+		// A manifest from a static file or another source lists scripts for
+		// any level; only the Inth server filters by the parameter.
+		const fetchSpy = vi.fn<typeof fetch>(() =>
+			Promise.resolve(
+				jsonResponse({
+					...everywhereManifest,
+					scriptRegistry: {
+						load: [
+							entry('level-one'),
+							entry('needs-next', MANIFEST_RUNTIME_LEVEL + 1),
+						],
+					},
+				})
+			)
+		);
+		const transport = createBrowserManifestTransport({
+			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
+		});
+
+		const response = await transport.init?.(initContext({ language: 'en' }));
+
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
+			`https://backend.example/v1/consent/manifest?manifestLevel=${MANIFEST_RUNTIME_LEVEL}`
+		);
+		expect(response?.scriptRegistry?.load?.map(({ id }) => id)).toEqual([
+			'level-one',
+		]);
+	});
+
 	test('asks GET /v1/consent/init, with a warning, when the manifest is unavailable', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				String(input).endsWith('/v1/consent/manifest')
+				String(input).includes('/v1/consent/manifest')
 					? new Response('missing', { status: 404 })
 					: jsonResponse({
 							location: { countryCode: 'DE', regionCode: null },

@@ -46,6 +46,6 @@ test('manifest() without a consent route reads the manifest itself', async () =>
 		request
 	);
 	expect(String(fetch.mock.calls[0]?.[0])).toBe(
-		'https://consent.example.com/v1/consent/manifest'
+		'https://consent.example.com/v1/consent/manifest?manifestLevel=1'
 	);
 });

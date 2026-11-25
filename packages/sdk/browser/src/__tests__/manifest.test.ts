@@ -552,7 +552,7 @@ describe('manifest()', () => {
 	it("reads the backend's /manifest when the build had no snapshot", async () => {
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				String(input) === 'https://example.test/api/v1/consent/manifest'
+				pathOf(input) === 'https://example.test/api/v1/consent/manifest'
 					? new Response(JSON.stringify(everywhereManifest))
 					: new Response(
 							JSON.stringify({
@@ -575,6 +575,10 @@ describe('manifest()', () => {
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
 			'https://example.test/api/v1/consent/manifest',
 		]);
+		// The Inth server lists only the remote scripts this level runs.
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
+			'https://example.test/api/v1/consent/manifest?manifestLevel=1'
+		);
 	});
 
 	it.each([

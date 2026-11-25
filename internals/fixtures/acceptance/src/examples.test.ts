@@ -830,7 +830,9 @@ for (const target of selectedTargets()) {
 						}
 					);
 					expect(response.status).toBe(200);
-					expect(received).toContain('GET /v1/consent/manifest');
+					expect(received).toContain(
+						'GET /v1/consent/manifest?manifestLevel=1'
+					);
 				} finally {
 					relay.closeAllConnections();
 					relay.close();

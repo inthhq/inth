@@ -75,6 +75,10 @@ import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
 import { trimSlash } from '../libs/url';
 import { inthProtocolHeaders } from '../libs/version-header';
+import {
+	MANIFEST_RUNTIME_LEVEL,
+	withManifestLevel,
+} from '../manifest-runtime/level';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
@@ -717,6 +721,7 @@ const resolveRequest = async function resolveRequest(
 		country: inputs.country ?? null,
 		gpc: inputs.gpc,
 		language: inputs.language ?? 'en',
+		manifestLevel: MANIFEST_RUNTIME_LEVEL,
 		region: inputs.region ?? null,
 	});
 
@@ -759,7 +764,9 @@ const resolveRequest = async function resolveRequest(
 		const sourceUrl =
 			options.manifestUrl ??
 			(options.projectUrl
-				? `${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`
+				? withManifestLevel(
+						`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`
+					)
 				: undefined);
 		if (!sourceUrl) {
 			throw new RequestConsentError(
@@ -981,7 +988,9 @@ const resolveRequest = async function resolveRequest(
 				// The backend's own session report for this `/v1/consent/init` then carries
 				// the journey. The deferred list below keeps the plain URL.
 				response = await target.fetch(
-					journey ? appendJourneyParams(target.url, journey) : target.url,
+					withManifestLevel(
+						journey ? appendJourneyParams(target.url, journey) : target.url
+					),
 					init
 				);
 				if (!response.ok) {

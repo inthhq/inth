@@ -104,7 +104,7 @@ describe('@inth/nextjs/api', () => {
 		expect(served.status).toBe(304);
 		expect(policyCalls(fetch)).toHaveLength(1);
 		expect(fetch).toHaveBeenCalledWith(
-			'https://consent.example.com/v1/consent/manifest',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
 			expect.objectContaining({ next: { revalidate: 120 } })
 		);
 	});
@@ -138,7 +138,7 @@ describe('@inth/nextjs/api', () => {
 		const { GET } = createConsentRoute({ config, fetch });
 		await call(GET, 'https://app.example.com/api/consent/v1/consent/manifest');
 		expect(fetch.mock.calls[0]?.[0]).toBe(
-			'https://consent.example.com/api/inth/v1/consent/manifest'
+			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=1'
 		);
 	});
 

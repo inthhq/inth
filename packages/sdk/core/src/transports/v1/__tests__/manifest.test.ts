@@ -64,7 +64,9 @@ describe('GET /v1/consent/manifest', () => {
 		await transport.init({ overrides: { country: 'DE' }, user: null });
 
 		expect(calls).toHaveLength(1);
-		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/manifest`);
+		expect(calls[0]?.url).toBe(
+			`${PROJECT_URL}/v1/consent/manifest?manifestLevel=1`
+		);
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
 		expect(first.location).toEqual({ countryCode: 'DE', regionCode: null });

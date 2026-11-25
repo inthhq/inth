@@ -22,7 +22,7 @@ const upstream = () =>
 		.fn<typeof globalThis.fetch>()
 		.mockImplementation((input) =>
 			Promise.resolve(
-				String(input).endsWith('/v1/consent/manifest')
+				String(input).includes('/v1/consent/manifest')
 					? Response.json(MANIFEST_FIXTURE)
 					: Response.json({ ok: true }, { status: 201 })
 			)

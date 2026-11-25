@@ -479,7 +479,7 @@ describe('modes', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const answers = upstream(MANIFEST, INIT);
 		const fetch = vi.fn<typeof globalThis.fetch>((input, init) =>
-			target(input).endsWith('/v1/consent/manifest')
+			target(input).includes('/v1/consent/manifest')
 				? Promise.resolve(new Response('missing', { status: 404 }))
 				: answers(input, init)
 		);
@@ -914,7 +914,7 @@ describe('budget', () => {
 		// only other call.
 		expect(
 			fetch.mock.calls.filter(([input]) =>
-				String(input).endsWith('/v1/consent/manifest')
+				String(input).includes('/v1/consent/manifest')
 			)
 		).toHaveLength(1);
 		expect(second.initialPolicyResolution?.status).toBe('matched');
@@ -1046,6 +1046,7 @@ describe('consent journey', () => {
 		expect(Object.fromEntries(sent.searchParams)).toEqual({
 			journey: state.journey?.id,
 			journeyScope: 'page',
+			manifestLevel: '1',
 			stored: '1',
 		});
 	});

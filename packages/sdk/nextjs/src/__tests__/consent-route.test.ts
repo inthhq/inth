@@ -25,7 +25,7 @@ const params = (...segments: string[]) => ({
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>((input) =>
 		Promise.resolve(
-			String(input).endsWith('/v1/consent/manifest')
+			String(input).includes('/v1/consent/manifest')
 				? Response.json(MANIFEST_FIXTURE)
 				: Response.json({ ok: true }, { status: 201 })
 		)
@@ -104,7 +104,7 @@ describe('createConsentRoute', () => {
 			params('v1', 'consent', 'manifest')
 		);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/v1/consent/manifest'
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=1'
 		);
 	});
 

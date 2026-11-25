@@ -28,7 +28,7 @@ const ROUTE_ID = '/api/inth/[...path]';
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>().mockImplementation((input) =>
 		Promise.resolve(
-			String(input).endsWith('/v1/consent/manifest')
+			String(input).includes('/v1/consent/manifest')
 				? Response.json(MANIFEST_FIXTURE, {
 						headers: {
 							'cache-control': 'public, s-maxage=1, stale-while-revalidate=600',
@@ -114,7 +114,7 @@ describe('createConsentRoute', () => {
 			})
 		);
 		expect(eventFetch).toHaveBeenCalledWith(
-			'/api/self-host/v1/consent/manifest',
+			'/api/self-host/v1/consent/manifest?manifestLevel=1',
 			expect.anything()
 		);
 	});
@@ -205,8 +205,8 @@ describe('createConsentRoute with inthHandle', () => {
 			restEvent('v1/consent/manifest')
 		);
 		expect(fetch.mock.calls.map(([url]) => String(url))).toEqual([
-			'https://handle.example/v1/consent/manifest',
-			'https://hosted.example/v1/consent/manifest',
+			'https://handle.example/v1/consent/manifest?manifestLevel=1',
+			'https://hosted.example/v1/consent/manifest?manifestLevel=1',
 		]);
 	});
 
@@ -240,7 +240,7 @@ describe('createConsentRoute with inthHandle', () => {
 			restEvent('v1/consent/manifest')
 		);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://route.example/v1/consent/manifest'
+			'https://route.example/v1/consent/manifest?manifestLevel=1'
 		);
 	});
 
@@ -283,7 +283,7 @@ describe('createConsentRoute with inthHandle', () => {
 		);
 		expect(response.status).toBe(200);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			`${BACKEND}/v1/consent/manifest`
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`
 		);
 		expect(eventFetch).not.toHaveBeenCalled();
 	});
@@ -344,7 +344,7 @@ describe('createConsentRoute with inthHandle', () => {
 			expect(fetch.mock.calls.map(([url]) => String(url))).toEqual(
 				expect.arrayContaining([
 					`${BACKEND}/v1/consent/records`,
-					`${BACKEND}/v1/consent/manifest`,
+					`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
 				])
 			);
 		}

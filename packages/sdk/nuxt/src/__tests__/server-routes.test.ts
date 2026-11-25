@@ -288,7 +288,7 @@ describe('init route', () => {
 			policyResolution: { policyId: 'eu-opt-in' },
 		});
 		expect(mocks.serverFetch).toHaveBeenCalledWith(
-			'/api/self-host/v1/consent/manifest',
+			'/api/self-host/v1/consent/manifest?manifestLevel=1',
 			expect.anything()
 		);
 		// A relative backend is this app's own proxy: no session report.
@@ -352,7 +352,7 @@ describe('init route', () => {
 		await callInitRoute();
 
 		expect(mocks.serverFetch.mock.calls[0]?.[0]).toBe(
-			'https://private.example/v1/consent/manifest'
+			'https://private.example/v1/consent/manifest?manifestLevel=1'
 		);
 	});
 
@@ -367,7 +367,7 @@ describe('init route', () => {
 		await callInitRoute();
 
 		expect(mocks.serverFetch.mock.calls[0]?.[0]).toBe(
-			'https://public.example/v1/consent/manifest'
+			'https://public.example/v1/consent/manifest?manifestLevel=1'
 		);
 	});
 

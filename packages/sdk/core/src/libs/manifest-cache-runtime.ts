@@ -1,6 +1,7 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
+import { withManifestLevel } from '../manifest-runtime/level';
 import { readApiError } from '../transports/v1/error';
 import { V1_ROUTES } from '../transports/v1/paths';
 import { boundedSet, mapFor } from './bounded-map';
@@ -513,7 +514,9 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	}
-	return `${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`;
+	return withManifestLevel(
+		`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`
+	);
 };
 
 /**

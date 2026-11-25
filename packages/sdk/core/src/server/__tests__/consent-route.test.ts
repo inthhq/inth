@@ -237,7 +237,9 @@ describe('upstream source', () => {
 			fetch: fromManifestUrl,
 			manifestUrl: 'https://cdn.example.com/m.json',
 		})(request('/api/inth/v1/consent/manifest'));
-		expect(calledURLs(fromBackend)).toEqual([`${BACKEND}/v1/consent/manifest`]);
+		expect(calledURLs(fromBackend)).toEqual([
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
+		]);
 		expect(calledURLs(fromManifestUrl)).toEqual([
 			'https://cdn.example.com/m.json',
 		]);
@@ -251,7 +253,7 @@ describe('upstream source', () => {
 			})
 		);
 		expect(calledURLs(fetch)).toEqual([
-			`${APP}/consent-backend/v1/consent/manifest`,
+			`${APP}/consent-backend/v1/consent/manifest?manifestLevel=1`,
 		]);
 	});
 
@@ -270,7 +272,7 @@ describe('upstream source', () => {
 			})
 		);
 		expect(calledURLs(fetch)).toEqual([
-			'https://public.example/consent-backend/v1/consent/manifest',
+			'https://public.example/consent-backend/v1/consent/manifest?manifestLevel=1',
 		]);
 	});
 
@@ -282,7 +284,7 @@ describe('upstream source', () => {
 			{ localFetch, route: 'manifest' }
 		);
 		expect(calledURLs(localFetch)).toEqual([
-			'/api/self-host/v1/consent/manifest',
+			'/api/self-host/v1/consent/manifest?manifestLevel=1',
 		]);
 		expect(fetch).not.toHaveBeenCalled();
 	});
@@ -293,7 +295,9 @@ describe('upstream source', () => {
 		await route({ fetch })(request('/api/inth/v1/consent/manifest'), {
 			localFetch,
 		});
-		expect(calledURLs(fetch)).toEqual([`${BACKEND}/v1/consent/manifest`]);
+		expect(calledURLs(fetch)).toEqual([
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
+		]);
 		expect(localFetch).not.toHaveBeenCalled();
 	});
 
@@ -427,8 +431,8 @@ describe('manifest route', () => {
 	});
 
 	test.each([
-		['DE-de', '?language=de-de'],
-		['fr', '?language=fr'],
+		['DE-de', '&language=de-de'],
+		['fr', '&language=fr'],
 		['<script>', ''],
 		['a'.repeat(40), ''],
 	])(
@@ -441,7 +445,7 @@ describe('manifest route', () => {
 				)
 			);
 			expect(calledURLs(fetch)).toEqual([
-				`${BACKEND}/v1/consent/manifest${search}`,
+				`${BACKEND}/v1/consent/manifest?manifestLevel=1${search}`,
 			]);
 		}
 	);
@@ -604,8 +608,41 @@ describe('init route', () => {
 		// Init resolves in-process: the backend sees the manifest request and
 		// the session report, never `/v1/consent/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
-			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
 			`${BACKEND}/v1/consent/sessions`,
+		]);
+	});
+
+	test('lists only the remote scripts the browser level runs, level 1 when it sends none', async () => {
+		const entry = (id: string, requires?: number) => ({
+			id,
+			integration: id,
+			manifest: {
+				category: 'measurement',
+				vendor: id,
+				...(requires !== undefined && { requires }),
+			},
+		});
+		const fetch = upstream({
+			...MANIFEST,
+			scriptRegistry: {
+				load: [entry('level-one'), entry('needs-two', 2)],
+			},
+		} as unknown as ConsentManifest);
+		const handle = route({ fetch });
+		const listed = async (query: string) => {
+			const response = await handle(
+				request(`/api/inth/v1/consent/init${query}`)
+			);
+			const body = (await response.json()) as InitOutput;
+			return body.scriptRegistry?.load?.map(({ id }) => id);
+		};
+
+		expect(await listed('')).toEqual(['level-one']);
+		expect(await listed('?manifestLevel=1')).toEqual(['level-one']);
+		expect(await listed('?manifestLevel=2')).toEqual([
+			'level-one',
+			'needs-two',
 		]);
 	});
 
@@ -1106,7 +1143,7 @@ describe('request budget', () => {
 
 	test('bounds the /init fallback, even through a fetch that drops the signal', async () => {
 		const localFetch = vi.fn<ManifestFetch>((url) =>
-			String(url).endsWith('/v1/consent/manifest')
+			String(url).includes('/v1/consent/manifest')
 				? Promise.resolve(new Response('missing', { status: 404 }))
 				: new Promise(() => {
 						// Never answers.
@@ -1148,7 +1185,7 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 	) =>
 		vi.fn<ManifestFetch>((url) =>
 			Promise.resolve(
-				String(url).endsWith('/v1/consent/manifest')
+				String(url).includes('/v1/consent/manifest')
 					? new Response('missing', { status: 404 })
 					: json(body, headers)
 			)
@@ -1217,6 +1254,26 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 		);
 		expect(localFetch).toHaveBeenLastCalledWith(
 			`/api/self-host/v1/consent/init?journey=${id}&journeyScope=tab&stored=1`,
+			expect.anything()
+		);
+	});
+
+	test('asks backend /init for the level the browser sent, and none when it sent none', async () => {
+		const localFetch = backendInit({
+			location: { countryCode: null, regionCode: null },
+			translations: { language: 'en', translations: {} },
+		});
+		const handle = route({ projectUrl: '/api/self-host' });
+		await handle(request('/api/inth/v1/consent/init?manifestLevel=2'), {
+			localFetch,
+		});
+		expect(localFetch).toHaveBeenLastCalledWith(
+			'/api/self-host/v1/consent/init?manifestLevel=2',
+			expect.anything()
+		);
+		await handle(request('/api/inth/v1/consent/init'), { localFetch });
+		expect(localFetch).toHaveBeenLastCalledWith(
+			'/api/self-host/v1/consent/init',
 			expect.anything()
 		);
 	});
@@ -1408,7 +1465,7 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 			handle(request('/api/inth/v1/consent/init'))
 		).rejects.toThrow();
 		expect(calledURLs(fetch)).toEqual([
-			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
 			`${BACKEND}/v1/consent/init`,
 			`${BACKEND}/v1/consent/init`,
 		]);
@@ -1422,7 +1479,7 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const fetch = vi.fn<ManifestFetch>((url, init) =>
-			String(url).endsWith('/v1/consent/manifest')
+			String(url).includes('/v1/consent/manifest')
 				? Promise.resolve(new Response('unavailable', { status: 500 }))
 				: answer(url, init)
 		);
@@ -1478,7 +1535,7 @@ describe('proxy', () => {
 		// Init resolves in-process: the backend sees the manifest request and
 		// the session report, never `/v1/consent/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
-			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
 			`${BACKEND}/v1/consent/sessions`,
 		]);
 

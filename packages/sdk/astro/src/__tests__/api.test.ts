@@ -56,7 +56,7 @@ afterEach(() => {
 describe('createConsentRouteHandlers', () => {
 	it('reads the manifest from the mode: manifestUrl or projectUrl', async () => {
 		for (const [mode, expected] of [
-			[manifestMode(), `${BACKEND}/v1/consent/manifest`],
+			[manifestMode(), `${BACKEND}/v1/consent/manifest?manifestLevel=1`],
 			[
 				manifestMode({ manifestUrl: 'https://cdn.example.com/m.json' }),
 				'https://cdn.example.com/m.json',

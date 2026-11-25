@@ -25,6 +25,10 @@ import type { BaseTranslations } from '@inth/sdk-translations/all';
 
 import { createUnreportedJourneys } from '../../libs/journey';
 import type { SessionReportHeaders } from '../../libs/session-report';
+import {
+	MANIFEST_RUNTIME_LEVEL,
+	withManifestLevel,
+} from '../../manifest-runtime/level';
 import type { InitContext, KernelOverrides } from '../../types';
 import {
 	fetchCachedAdTechProviders,
@@ -107,6 +111,7 @@ const mergeInputs = function mergeInputs(
 		country: overrides.country ?? base?.country ?? null,
 		gpc: overrides.gpc ?? base?.gpc,
 		language: overrides.language ?? base?.language ?? 'en',
+		manifestLevel: MANIFEST_RUNTIME_LEVEL,
 		region: overrides.region ?? base?.region ?? null,
 	};
 };
@@ -158,7 +163,8 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 	}
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1ManifestTransport');
-	const manifestUrl = options.manifestUrl ?? `${base}${V1_ROUTES.manifest}`;
+	const manifestUrl =
+		options.manifestUrl ?? withManifestLevel(`${base}${V1_ROUTES.manifest}`);
 	// The site the records transport saves under, reported with the journey.
 	const property = resolveProperty(base, options.property);
 	const unreported = createUnreportedJourneys();

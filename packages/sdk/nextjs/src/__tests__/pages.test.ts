@@ -436,7 +436,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 		});
 
 		expect(fetchSpy).toHaveBeenCalledWith(
-			'https://consent.example.com/api/inth/v1/consent/manifest?language=de',
+			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=1&language=de',
 			expect.anything()
 		);
 		expect(sink.ended()).toBe(true);
@@ -518,7 +518,9 @@ describe('@inth/nextjs/pages: API bridge', () => {
 			fetchSpy.mock.calls
 				.map(([url]) => url)
 				.filter((url) => !String(url).endsWith('/sessions'))
-		).toEqual(['https://consent.example.com/api/inth/v1/consent/manifest']);
+		).toEqual([
+			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=1',
+		]);
 		expect(sink.res.statusCode).toBe(200);
 		expect(config.initialPolicyResolution?.policy?.id).toBe('eu-opt-in');
 	});

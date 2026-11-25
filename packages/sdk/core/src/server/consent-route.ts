@@ -25,6 +25,7 @@
  */
 
 import {
+	appendInitParams,
 	appendJourneyParams,
 	applyInitParamsToHeaders,
 	CONSENT_REQUEST_HEADER_NAMES,
@@ -34,6 +35,7 @@ import {
 	POLICY_CONTRACT_VERSION,
 	primaryLanguage,
 	readJourneyParams,
+	readManifestLevelParam,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
@@ -64,6 +66,7 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { inthProtocolHeaders } from '../libs/version-header';
+import { withManifestLevel } from '../manifest-runtime/level';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
@@ -689,7 +692,10 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			throw new Error(`${adapter}: pass projectUrl or manifestUrl.`);
 		}
 		const backend = resolveBackend(request, context, options.projectUrl);
-		return { ...backend, url: `${backend.url}${V1_ROUTES.manifest}` };
+		return {
+			...backend,
+			url: withManifestLevel(`${backend.url}${V1_ROUTES.manifest}`),
+		};
 	};
 
 	/**
@@ -917,10 +923,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		const fetchImpl = backend.fetch ?? configuredFetch();
 		const payload = await budget.bound(
 			(async () => {
+				// The browser's level, not this route's: the browser runs the
+				// scripts the answer lists.
+				const plain = appendInitParams(`${backend.url}${V1_ROUTES.init}`, {
+					manifestLevel: readManifestLevelParam(request.url),
+				});
 				const upstream = await fetchImpl(
-					journey
-						? appendJourneyParams(`${backend.url}${V1_ROUTES.init}`, journey)
-						: `${backend.url}${V1_ROUTES.init}`,
+					journey ? appendJourneyParams(plain, journey) : plain,
 					init
 				);
 				if (!upstream.ok) {
@@ -1008,16 +1017,21 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		if (listResponse) {
 			return listResponse;
 		}
-		const inputs = context.inputs
-			? {
-					...context.inputs,
-					// Inputs an adapter resolved from the request headers miss the
-					// overrides a browser sends in the query string; those win,
-					// as the `x-inth-*` override headers did.
-					...queryOverrides(url),
-					language: context.inputs.language ?? 'en',
-				}
-			: getResolverInputsFromHeaders(request.headers);
+		const inputs = {
+			...(context.inputs
+				? {
+						...context.inputs,
+						// Inputs an adapter resolved from the request headers miss the
+						// overrides a browser sends in the query string; those win,
+						// as the `x-inth-*` override headers did.
+						...queryOverrides(url),
+						language: context.inputs.language ?? 'en',
+					}
+				: getResolverInputsFromHeaders(request.headers)),
+			// The answer lists only the remote scripts the browser's level runs;
+			// a browser that sends none runs level 1.
+			manifestLevel: readManifestLevelParam(url) ?? 1,
+		};
 		const payload = await resolveConsentInit({
 			inputs,
 			loadAdTechProviders: createAdTechProviderLoader(request, budget, context),

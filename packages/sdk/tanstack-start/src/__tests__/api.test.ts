@@ -15,7 +15,7 @@ const BACKEND = 'https://consent.example.com';
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>().mockImplementation((input) =>
 		Promise.resolve(
-			String(input).endsWith('/v1/consent/manifest')
+			String(input).includes('/v1/consent/manifest')
 				? Response.json(MANIFEST_FIXTURE, {
 						headers: { 'cache-control': 'public, s-maxage=120' },
 					})

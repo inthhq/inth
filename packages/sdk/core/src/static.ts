@@ -16,6 +16,7 @@ import { resolveInitFromManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
 import { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
+import { MANIFEST_RUNTIME_LEVEL } from './manifest-runtime/level';
 import {
 	fetchGeoInputs,
 	readGeoInputs,
@@ -111,7 +112,12 @@ export const resolveUnknownLocationInit = function resolveUnknownLocationInit(
 ): InitOutput {
 	return resolveInitFromManifest(
 		manifest,
-		{ ...inputs, country: null, region: null },
+		{
+			...inputs,
+			country: null,
+			manifestLevel: MANIFEST_RUNTIME_LEVEL,
+			region: null,
+		},
 		{ baseTranslations }
 	);
 };
@@ -142,7 +148,7 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 ): StaticConsentResolution {
 	const language = options.language ?? readBrowserLanguage() ?? 'en';
 	const gpc = options.gpc ?? hasGlobalPrivacyControlSignal();
-	const commonInputs = { gpc, language };
+	const commonInputs = { gpc, language, manifestLevel: MANIFEST_RUNTIME_LEVEL };
 	const initialGeo = readGeoInputs(options.geo);
 	const hasGeo = Boolean(initialGeo.country || initialGeo.region);
 	const initial = hasGeo

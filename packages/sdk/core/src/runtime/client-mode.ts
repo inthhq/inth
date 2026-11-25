@@ -24,6 +24,7 @@ import { isProductionBuild } from '../libs/is-production';
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
 import { trimSlash } from '../libs/url';
+import { withManifestLevel } from '../manifest-runtime/level';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
@@ -412,7 +413,9 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 					: undefined);
 			const manifestUrl =
 				options.manifestUrl ??
-				`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`;
+				withManifestLevel(
+					`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`
+				);
 			let early: EarlyRequest | undefined;
 			let firstLoad: ReturnType<LoadManifestBrowserModule> | undefined;
 			let initStarted = false;

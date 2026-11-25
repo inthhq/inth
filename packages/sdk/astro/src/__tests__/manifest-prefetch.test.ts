@@ -128,7 +128,7 @@ describe('manifest-mode server prefetch', () => {
 
 		expect(
 			fetchImpl.mock.calls.filter(([url]) =>
-				String(url).endsWith('/v1/consent/manifest')
+				String(url).includes('/v1/consent/manifest')
 			)
 		).toHaveLength(1);
 		expect(german.inth?.shouldShowBanner).toBe(true);

@@ -24,6 +24,10 @@ import { readGlobalPrivacyControl } from '../libs/global-privacy-control';
 import { createUnreportedJourneys } from '../libs/journey';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { trimSlash } from '../libs/url';
+import {
+	MANIFEST_RUNTIME_LEVEL,
+	withManifestLevel,
+} from '../manifest-runtime/level';
 import type {
 	ManifestModeBaseOptions,
 	ManifestModeInputs,
@@ -167,6 +171,9 @@ const mergeInputs = function mergeInputs(
 		country: overrides.country ?? base?.country ?? geo?.country ?? null,
 		gpc: overrides.gpc ?? readGlobalPrivacyControl(),
 		language,
+		// A manifest from `manifestUrl` or a snapshot was not filtered for
+		// this runtime.
+		manifestLevel: MANIFEST_RUNTIME_LEVEL,
 		region: overrides.region ?? base?.region ?? geo?.region ?? null,
 	};
 };
@@ -206,7 +213,7 @@ const createManifestSource = function createManifestSource(
 		options.manifestUrl ??
 		(options.snapshot || projectUrl === undefined
 			? undefined
-			: `${projectUrl}${V1_ROUTES.manifest}`);
+			: withManifestLevel(`${projectUrl}${V1_ROUTES.manifest}`));
 	if (!(options.snapshot || manifestUrl)) {
 		throw new Error(
 			'inth: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
