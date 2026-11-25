@@ -34,3 +34,6 @@ export const importDialog = (): Promise<typeof dialog> =>
 
 export const importOptInConfirmation = (): Promise<typeof optInConfirmation> =>
 	Promise.resolve(optInConfirmation);
+
+/** One file: the dialog is here already, and warming it costs nothing. */
+export const warmsDialogWithBanner = true;

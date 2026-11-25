@@ -7,9 +7,15 @@ import type { Plugin } from 'vite-plus';
 
 /**
  * The script-tag build's files a page with a backend loads. `inth.js` loads
- * `inth.hosted.js` from its own folder, which loads `inth.choices.js`.
+ * `inth.hosted.js` from its own folder, which loads `inth.choices.js` and
+ * its dialog `inth.choices-dialog.js`.
  */
-const SCRIPT_FILES = ['inth.js', 'inth.hosted.js', 'inth.choices.js'];
+const SCRIPT_FILES = [
+	'inth.js',
+	'inth.hosted.js',
+	'inth.choices.js',
+	'inth.choices-dialog.js',
+];
 
 /**
  * Stands in for the CDN: emits `@inth/sdk`'s script-tag build next to
