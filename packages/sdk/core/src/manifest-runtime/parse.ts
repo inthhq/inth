@@ -29,6 +29,14 @@ const STEP_LISTS = [
 
 const CONSENT_SIGNALS = new Set(['gtag', 'rudderstack', 'clarity']);
 
+/**
+ * Attributes a manifest may set on its script tag: `data-*` ones a vendor's
+ * file reads, and the few that only shape the fetch. Never `src`, an event
+ * handler or anything else that would change what runs.
+ */
+const TAG_ATTRIBUTE =
+	/^(?:data-[a-z0-9][a-z0-9._-]*|crossorigin|integrity|charset|referrerpolicy)$/u;
+
 const isHttpsUrl = (value: unknown): boolean => {
 	if (typeof value !== 'string') {
 		return false;
@@ -91,12 +99,17 @@ const manifestProblem = (
 			isRecord(loadScript) &&
 			loadScript.type === 'loadScript' &&
 			isHttpsUrl(loadScript.src) &&
-			isOptional(loadScript.attributes, (attributes) =>
-				isStringRecord(attributes, (entry) => typeof entry === 'string')
+			isOptional(
+				loadScript.attributes,
+				(attributes) =>
+					isStringRecord(attributes, (entry) => typeof entry === 'string') &&
+					Object.keys(attributes as object).every((name) =>
+						TAG_ATTRIBUTE.test(name)
+					)
 			)
 		)
 	) {
-		return 'its loadScript has no https src';
+		return 'its loadScript has no https src, or sets an attribute other than data-*, crossorigin, integrity, charset or referrerpolicy';
 	}
 	if (
 		!isOptional(manifest.alwaysLoad, (value) => typeof value === 'boolean') ||

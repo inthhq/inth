@@ -133,3 +133,38 @@ export const updatePolicyCacheRegistry = function updatePolicyCacheRegistry(
 	}
 	store({ ...entry, i: { ...entry.i, scriptRegistry } });
 };
+
+/**
+ * Follows the script registry the engine applies, for the cache. Only a
+ * registry that differs from the one the engine started with counts: the
+ * start is the init script's answer or the cache, or nothing when an
+ * unavailable answer kept it so, and writing that back would add nothing
+ * or wipe the cached list.
+ *
+ * @param initial - The engine's registry when it took over.
+ * @internal
+ */
+export const createRegistryTracker = function createRegistryTracker(
+	initial: unknown
+) {
+	let last = initial;
+	let changed = false;
+	return {
+		/** The registry the engine applied since it started, if it applied one. */
+		get applied(): { registry: unknown } | undefined {
+			return changed ? { registry: last } : undefined;
+		},
+		/** Record a snapshot; `true` when it applied a new registry. */
+		observe(next: {
+			policyPending: boolean;
+			scriptRegistry: unknown;
+		}): boolean {
+			if (next.policyPending || next.scriptRegistry === last) {
+				return false;
+			}
+			last = next.scriptRegistry;
+			changed = true;
+			return true;
+		},
+	};
+};

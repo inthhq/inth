@@ -9,10 +9,12 @@ import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import {
 	matchedResolution,
 	optInRule,
+	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
+import { rootNeedsEngine } from '../../surface-actions/plain-scripts';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import {
 	createConsentProviderRuntime,
@@ -408,5 +410,109 @@ describe('remoteScripts', () => {
 		await vi.waitFor(() => expect(tags()).toHaveLength(1));
 		expect(tags(pinned)).toHaveLength(0);
 		other.dispose();
+	});
+
+	test('never runs an entry that the answer granting its category also removes', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
+				initialScriptRegistry: { load: load() },
+			},
+			remoteScripts: true,
+		});
+		runtime.start();
+		// The cached entry is built, and waits for marketing.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(tags()).toHaveLength(0);
+
+		// One answer grants marketing (opt-out) and drops the entry.
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: { load: [] },
+		});
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
+		expect(tags()).toHaveLength(0);
+		runtime.dispose();
+	});
+
+	test('never runs a cached entry the registry waits on when init drops it', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
+				initialScriptRegistry: {
+					load: load(acmeManifest({ alwaysLoad: true })),
+				},
+			},
+			remoteScripts: true,
+		});
+		runtime.start();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		// It waits for the registry's list.
+		expect(tags()).toHaveLength(0);
+
+		answer.resolve({ scriptRegistry: { load: [] } });
+
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect((window as { acmeQueue?: unknown }).acmeQueue).toBeUndefined();
+		expect(tags()).toHaveLength(0);
+		runtime.dispose();
+	});
+
+	test('skips an entry whose id a code script uses, whatever its vendor', async () => {
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const runtime = startOff({
+			prefetch: { initialScriptRegistry: { load: load() } },
+			remoteScripts: true,
+			scriptLoader: { onDebug },
+			scripts: [
+				{
+					category: 'marketing',
+					id: 'acme-pixel',
+					src: 'https://cdn.acme.example/own-copy.js',
+					vendor: 'acme-legacy',
+				},
+			],
+		});
+
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({ action: 'skipped', scriptId: 'acme-pixel' })
+			)
+		);
+		expect(tags()).toHaveLength(0);
+		expect(tags('https://cdn.acme.example/own-copy.js')).toHaveLength(1);
+		runtime.dispose();
+	});
+
+	test('needs the engine from the first render of a root', () => {
+		expect(rootNeedsEngine({ options: { remoteScripts: true } })).toBe(true);
+		expect(rootNeedsEngine({ options: {} })).toBe(false);
 	});
 });

@@ -236,13 +236,18 @@ export const scriptsNeedEngine = function scriptsNeedEngine(
 export interface RootEngineInputs {
 	clearOnRevocation?: unknown;
 	networkBlocker?: { enabled?: boolean } | false;
-	options?: { enabled?: boolean; experiment?: unknown };
+	options?: {
+		enabled?: boolean;
+		experiment?: unknown;
+		remoteScripts?: boolean;
+	};
 }
 
 /**
  * Whether a root's own options need the engine from its first render,
  * whatever the visitor's snapshot says: a root turned off, an experiment,
- * an enabled network blocker, which has to be in place before the page's
+ * `remoteScripts`, whose scripts only the engine's loader runs, an enabled
+ * network blocker, which has to be in place before the page's
  * code sends a request, or `clearOnRevocation`, whose cleanup of a denied
  * category's cookies and storage runs only in the engine.
  *
@@ -260,6 +265,8 @@ export const rootNeedsEngine = function rootNeedsEngine({
 		clearOnRevocation ||
 		options?.experiment ||
 		options?.enabled === false ||
+		// Scripts the Inth server lists run only through the engine's loader.
+		options?.remoteScripts === true ||
 		(networkBlocker && networkBlocker.enabled !== false)
 	);
 };

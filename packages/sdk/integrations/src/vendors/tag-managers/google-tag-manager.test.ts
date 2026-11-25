@@ -220,4 +220,21 @@ describe('googleTagManager', () => {
 			'data-inth-layer': 'dataLayer',
 		});
 	});
+
+	it('gives each call its own attributes and category', () => {
+		const first = googleTagManager({
+			id: 'GTM-SHARED',
+			loadMode: 'after-consent',
+		});
+		(first.attributes as Record<string, string>)['data-inth-layer'] = 'changed';
+		(first.category as { or: string[] }).or[0] = 'experience';
+
+		const second = googleTagManager({
+			id: 'GTM-SHARED',
+			loadMode: 'after-consent',
+		});
+
+		expect(second.attributes).toEqual({ 'data-inth-layer': 'dataLayer' });
+		expect(second.category).toEqual({ or: ['measurement', 'marketing'] });
+	});
 });

@@ -5,6 +5,7 @@ import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 import { afterEach, expect, test } from 'vite-plus/test';
 
 import {
+	createRegistryTracker,
 	readPolicyCache,
 	updatePolicyCacheRegistry,
 	writePolicyCache,
@@ -79,4 +80,30 @@ test('writes no entry from the engine when none was cached', () => {
 	updatePolicyCacheRegistry(PROJECT, undefined, pixelList);
 
 	expect(readPolicyCache(PROJECT)).toBeUndefined();
+});
+
+test('the engine registry tracker ignores what the engine started with', () => {
+	// An engine that started with no list and got an unavailable answer
+	// still has none: that must not wipe a cached list.
+	const empty = createRegistryTracker(null);
+	expect(empty.observe({ policyPending: true, scriptRegistry: null })).toBe(
+		false
+	);
+	expect(empty.observe({ policyPending: false, scriptRegistry: null })).toBe(
+		false
+	);
+	expect(empty.applied).toBeUndefined();
+
+	// A list the engine applies later is what the cache should keep, even
+	// after a choice writes the init script's older answer.
+	const handed = { load: [{ id: 'meta-pixel' }] };
+	const tracker = createRegistryTracker(handed);
+	expect(
+		tracker.observe({ policyPending: false, scriptRegistry: handed })
+	).toBe(false);
+	const cleared = { load: [] };
+	expect(
+		tracker.observe({ policyPending: false, scriptRegistry: cleared })
+	).toBe(true);
+	expect(tracker.applied).toEqual({ registry: cleared });
 });

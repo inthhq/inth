@@ -80,6 +80,7 @@ import {
 } from './pending-tap';
 import type { PendingTap } from './pending-tap';
 import {
+	createRegistryTracker,
 	readPolicyCache,
 	updatePolicyCacheRegistry,
 	writePolicyCache,
@@ -229,12 +230,24 @@ export const runInitScript = function runInitScript(
 	const listeners = new Set<(next: ConsentSnapshot) => void>();
 	const cleanups: (() => void)[] = [];
 
+	/** The script registry the engine applied after it took over. */
+	let engineRegistry: ReturnType<typeof createRegistryTracker> | undefined;
 	/** Keep the last `/v1/consent/init` policy once the visitor has a choice. */
 	const cachePolicy = function cachePolicy(): void {
 		const projectUrl =
 			options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
 		if (lastInit && projectUrl) {
 			writePolicyCache(projectUrl, options?.overrides, lastInit);
+			// A list the engine got later, such as an empty one, replaces the
+			// one `lastInit` carried.
+			const applied = engineRegistry?.applied;
+			if (applied) {
+				updatePolicyCacheRegistry(
+					projectUrl,
+					options?.overrides,
+					applied.registry
+				);
+			}
 		}
 	};
 	const boot: InitBoot = {
@@ -257,18 +270,16 @@ export const runInitScript = function runInitScript(
 			engine.onInit((client) => {
 				// The engine's own answers, such as an empty list after the
 				// init script gave up waiting, replace the cached list too.
-				let cachedRegistry: ConsentSnapshot['scriptRegistry'] | undefined;
+				const tracker = createRegistryTracker(
+					client.getSnapshot().scriptRegistry
+				);
+				engineRegistry = tracker;
 				client.subscribe((next) => {
 					const projectUrl =
 						options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
-					if (
-						next.policyPending ||
-						next.scriptRegistry === cachedRegistry ||
-						!projectUrl
-					) {
+					if (!(tracker.observe(next) && projectUrl)) {
 						return;
 					}
-					cachedRegistry = next.scriptRegistry;
 					updatePolicyCacheRegistry(
 						projectUrl,
 						options?.overrides,
@@ -830,14 +841,12 @@ export const runInitScript = function runInitScript(
 				return;
 			}
 			remote = readRemoteStandIns(data, current.scripts ?? []);
-			snapshotOptions.consentCategories = remote.scripts.length
-				? [
-						...new Set([
-							...(current.consentCategories ?? []),
-							...remote.categories,
-						]),
-					]
-				: current.consentCategories;
+			// Only a page that lists its categories narrows the policy's
+			// scope; without a list, the scope already covers these.
+			snapshotOptions.consentCategories =
+				remote.scripts.length && current.consentCategories?.length
+					? [...new Set([...current.consentCategories, ...remote.categories])]
+					: current.consentCategories;
 			if (remote.scripts.length) {
 				void loadPart('manifests');
 			}

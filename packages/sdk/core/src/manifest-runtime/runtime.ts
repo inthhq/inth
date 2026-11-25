@@ -732,6 +732,24 @@ const manifestServerStart = function manifestServerStart(
 			: undefined;
 };
 
+/**
+ * The script's `attributes` and `category` as copies, so a script changed by
+ * its caller never changes another built from the same cached manifest.
+ */
+const ownCopies = (
+	resolvedManifest: ResolvedManifest
+): Pick<Script, 'attributes' | 'category'> => {
+	const { category, loadScript } = resolvedManifest;
+	return {
+		attributes: loadScript?.attributes
+			? { ...loadScript.attributes }
+			: undefined,
+		category: (typeof category === 'object'
+			? structuredClone(category)
+			: category) as Script['category'],
+	};
+};
+
 const manifestToScript = function manifestToScript(
 	resolvedManifest: ResolvedManifest,
 	inlineStepsStart: InlineStepsStart | undefined
@@ -758,9 +776,8 @@ const manifestToScript = function manifestToScript(
 	const script: Script = {
 		alwaysLoad: resolvedManifest.alwaysLoad,
 		async: resolvedManifest.loadScript?.async,
-		attributes: resolvedManifest.loadScript?.attributes,
+		...ownCopies(resolvedManifest),
 		callbackOnly: resolvedManifest.loadScript ? undefined : true,
-		category: resolvedManifest.category as Script['category'],
 		defer: resolvedManifest.loadScript?.defer,
 		fetchPriority: resolvedManifest.loadScript?.fetchPriority,
 		id: resolvedManifest.vendor,

@@ -95,6 +95,19 @@ describe('parseResolvedManifest', () => {
 				loadScript: { src: '//bat.bing.com/bat.js', type: 'loadScript' },
 			},
 		],
+		...['src', 'onload', 'onerror', 'nonce', 'type'].map(
+			(name) =>
+				[
+					`a ${name} attribute`,
+					{
+						...manifest(),
+						loadScript: {
+							...manifest().loadScript,
+							attributes: { [name]: 'https://evil.example/x.js' },
+						},
+					},
+				] as const
+		),
 		['a string alwaysLoad', { ...manifest(), alwaysLoad: 'yes' }],
 		['an unknown consent signal', { ...manifest(), consentSignal: 'other' }],
 		[

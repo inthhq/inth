@@ -892,7 +892,15 @@ describe('scripts the Inth server lists', () => {
 
 		await expect.poll(() => win.__ran, { timeout: 8000 }).toContain('remote');
 		expect(remoteTag(win)).not.toBeNull();
+		// The page lists no categories, so the accept still covers the
+		// policy's whole scope, not only the remote script's.
+		expect(win.__ran).toContain('measurement');
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		expect(bannerOf(win)).toBeNull();
 	});
 
 	it('loads nothing the server lists with data-remote-scripts="false"', async () => {

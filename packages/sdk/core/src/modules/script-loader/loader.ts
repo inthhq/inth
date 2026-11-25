@@ -120,8 +120,14 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	/** Ids of the remote scripts in the registered list. */
 	let activeRemoteIds = new Set<string>();
 	/** Whether a code script claims a remote entry's integration. */
+	/**
+	 * What code scripts claim: each one's `integration ?? vendor ?? id`, and
+	 * its `id`, so the merged list never holds two scripts with one id.
+	 */
 	const claimedByCode = (): Set<string> =>
-		new Set(codeScripts.map(codeScriptKey));
+		new Set(
+			codeScripts.flatMap((script) => [codeScriptKey(script), script.id])
+		);
 	const registerCategories = (scripts: Script[]) => {
 		// A remote entry declares its category and vendor from its JSON, before
 		// its script is built, so a choice made meanwhile covers it.
@@ -179,6 +185,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		return true;
 	};
 	readLoad(kernel.getSnapshot());
+	/**
+	 * Apply a changed `load` list; set once the remote functions exist. The
+	 * kernel subscriber calls it first, before it reconciles.
+	 */
+	let syncRemote = (_snapshot: ConsentSnapshot): void => undefined;
 	// Read once init resolves; a later init's list does not move scripts.
 	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState =>
 		readScriptRegistry(
@@ -867,7 +878,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 		}
 	};
-	unsubscribe = kernel.subscribe(() => {
+	unsubscribe = kernel.subscribe((snapshot) => {
+		// A new `load` list replaces the remote scripts before anything
+		// reconciles against this snapshot, here or in the registry's
+		// subscriber below, so an entry the same answer removes never runs.
+		syncRemote(snapshot);
 		if (processing && isConsentStateUnchanged(kernel.getSnapshot())) {
 			return;
 		}
@@ -981,7 +996,16 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		void loadRemote(options.remote, remoteEntries);
 	};
-	let stopRemote: (() => void) | undefined;
+	syncRemote = (snapshot) => {
+		if (!readLoad(snapshot)) {
+			return;
+		}
+		registerCategories([
+			...normalized.map(({ script }) => script),
+			...held.map(({ script }) => script),
+		]);
+		applyRemote();
+	};
 
 	const handle: ScriptLoaderHandle = {
 		dispose() {
@@ -992,7 +1016,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			unsubscribe?.();
 			unsubscribe = undefined;
 			stopWaiting?.();
-			stopRemote?.();
 			drain();
 		},
 		getLoadedScriptIds() {
@@ -1058,20 +1081,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		handle.dispose();
 		throw error;
 	}
-	if (options.remote) {
-		stopRemote = kernel.subscribe((snapshot) => {
-			if (!readLoad(snapshot)) {
-				return;
-			}
-			registerCategories([
-				...normalized.map(({ script }) => script),
-				...held.map(({ script }) => script),
-			]);
-			applyRemote();
-		});
-		if (remoteEntries.length > 0) {
-			applyRemote();
-		}
+	if (remoteEntries.length > 0) {
+		applyRemote();
 	}
 	return handle;
 };

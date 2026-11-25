@@ -1,6 +1,7 @@
 // @vitest-environment node
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
+import { parseResolvedManifest } from '@inth/sdk/manifest-runtime';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
@@ -121,6 +122,13 @@ describe('remoteIntegrations', () => {
 
 		expect(JSON.parse(JSON.stringify(manifest))).toEqual(manifest);
 		expect(manifest?.vendor).toBe(remoteIntegrations[key]?.vendor);
+		// The SDK runs what it receives only once it passes its own check.
+		expect(parseResolvedManifest(JSON.parse(JSON.stringify(manifest)))).toEqual(
+			{
+				manifest: expect.anything(),
+				ok: true,
+			}
+		);
 	});
 
 	it.each(cases)(

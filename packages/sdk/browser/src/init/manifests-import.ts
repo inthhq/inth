@@ -31,7 +31,7 @@ const own =
  */
 export const loadManifestsFile =
 	async function loadManifestsFile(): Promise<RemoteManifestRuntime> {
-		const src = partSrc('manifests', adoptedBoot()?.script, own?.src);
+		const src = partSrc('manifests', adoptedBoot()?.script ?? own, own?.src);
 		if (!src) {
 			throw new Error('inth.manifests.js has no URL');
 		}
