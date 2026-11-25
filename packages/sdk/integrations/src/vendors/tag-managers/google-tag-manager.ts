@@ -224,14 +224,17 @@ export const googleTagManager = function googleTagManager(
 	const normalizedId = readId(options.id);
 	if (normalizedId === undefined) {
 		// Keep the category so it stays in the consent scope while the ID is
-		// missing.
+		// missing. A copy, so this script's category never changes the
+		// manifest's.
 		return skipMissingId('googleTagManager', 'id', {
 			category:
 				options.category ??
-				(options.loadMode === 'after-consent'
-					? googleTagManagerAfterConsentManifest
-					: googleTagManagerManifest
-				).category,
+				structuredClone(
+					(options.loadMode === 'after-consent'
+						? googleTagManagerAfterConsentManifest
+						: googleTagManagerManifest
+					).category
+				),
 			manifest: googleTagManagerManifest,
 		});
 	}

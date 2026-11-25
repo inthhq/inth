@@ -237,4 +237,18 @@ describe('googleTagManager', () => {
 		expect(second.attributes).toEqual({ 'data-inth-layer': 'dataLayer' });
 		expect(second.category).toEqual({ or: ['measurement', 'marketing'] });
 	});
+
+	it('gives a call with no ID its own category', () => {
+		const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const missing = googleTagManager({ id: '', loadMode: 'after-consent' });
+		(missing.category as { or: string[] }).or[0] = 'functionality';
+		errors.mockRestore();
+
+		const valid = googleTagManager({
+			id: 'GTM-OWN',
+			loadMode: 'after-consent',
+		});
+
+		expect(valid.category).toEqual({ or: ['measurement', 'marketing'] });
+	});
 });
