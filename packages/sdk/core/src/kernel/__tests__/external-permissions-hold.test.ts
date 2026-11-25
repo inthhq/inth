@@ -4,7 +4,8 @@
  * An external CMP owns the consent outcome, so the account hold does not
  * apply under it: the script loader, the iframe blocker and the network
  * blocker allow what the external permissions allow, as the category gate
- * does.
+ * does. Nor does the policy hold the script loader and the iframe blocker
+ * add for `userConsent`.
  */
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -101,3 +102,95 @@ test.each([
 		}
 	}
 );
+
+// The policy hold in the script loader and the iframe blocker is the account
+// layer's addition, so it gives way to an external CMP the same way. The
+// network blocker's own policy hold is unchanged.
+test.each([
+	['set at construction', true],
+	['set while the policy loads', false],
+])(
+	'external permissions start the scripts and iframes they allow while the policy is pending, %s',
+	async (_name, atConstruction) => {
+		const iframe = document.createElement('iframe');
+		iframe.setAttribute('data-category', 'marketing');
+		iframe.setAttribute('data-src', 'https://ads.example.test/frame');
+		document.body.append(iframe);
+
+		const kernel = createKernel({
+			initialExternalPermissions: atConstruction ? { marketing: true } : {},
+			initialPolicyPending: true,
+			now: NOW,
+		});
+		if (!atConstruction) {
+			kernel.set.externalPermissions({ marketing: true });
+		}
+		const loaded: string[] = [];
+		const scripts = createScriptLoader({
+			kernel,
+			scripts: [
+				{
+					callbackOnly: true,
+					category: 'marketing',
+					id: 'ads-script',
+					onLoad: () => {
+						loaded.push('ads-script');
+					},
+				},
+			],
+		});
+		const iframes = createIframeBlocker({ kernel });
+		try {
+			const snapshot = kernel.getSnapshot();
+			expect(snapshot.policyPending).toBe(true);
+			expect(evaluateCategoryGate({ category: 'marketing' }, snapshot)).toBe(
+				true
+			);
+
+			await flushMacrotasks();
+
+			expect(loaded).toEqual(['ads-script']);
+			expect(iframe.getAttribute('src')).toBe('https://ads.example.test/frame');
+		} finally {
+			iframes.dispose();
+			scripts.dispose();
+			kernel.dispose();
+		}
+	}
+);
+
+test('with no external permissions, a pending policy still holds scripts and iframes', async () => {
+	const iframe = document.createElement('iframe');
+	iframe.setAttribute('data-category', 'necessary');
+	iframe.setAttribute('data-vendor', 'ads');
+	iframe.setAttribute('data-src', 'https://ads.example.test/frame');
+	document.body.append(iframe);
+
+	const kernel = createKernel({ initialPolicyPending: true, now: NOW });
+	const loaded: string[] = [];
+	const scripts = createScriptLoader({
+		kernel,
+		scripts: [
+			{
+				callbackOnly: true,
+				category: 'necessary',
+				id: 'vendor-script',
+				onLoad: () => {
+					loaded.push('vendor-script');
+				},
+				vendor: 'ads',
+			},
+		],
+	});
+	const iframes = createIframeBlocker({ kernel });
+	try {
+		await flushMacrotasks();
+
+		expect(loaded).toEqual([]);
+		expect(iframe.getAttribute('src')).toBeNull();
+	} finally {
+		iframes.dispose();
+		scripts.dispose();
+		kernel.dispose();
+	}
+});

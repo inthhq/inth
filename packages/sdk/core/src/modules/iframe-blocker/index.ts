@@ -30,6 +30,7 @@ import {
 	buildReconcilePass,
 	determineCategory,
 	determineVendor,
+	framesPending,
 	reconcileAllIframes,
 	reconcileIframeSafely,
 } from './reconcile-iframe';
@@ -262,8 +263,7 @@ export const createIframeBlocker = function createIframeBlocker(
 		if (disableAuto) {
 			return;
 		}
-		const pending =
-			snapshot.policyPending || snapshot.userConsentPending === true;
+		const pending = framesPending(snapshot);
 		if (
 			snapshot.effectivePermissions === lastConsents &&
 			snapshot.policyRule.scope === lastPolicyCategories &&

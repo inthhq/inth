@@ -49,6 +49,16 @@ export interface ReconcilePass {
 }
 
 /**
+ * Whether frames wait for policy or `userConsent`. An external CMP owns the
+ * outcome, so its permissions decide at once, as the category gate does.
+ */
+export const framesPending = function framesPending(
+	snapshot: ConsentSnapshot
+): boolean {
+	return !snapshot.externalPermissions && consentPending(snapshot);
+};
+
+/**
  * Build a `ReconcilePass` from the current snapshot. Pure.
  */
 export const buildReconcilePass = function buildReconcilePass(
@@ -59,7 +69,7 @@ export const buildReconcilePass = function buildReconcilePass(
 		consents: getEffectiveGateState(snapshot).effectivePermissions,
 		declared: new Set(snapshot.vendors?.declared.map((vendor) => vendor.id)),
 		isIabMode: !vendorAxisActive(snapshot),
-		pending: consentPending(snapshot),
+		pending: framesPending(snapshot),
 		storedDenied: stored && stored.length > 0 ? new Set(stored) : null,
 		vendorDenied: deniedVendorIds(snapshot),
 	};
