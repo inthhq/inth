@@ -30,6 +30,8 @@ group: reference
   | Prop | Type | Default | Behavior |
   | --- | --- | --- | --- |
   | `initialTab` | `'purposes' \| 'vendors'` | Tab requested by the banner, else `'purposes'` | Initial active tab when the dialog opens. |
+  | `scrollLock`, `trapFocus` | `boolean` | the config's `scrollLock` and `trapFocus`, then `presentation` | Block the page while the dialog is open: backdrop, scroll lock and focus trap. `false` in either turns blocking off. `presentation.preferences.blocking` wins over both. |
+  | `disableAnimation` | `boolean` | the config's `disableAnimation` | Skips enter and exit animations. |
 </section>
 
 <section id="accessibility">

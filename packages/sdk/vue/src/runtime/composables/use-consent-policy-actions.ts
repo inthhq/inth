@@ -53,17 +53,34 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 	};
 };
 
+/** The scroll and focus options a surface or the config can set. */
+export interface FocusOptions {
+	readonly scrollLock?: boolean;
+	readonly trapFocus?: boolean;
+}
+
+/** One blocking mode from the scroll and focus options, as one value. */
+const fromFocusOptions = (options: FocusOptions): boolean | undefined =>
+	options.scrollLock === false || options.trapFocus === false
+		? false
+		: (options.scrollLock ?? options.trapFocus);
+
 /**
- * The blocking the IAB banner and dialog take from the config's
- * `trapFocus`. The banner passes it on as `blockUntilChoice`, the dialog as
- * `blocking`. An explicit `presentation.prompt.blockUntilChoice` or
- * `presentation.preferences.blocking` wins over it, so this is `undefined`
- * then, as it is when `trapFocus` is unset.
+ * The blocking the IAB banner and dialog ask for through their
+ * `scrollLock` and `trapFocus` props, or the config's. The banner passes
+ * it on as `blockUntilChoice`, the dialog as `blocking`. An explicit
+ * `presentation.prompt.blockUntilChoice` or `presentation.preferences.blocking`
+ * wins over both; then the component's own props, then the config's.
+ * `undefined` leaves the presentation to decide. React, Svelte and Angular
+ * resolve it the same way.
  *
+ * @param surface - The presentation tier the surface reads.
+ * @param local - The component's own props.
  * @internal
  */
 export const useFocusBlocking = function useFocusBlocking(
-	surface: 'prompt' | 'preferences'
+	surface: 'prompt' | 'preferences',
+	local: MaybeRefOrGetter<FocusOptions> = {}
 ): ComputedRef<boolean | undefined> {
 	const config = useConsentConfig();
 	const hostPresentation = useResolvedPresentation();
@@ -75,6 +92,12 @@ export const useFocusBlocking = function useFocusBlocking(
 		if (explicit !== undefined) {
 			return undefined;
 		}
-		return config.value.trapFocus;
+		return (
+			fromFocusOptions(toValue(local)) ??
+			fromFocusOptions({
+				scrollLock: config.value.scrollLock,
+				trapFocus: config.value.trapFocus,
+			})
+		);
 	});
 };

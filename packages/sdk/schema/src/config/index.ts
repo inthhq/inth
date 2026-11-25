@@ -498,6 +498,16 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	 * (`blockUntilChoice`); the stock dialog always does.
 	 */
 	trapFocus?: boolean;
+	/**
+	 * Locks page scroll while the IAB banner or dialog is open. With
+	 * `trapFocus`, it sets one blocking mode (backdrop, scroll lock and focus
+	 * trap), and `false` in either turns blocking off. A component's own
+	 * `scrollLock` or `trapFocus` prop wins over it, and an explicit
+	 * `presentation.prompt.blockUntilChoice` or
+	 * `presentation.preferences.blocking` wins over both. The stock banner
+	 * blocks only with `blockUntilChoice`; the stock dialog always does.
+	 */
+	scrollLock?: boolean;
 	/** Provider-level legal link URLs (labels come from init translations). */
 	legalLinks?: ConsentLegalLinks;
 	/**
