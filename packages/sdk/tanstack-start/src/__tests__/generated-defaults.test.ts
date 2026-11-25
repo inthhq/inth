@@ -6,7 +6,7 @@
  */
 import { hosted } from '@inth/sdk/modes';
 import { createManifestCache } from '@inth/sdk/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentRoute } from '../api';
 import { createConsentStateHandler, resolveConsent } from '../server';

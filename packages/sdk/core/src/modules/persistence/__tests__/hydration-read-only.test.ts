@@ -9,7 +9,14 @@
  * stored record that carries a subject ID keeps it there: startup does not
  * copy it into the subject ID key.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';

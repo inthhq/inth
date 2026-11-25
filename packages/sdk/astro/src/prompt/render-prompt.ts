@@ -389,6 +389,7 @@ export const renderPrompt = function renderPrompt(
 	return h(
 		'div',
 		bound(parts.root, {
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-animation': model.disableAnimation ? 'off' : undefined,
 			'data-blocking': layout.blocking ? 'true' : undefined,
 			'data-edge-style': layout.edgeStyle,
@@ -405,7 +406,6 @@ export const renderPrompt = function renderPrompt(
 			dir: model.textDirection,
 			// A prompt on its way out takes no input (PERM-05).
 			inert: flag(state.phase === 'leaving'),
-			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 		}),
 		layout.blocking
 			? h(

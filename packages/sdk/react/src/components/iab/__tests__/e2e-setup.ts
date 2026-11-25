@@ -1,5 +1,5 @@
 import { readStoredRecords } from '@inth/sdk/modules/persistence';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import { DEFAULT_KEY_STORAGE } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';

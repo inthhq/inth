@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { isUuidV7 } from '../../transports/v1/v1-request.api';
 import { createIdempotencyKey, generateUuidV7 } from '../subject-uuid.model';

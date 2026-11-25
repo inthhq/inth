@@ -5,7 +5,7 @@
  * that only dropped its own class.
  */
 import { render, screen } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import PreferenceItemFixture from '../../__tests__/fixtures/preference-item-fixture.svelte';
 

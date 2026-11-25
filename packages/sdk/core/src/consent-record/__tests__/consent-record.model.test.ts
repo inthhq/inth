@@ -1,4 +1,4 @@
-import { assert, describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vite-plus/test';
 
 import { recordCategoryPatch } from '../consent-record.model';
 import { evaluateConsentRecord } from '../evaluate';

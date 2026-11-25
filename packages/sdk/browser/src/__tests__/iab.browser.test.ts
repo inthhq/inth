@@ -1,7 +1,7 @@
 import { runAxe } from '@inth/conformance/a11y';
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { page, userEvent } from 'vite-plus/test/browser';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentClient } from '../consent-client.model';

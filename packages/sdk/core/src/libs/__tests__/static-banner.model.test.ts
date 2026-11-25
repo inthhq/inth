@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { canonicalizePolicySurface } from '@inth/sdk-schema/types';
 import type { PolicySurface } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { PREFETCH_WINDOW_KEY } from '../page-globals';
 import {

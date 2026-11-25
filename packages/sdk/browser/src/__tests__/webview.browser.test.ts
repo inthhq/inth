@@ -7,7 +7,7 @@
  * starts web Inth with its stock banner and `webViewConsentSource()`.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 import UPDATE_SCRIPT from '../../../../native-protocol/webview/update.js?raw';
 // The fixture page imports the client. Importing it here makes Vite

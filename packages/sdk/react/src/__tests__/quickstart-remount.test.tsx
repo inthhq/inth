@@ -6,7 +6,7 @@
  * The write code is held back for the whole file, so it holds one test:
  * the page loads the code once.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { pageWriterLoader } from '../../../core/src/modules/persistence/writer-loader';
@@ -75,14 +75,14 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 	await first.getByTestId('consent-banner-reject-button').click();
 	await expect
 		.element(first.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|false');
+		.toMatchTextContent('false|false');
 	expect(localStorage.getItem('inth')).toBeNull();
 
 	await first.unmount();
 	const returning = await render(app);
 	await expect
 		.element(returning.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|false');
+		.toMatchTextContent('false|false');
 	await expect
 		.element(returning.getByTestId('consent-banner-root'))
 		.not.toBeInTheDocument();
@@ -94,6 +94,6 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 	});
 	await expect
 		.element(returning.getByTestId('quickstart-state'))
-		.toHaveTextContent('false|false');
+		.toMatchTextContent('false|false');
 	await returning.unmount();
 });

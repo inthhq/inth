@@ -7,7 +7,7 @@ import { readStoredRecords } from '@inth/sdk/modules/persistence';
  * Mirrors: packages/sdk/react/src/components/__tests__/consent-flow.e2e.test.tsx
  */
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import BannerDialogFixture from '../../__tests__/fixtures/banner-dialog-fixture.svelte';
 import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';

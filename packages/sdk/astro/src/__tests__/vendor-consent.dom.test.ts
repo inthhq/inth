@@ -6,7 +6,7 @@
  */
 
 import type { Vendor } from '@inth/sdk/engine';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { AstroEngineClient } from '../astro-consent-client.model';
 import { activateGatedScripts } from '../browser/activate-gated-scripts';

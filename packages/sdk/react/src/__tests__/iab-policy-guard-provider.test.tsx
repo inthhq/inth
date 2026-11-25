@@ -7,7 +7,7 @@ import { MINIMAL_GVL } from '@inth/conformance';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { deferInitGvl } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentDialog } from '../aggregate-components';

@@ -6,7 +6,7 @@ import {
 	signal,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../src/__tests__/test-local';

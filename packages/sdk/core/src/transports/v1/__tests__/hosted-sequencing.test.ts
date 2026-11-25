@@ -3,7 +3,7 @@
  * save asserts when inits overlap, are retried or carry other inputs.
  */
 import type { InitOutput } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	iabRule,
@@ -514,7 +514,10 @@ describe('assertion state across overlapping inits', () => {
 		}
 		expect(
 			JSON.parse((saveCall[1] as RequestInit).body as string)
-		).toMatchObject({ fingerprint: 'fp-1', policyId: 'policy-1' });
+		).toMatchObject({
+			fingerprint: 'fp-1',
+			policyId: 'policy-1',
+		});
 	});
 
 	test('a save refuses to post unbound when the awaited init failed', async () => {

@@ -1,7 +1,14 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { iabPromptClassNames } from '../banner/banner-class-names.model';
 import {

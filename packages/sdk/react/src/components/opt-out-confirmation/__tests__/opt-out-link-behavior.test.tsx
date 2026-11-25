@@ -3,7 +3,7 @@ import { policyRulePresets } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { useEffect } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';

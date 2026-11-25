@@ -5,7 +5,7 @@ import {
 	viewChild,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	Accordion,

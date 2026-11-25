@@ -1,6 +1,6 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import ConsentBanner from '../components/prompt.astro';

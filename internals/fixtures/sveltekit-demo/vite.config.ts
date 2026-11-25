@@ -3,10 +3,10 @@ import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
-	plugins: [
+	plugins: lazyPlugins(() => [
 		tailwindcss(),
 		sveltekit({
 			adapter: adapter(),
@@ -17,7 +17,7 @@ export default defineConfig({
 		// backend URL keeps going and each server load reads its policy at
 		// runtime.
 		consentManifest({ onBuildError: 'runtime' }),
-	],
+	]),
 	ssr: {
 		// Transform workspace CSS imports instead of passing them to Node's loader.
 		noExternal: ['@inth/sdk'],

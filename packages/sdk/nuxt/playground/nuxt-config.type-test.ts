@@ -3,7 +3,7 @@
 // augmentations the same way it does in an application.
 import type { BlockedRequestInfo } from '@inth/sdk/modules/network-blocker';
 import type { NitroRouteConfig } from 'nitropack/types';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import type { testing } from '../../vue/src/testing';
 import type { hosted, manifest } from '../src/module';

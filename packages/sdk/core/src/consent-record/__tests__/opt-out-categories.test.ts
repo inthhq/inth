@@ -3,7 +3,7 @@
  * for a new opt-out, joined with what a held record was made with.
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { validateOptOutRecord } from '../consent-record-validation.model';
 import { evaluateConsentRecord } from '../evaluate';

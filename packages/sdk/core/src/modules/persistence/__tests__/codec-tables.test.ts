@@ -4,7 +4,7 @@
  * or a record this release writes would not read back.
  */
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../../consent-record/types';
 import {

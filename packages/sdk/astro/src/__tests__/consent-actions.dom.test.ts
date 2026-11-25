@@ -13,7 +13,7 @@ import {
 	expect,
 	it,
 	vi,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';

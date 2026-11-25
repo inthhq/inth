@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 
 import { AndroidConfig } from 'expo/config-plugins';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { applyAndroidManifest } from '../apply-android-manifest';
 import { applyInfoPlist } from '../apply-info-plist';

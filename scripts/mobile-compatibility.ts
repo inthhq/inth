@@ -271,7 +271,7 @@ const main = function main(): void {
 			2
 		)
 	);
-	run(join(PACKAGE, 'node_modules/.bin/tsc'), ['-p', consumer]);
+	run(join(PACKAGE, 'node_modules/.bin/tsrs'), ['-p', consumer]);
 	for (const platform of ['android', 'ios']) {
 		const generated = join(output, `codegen-${platform}`);
 		run('node', [

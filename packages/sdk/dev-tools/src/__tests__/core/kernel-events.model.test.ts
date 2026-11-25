@@ -1,6 +1,6 @@
 import type { KernelEvent } from '@inth/sdk-core';
 import { createConsentKernel } from '@inth/sdk-core';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	KERNEL_EVENT_TYPES,

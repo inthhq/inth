@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { mergeConfig } from 'vitest/config';
+import { mergeConfig } from 'vite-plus';
 
 import vueConfig from '../vue/vitest.config';
 

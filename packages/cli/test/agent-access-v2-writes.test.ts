@@ -5,7 +5,7 @@ import type { IncomingHttpHeaders, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { ApiClient } from "../experiments/node/api.ts";
 import { Auth } from "../experiments/node/auth.ts";
@@ -313,7 +313,9 @@ describe("named Dashboard writes", () => {
       vi.stubGlobal("fetch", fetcher);
       await expect(
         invoke([...example.args, "--json"], signal())
-      ).rejects.toMatchObject({ code: "usage_error" });
+      ).rejects.toMatchObject({
+        code: "usage_error",
+      });
       expect(fetcher).not.toHaveBeenCalled();
     }
   );
@@ -607,7 +609,9 @@ describe("named Dashboard writes", () => {
     const requests = await fixture((_request, response) => response.destroy());
     await expect(
       invoke(["integration", "github-sync", "--json"], signal())
-    ).rejects.toMatchObject({ code: "mutation_outcome_unknown" });
+    ).rejects.toMatchObject({
+      code: "mutation_outcome_unknown",
+    });
     expect(requests).toHaveLength(1);
   });
 
@@ -622,7 +626,9 @@ describe("named Dashboard writes", () => {
     );
     await expect(
       invoke([...(example?.args ?? []), "--json"], signal())
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toMatchObject({
+      status: 409,
+    });
     expect(requests).toHaveLength(1);
     expect(
       JSON.parse(requests[0]?.body.toString() ?? "").approvedQuote
@@ -789,7 +795,9 @@ describe("named Dashboard writes", () => {
       const fetcher = vi.fn();
       vi.stubGlobal("fetch", fetcher);
       await expect(invoke([...args, "--json"], signal())).rejects.toMatchObject(
-        { code: "usage_error" }
+        {
+          code: "usage_error",
+        }
       );
       expect(captured.access).not.toHaveBeenCalled();
       expect(fetcher).not.toHaveBeenCalled();
@@ -1032,7 +1040,9 @@ describe("named Dashboard writes", () => {
               '{"confirmation":"alex@example.com"}',
             ];
       await expect(invoke([...args, "--json"], signal())).rejects.toMatchObject(
-        { code: "interaction_required" }
+        {
+          code: "interaction_required",
+        }
       );
       expect(captured.access).not.toHaveBeenCalled();
     }

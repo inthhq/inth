@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const LIB = resolve(__dirname, '../lib');
 

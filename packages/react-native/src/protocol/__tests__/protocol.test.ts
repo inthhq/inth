@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import { decisionInputsMatchOverrides } from '@inth/sdk/engine';
 import type { RememberedDecisionInputs } from '@inth/sdk/engine';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-vocabulary.model';
 import type {

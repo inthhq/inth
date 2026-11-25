@@ -16,7 +16,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const FESM = resolve(ROOT, 'dist/fesm2022');

@@ -127,3 +127,4 @@ __screenshots__/
 
 # Rsdoctor reports (WITH_RSDOCTOR=1 builds)
 .rsdoctor/
+.vitest/

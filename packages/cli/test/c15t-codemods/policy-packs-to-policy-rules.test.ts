@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { runPolicyPacksToPolicyRulesCodemod as codemod } from "../../src/native/c15t-codemods/policy-packs-to-policy-rules.ts";
 import { cleanupProjects, transformFile, transformTwice } from "./helpers.ts";

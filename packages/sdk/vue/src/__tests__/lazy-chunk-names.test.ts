@@ -14,7 +14,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '../../dist');
 

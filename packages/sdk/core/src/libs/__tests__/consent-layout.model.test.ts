@@ -1,6 +1,6 @@
 import { normalizePolicyRule } from '@inth/sdk-schema/types';
 import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { PHONE_LAYOUT_QUERY, resolveLayout } from '../consent-layout.model';
 import type {

@@ -93,12 +93,12 @@ const renameVariables = function renameVariables(text: string): Rewrite {
   const summaries = new Set<string>();
   let operations = 0;
   const renamed = text
-    .replace(WIDGET_PATTERN, (_match, suffix: string) => {
+    .replaceAll(WIDGET_PATTERN, (_match, suffix: string) => {
       operations += 1;
       summaries.add("--consent-widget-* -> --consent-manager-*");
       return `--consent-manager-${suffix}`;
     })
-    .replace(FRAME_PATTERN, (_match, suffix: string) => {
+    .replaceAll(FRAME_PATTERN, (_match, suffix: string) => {
       operations += 1;
       summaries.add("--frame-* -> --consent-gate-*");
       return `--consent-gate-${suffix}`;

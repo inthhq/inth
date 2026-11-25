@@ -9,7 +9,14 @@ import {
 	resolvePolicyRules,
 } from '@inth/sdk-schema/types';
 import type { PolicyResolution, PolicyRule } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	CHOICE_FINGERPRINT,

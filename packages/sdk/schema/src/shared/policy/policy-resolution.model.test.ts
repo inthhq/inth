@@ -1,4 +1,4 @@
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import {
 	matchPolicyRules,
@@ -127,7 +127,10 @@ describe('resolvePolicyRules', () => {
 	test('an explicit empty pack is configured and matches nothing', () => {
 		expect(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules: [] })
-		).toEqual({ policy: null, status: 'no-match' });
+		).toEqual({
+			policy: null,
+			status: 'no-match',
+		});
 	});
 
 	test('uses fallback for unknown locations and default for known ones', () => {
@@ -244,10 +247,18 @@ describe('matchPolicyRules', () => {
 		const entries = [california, europe];
 		expect(
 			matchPolicyRules({ countryCode: ' us ', entries, regionCode: 'us-ca' })
-		).toEqual({ index: 0, matchedBy: 'region', status: 'matched' });
+		).toEqual({
+			index: 0,
+			matchedBy: 'region',
+			status: 'matched',
+		});
 		expect(
 			matchPolicyRules({ countryCode: 'DE', entries, regionCode: undefined })
-		).toEqual({ index: 1, matchedBy: 'country', status: 'matched' });
+		).toEqual({
+			index: 1,
+			matchedBy: 'country',
+			status: 'matched',
+		});
 	});
 });
 

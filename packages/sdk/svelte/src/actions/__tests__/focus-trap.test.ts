@@ -4,7 +4,7 @@
  * Mirrors: packages/sdk/react/src/hooks/__tests__/use-focus-trap.test.tsx
  */
 
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import { focusTrap } from '../../lib/actions/focus-trap';
 

@@ -1,7 +1,7 @@
 import { defaultTranslationConfig } from '@inth/sdk/engine';
 import type { ComponentProps, ReactElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
@@ -141,7 +141,7 @@ describe('BrandingTag', () => {
 			expect(link).toHaveAttribute('data-branding', 'c15t');
 			expect(link?.href).toContain('c15t.com');
 			expect(link).not.toHaveAttribute('target');
-			expect(link?.querySelector('[dir="ltr"]')).toHaveTextContent('c15t');
+			expect(link?.querySelector('[dir="ltr"]')).toMatchTextContent('c15t');
 		});
 	});
 
@@ -183,7 +183,7 @@ describe('BrandingTag', () => {
 			const link = tagLink();
 			expect(link).toBeInTheDocument();
 			expect(link).not.toHaveAttribute('dir');
-			expect(link).toHaveTextContent('מאובטח על ידי');
+			expect(link).toMatchTextContent('מאובטח על ידי');
 			expect(link?.querySelector('[dir="ltr"]')).toBeInTheDocument();
 		});
 	});
@@ -249,7 +249,9 @@ describe('BrandingTag', () => {
 				surface="banner"
 				hideBranding
 			/>,
-			{ branding: 'inth' }
+			{
+				branding: 'inth',
+			}
 		);
 
 		await vi.waitFor(() => {

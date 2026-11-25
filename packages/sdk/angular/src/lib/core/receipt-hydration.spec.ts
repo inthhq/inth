@@ -17,7 +17,7 @@ import {
 	getOptOutReceiptData,
 	getServerOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { ALL_CATEGORIES } from '../../__tests__/test-local';

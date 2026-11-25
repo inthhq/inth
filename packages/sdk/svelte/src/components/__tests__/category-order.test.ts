@@ -5,7 +5,7 @@
  * the same list, so the rows match React's and Vue's.
  */
 import { render, waitFor } from '@testing-library/svelte';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';

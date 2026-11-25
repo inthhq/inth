@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { ApiClient } from "../experiments/node/api.ts";
 import { HttpClient } from "../experiments/node/http.ts";
@@ -84,7 +84,9 @@ describe("bounded download reader", () => {
       );
       await expect(
         readDownload(response, "image/*", signal(), 4)
-      ).rejects.toMatchObject({ code: "download_too_large" });
+      ).rejects.toMatchObject({
+        code: "download_too_large",
+      });
       expect(cancel).toHaveBeenCalledOnce();
     }
   );
@@ -282,7 +284,9 @@ describe("authenticated API downloads", () => {
     const f = setup([]);
     await expect(
       new ApiClient(f.http, noAuth).download(path)
-    ).rejects.toMatchObject({ code: "usage_error" });
+    ).rejects.toMatchObject({
+      code: "usage_error",
+    });
   });
   it("cancels a pending download with the command signal", async () => {
     const f = setup([new Response(new ReadableStream<Uint8Array>())]);

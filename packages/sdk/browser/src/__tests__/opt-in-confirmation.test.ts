@@ -12,7 +12,7 @@ import type {
 	ProviderTransportFactory,
 } from '@inth/sdk-core';
 import { createTestingMode } from '@inth/sdk-core/testing';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type {
 	ConsentClient,

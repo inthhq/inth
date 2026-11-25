@@ -5,7 +5,7 @@
  * failed load. The built files run in Chromium in
  * `init-script.browser.test.ts`.
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	CHOICES_ENGINE_KEY,

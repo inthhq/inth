@@ -4,7 +4,7 @@ import {
 	getScriptDiagnostics,
 	subscribeScriptDiagnostics,
 } from '@inth/sdk-core/modules/script-loader';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDevTools } from '../../index';
 import { choiceRecords } from '../helpers/kernel';

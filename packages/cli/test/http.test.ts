@@ -1,9 +1,8 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { describe, expect, it } from "vitest";
-import { z } from "zod";
+import { describe, expect, it } from "vite-plus/test";
 
-import { retryDelay } from "../experiments/node/http.ts";
+import { jsonValueSchema, retryDelay } from "../experiments/node/http.ts";
 import { setup } from "./fixtures.ts";
 
 describe("HTTP failures", () => {
@@ -32,7 +31,9 @@ describe("HTTP failures", () => {
       )
     );
     const response = await f.http.request("https://api.inth.com/v1/projects");
-    await expect(f.http.json(response, z.json())).rejects.toThrow("limit-123");
+    await expect(f.http.json(response, jsonValueSchema)).rejects.toThrow(
+      "limit-123"
+    );
     expect(f.clock.waits).toEqual([1000, 1000, 1000]);
   });
   it("does not poll past a device deadline to retry a 429", async () => {
@@ -59,7 +60,7 @@ describe("HTTP failures", () => {
     ]);
     const response = await f.http.request("https://api.inth.com/v1/projects");
     expect(response.status).toBe(429);
-    await expect(f.http.json(response, z.json())).rejects.toMatchObject({
+    await expect(f.http.json(response, jsonValueSchema)).rejects.toMatchObject({
       requestId: "long-limit",
       status: 429,
     });

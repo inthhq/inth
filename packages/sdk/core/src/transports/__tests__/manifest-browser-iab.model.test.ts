@@ -1,5 +1,5 @@
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { clearGvlCache } from '../gvl-cache.model';
 import { attachVendorList } from '../manifest-browser-iab.model';

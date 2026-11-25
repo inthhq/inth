@@ -1,5 +1,5 @@
 import type { VendorCategoryCondition } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { createConsentKernel } from '..';
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';

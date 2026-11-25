@@ -6,7 +6,7 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { mobileManifest } from '~/commands/mobile-manifest';
 import type { CliContext } from '~/context/types';

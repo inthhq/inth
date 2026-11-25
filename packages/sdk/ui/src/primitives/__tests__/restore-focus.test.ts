@@ -3,7 +3,7 @@
  * nothing out, so a control the page hides with CSS is modelled by a
  * `focus()` that does not land, as the browser does for `display: none`.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { restoreFocus, takesFocus } from '../surface';
 

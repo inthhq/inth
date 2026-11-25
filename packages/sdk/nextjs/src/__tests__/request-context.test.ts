@@ -4,7 +4,7 @@
  * `partialPrefetching`, Next resolves `headers()` inside the runtime
  * prefetch and then rejects the `Date.now()` that follows as sync IO.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 const order: string[] = [];
 

@@ -4,7 +4,7 @@
  * so the dialog, which waits for the init's display data, has its copy.
  */
 import { flushPromises, mount } from '@vue/test-utils';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { inth } from '../index';
 import ConsentManager from '../runtime/components/dialog/manager.vue';

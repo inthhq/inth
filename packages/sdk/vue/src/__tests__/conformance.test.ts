@@ -36,7 +36,7 @@ import type {
 	TranslationsResponse,
 } from '@inth/sdk/schema/types';
 import { flushPromises } from '@vue/test-utils';
-import { describe, expect, onTestFinished, test, vi } from 'vitest';
+import { describe, expect, onTestFinished, test, vi } from 'vite-plus/test';
 import { createApp, createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';

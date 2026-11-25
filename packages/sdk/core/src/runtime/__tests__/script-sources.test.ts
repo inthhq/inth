@@ -9,7 +9,7 @@ import type { ConsentManifest, ScriptSourceWire } from '@inth/sdk-schema/types';
  * `scriptLoader.sources` loads a script from another URL, such as a vetted
  * copy on the site's own host, with an integrity hash the browser checks.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

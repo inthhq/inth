@@ -10,7 +10,7 @@ import {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
 } from '@inth/react/deferred';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import packageJson from '../../package.json';
 // oxlint-disable-next-line import/default -- Vite's `?raw` query makes the file's source the default export.

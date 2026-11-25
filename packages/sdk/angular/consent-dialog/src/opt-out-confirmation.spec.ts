@@ -26,7 +26,7 @@ import {
 import type * as RuntimeProvider from '@inth/sdk/runtime/provider';
 import { V1_UUID_PATTERN, resolvePolicyRules } from '@inth/sdk/schema/types';
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialog } from './consent-dialog';
 import { OptOutConfirmation } from './opt-out-confirmation';

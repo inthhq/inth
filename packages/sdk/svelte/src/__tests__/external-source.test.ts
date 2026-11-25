@@ -1,6 +1,6 @@
 import type { ConsentState } from '@inth/sdk/engine';
 import { render, fireEvent } from '@testing-library/svelte';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/consent-context.model';
 import { testing } from '../lib/testing';

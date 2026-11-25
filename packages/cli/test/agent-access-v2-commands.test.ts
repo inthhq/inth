@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { formatResource } from "../experiments/node/resource-output.ts";

@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { loadStaticManifest } from '../../../server/static-manifest.api';
 import { InthApiError, isInthApiError, readApiError } from '../inth-api-error';

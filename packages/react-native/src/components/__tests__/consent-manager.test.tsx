@@ -7,7 +7,7 @@
  */
 
 import { Activity, StrictMode, Suspense, useState } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
 import {

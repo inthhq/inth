@@ -11,7 +11,14 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createIframeBlocker } from '../../modules/iframe-blocker';

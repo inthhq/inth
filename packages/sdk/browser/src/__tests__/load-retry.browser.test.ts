@@ -5,7 +5,7 @@
  * starts.
  */
 import { showConsentSurface } from '@inth/sdk-core/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type * as loader from '../ui/parts/load';
 import {

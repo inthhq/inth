@@ -9,7 +9,7 @@ import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';

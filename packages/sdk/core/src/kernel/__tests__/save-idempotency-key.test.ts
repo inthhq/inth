@@ -4,7 +4,14 @@
  * The idempotency key of a save: made once with the action, stored with the
  * queued payload, and sent unchanged by every replay.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import type { SavePayload } from '../../consent-kernel.model';
 import { isUuidV7 } from '../../transports/v1/v1-request.api';

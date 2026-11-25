@@ -1,7 +1,7 @@
 import { css as iabDialogCSS } from '@inth/sdk/ui/styles/sheets/iab-dialog';
 import { css as iabFirstPaintCSS } from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { injectSurfaceStyles } from '../lib/kit/inject-surface-styles';
 import Fixture from './fixtures/iab-surface-styles.svelte';

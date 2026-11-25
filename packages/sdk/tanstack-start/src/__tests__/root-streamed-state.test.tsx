@@ -17,7 +17,7 @@ import {
 	useModel,
 	useSaveConsents,
 } from '@inth/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../inth-provider';
@@ -29,9 +29,7 @@ const Status = () => {
 	const activeUI = useActiveUI();
 	const marketing = useConsent('marketing');
 	return (
-		<div data-testid="status">
-			{`${model ?? 'pending'}/${activeUI}/${String(marketing)}`}
-		</div>
+		<div data-testid="status">{`${model ?? 'pending'}/${activeUI}/${String(marketing)}`}</div>
 	);
 };
 
@@ -104,12 +102,12 @@ describe('InthProvider: streamed state', () => {
 
 			await expect
 				.element(getByTestId('status'))
-				.toHaveTextContent('pending/none/false');
+				.toMatchTextContent('pending/none/false');
 
 			resolveState({ ...policyFixture(), ...sameOrigin });
 			await expect
 				.element(getByTestId('status'))
-				.toHaveTextContent('opt-in/banner/false');
+				.toMatchTextContent('opt-in/banner/false');
 			expect(fetchSpy).not.toHaveBeenCalled();
 
 			await getByTestId('save').click();

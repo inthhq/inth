@@ -10,7 +10,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { createGPP } from '../gpp';
 import { encodeGPPString } from '../gpp/gpp-encoder.model';

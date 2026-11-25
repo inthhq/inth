@@ -1,6 +1,6 @@
 import type * as Core from '@inth/sdk/engine';
 import type { RevocationReloadOptions } from '@inth/sdk/engine';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import { mockGVL } from './components/iab/__tests__/fixtures/mock-consent-state';
 

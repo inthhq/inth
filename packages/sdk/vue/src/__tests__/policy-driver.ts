@@ -28,7 +28,7 @@ import {
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import {
 	createApp,
 	createSSRApp,

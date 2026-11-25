@@ -3,7 +3,7 @@
  * per-category receipt exactly, keep `false` distinct from absence, and
  * never coerce string fingerprints or identifiers.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { ChoiceBasis } from '../../../consent-record/types';
 import {
@@ -360,7 +360,10 @@ describe('clear epoch', () => {
 		}
 		expect(
 			validateStoredConsentEnvelope({ ...plain, epoch: 'abc' }, NOW)
-		).toEqual({ ok: true, record: plain });
+		).toEqual({
+			ok: true,
+			record: plain,
+		});
 	});
 
 	it('keeps an epoch up to the clock tolerance ahead, for a clock set back', () => {

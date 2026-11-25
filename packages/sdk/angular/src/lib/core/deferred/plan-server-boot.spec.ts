@@ -1,6 +1,6 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { pendingBootSnapshot } from '@inth/sdk/surface-state';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { canDeferEngine } from './plan-server-boot';
 

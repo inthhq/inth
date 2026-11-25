@@ -12,7 +12,7 @@ import type {
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
 import { resolveManifestInit } from '@inth/sdk/transports/manifest-cache';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import {
 	createApp,
 	createSSRApp,

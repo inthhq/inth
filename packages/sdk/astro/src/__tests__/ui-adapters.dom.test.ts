@@ -9,7 +9,7 @@
 
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { InthResolvedOptions } from '../inth-options.model';
 import { reactDialogAdapter } from '../ui/react';

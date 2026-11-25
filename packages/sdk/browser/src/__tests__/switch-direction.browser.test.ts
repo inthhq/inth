@@ -8,7 +8,7 @@
  * inherits it from the dialog.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import type { ConsentClient } from '../consent-client.model';
 import { init } from './fixtures/factory-init';

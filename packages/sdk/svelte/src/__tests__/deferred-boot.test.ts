@@ -4,7 +4,7 @@
  */
 import { defaultTranslationConfig } from '@inth/sdk/engine';
 import { canDeferEngine } from '@inth/sdk/server';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { createOwnedRuntime } from '../lib/create-owned-runtime';
 import {

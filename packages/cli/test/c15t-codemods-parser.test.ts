@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
 
 import ts from "typescript";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import type { Node } from "../src/native/c15t-codemods/syntax/node.ts";
 import { parseSourceFile } from "../src/native/c15t-codemods/syntax/parser.ts";

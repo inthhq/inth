@@ -10,7 +10,14 @@
  * the default loader writes as before; the tests use one to seed storage.
  * The handle under test gets a loader whose code lands on `land()`.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,

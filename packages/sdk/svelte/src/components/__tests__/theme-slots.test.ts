@@ -4,7 +4,7 @@
  */
 
 import { render, waitFor } from '@testing-library/svelte';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';
 import DialogFixture from '../../__tests__/fixtures/dialog-fixture.svelte';

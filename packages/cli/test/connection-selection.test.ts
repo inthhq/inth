@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { OrganizationContext } from "../experiments/node/state.ts";
 import { productionAgentEnvironment } from "../src/agent-environment.ts";
@@ -104,7 +104,9 @@ describe("selected connection", () => {
         JSON.parse(
           await readFile(path.join(directory, "connection.json"), "utf-8")
         )
-      ).toEqual({ auth: "browser" });
+      ).toEqual({
+        auth: "browser",
+      });
       await writeFile(path.join(directory, "connection.json"), "broken");
       await expect(first.selectedConnection()).rejects.toMatchObject({
         code: "invalid_config",

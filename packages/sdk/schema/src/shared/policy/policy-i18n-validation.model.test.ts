@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { getTranslationsData } from '../get-translations-data';
 import { validatePolicyI18nConfig } from './policy-i18n-validation.model';

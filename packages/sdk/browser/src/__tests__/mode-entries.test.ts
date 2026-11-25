@@ -12,7 +12,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import { translations } from '@inth/sdk-translations/en';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type {
 	ConsentClient,
@@ -472,7 +472,9 @@ describe('testing browser entry', () => {
 		await client.ready();
 		await expect(
 			client.save({ marketing: false, measurement: true })
-		).resolves.toMatchObject({ ok: true });
+		).resolves.toMatchObject({
+			ok: true,
+		});
 		client.dispose();
 
 		const next = track(

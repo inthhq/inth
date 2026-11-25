@@ -3,7 +3,7 @@
  * run its checks on the server and at build time, and browser bundles drop
  * them. The Node suite in `config.test.ts` covers the checks.
  */
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { defineConsentConfig } from '../config';
 

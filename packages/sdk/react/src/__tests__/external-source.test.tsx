@@ -1,6 +1,6 @@
 import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
 import { useContext, useEffect, StrictMode } from 'react';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentDialogLink } from '../components/panel-link';

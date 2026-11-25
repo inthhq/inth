@@ -6,7 +6,7 @@
  */
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';

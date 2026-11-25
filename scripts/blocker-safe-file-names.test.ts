@@ -12,7 +12,7 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 

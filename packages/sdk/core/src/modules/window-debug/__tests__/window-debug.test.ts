@@ -1,7 +1,7 @@
 /**
  * Tests for @inth/sdk/modules/window-debug.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { version } from '../../../version';
 import { createWindowDebug, resolveWindowDebugMode } from '../index';

@@ -2,7 +2,7 @@
  * `consentManifest()` loads `@inth/react/static-banner` in Node during
  * `vite build`, where there is no document.
  */
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import init from '../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { renderStaticBanner, staticBannerSheets } from '../static-banner';

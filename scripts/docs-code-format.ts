@@ -1,7 +1,7 @@
-import { format } from 'oxfmt';
-import type { FormatConfig } from 'oxfmt';
+import { format } from 'vite-plus/fmt';
+import type { FormatConfig } from 'vite-plus/fmt';
 
-import repoConfig from '../oxfmt.sdk.config';
+import { fmtConfig as repoConfig } from '../oxfmt.sdk.config';
 
 const { ignorePatterns: _ignorePatterns, ...repoOptions } = repoConfig;
 

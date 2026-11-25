@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import fg from 'fast-glob';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import {
 	PACKAGE_DOCS_CONFIGS,

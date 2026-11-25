@@ -80,10 +80,7 @@ const cliRootFiles = [
   "renovate.json",
   "docs/",
   "install.sh",
-  "oxfmt.config.ts",
-  "oxlint.config.ts",
   "tools/oxlint/",
-  "vitest.config.ts",
 ];
 const sdkRootFiles = ["oxfmt.sdk.config.ts", "oxlint.sdk.config.ts"];
 

@@ -3,7 +3,7 @@ import {
 	createConsentManifestPolicyPack,
 } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createV1ManifestTransport } from '../../transports/v1/manifest';
 import { reportV1ConsentSession } from '../../transports/v1/v1-session-report.api';

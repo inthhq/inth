@@ -27,7 +27,7 @@ import {
 	describe,
 	expect,
 	test,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import { OBSERVED_RULE, observedPolicy } from '../src/policy';
 import { ConsentProbe } from '../src/react';

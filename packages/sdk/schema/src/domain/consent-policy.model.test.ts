@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { assert, describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vite-plus/test';
 
 import {
 	postSubjectInputSchema,

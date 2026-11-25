@@ -3,7 +3,7 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
-import { afterEach, beforeEach, expect, vi } from 'vitest';
+import { afterEach, beforeEach, expect, vi } from 'vite-plus/test';
 
 import { getBuiltInScriptIntegration } from '../registry';
 import type { BuiltInScriptIntegrationKey } from '../registry';

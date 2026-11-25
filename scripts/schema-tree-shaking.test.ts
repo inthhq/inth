@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const schemaDirectory = fileURLToPath(
 	new URL('../packages/sdk/schema/', import.meta.url)

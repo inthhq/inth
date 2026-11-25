@@ -2,7 +2,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { policyRulePresets, resolvePolicyRules } from '@inth/sdk/schema/types';
 /** @vitest-environment jsdom */
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 import { reactBrowserBudgetsForScenario } from './budgets';
 import { evaluateBudget } from './reporting';

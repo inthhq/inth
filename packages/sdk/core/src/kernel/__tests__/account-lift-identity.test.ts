@@ -5,7 +5,7 @@
  * the new account's opt-out, and no follow-up lift leaves with its identity.
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

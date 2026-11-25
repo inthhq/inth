@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { liveIntentTag } from '../vendors/ads-and-pixels/liveintent';
 import { theTradeDeskPixel } from '../vendors/ads-and-pixels/the-trade-desk';

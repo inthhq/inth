@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClientOptions } from '../consent-client.model';
 import { installGlobal } from '../global';

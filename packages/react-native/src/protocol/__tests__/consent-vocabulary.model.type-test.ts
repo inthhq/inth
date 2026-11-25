@@ -40,7 +40,7 @@ import type {
 	RestrictionReason as KernelRestrictionReason,
 	SavePayload as KernelSavePayload,
 } from '@inth/sdk/engine';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf } from 'vite-plus/test';
 
 import type { KernelCommonCopy } from '../../index';
 import type { KernelUser, NativeSavePayload } from '../commit-payload.model';

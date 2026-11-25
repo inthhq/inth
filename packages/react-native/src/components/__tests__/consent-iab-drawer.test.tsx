@@ -13,7 +13,7 @@
  */
 
 import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { IAB_DEMO_DISPLAY_MODEL } from '../../../../../internals/fixtures/react-native-bare/src/fixtures/iab-display-model';
 import { completeGVL } from '../../../../sdk/iab/src/__tests__/fixtures/gvl-sample';

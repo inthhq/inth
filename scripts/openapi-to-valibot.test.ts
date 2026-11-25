@@ -1,6 +1,6 @@
 import { transform } from 'esbuild';
 import * as valibot from 'valibot';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import * as runtime from '../packages/sdk/schema/src/api/v1/json-schema';
 import { openApiToValibot } from './openapi-to-valibot';

@@ -5,7 +5,7 @@
  * and it must decline whatever `planEarlyCommit` declines.
  */
 import type { PolicyRule } from '@inth/sdk-schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	DAY,

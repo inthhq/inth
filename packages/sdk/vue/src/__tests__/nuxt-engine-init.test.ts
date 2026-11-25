@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { createNuxtEngineContext } from '../runtime/deferred/engine';
 import type { RuntimeConsentConfig } from '../runtime/vue-consent-kernel-context.model';

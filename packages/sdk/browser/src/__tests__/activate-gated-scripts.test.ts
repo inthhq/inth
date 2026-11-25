@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { activateGatedScripts } from '../activate-gated-scripts';
 import type { ConsentClient } from '../consent-client.model';

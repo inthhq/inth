@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import {
@@ -244,6 +244,9 @@ describe("inth c15t app detection", () => {
     });
     expect(
       hostedProject({ consent: null, id: "prj_2", name: "New" })
-    ).toMatchObject({ status: "pending", url: "" });
+    ).toMatchObject({
+      status: "pending",
+      url: "",
+    });
   });
 });

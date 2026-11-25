@@ -18,9 +18,16 @@ import {
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { page, userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page, userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-provider';
@@ -294,8 +301,8 @@ describe('card:', () => {
 		expect($('consent-banner-customize-button')).toBeNull();
 		const reject = must('consent-banner-reject-button');
 		const accept = must('consent-banner-accept-button');
-		expect(reject).toHaveTextContent('Reject all');
-		expect(accept).toHaveTextContent('Accept all');
+		expect(reject).toMatchTextContent('Reject all');
+		expect(accept).toMatchTextContent('Accept all');
 		expect(reject.className).toBe(accept.className);
 		expect(reject.getBoundingClientRect().width).toBeCloseTo(
 			accept.getBoundingClientRect().width,
@@ -375,7 +382,7 @@ describe('card:', () => {
 		const description = document.getElementById(
 			sw.getAttribute('aria-describedby') ?? ''
 		);
-		expect(label).toHaveTextContent('Analytics');
+		expect(label).toMatchTextContent('Analytics');
 		expect(description?.textContent).toMatch(/understand how visitors/u);
 		expect(description).toBeVisible();
 	});
@@ -432,7 +439,7 @@ describe('card:', () => {
 		// policy, with no opt-out icon: the way back in.
 		const link = must('privacy-choices-link');
 		expect(document.activeElement).toBe(link);
-		expect(link).toHaveTextContent('Your Privacy Choices');
+		expect(link).toMatchTextContent('Your Privacy Choices');
 		expect(link.querySelector('svg')).toBeNull();
 		expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
 			false
@@ -475,7 +482,7 @@ describe('card:', () => {
 		finishAnimations();
 		const tag = box('consent-banner-branding');
 		const card = box('consent-banner-card');
-		expect(must('consent-banner-branding')).toHaveTextContent('Consent by');
+		expect(must('consent-banner-branding')).toMatchTextContent('Consent by');
 		expect(Math.abs(card.top - tag.bottom - 8)).toBeLessThanOrEqual(1);
 		expect(Math.abs(card.right - tag.right)).toBeLessThanOrEqual(1);
 	});
@@ -592,11 +599,13 @@ describe('banner:', () => {
 			region: 'us-opt-in',
 		});
 		await waitForRoot();
-		expect(must('consent-banner-reject-button')).toHaveTextContent(
+		expect(must('consent-banner-reject-button')).toMatchTextContent(
 			"Don't allow"
 		);
-		expect(must('consent-banner-accept-button')).toHaveTextContent('Allow');
-		expect(must('consent-banner-customize-button')).toHaveTextContent('Choose');
+		expect(must('consent-banner-accept-button')).toMatchTextContent('Allow');
+		expect(must('consent-banner-customize-button')).toMatchTextContent(
+			'Choose'
+		);
 		expect(must('consent-banner-description').textContent).toMatch(
 			/asks before using optional cookies/u
 		);
@@ -890,7 +899,7 @@ describe('notice', () => {
 		await waitForRoot();
 		expect(root()).toHaveAttribute('data-variant', 'notice');
 		const link = must('consent-banner-right-link-opt-out');
-		expect(link).toHaveTextContent('Do not sell or share my data');
+		expect(link).toMatchTextContent('Do not sell or share my data');
 		expect($('consent-banner-reject-button')).toBeNull();
 		link.click();
 		await waitForPanel();

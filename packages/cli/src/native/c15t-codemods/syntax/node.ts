@@ -1191,7 +1191,7 @@ export class Node {
   getPreviousSibling(): Node | undefined {
     const siblings = this.siblings();
     const index = siblings.indexOf(this);
-    return index > 0 ? siblings[index - 1] : undefined;
+    return siblings[index - 1];
   }
 
   getNextSibling(): Node | undefined {

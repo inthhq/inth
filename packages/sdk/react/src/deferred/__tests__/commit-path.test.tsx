@@ -15,8 +15,8 @@ import {
 	useState,
 	useSyncExternalStore,
 } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import {
 	EARLY_TAP_STYLE_ID,

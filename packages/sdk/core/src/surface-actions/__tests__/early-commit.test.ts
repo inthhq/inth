@@ -4,7 +4,14 @@
  * commit, store and send what the kernel's own save does for the same tap,
  * so the kernel that loads afterwards takes it over without saving again.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,

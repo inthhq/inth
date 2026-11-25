@@ -11,7 +11,7 @@ import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	openOptInConfirmation,
 } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { rightsBundleOf } from '../runtime/components/parts/use-surface-session';
 import {

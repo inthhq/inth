@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import {
+	copyFile,
+	mkdir,
+	mkdtemp,
+	realpath,
+	rm,
+	writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { IOSConfig } from 'expo/config-plugins';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
 	embedPolicyResource,
@@ -126,7 +133,7 @@ describe('bundling the manifest at prebuild', () => {
 	});
 
 	it('needs @c15t/cli installed in the app', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'inth-cli-'));
+		const root = await realpath(await mkdtemp(join(tmpdir(), 'inth-cli-')));
 		try {
 			await writeFile(join(root, 'package.json'), '{}');
 			expect(() => resolveCli(root)).toThrow(

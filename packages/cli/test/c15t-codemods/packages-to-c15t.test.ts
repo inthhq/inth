@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Matches the native sources.
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { runCssVariablesToV3Codemod as cssVariables } from "../../src/native/c15t-codemods/css-variables-to-v3.ts";
 import { runPackagesToC15tCodemod as codemod } from "../../src/native/c15t-codemods/packages-to-c15t.ts";

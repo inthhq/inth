@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import type { Script } from '@inth/sdk/engine';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createCallbackInfo } from '../__tests__/helpers';
 import { resolveManifest } from '../resolve-manifest';

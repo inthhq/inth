@@ -3,11 +3,11 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate tsx scripts/run-gate.ts",
-		"bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count tsx scripts/run-script-count-bench.ts",
+		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle vpx scripts/run-bench.ts",
+		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle vpx scripts/run-bench.ts",
+		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate vpx scripts/run-gate.ts",
+		"bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle vpx scripts/run-bench.ts",
+		"bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count vpx scripts/run-script-count-bench.ts",
 		"build": "next build",
 		"dev": "next dev",
 		"start": "next start"
@@ -24,8 +24,7 @@
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"esbuild": "^0.28.1",
-		"playwright": "1.61.1",
-		"tsx": "4.23.0",
+		"playwright": "catalog:",
 		"typescript": "6.0.3"
 	}
 }

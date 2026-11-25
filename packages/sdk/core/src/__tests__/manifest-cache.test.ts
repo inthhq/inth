@@ -10,7 +10,7 @@
  */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	clearManifestCache,
@@ -2509,7 +2509,9 @@ describe('manifest fetch protection', () => {
 						init?.signal?.addEventListener(
 							'abort',
 							() => reject(init.signal?.reason),
-							{ once: true }
+							{
+								once: true,
+							}
 						);
 					})
 			)
@@ -2525,12 +2527,16 @@ describe('manifest fetch protection', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 		await expect(
 			fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL })
-		).rejects.toMatchObject({ reason: 'backoff' });
+		).rejects.toMatchObject({
+			reason: 'backoff',
+		});
 		expect(fetch).toHaveBeenCalledTimes(1);
 		await vi.advanceTimersByTimeAsync(MANIFEST_FAILURE_RETRY_MIN_MS);
 		await expect(
 			fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL })
-		).resolves.toMatchObject({ manifest: { revision: 1 } });
+		).resolves.toMatchObject({
+			manifest: { revision: 1 },
+		});
 		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
@@ -2543,7 +2549,9 @@ describe('manifest fetch protection', () => {
 					init?.signal?.addEventListener(
 						'abort',
 						() => reject(init.signal?.reason),
-						{ once: true }
+						{
+							once: true,
+						}
 					);
 				})
 		);

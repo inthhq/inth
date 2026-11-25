@@ -11,7 +11,7 @@ import {
 } from '@inth/sdk/schema/types';
 import { enTranslations } from '@inth/sdk/translations';
 import { render, screen, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

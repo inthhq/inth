@@ -8,7 +8,7 @@
  * and `clear()` remove every copy, whatever the current configuration. A
  * visitor whose stored records carry no ID keeps the one 3.2 gave them.
  */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	explicitChoice,

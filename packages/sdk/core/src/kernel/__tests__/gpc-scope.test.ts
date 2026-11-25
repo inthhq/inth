@@ -9,7 +9,14 @@
  */
 import type { OptOutRecord, PolicyRule } from '@inth/sdk-schema/types';
 import { policyRulePresets } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,

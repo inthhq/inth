@@ -23,7 +23,7 @@ import {
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentBanner } from '../prompt/prompt';

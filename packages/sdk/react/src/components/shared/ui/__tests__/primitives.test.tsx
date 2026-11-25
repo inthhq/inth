@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { StableGlobalThemeProvider } from '~/__tests__/stable-context-providers';
 

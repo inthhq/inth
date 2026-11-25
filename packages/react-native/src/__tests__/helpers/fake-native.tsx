@@ -10,7 +10,7 @@ import { act } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import type { NativeInthTurboModule } from '../../native/get-native-inth';
 import type { NativeAutoPresentSettings } from '../../native/presenter';

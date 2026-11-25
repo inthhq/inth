@@ -12,7 +12,14 @@ import {
 	normalizePolicyRule,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { isLegitimateInterestAllowed } from '../headless';
 import {
@@ -2095,7 +2102,9 @@ test('stored authority must carry the configured publisher restrictions', async 
 	const tcString = await generateTCString(
 		{ ...data, publisherRestrictions },
 		completeGVL,
-		{ cmpId: 28 }
+		{
+			cmpId: 28,
+		}
 	);
 	const receipt = createAuthorityReceipt(kernel.getSnapshot(), tcString, NOW);
 	expect(

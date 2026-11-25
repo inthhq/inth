@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 
 import { releaseNames, releaseRefusals } from "./release-guard.ts";
 import type { ReleaseProduct } from "./release-guard.ts";

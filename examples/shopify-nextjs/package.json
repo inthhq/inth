@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "next build",
-		"check-types": "next typegen && tsc --noEmit",
+		"check-types": "next typegen && tsrs --noEmit",
 		"dev": "next dev --port 3104",
 		"start": "next start --port 3104"
 	},
@@ -20,7 +20,9 @@
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
+		"tsrs": "catalog:",
 		"typescript": "6.0.3",
-		"vite": "8.1.3"
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

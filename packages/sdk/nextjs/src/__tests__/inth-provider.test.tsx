@@ -1,5 +1,5 @@
 import { useConsent, useOverrides } from '@inth/react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../inth-provider';
@@ -26,7 +26,7 @@ describe('InthProvider: state is honored', () => {
 			</InthProvider>
 		);
 
-		await expect.element(getByTestId('status')).toHaveTextContent('true');
+		await expect.element(getByTestId('status')).toMatchTextContent('true');
 	});
 
 	test('initial overrides from state reach useOverrides', async () => {
@@ -48,7 +48,7 @@ describe('InthProvider: state is honored', () => {
 			</InthProvider>
 		);
 
-		await expect.element(getByTestId('country')).toHaveTextContent('DE/de');
+		await expect.element(getByTestId('country')).toMatchTextContent('DE/de');
 	});
 });
 
@@ -82,7 +82,7 @@ describe('InthProvider: kernel is per-mount', () => {
 			</div>
 		);
 
-		await expect.element(screen.getByTestId('a')).toHaveTextContent('a:true');
-		await expect.element(screen.getByTestId('b')).toHaveTextContent('b:false');
+		await expect.element(screen.getByTestId('a')).toMatchTextContent('a:true');
+		await expect.element(screen.getByTestId('b')).toMatchTextContent('b:false');
 	});
 });

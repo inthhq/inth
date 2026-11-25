@@ -10,7 +10,14 @@
  */
 import { V1_UUID_PATTERN } from '@inth/sdk-schema/types';
 import type { OptOutRecord } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	DAY,

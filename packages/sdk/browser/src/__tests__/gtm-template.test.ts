@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import { policyRulePresets } from '@inth/sdk-core';
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClientOptions } from '../consent-client.model';
 import { installGlobal } from '../global';

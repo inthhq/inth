@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import {
@@ -70,7 +70,9 @@ describe("Inth MCP config edits", () => {
     const source = `{"mcpServers":{"other":{},"inth":${config}}}`;
     expect(
       JSON.parse(editMcpJson(source, "mcpServers", config, true).source)
-    ).toEqual({ mcpServers: { other: {} } });
+    ).toEqual({
+      mcpServers: { other: {} },
+    });
   });
 });
 
@@ -358,7 +360,11 @@ it.each([
       mcpServers: { inth: { [field]: MCP_URL, headers: { custom: "keep" } } },
     });
     expect(editMcpJson(source, target.key, target.config, false)).toMatchObject(
-      { changed: false, configured: true, source }
+      {
+        changed: false,
+        configured: true,
+        source,
+      }
     );
   }
 );

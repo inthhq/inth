@@ -15,7 +15,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { REPO_ROOT } from '../measure/native';
 import {

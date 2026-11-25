@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import nodePath from "node:path";
 import { PassThrough, Readable } from "node:stream";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { ApiClient } from "../experiments/node/api.ts";
 import { run } from "../experiments/node/commands.ts";
@@ -508,7 +508,9 @@ describe("file and stdin input", () => {
       // eslint-disable-next-line no-await-in-loop -- Check each real filesystem input independently.
       await expect(
         readResourceInput(input, "message-file", signal())
-      ).rejects.toMatchObject({ code: "usage_error" });
+      ).rejects.toMatchObject({
+        code: "usage_error",
+      });
     }
   });
   it("rejects invalid file contents before credentials and HTTP", async () => {

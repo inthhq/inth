@@ -1,5 +1,5 @@
 import { normalizePolicyRule } from '@inth/sdk-schema/types';
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vite-plus/test';
 
 import { defineExperiment } from '../../index';
 import type { ExperimentArmName } from '../../index';

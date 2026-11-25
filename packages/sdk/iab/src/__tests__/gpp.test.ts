@@ -7,7 +7,14 @@ import {
 	normalizePolicyRule,
 } from '@inth/sdk-schema/types';
 import type { PolicyRule } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { createGPP, destroyGPPStub, initializeGPPStub } from '../gpp';
 import type { GPPEventData, GPPHandle, GPPPingData } from '../gpp';

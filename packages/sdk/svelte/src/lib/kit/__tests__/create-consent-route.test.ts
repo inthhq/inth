@@ -5,7 +5,14 @@
  */
 import { clearManifestCache } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { setGenerated } from '../../__tests__/generated';
 import { createConsentRoute } from '../create-consent-route';

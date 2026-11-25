@@ -1,7 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import type { SavePayload } from '../../consent-kernel.model';
 import { createOfflineTransport } from '../../transports/offline';

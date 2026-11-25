@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 export default mergeConfig(
 	baseConfig,

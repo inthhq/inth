@@ -5,8 +5,15 @@
  * shadow root, so the suite looks there as well as in the page.
  */
 import { openOptInConfirmation } from '@inth/sdk-core/surface-actions';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { page, userEvent } from 'vite-plus/test/browser';
 
 import { mountConsentUI } from '../ui/mount-consent-ui';
 import { rightsBundleOf } from '../ui/parts/part-env.model';
@@ -124,8 +131,8 @@ describe('card:', () => {
 		expect($('consent-banner-customize-button')).toBeNull();
 		const reject = must('consent-banner-reject-button');
 		const accept = must('consent-banner-accept-button');
-		expect(reject).toHaveTextContent('Reject all');
-		expect(accept).toHaveTextContent('Accept all');
+		expect(reject).toMatchTextContent('Reject all');
+		expect(accept).toMatchTextContent('Accept all');
 		expect(reject.className).toBe(accept.className);
 		expect(reject.getBoundingClientRect().width).toBeCloseTo(
 			accept.getBoundingClientRect().width,
@@ -199,7 +206,7 @@ describe('card:', () => {
 		expect(sw).toHaveAttribute('role', 'switch');
 		const label = byId(sw.getAttribute('aria-labelledby'));
 		const description = byId(sw.getAttribute('aria-describedby'));
-		expect(label).toHaveTextContent('Analytics');
+		expect(label).toMatchTextContent('Analytics');
 		expect(description?.textContent).toMatch(/understand how visitors/u);
 		await vi.waitFor(() => expect(description).toBeVisible());
 	});
@@ -265,7 +272,7 @@ describe('card:', () => {
 		finishAnimations();
 		const tag = box('consent-banner-branding');
 		const card = box('consent-banner-card');
-		expect(must('consent-banner-branding')).toHaveTextContent('Consent by');
+		expect(must('consent-banner-branding')).toMatchTextContent('Consent by');
 		expect(Math.abs(card.top - tag.bottom - 8)).toBeLessThanOrEqual(1);
 		expect(Math.abs(card.right - tag.right)).toBeLessThanOrEqual(1);
 	});
@@ -382,11 +389,13 @@ describe('banner:', () => {
 			region: 'us-opt-in',
 		});
 		await waitForRoot();
-		expect(must('consent-banner-reject-button')).toHaveTextContent(
+		expect(must('consent-banner-reject-button')).toMatchTextContent(
 			"Don't allow"
 		);
-		expect(must('consent-banner-accept-button')).toHaveTextContent('Allow');
-		expect(must('consent-banner-customize-button')).toHaveTextContent('Choose');
+		expect(must('consent-banner-accept-button')).toMatchTextContent('Allow');
+		expect(must('consent-banner-customize-button')).toMatchTextContent(
+			'Choose'
+		);
 		expect(must('consent-banner-description').textContent).toMatch(
 			/asks before using optional cookies/u
 		);
@@ -676,7 +685,7 @@ describe('notice', () => {
 		await waitForRoot();
 		expect(root()).toHaveAttribute('data-variant', 'notice');
 		const link = must('consent-banner-right-link-opt-out');
-		expect(link).toHaveTextContent('Do not sell or share my data');
+		expect(link).toMatchTextContent('Do not sell or share my data');
 		expect($('consent-banner-reject-button')).toBeNull();
 		link.click();
 		await waitForPanel();

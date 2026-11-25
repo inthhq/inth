@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import { readPolicyCache, writePolicyCache } from '../init/policy-cache.store';
 

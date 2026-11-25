@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import type { SavePayload } from '../../../consent-kernel.model';
 
@@ -119,7 +119,10 @@ export const savePayload = (
  */
 export const recordAnswer = function recordAnswer(
 	init: RequestInit | undefined
-): { recordId: string; subjectId: string } {
+): {
+	recordId: string;
+	subjectId: string;
+} {
 	const sent =
 		typeof init?.body === 'string'
 			? (JSON.parse(init.body) as { subjectId?: string }).subjectId

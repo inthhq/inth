@@ -15,7 +15,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 import { mount, unmount } from 'svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { isIABConfigured } from '../lib/lazy-create-iab';
 import type { ConsentManagerOptions } from '../lib/manager-options.model';

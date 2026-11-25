@@ -1,7 +1,7 @@
 /* oxlint-disable no-script-url -- Unsafe vendor URLs exercise the disclosure link filter. */
 import type { GlobalVendorList, NonIABVendor } from '@inth/sdk-core';
 import { clearGVLCache } from '@inth/sdk-iab';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentClient } from '../consent-client.model';

@@ -7,7 +7,7 @@
  */
 import type { ConsentContainer, ConsentPresentation } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { injectSurfaceStyles } from '../lib/kit/inject-surface-styles';
 import type { ConsentManagerOptions } from '../lib/manager-options.model';

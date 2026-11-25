@@ -5,7 +5,14 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentKernel, ConsentState, Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { hubspot } from './vendors/analytics/hubspot';
 import type { HubSpotOptions } from './vendors/analytics/hubspot';

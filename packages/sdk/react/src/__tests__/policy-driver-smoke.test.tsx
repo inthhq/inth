@@ -4,7 +4,7 @@ import {
 	POLICY_SCENARIOS,
 } from '@inth/conformance/fixtures/policy-scenarios';
 import { executePolicyScenario } from '@inth/conformance/suite';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createPolicySession } from './policy-driver';
 

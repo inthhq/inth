@@ -6,7 +6,7 @@
  */
 import { join } from 'node:path';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import * as composables from '../../../vue/src/runtime/composables';
 import { readComposableExports } from '../read-composable-exports';

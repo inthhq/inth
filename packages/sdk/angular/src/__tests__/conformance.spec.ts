@@ -42,7 +42,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { testing } from '../../testing/src/testing';
 import type {

@@ -6,7 +6,7 @@
  * network.
  */
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { clearGvlCache } from '../../transports/gvl-cache.model';
 import { fetchServerGvl } from '../server-gvl-cache.api';

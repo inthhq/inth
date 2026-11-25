@@ -6,7 +6,14 @@
 import { hosted, manifest as manifestMode } from '@inth/sdk/modes';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { defineConsentConfig } from '../config';
 import { toWebHeaders, toWebRequest } from '../node-bridge.model';

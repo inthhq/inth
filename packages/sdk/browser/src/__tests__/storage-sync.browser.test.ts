@@ -3,7 +3,7 @@
  * A choice made in one must reach the other without a reload.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
 
 // The fixture page imports the client. Importing it here makes Vite
 // transform its graph while it collects this file, not inside the first

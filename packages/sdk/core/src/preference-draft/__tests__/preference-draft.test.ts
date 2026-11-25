@@ -5,7 +5,7 @@ import type { PolicyRule } from '@inth/sdk-schema/types';
  * pinned here: vendor-surface order, the stale rule, the baseline merge, the
  * displayed categories and bulk actions.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

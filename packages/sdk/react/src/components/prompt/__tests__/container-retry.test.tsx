@@ -7,7 +7,7 @@ import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import { Suspense, act } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { deferredContainer } from '../prompt';
 import type { PromptSurfaceOptions } from '../prompt-surface';

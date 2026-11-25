@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { transformSync } from "esbuild";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it } from "vite-plus/test";
 
 import { runGenerationWorkflow } from "../src/native/c15t-generation.ts";
 

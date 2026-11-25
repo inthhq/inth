@@ -5,7 +5,7 @@
  */
 import { ApplicationRef, PendingTasks } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { injectPhoneLayout } from './inject-surface-session';
 

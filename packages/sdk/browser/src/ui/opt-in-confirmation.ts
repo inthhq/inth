@@ -115,13 +115,13 @@ export const createOptInConfirmation = function createOptInConfirmation(
 		content = h(
 			'div',
 			{
+				[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 				'aria-describedby': 'opt-in-confirmation-description',
 				'aria-labelledby': 'opt-in-confirmation-title',
 				'aria-modal': 'true',
 				class: noStyle ? '' : styles.container,
 				'data-state': 'open',
 				'data-testid': 'opt-in-confirmation-root',
-				[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 				dir: copy.dir,
 				lang: copy.language,
 				onkeydown: onKeyDown as EventListener,

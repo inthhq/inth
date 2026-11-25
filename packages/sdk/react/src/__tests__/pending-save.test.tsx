@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialog } from '../aggregate-components';
 import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';

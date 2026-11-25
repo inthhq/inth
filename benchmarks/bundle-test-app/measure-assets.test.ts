@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
 import type { Metafile } from 'esbuild';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import {
 	classifyEntryChunks,

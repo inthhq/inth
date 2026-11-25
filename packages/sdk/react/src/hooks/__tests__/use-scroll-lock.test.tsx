@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { describe, expect, onTestFinished, test, vi } from 'vitest';
+import { describe, expect, onTestFinished, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { useScrollLock } from '../use-scroll-lock';
 

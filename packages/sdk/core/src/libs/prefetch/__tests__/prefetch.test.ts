@@ -7,7 +7,14 @@ import {
 	parseExperimentHeader,
 	readJourneyParams,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';
 import {

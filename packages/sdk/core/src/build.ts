@@ -760,8 +760,16 @@ export interface ConsentManifestConfigContext {
 /** The build options the `config` hook reads, of the app or an environment. */
 export interface ConsentManifestBuildConfig {
 	ssr?: unknown;
-	rolldownOptions?: { input?: unknown; output?: unknown };
-	rollupOptions?: { input?: unknown; output?: unknown };
+	rolldownOptions?: {
+		input?: unknown;
+		output?: unknown;
+		preserveEntrySignatures?: unknown;
+	};
+	rollupOptions?: {
+		input?: unknown;
+		output?: unknown;
+		preserveEntrySignatures?: unknown;
+	};
 }
 
 /** The slice of the app's Vite config the `config` hook reads. */
@@ -858,9 +866,20 @@ export const shouldGroupConsentChunks = function shouldGroupConsentChunks(
 		return false;
 	}
 	// The app's chunking, and the client environment's in a shared config.
-	const outputs = [config?.build, config?.environments?.client?.build].flatMap(
-		(build) => [build?.rolldownOptions?.output, build?.rollupOptions?.output]
-	);
+	const bundlerOptions = [
+		config?.build,
+		config?.environments?.client?.build,
+	].flatMap((build) => [build?.rolldownOptions, build?.rollupOptions]);
+	// Rolldown refuses `includeDependenciesRecursively: false` with strict entry
+	// signatures.
+	if (
+		bundlerOptions.some(
+			(options) => options?.preserveEntrySignatures === 'strict'
+		)
+	) {
+		return false;
+	}
+	const outputs = bundlerOptions.map((options) => options?.output);
 	return !outputs.some(
 		(output) =>
 			typeof output === 'object' &&

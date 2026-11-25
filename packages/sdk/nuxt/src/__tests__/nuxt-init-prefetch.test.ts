@@ -10,7 +10,14 @@ import {
 } from '@inth/sdk/schema/types';
 import type { InitOutput } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 import { createApp, defineComponent, h, ref } from 'vue';
 import type { App, Ref } from 'vue';
 

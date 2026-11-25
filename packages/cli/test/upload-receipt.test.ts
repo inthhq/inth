@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 
 import { UploadReceipt } from "../src/upload-receipt.ts";
 import type { UploadReceiptData } from "../src/upload-receipt.ts";

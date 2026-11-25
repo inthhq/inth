@@ -3,7 +3,7 @@
  *
  * These run against the public kernel implementation and must pass.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentKernel } from '../index';
 import { choiceRecords, NOW } from './fixtures/kernel-fixtures';

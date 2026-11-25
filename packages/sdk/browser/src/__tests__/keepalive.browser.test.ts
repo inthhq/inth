@@ -3,7 +3,7 @@
  * tick as a page navigation still reaches the backend after a delayed CORS
  * preflight.
  */
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vite-plus/test';
 
 const opened: Window[] = [];
 

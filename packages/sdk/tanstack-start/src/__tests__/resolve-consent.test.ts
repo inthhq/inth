@@ -7,7 +7,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
  * middleware's remembered inputs, the route prefix and the prerender flag.
  */
 import { createManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { rememberConsentInputs } from '../consent-request/consent-request-inputs.model';
 import { createConsentStateHandler, resolveConsent } from '../server';

@@ -8,7 +8,14 @@ import { join } from 'node:path';
 
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext, Page } from 'playwright';
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+} from 'vite-plus/test';
 
 import {
 	acceptButton,

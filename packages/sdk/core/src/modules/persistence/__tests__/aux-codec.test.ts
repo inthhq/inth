@@ -3,7 +3,7 @@
  * the shared validator, reject malformed or future input, and never touch
  * the consent record.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { decodeNoticeDismissalCompact } from '../record-codec.model';
 import { encodeNoticeDismissalCompact } from '../writer/record-encode.model';

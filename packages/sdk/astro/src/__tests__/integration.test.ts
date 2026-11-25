@@ -14,7 +14,14 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { buildInlineCodeHashes } from '../build-astro-csp';
 import {
@@ -763,7 +770,10 @@ describe('resolveOptions', () => {
 		});
 		expect(
 			resolveOptions({ middleware: false, mode: testingMode() }).middleware
-		).toEqual({ enabled: false, skip: [] });
+		).toEqual({
+			enabled: false,
+			skip: [],
+		});
 		expect(
 			resolveOptions({
 				middleware: { skip: ['/healthz'] },

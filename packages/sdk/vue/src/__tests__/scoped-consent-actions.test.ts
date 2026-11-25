@@ -4,7 +4,7 @@ import {
 	createPolicyRuleFingerprints,
 } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { defineComponent, h, ref } from 'vue';
 
 import ConsentActions from '../runtime/components/actions.vue';
@@ -67,8 +67,8 @@ describe('displayed consent actions', () => {
 						[consentConfigKey]: {
 							consentCategories: ['necessary', 'measurement'],
 						},
-						[symbolKernel]: kernel,
 						[symbolInit]: ref(undefined),
+						[symbolKernel]: kernel,
 					},
 				},
 			});

@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 
 import { getRegistryItems } from 'shadcn/registry';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { buildRegistry } from '../build-registry';
 import { styles } from '../items';

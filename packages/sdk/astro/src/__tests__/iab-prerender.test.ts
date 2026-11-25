@@ -6,7 +6,7 @@ import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { iabPromptClassNames } from '../banner/banner-class-names.model';
 import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';

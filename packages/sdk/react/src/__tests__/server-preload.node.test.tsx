@@ -3,7 +3,7 @@
  * chunk: the banner's containers load first with `await preloadContainers()`.
  */
 import { renderToString } from 'react-dom/server';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { ConsentBanner, preloadContainers } from '../components/prompt/index';
 import { InthProvider } from '../provider';

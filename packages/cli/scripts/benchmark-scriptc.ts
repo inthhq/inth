@@ -21,7 +21,11 @@ assert.equal(build.status, 0, "Native CLI build failed.");
 const require = createRequire(import.meta.url);
 const nodeBuild = spawnSync(
   process.execPath,
-  [require.resolve("typescript/bin/tsc"), "-p", "tsconfig.build.json"],
+  [
+    path.join(path.dirname(require.resolve("tsrs/package.json")), "bin/tsrs"),
+    "-p",
+    "tsconfig.build.json",
+  ],
   { cwd: root, stdio: "inherit" }
 );
 assert.equal(nodeBuild.status, 0, "Node CLI build failed.");

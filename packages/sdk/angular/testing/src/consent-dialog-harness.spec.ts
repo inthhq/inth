@@ -4,7 +4,7 @@ import { ConsentManager } from '@inth/angular';
 import type { InthProviderOptions } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 import type { PolicyRule } from '@inth/sdk/engine';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import {

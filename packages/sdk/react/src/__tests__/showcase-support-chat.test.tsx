@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page } from 'vitest/browser';
 
 import { SupportChat } from '../../../../../examples/showcase-gated-embeds/components/support-chat';
 import { useVendorAllowed } from '../hooks';
@@ -71,7 +71,7 @@ describe('showcase support chat', () => {
 		await page.getByRole('button', { name: 'Deny Crisp' }).click();
 		await expect
 			.element(page.getByTestId('crisp-allowed'))
-			.toHaveTextContent('false');
+			.toMatchTextContent('false');
 		await expect
 			.element(
 				page.getByText('Crisp is switched off in your Privacy settings.')

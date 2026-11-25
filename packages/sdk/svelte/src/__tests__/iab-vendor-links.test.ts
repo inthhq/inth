@@ -4,7 +4,7 @@ import { resolveIABCopy } from '@inth/sdk/surface-state';
  * they are absolute http(s) URLs. Svelte does not block other schemes itself.
  */
 import { fireEvent, render } from '@testing-library/svelte';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab/iab-vendor-list.svelte';

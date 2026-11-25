@@ -1,6 +1,6 @@
 // Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { run } from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
@@ -129,10 +129,12 @@ describe("public resource commands", () => {
         "prj_123",
         "--json",
       ];
-      const failure = await run(args, new AbortController().signal).then(
-        () => new Error("The decision was not refused."),
-        (error: Error) => error
-      );
+      let failure: Error = new Error("The decision was not refused.");
+      try {
+        await run(args, new AbortController().signal);
+      } catch (error) {
+        failure = error instanceof Error ? error : new Error(String(error));
+      }
       expect(failure).toBeInstanceOf(HttpError);
       const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
       expect(reportError(true, failure, false)).toBe(1);

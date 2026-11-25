@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import { CliError } from "../src/cli-error.ts";

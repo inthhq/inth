@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 const script = new URL('./vendor-firebase-log.py', import.meta.url).pathname;
 const runner = '/data/InthConsentDemoUITests-Runner';

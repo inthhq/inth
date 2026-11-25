@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { staleV1OpenApiFiles } from './generate-v1-openapi';
 

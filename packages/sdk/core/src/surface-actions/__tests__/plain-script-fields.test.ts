@@ -4,7 +4,7 @@
  * loader (`LOADER_FIELDS`). A field added to `Script` without a place in
  * one of the two lists fails the type check below.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { Script } from '../../libs/script-loader/script.model';
 import {

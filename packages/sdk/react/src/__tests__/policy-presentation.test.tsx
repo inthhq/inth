@@ -8,7 +8,7 @@ import {
 } from '@inth/sdk/schema/types';
 import type { PolicyResolution, PolicyRule } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentDialog } from '../aggregate-components';
@@ -180,12 +180,12 @@ describe('policy presentation reference behavior', () => {
 		);
 		await expect
 			.element(screen.getByTestId('draft'))
-			.toHaveTextContent('"marketing":false');
+			.toMatchTextContent('"marketing":false');
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		await screen.getByRole('button', { name: 'Select marketing' }).click();
 		await expect
 			.element(screen.getByTestId('draft'))
-			.toHaveTextContent('"marketing":false');
+			.toMatchTextContent('"marketing":false');
 		await screen.getByRole('button', { name: 'Change necessary' }).click();
 		await screen.getByRole('button', { name: 'Save draft' }).click();
 		expect(choice).toHaveBeenCalledTimes(1);
@@ -226,7 +226,7 @@ describe('policy presentation reference behavior', () => {
 		await screen.getByRole('button', { name: 'Save draft' }).click();
 		await expect
 			.element(screen.getByTestId('draft'))
-			.toHaveTextContent('"stale":true');
+			.toMatchTextContent('"stale":true');
 		expect(choice).not.toHaveBeenCalled();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
 	});

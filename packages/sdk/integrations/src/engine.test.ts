@@ -1,6 +1,13 @@
 import { subscribeToScriptDebugEvents } from '@inth/sdk/engine';
 import type { ScriptDebugEvent } from '@inth/sdk/engine';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	createCallbackInfo,

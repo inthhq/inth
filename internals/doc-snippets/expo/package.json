@@ -3,7 +3,7 @@
 	"private": true,
 	"description": "Type-checked Expo code for docs pages that no fixture runs, such as gating Expo Observe and the EAS PostHog setup.",
 	"scripts": {
-		"check-types": "tsc --noEmit"
+		"check-types": "tsrs --noEmit"
 	},
 	"dependencies": {
 		"@inth/react-native": "workspace:*",
@@ -16,6 +16,6 @@
 	"devDependencies": {
 		"@types/node": "25.5.0",
 		"@types/react": "~19.3.0",
-		"typescript": "7.0.2"
+		"tsrs": "catalog:"
 	}
 }

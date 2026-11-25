@@ -9,8 +9,8 @@ import type {
 	CompleteCommitInput,
 	CompleteCommitResult,
 } from '@inth/sdk/surface-actions/early-commit';
-import { afterEach, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { createOwnedRuntime } from '../lib/create-owned-runtime';

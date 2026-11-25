@@ -11,7 +11,7 @@ import {
 	createConsentRuntime,
 	defaultRuntimeModules,
 } from '@inth/sdk/runtime';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { testLocal, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';

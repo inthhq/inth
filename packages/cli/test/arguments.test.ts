@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 
@@ -61,7 +61,11 @@ describe("native CLI arguments", () => {
   it("accepts whoami with machine output and rejects positional arguments", () => {
     expect(
       parseArguments(["whoami", "--json", "--token", "inth_test"])
-    ).toMatchObject({ command: "whoami", json: true, token: "inth_test" });
+    ).toMatchObject({
+      command: "whoami",
+      json: true,
+      token: "inth_test",
+    });
     expect(() => parseArguments(["whoami", "extra"])).toThrow(
       "Usage: inth whoami"
     );
@@ -115,7 +119,10 @@ describe("native CLI arguments", () => {
     });
     expect(
       parseArguments(["login", "--no-browser", "--organization", "org-one"])
-    ).toMatchObject({ noBrowser: true, organization: "org-one" });
+    ).toMatchObject({
+      noBrowser: true,
+      organization: "org-one",
+    });
   });
   it("rejects missing or repeated option values without printing tokens", () => {
     expect(() => parseArguments(["login", "--token"])).toThrow(

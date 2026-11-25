@@ -1,5 +1,5 @@
 import { baseTranslations } from '@inth/sdk-translations/all';
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import {
 	buildConsentManifestFromConfig,
@@ -193,7 +193,11 @@ describe('canonical manifest contract', () => {
 		const built = await buildConsentManifestFromConfig({ policyRules: [rule] });
 		expect(
 			resolveInitFromManifest(built, { country: 'BR' }).policyResolution
-		).toEqual({ policy: null, status: 'no-match', version: 1 });
+		).toEqual({
+			policy: null,
+			status: 'no-match',
+			version: 1,
+		});
 		expect(resolveInitFromManifest(built, {}).policyResolution).toMatchObject({
 			reason: 'insufficient-inputs',
 			status: 'failed',
@@ -203,7 +207,10 @@ describe('canonical manifest contract', () => {
 		});
 		expect(
 			resolveInitFromManifest(invalid, { country: 'DE' }).policyResolution
-		).toMatchObject({ reason: 'invalid-configuration', status: 'failed' });
+		).toMatchObject({
+			reason: 'invalid-configuration',
+			status: 'failed',
+		});
 	});
 	test('never includes IAB authority outside a matched IAB result', async () => {
 		const config = { iab: { cmpId: 123, customVendors: [], enabled: true } };

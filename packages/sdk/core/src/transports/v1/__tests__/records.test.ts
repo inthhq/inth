@@ -8,7 +8,7 @@ import {
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordQuerySchema,
 } from '@inth/sdk-schema/v1';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	isConsentSaveRejection,

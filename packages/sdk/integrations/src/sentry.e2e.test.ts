@@ -4,7 +4,14 @@ import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { testing } from '@inth/sdk/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
 import {

@@ -25,7 +25,7 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 
 import { parse } from 'postcss';
 import type { AtRule, ChildNode, Container, Declaration } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { SURFACE_SHEETS } from '../../../scripts/stylesheet-parts';
 

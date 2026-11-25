@@ -9,7 +9,7 @@ import type { AddressInfo } from 'node:net';
 
 import { manifest } from '@inth/angular';
 import { clearManifestCache } from '@inth/sdk/server';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';
 import { createConsentRoute } from './consent-route.api';
@@ -332,7 +332,11 @@ describe('createConsentRoute', () => {
 				const { port } = server.address() as AddressInfo;
 				return await globalThis.fetch(
 					`http://127.0.0.1:${port}/api/inth/v1/consent/records`,
-					{ body: '{}', headers: forwarded, method: 'POST' }
+					{
+						body: '{}',
+						headers: forwarded,
+						method: 'POST',
+					}
 				);
 			} finally {
 				await new Promise((resolve) => {

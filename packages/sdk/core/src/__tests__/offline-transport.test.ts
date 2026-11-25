@@ -5,7 +5,7 @@
  * hosted mode, using local policy-pack resolution. Consumers can swap
  * transports without changes to the kernel or adapter.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { createConsentKernel, resolveLocalTranslations } from '../index';
 import { createConsentRuntime } from '../runtime';

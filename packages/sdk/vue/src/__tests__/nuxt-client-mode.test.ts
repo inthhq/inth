@@ -5,7 +5,7 @@ import type { ConsentMode } from '@inth/sdk/modes';
  */
 import { clientMode } from '@inth/sdk/runtime/client-mode';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Nuxt supplies this virtual module; importing the plugin only needs `defineNuxtPlugin`.
 vi.mock('#imports', () => ({ defineNuxtPlugin: (plugin: unknown) => plugin }));

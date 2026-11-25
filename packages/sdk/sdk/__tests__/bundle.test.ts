@@ -6,7 +6,7 @@
 import { spawnSync } from 'node:child_process';
 
 import { build } from 'esbuild';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { PACKAGE_ROOT } from '../scripts/assemble';
 
@@ -106,7 +106,10 @@ describe('one module instance', () => {
 		const result = spawnSync(
 			process.execPath,
 			['--input-type=module', '-e', script],
-			{ cwd: PACKAGE_ROOT, encoding: 'utf8' }
+			{
+				cwd: PACKAGE_ROOT,
+				encoding: 'utf8',
+			}
 		);
 		expect(result.stderr).toBe('');
 		expect(JSON.parse(result.stdout)).toEqual([true, true, true]);

@@ -1,4 +1,4 @@
-import type { ESTree } from "@oxlint/plugins";
+import type { ESTree } from "vite-plus/lint/plugins";
 
 import {
 	createTypeAliasEnvironment,
@@ -78,15 +78,8 @@ function typeReferenceName(type: ESTree.TSTypeReference): string | null {
 	return type.typeName.type === "Identifier" ? type.typeName.name : null;
 }
 
-function isBuiltIn(
-	name: string,
-	use: ESTree.Node,
-	environment: TypeEnvironment,
-): boolean {
-	return (
-		BUILT_INS.has(name) &&
-		!hasVisibleTypeBinding(name, use, environment.typeAliases)
-	);
+function isBuiltIn(name: string, use: ESTree.Node, environment: TypeEnvironment): boolean {
+	return BUILT_INS.has(name) && !hasVisibleTypeBinding(name, use, environment.typeAliases);
 }
 
 function isUnappliedReferenceTo(type: ESTree.TSType, name: string): boolean {
@@ -274,10 +267,7 @@ function dictionaryValueTypes(
 		return value === null ? [] : [{ type: value, substitutions }];
 	}
 
-	if (
-		(name === "Pick" || name === "Omit") &&
-		isBuiltIn(name, unwrapped, environment)
-	) {
+	if ((name === "Pick" || name === "Omit") && isBuiltIn(name, unwrapped, environment)) {
 		const source = unwrapped.typeArguments?.params[0];
 		return source === undefined
 			? []
@@ -445,12 +435,7 @@ function classifyAliasBroadTarget(
 	if (substitution !== undefined) {
 		return isUnappliedReferenceTo(substitution, name)
 			? null
-			: classifyAliasBroadTarget(
-					substitution,
-					environment,
-					substitutions,
-					resolvingAliases,
-				);
+			: classifyAliasBroadTarget(substitution, environment, substitutions, resolvingAliases);
 	}
 	if (TRANSPARENT_WRAPPERS.has(name) && isBuiltIn(name, unwrapped, environment)) {
 		const wrapped = unwrapped.typeArguments?.params[0];

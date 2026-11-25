@@ -10,7 +10,7 @@
  * same backend lists the same rows on both platforms.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { buildSnapshot } from '../../../__tests__/helpers/fake-native';
 import type { ConsentSnapshot } from '../../../protocol';

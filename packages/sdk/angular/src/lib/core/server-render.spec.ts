@@ -13,7 +13,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { testOptions } from '../../__tests__/test-local';
 import { CARD_CONTAINER } from '../prompt/card-container';

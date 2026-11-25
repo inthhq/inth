@@ -9,7 +9,7 @@ import {
 	closeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';

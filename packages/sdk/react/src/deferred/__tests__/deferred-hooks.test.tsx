@@ -7,7 +7,7 @@ import type { ConsentKernel, ConsentSnapshot, Script } from '@inth/sdk/engine';
 import { getScriptDiagnostics } from '@inth/sdk/modules/script-loader';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '../../__tests__/policy-fixture';

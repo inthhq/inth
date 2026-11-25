@@ -6,7 +6,7 @@
 
 import { StrictMode, useEffect, useLayoutEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	buildSnapshot,

@@ -5,7 +5,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/consent-context.model';
 import Fixture from './fixtures/surfaces-fixture.svelte';

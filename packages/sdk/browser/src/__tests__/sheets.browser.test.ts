@@ -8,7 +8,7 @@
  * so the frame's resource entries list exactly the modules this file's
  * pages asked for: the ESM build's on-demand chunks, served as source.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	$,

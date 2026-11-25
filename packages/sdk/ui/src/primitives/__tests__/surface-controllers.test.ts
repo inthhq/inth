@@ -3,7 +3,14 @@
  * geometry is checked through the pure reveal maths and stubbed rects.
  */
 import { JSDOM } from 'jsdom';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	afterMotion,

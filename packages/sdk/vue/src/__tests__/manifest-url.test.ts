@@ -8,7 +8,7 @@ import {
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h, inject } from 'vue';
 
 import { inth, manifest } from '../index';

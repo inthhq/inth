@@ -6,7 +6,7 @@
  * rejection of malformed input, storage reads on both paths, the SSR
  * cookie-header read, and independence from the consent envelope.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 import {
 	explicitChoice,
@@ -86,7 +86,10 @@ describe('vendor choice compact projection', () => {
 		});
 		expect(
 			decodeVendorChoice(JSON.parse(encodeVendorChoice(record)), NOW)
-		).toEqual({ ok: true, record });
+		).toEqual({
+			ok: true,
+			record,
+		});
 		expect(
 			decodeVendorChoice({ ...record, subject: { subjectId: '' } }, NOW).ok
 		).toBe(false);

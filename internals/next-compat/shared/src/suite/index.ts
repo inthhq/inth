@@ -11,7 +11,7 @@ import {
 	expect,
 	inject,
 	it,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import type { CompatProbeState } from '../probe';
 import { readRenderingMode } from './manifest';
@@ -141,7 +141,10 @@ const fetchManifestRequests = async function fetchManifestRequests(
  */
 const watchEmbedRequests = function watchEmbedRequests(
 	target: BrowserContext
-): { count: () => number; reset: () => void } {
+): {
+	count: () => number;
+	reset: () => void;
+} {
 	let requests = 0;
 	target.on('request', (request) => {
 		if (new URL(request.url()).pathname === GATED_EMBED_PATH) {
@@ -465,7 +468,9 @@ export const defineCompatSuite = function defineCompatSuite({
 						await page.waitForFunction(
 							() => document.cookie.includes('inth='),
 							undefined,
-							{ timeout: 10_000 }
+							{
+								timeout: 10_000,
+							}
 						);
 						await page.waitForTimeout(500);
 						expect(embed.count()).toBe(1);
@@ -495,7 +500,9 @@ export const defineCompatSuite = function defineCompatSuite({
 							await other.waitForFunction(
 								() => document.cookie.includes('inth='),
 								undefined,
-								{ timeout: 10_000 }
+								{
+									timeout: 10_000,
+								}
 							);
 							await other.reload({ waitUntil: 'load' });
 							await waitForInit(other);
@@ -530,7 +537,9 @@ export const defineCompatSuite = function defineCompatSuite({
 					await page.waitForFunction(
 						() => document.cookie.includes('inth='),
 						undefined,
-						{ timeout: 10_000 }
+						{
+							timeout: 10_000,
+						}
 					);
 
 					await page.reload({ waitUntil: 'domcontentloaded' });

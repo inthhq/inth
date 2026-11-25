@@ -18,7 +18,14 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';

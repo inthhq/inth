@@ -6,7 +6,7 @@
  * @vitest-environment jsdom
  */
 import { mount } from '@vue/test-utils';
-import { expect, onTestFinished, test, vi } from 'vitest';
+import { expect, onTestFinished, test, vi } from 'vite-plus/test';
 import { defineComponent, ref } from 'vue';
 
 import { minimalGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

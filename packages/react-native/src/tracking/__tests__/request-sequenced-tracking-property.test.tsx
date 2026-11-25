@@ -13,7 +13,7 @@
 
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	buildSnapshot,

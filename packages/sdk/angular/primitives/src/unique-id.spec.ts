@@ -13,7 +13,7 @@ import {
 	provideServerRendering,
 	renderApplication,
 } from '@angular/platform-server';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 import {
 	Collapsible,

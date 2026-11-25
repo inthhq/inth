@@ -8,7 +8,7 @@ import type { Script } from '@inth/sdk/engine';
 import { manifest } from '@inth/sdk/modes';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { optOutRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { InthProvider } from '../inth-provider';

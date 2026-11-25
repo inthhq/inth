@@ -3,7 +3,7 @@
  * optional categories. Processing is permitted by default, nothing prompts,
  * nothing is recorded, and no consent UI is owed.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	matchedResolution,

@@ -23,7 +23,7 @@ import { join } from 'node:path';
 
 import { parse } from 'postcss';
 import type { Rule } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const SOURCE_DIR = join(__dirname, '..', 'components');
 const CONTAINERS = ['consent-card', 'consent-banner', 'consent-drawer'];

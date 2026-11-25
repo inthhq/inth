@@ -83,7 +83,7 @@ export const createDeferredModule = <ModuleType,>(
 					return { default: select(module) };
 				})();
 				// oxlint-disable-next-line promise/prefer-await-to-then -- Register before React attaches its handler, then notify in the following microtask.
-				void selected.then(publish, publish);
+				void selected.catch(() => undefined).then(publish);
 				return selected;
 			});
 			// React 18 drops a `ref` passed to a function component; forward it

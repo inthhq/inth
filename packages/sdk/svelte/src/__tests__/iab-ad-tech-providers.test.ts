@@ -12,7 +12,7 @@ import { mount, unmount } from 'svelte';
 // The IAB components load this package lazily. Importing it here makes Vite
 // transform it while it collects this file, not inside `vi.waitFor`.
 import '@inth/sdk/iab';
-import { expect, onTestFinished, test, vi } from 'vitest';
+import { expect, onTestFinished, test, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab/iab-vendor-list.svelte';

@@ -142,7 +142,7 @@ export const connectConsentState = <StateType>(
 		};
 		// A failed vendor call must not prevent a subsequent withdrawal or retry.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Both outcomes must continue the same serialized queue.
-		const update = tail.then(reconcile, reconcile);
+		const update = tail.catch(() => undefined).then(reconcile);
 		tail = update;
 		void reportFailure(update);
 		return update;

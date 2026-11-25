@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Profiler, StrictMode, useEffect } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import {
@@ -67,11 +67,11 @@ describe('v3 react: selector hook basics', () => {
 			</Wrapper>
 		);
 
-		await expect.element(getByTestId('status')).toHaveTextContent('off');
+		await expect.element(getByTestId('status')).toMatchTextContent('off');
 
 		await getByTestId('toggle').click();
 
-		await expect.element(getByTestId('status')).toHaveTextContent('on');
+		await expect.element(getByTestId('status')).toMatchTextContent('on');
 	});
 
 	test('useConsents returns the full map', async () => {
@@ -104,13 +104,13 @@ describe('v3 react: selector hook basics', () => {
 
 		await expect
 			.element(getByTestId('dump'))
-			.toHaveTextContent('"marketing":false');
+			.toMatchTextContent('"marketing":false');
 
 		await getByTestId('toggle').click();
 
 		await expect
 			.element(getByTestId('dump'))
-			.toHaveTextContent('"marketing":true');
+			.toMatchTextContent('"marketing":true');
 	});
 
 	test('explicit choice appears after save', async () => {
@@ -143,9 +143,9 @@ describe('v3 react: selector hook basics', () => {
 			</Wrapper>
 		);
 
-		await expect.element(getByTestId('has')).toHaveTextContent('false');
+		await expect.element(getByTestId('has')).toMatchTextContent('false');
 		await getByTestId('save').click();
-		await expect.element(getByTestId('has')).toHaveTextContent('true');
+		await expect.element(getByTestId('has')).toMatchTextContent('true');
 	});
 
 	test('useOverrides updates on set.overrides', async () => {
@@ -176,9 +176,9 @@ describe('v3 react: selector hook basics', () => {
 			</Wrapper>
 		);
 
-		await expect.element(getByTestId('country')).toHaveTextContent('none');
+		await expect.element(getByTestId('country')).toMatchTextContent('none');
 		await getByTestId('set-country').click();
-		await expect.element(getByTestId('country')).toHaveTextContent('DE');
+		await expect.element(getByTestId('country')).toMatchTextContent('DE');
 	});
 });
 
@@ -345,13 +345,13 @@ describe('v3 react: stale-closure resolved (issue #604)', () => {
 			</StrictMode>
 		);
 
-		await expect.element(getByTestId('value')).toHaveTextContent(/^off\|/u);
+		await expect.element(getByTestId('value')).toMatchTextContent(/^off\|/u);
 
 		await getByTestId('on').click();
-		await expect.element(getByTestId('value')).toHaveTextContent(/^on\|/u);
+		await expect.element(getByTestId('value')).toMatchTextContent(/^on\|/u);
 
 		await getByTestId('off').click();
-		await expect.element(getByTestId('value')).toHaveTextContent(/^off\|/u);
+		await expect.element(getByTestId('value')).toMatchTextContent(/^off\|/u);
 	});
 });
 
@@ -526,7 +526,7 @@ describe('v3 react: action hooks', () => {
 		);
 
 		await getByTestId('toggle').click();
-		await expect.element(getByTestId('measurement')).toHaveTextContent('true');
+		await expect.element(getByTestId('measurement')).toMatchTextContent('true');
 
 		// Reference stability across re-renders caused by unrelated state.
 		expect(references[0]).toBe(references[1]);
@@ -564,9 +564,9 @@ describe('v3 react: action hooks', () => {
 			</Wrapper>
 		);
 
-		await expect.element(getByTestId('has')).toHaveTextContent('false');
+		await expect.element(getByTestId('has')).toMatchTextContent('false');
 		await getByTestId('save').click();
-		await expect.element(getByTestId('has')).toHaveTextContent('true');
-		await expect.element(getByTestId('marketing')).toHaveTextContent('true');
+		await expect.element(getByTestId('has')).toMatchTextContent('true');
+		await expect.element(getByTestId('marketing')).toMatchTextContent('true');
 	});
 });

@@ -11,7 +11,7 @@ import type { ConsentPresentation, KernelConfig } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import type { ConsentManagerOptions } from '../lib/manager-options.model';

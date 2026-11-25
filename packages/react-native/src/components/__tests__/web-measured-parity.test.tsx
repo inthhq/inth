@@ -20,7 +20,7 @@
  * - A web action is 35.5 tall. The 44pt target is a touch requirement, not a
  *   drawing requirement, so it lives on the hit area.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	resetNativeStub,

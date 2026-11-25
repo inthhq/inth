@@ -861,13 +861,13 @@
 	"scripts": {
 		"build": "node scripts/assemble.ts",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/sdk",
-		"check-types": "tsc --noEmit",
+		"check-types": "tsrs --noEmit",
 		"dev": "node scripts/assemble.ts --watch",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./scripts ./__tests__",
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./scripts ./__tests__",
 		"manifest": "node scripts/assemble.ts manifest",
 		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
-		"test": "vitest run"
+		"test": "vp test run"
 	},
 	"dependencies": {
 		"@iabtechlabtcf/core": "^1.5.22",
@@ -878,7 +878,7 @@
 		"@inth/typescript-config": "workspace:*",
 		"@types/node": "25.5.0",
 		"esbuild": "^0.28.1",
-		"typescript": "7.0.2",
-		"vitest": "4.1.10"
+		"tsrs": "catalog:",
+		"vite-plus": "catalog:"
 	}
 }

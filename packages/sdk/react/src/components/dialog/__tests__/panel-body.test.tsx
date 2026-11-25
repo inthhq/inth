@@ -17,9 +17,16 @@ import {
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import { useEffect } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import { page, userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page, userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-provider';
@@ -392,7 +399,7 @@ describe('US first view', () => {
 	test('[LAW-01][LAY-04][LAW-04] rights first, the one-line intro, and only Done', async () => {
 		await mount();
 		await openDialog();
-		expect(must('consent-dialog-intro')).toHaveTextContent(
+		expect(must('consent-dialog-intro')).toMatchTextContent(
 			'Your choices apply right away.'
 		);
 		const row = must('consent-dialog-rights-row-sale');
@@ -405,7 +412,7 @@ describe('US first view', () => {
 			'button'
 		);
 		expect(footerButtons).toHaveLength(1);
-		expect(must('consent-dialog-done')).toHaveTextContent('Done');
+		expect(must('consent-dialog-done')).toMatchTextContent('Done');
 		expect(must('consent-dialog-legal-link-privacyPolicy')).toHaveAttribute(
 			'href',
 			'/privacy'
@@ -421,7 +428,7 @@ describe('US first view', () => {
 		await waitFor(() => expect(status()).toMatch(/^Opted out of .*Saved\./u));
 		// Done keeps its node and its label (FOC-06, SR-07).
 		expect(must('consent-dialog-done')).toBe(done);
-		expect(done).toHaveTextContent('Done');
+		expect(done).toMatchTextContent('Done');
 		expect(must('consent-dialog-saved-cue')).toBeInTheDocument();
 
 		must('consent-dialog-right-option-sale-allow').click();
@@ -474,14 +481,14 @@ describe('receipt', () => {
 		must('consent-dialog-right-option-sale-protect').click();
 		await waitFor(() => expect(receipt).toHaveAttribute('data-open', 'true'));
 		expect(must('consent-dialog-receipt')).toBe(receipt);
-		expect(receipt).toHaveTextContent(/Saved for this browser · just now/u);
+		expect(receipt).toMatchTextContent(/Saved for this browser · just now/u);
 		const toggle = must('consent-dialog-receipt-toggle');
 		expect(toggle).toHaveAttribute('aria-expanded', 'false');
 		toggle.click();
 		await waitFor(() =>
 			expect(toggle).toHaveAttribute('aria-expanded', 'true')
 		);
-		expect(must('consent-dialog-receipt-details')).toHaveTextContent(
+		expect(must('consent-dialog-receipt-details')).toMatchTextContent(
 			/Applies to this browser\./u
 		);
 	});
@@ -530,10 +537,10 @@ describe('GPC', () => {
 		expect(
 			must('consent-dialog-right-option-sale-protect')
 		).not.toHaveAttribute('aria-disabled');
-		expect(must('consent-dialog-rights-row-sale')).toHaveTextContent(
+		expect(must('consent-dialog-rights-row-sale')).toMatchTextContent(
 			/Global Privacy Control signal/u
 		);
-		expect(must('consent-dialog-receipt')).toHaveTextContent(
+		expect(must('consent-dialog-receipt')).toMatchTextContent(
 			'Honoring Global Privacy Control from this browser'
 		);
 	});
@@ -544,16 +551,16 @@ describe('preferences', () => {
 		await mount();
 		await openDialog();
 		const row = must('consent-dialog-preferences-row');
-		expect(row).toHaveTextContent(/Preferences/u);
+		expect(row).toMatchTextContent(/Preferences/u);
 		expect(row).toHaveAttribute('aria-expanded', 'false');
 		expect(row).not.toHaveAttribute('aria-haspopup');
 		row.click();
 		await waitFor(() => expect(row).toHaveAttribute('aria-expanded', 'true'));
 		expect($('consent-dialog-category-switch-marketing')).toBeNull();
 		const advertising = must('consent-dialog-advertising-row');
-		expect(advertising).toHaveTextContent(/On$/u);
+		expect(advertising).toMatchTextContent(/On$/u);
 		must('consent-dialog-right-option-sale-protect').click();
-		await waitFor(() => expect(advertising).toHaveTextContent(/Off$/u));
+		await waitFor(() => expect(advertising).toMatchTextContent(/Off$/u));
 	});
 
 	test('[LAW-04][RCPT-02][CAT-04] a US switch applies at once and keeps the receipt date', async () => {
@@ -625,10 +632,10 @@ describe('preferences under a held opt-out', () => {
 		await accountHeld();
 		await openDialog();
 		const row = must('consent-dialog-rights-row-sale');
-		expect(row).toHaveTextContent(
+		expect(row).toMatchTextContent(
 			'Your account has opted out, and you can change this after signing in.'
 		);
-		expect(row).not.toHaveTextContent('Global Privacy Control');
+		expect(row).not.toMatchTextContent('Global Privacy Control');
 		// Signed out, only the account's owner can lift it.
 		expect(must('consent-dialog-right-option-sale-allow')).toHaveAttribute(
 			'aria-disabled',
@@ -644,7 +651,7 @@ describe('preferences under a held opt-out', () => {
 		await openDialog();
 		const allow = must('consent-dialog-right-option-sale-allow');
 		expect(allow).not.toHaveAttribute('aria-disabled');
-		expect(must('consent-dialog-rights-row-sale')).not.toHaveTextContent(
+		expect(must('consent-dialog-rights-row-sale')).not.toMatchTextContent(
 			'Global Privacy Control'
 		);
 		// Two steps, as for any opt back in (11 CCR §7028(a)).
@@ -716,7 +723,7 @@ describe('vendors:', () => {
 	test('[CAT-05][CAT-09][CAT-07] the trigger names itself from its text and opens a boxed table', async () => {
 		const trigger = await openAnalytics();
 		expect(trigger.textContent).toMatch(/^View 2 vendors for Analytics/u);
-		expect(trigger).toHaveTextContent(/0 on/u);
+		expect(trigger).toMatchTextContent(/0 on/u);
 		expect(trigger).toHaveAttribute('aria-expanded', 'false');
 		trigger.click();
 		await waitFor(() =>
@@ -799,7 +806,7 @@ describe('EU', () => {
 	test('[EU-01][EU-03] Reject and Accept are equal; Save waits for an effective change', async () => {
 		await mount({ region: 'eu' });
 		await openDialog();
-		expect(must('consent-dialog-title')).toHaveTextContent('Privacy settings');
+		expect(must('consent-dialog-title')).toMatchTextContent('Privacy settings');
 		const reject = must('consent-dialog-reject-all');
 		const accept = must('consent-dialog-accept-all');
 		expect(reject.className).toBe(accept.className);
@@ -883,7 +890,7 @@ describe('phone sheets', () => {
 			expect(document.activeElement?.closest('[data-testid]')).toBe(sheet)
 		);
 		expect(sheet).toHaveAttribute('aria-modal', 'true');
-		expect(sheet).toHaveTextContent(
+		expect(sheet).toMatchTextContent(
 			'Changes apply when you save in Privacy settings.'
 		);
 		expect(card()).not.toHaveAttribute('aria-modal');
@@ -925,7 +932,7 @@ describe('phone sheets', () => {
 		expect(row).toHaveAttribute('aria-haspopup', 'dialog');
 		row.click();
 		const sheet = await waitFor(() => must('consent-dialog-sheet'));
-		expect(sheet).toHaveTextContent('Saved automatically');
+		expect(sheet).toMatchTextContent('Saved automatically');
 		expect(
 			sheet.querySelector('[aria-label="Close preferences"]')
 		).not.toBeNull();
@@ -985,7 +992,7 @@ describe('wave B round 1', () => {
 		const receipt = await waitFor(() => must('consent-dialog-receipt'));
 		await waitFor(() => expect(document.activeElement).toBe(receipt));
 		expect(receipt).toHaveAttribute('data-open', 'true');
-		expect(receipt).toHaveTextContent(/opted out/iu);
+		expect(receipt).toMatchTextContent(/opted out/iu);
 		expect($('opt-out-confirmation-card')).toBeNull();
 		expect(probe.snapshot?.optOut).not.toBeNull();
 		// A later open starts on the title again.
@@ -1015,7 +1022,7 @@ describe('wave B round 1', () => {
 	test('[BNR-05] Your Privacy Choices stays a way back in under US opt-in, without the opt-out icon', async () => {
 		await mount({ region: 'us-opt-in' });
 		const choices = await waitFor(() => must('privacy-choices-link'));
-		expect(choices).toHaveTextContent('Your Privacy Choices');
+		expect(choices).toMatchTextContent('Your Privacy Choices');
 		expect(choices.querySelector('svg')).toBeNull();
 		expect(choices).not.toHaveAttribute('data-opt-out-variant');
 		await openDialog();

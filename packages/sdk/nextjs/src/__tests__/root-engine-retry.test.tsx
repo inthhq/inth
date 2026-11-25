@@ -8,7 +8,7 @@ import { InthProvider as ReactProvider } from '@inth/react/provider';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentState } from '../consent-client-options.model';
 import type * as RootModule from '../inth-provider';

@@ -1,6 +1,6 @@
 import type { EventDispatcher } from '@inth/sdk/events';
 import { render } from '@testing-library/svelte';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentContextValue } from '../lib/consent-context.model';
 import Fixture from './fixtures/event-dispatcher-fixture.svelte';

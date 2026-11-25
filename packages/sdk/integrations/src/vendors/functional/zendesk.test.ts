@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { isArgumentsPayload, toArgs } from '../../__tests__/e2e-test-utils';
 import {

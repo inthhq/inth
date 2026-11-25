@@ -96,7 +96,7 @@ See [publishing with Tegami](../.tegami/README.md) for how versions and releases
 
 ## Code style
 
-Oxlint and Oxfmt enforce style. The CLI uses `oxlint.config.ts` and `oxfmt.config.ts`; the SDK uses `oxlint.sdk.config.ts` and `oxfmt.sdk.config.ts`.
+Vite+ (Oxlint and Oxfmt) enforces style. The CLI uses `vite.config.ts`; the SDK uses `oxlint.sdk.config.ts` and `oxfmt.sdk.config.ts`.
 
 ## Security
 

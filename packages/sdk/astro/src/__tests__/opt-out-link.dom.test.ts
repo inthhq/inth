@@ -5,7 +5,7 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '@inth/sdk/runtime/page-globals';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';

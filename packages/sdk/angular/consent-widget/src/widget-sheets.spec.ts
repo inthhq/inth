@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { PARTS_SHEETS } from '../../src/lib/core/consent-styles';
 import { WIDGET_SHEETS } from './widget-sheets';

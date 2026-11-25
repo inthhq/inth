@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { readIntent } from './read-intent';
 
@@ -10,7 +10,10 @@ describe('readIntent', () => {
 		});
 		expect(
 			readIntent('{"action":"explicit","consents":{"measurement":true}}')
-		).toEqual({ action: 'explicit', consents: { measurement: true } });
+		).toEqual({
+			action: 'explicit',
+			consents: { measurement: true },
+		});
 		// Both native decoders accept an empty map, as a save that changed nothing.
 		expect(readIntent('{"action":"explicit","consents":{}}')).toEqual({
 			action: 'explicit',

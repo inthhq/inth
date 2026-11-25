@@ -7,7 +7,7 @@
  * keeps the consent UI's parts out of the engine, and keeps per-kernel
  * state out of `inth.choices.js`.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { modeBundleBoundary } from '../../scripts/mode-bundle-boundary';
 

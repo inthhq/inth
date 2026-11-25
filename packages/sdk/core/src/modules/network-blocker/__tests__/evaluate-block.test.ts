@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { choiceRecords } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';

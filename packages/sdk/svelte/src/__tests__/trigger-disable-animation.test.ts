@@ -1,7 +1,7 @@
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { render, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import Fixture from './fixtures/panel-trigger-fixture.svelte';

@@ -368,13 +368,13 @@ await runWithCleanup(async () => {
     join(directory, "credentials.lock"),
     () => controller.signal.throwIfAborted()
   );
+  const abortAfterDelay = async (): Promise<void> => {
+    await setTimeout(50);
+    controller.abort();
+  };
   await store.exclusive(async () => {
     const started = Date.now();
-    const cancel = async (): Promise<void> => {
-      await setTimeout(50);
-      controller.abort();
-    };
-    const cancellation = cancel();
+    const cancellation = abortAfterDelay();
     let aborted = false;
     try {
       await waitingStore.exclusive(async () => {

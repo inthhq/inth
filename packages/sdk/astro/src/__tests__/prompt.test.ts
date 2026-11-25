@@ -6,7 +6,7 @@
 
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { canDeferEngine } from '../banner/deferred-boot.model';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';

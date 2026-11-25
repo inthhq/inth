@@ -1,6 +1,6 @@
 import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 import { useContext, useEffect } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';

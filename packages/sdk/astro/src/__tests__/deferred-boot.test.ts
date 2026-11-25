@@ -1,6 +1,6 @@
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { canDeferEngine } from '../banner/deferred-boot.model';
 import { CONSENT_BOOT_ATTRIBUTE } from '../browser/consent-boot.model';

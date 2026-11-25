@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	captureErrorMessage,
@@ -92,7 +92,10 @@ const StylesProbe = (props: {
 	readonly theme?: ConsentTheme;
 }): ReactNode => {
 	const { controlMinHeight, fontScale, maxBodyHeight, parts, scheme } =
-		useConsentStyles({ styles: props.styles, theme: props.theme });
+		useConsentStyles({
+			styles: props.styles,
+			theme: props.theme,
+		});
 	const facts: ProbeFacts = {
 		border: parts.sheet.borderRadius ?? 0,
 		controlMinHeight,
@@ -444,7 +447,12 @@ describe('theme', () => {
 		);
 
 		expect(hitSlop(requireRole(tall.container(), 'button', 'Werbung'))).toEqual(
-			{ bottom: 0, left: 0, right: 0, top: 0 }
+			{
+				bottom: 0,
+				left: 0,
+				right: 0,
+				top: 0,
+			}
 		);
 
 		tall.unmount();

@@ -7,7 +7,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const RUNTIME_DIR = join(__dirname, '..', 'runtime');
 const CLASS_MAP_IMPORT =

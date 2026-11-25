@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import { parseConsentPresenterOutcome as native } from '../presenter';
 import { parseConsentPresenterOutcome as web } from '../presenter.web';

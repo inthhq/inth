@@ -1,13 +1,10 @@
-import type { ESTree } from "@oxlint/plugins";
+import type { ESTree } from "vite-plus/lint/plugins";
 
 type VisitorKeys = Readonly<Record<string, readonly string[]>>;
 
 function isNode(value: unknown): value is ESTree.Node {
 	return (
-		typeof value === "object" &&
-		value !== null &&
-		"type" in value &&
-		typeof value.type === "string"
+		typeof value === "object" && value !== null && "type" in value && typeof value.type === "string"
 	);
 }
 

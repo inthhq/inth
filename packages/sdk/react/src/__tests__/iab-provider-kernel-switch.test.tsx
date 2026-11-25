@@ -11,7 +11,7 @@ import {
 	useState,
 } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
@@ -255,7 +255,9 @@ describe('IABProvider when the context kernel changes', () => {
 			// (b) A save still addressed to the first kernel, after its handle
 			// was disposed, is aborted rather than recorded anywhere.
 			await expect(staleRun?.((handle) => handle.save())).rejects.toMatchObject(
-				{ name: 'AbortError' }
+				{
+					name: 'AbortError',
+				}
 			);
 			expect(handleOf(first).save).not.toHaveBeenCalled();
 			expect(handleOf(second).save).not.toHaveBeenCalled();
@@ -269,7 +271,10 @@ describe('IABProvider when the context kernel changes', () => {
 		const first = createKernel();
 		const second = createKernel();
 		let latest: { kernel: ConsentKernel | null; state: ReactIABState | null } =
-			{ kernel: null, state: null };
+			{
+				kernel: null,
+				state: null,
+			};
 		const onState = (
 			kernel: ConsentKernel | null,
 			state: ReactIABState | null

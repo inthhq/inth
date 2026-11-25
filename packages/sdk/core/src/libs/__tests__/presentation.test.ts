@@ -1,5 +1,5 @@
 import { normalizePolicyRule } from '@inth/sdk-schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { resolveConsentPresentation } from '../policy-actions';
 import type {

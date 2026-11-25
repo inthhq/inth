@@ -5,9 +5,9 @@ import type {
 } from '@inth/sdk/engine';
 import { policyRulePresets } from '@inth/sdk/engine';
 import { createRef, useEffect } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { transportMode } from '~/__tests__/fixtures/transport-mode';
@@ -142,7 +142,7 @@ describe('PrivacyChoicesLink', () => {
 			expect(activeKernel?.getSnapshot().resolution.status).toBe('matched')
 		);
 		await vi.waitFor(() =>
-			expect(query('privacy-choices-link')).toHaveTextContent(
+			expect(query('privacy-choices-link')).toMatchTextContent(
 				'Your Privacy Choices'
 			)
 		);

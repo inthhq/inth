@@ -9,7 +9,7 @@ import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 	policyRulePresets,
 } from '@inth/sdk-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import type { ConsentClient, ConsentUIOptions } from '../consent-client.model';
 import { createTestingConsentClient } from '../testing-global';

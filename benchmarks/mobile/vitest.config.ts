@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 
 /**
  * `react-native` points at the bench stub for the same reason `tsconfig.json`

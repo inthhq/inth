@@ -1,6 +1,6 @@
 import { clearManifestCache } from '@inth/sdk/server';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
 import { createConsentRoute } from '../create-consent-route';
@@ -89,7 +89,10 @@ describe('inthHandle', () => {
 		expect(locals.config.initialRecords?.choice).not.toBeNull();
 		expect(
 			locals.config.initialRecords?.choice?.categories.marketing
-		).toMatchObject({ basis: { kind: 'legacy-v2' }, value: true });
+		).toMatchObject({
+			basis: { kind: 'legacy-v2' },
+			value: true,
+		});
 	});
 
 	test('records no choice when there is no request context', async () => {

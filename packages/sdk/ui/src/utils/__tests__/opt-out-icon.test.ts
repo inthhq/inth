@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { CPPA_OPT_OUT_ICON, cppaOptOutIconSvg } from '../opt-out-icon';
 

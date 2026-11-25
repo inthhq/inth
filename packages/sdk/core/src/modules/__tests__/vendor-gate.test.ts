@@ -4,7 +4,7 @@
  * granted; IAB mode ignores the vendor slug; category evaluation still runs
  * first so config errors throw.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	choiceRecords,

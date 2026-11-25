@@ -6,7 +6,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { act } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 (
 	globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }

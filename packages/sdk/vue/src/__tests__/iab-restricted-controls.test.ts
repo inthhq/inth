@@ -13,7 +13,7 @@ import {
 } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 import { ref } from 'vue';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

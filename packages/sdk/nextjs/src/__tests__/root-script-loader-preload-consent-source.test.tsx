@@ -12,7 +12,7 @@ import type { Script } from '@inth/sdk/modules/script-loader';
 import type { ExternalConsentSource } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';

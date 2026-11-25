@@ -8,7 +8,7 @@
 import type { KernelConfig } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { StrictMode, act } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { ConsentBanner, InthProvider } from '../index';
 import type { InthProviderOptions } from '../index';

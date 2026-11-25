@@ -12,7 +12,7 @@ import {
 } from '@inth/sdk/schema/types';
 import type { InitOutput } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
-import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
+import { afterEach, expect, onTestFinished, test, vi } from 'vite-plus/test';
 import { createApp, ref } from 'vue';
 import type { Component } from 'vue';
 
@@ -55,7 +55,9 @@ test('lists each provider with its privacy policy and a consent switch', () => {
 	expect(row.get('a').attributes('href')).toBe('https://ads.example/privacy');
 	expect(
 		wrapper.get('#ad-tech-provider-2577 [role="switch"]').attributes()
-	).toMatchObject({ 'aria-checked': 'true' });
+	).toMatchObject({
+		'aria-checked': 'true',
+	});
 });
 
 test('hides providers while a vendor from the Purposes tab is selected', () => {

@@ -7,7 +7,7 @@ import {
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
 import { hosted } from '@inth/sdk/transports';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import { manifest } from '../runtime/modes.model';

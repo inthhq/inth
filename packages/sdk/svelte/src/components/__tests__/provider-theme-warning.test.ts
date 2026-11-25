@@ -5,8 +5,15 @@
  */
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';

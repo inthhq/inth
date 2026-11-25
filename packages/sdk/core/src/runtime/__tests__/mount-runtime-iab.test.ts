@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentKernel } from '../../kernel';
 import type { ConsentRuntimeIABFactory } from '../consent-runtime.model';

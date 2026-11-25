@@ -6,7 +6,7 @@ import { act, StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test } from 'vite-plus/test';
 
 import { useConsentBootPlan } from '../use-consent-boot-plan';
 

@@ -5,7 +5,7 @@
  * snapshot, with the harness's own work kept out of the span.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { loadBudgets } from '../budgets';
 import { measureColdStart } from '../measure/cold-start';

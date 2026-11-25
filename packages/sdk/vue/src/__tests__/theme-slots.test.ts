@@ -12,7 +12,7 @@ import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';

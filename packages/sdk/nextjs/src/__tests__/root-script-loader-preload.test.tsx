@@ -11,7 +11,7 @@ import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
 import type { ConsentState } from '../consent-client-options.model';

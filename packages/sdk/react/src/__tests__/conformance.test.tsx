@@ -24,7 +24,7 @@ import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { ConsentDialog } from '~/aggregate-components';
 import { ConsentWidget } from '~/components/preferences';

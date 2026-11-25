@@ -2,7 +2,7 @@
  * The per-kernel surface session store: it follows the kernel without a
  * renderer's help.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

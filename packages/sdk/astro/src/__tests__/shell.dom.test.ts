@@ -1,8 +1,15 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import {
 	EARLY_TAP_ROOT,

@@ -1,6 +1,6 @@
 import type { Theme as NuxtTheme } from '@inth/vue';
 import { defineTheme as defineNuxtTheme } from '@inth/vue';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 import type { Theme } from '../index';
 import { defineTheme } from '../index';

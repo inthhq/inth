@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { validateExplicitChoice } from '../consent-record-validation.model';
 import { recordCategoryPatch } from '../consent-record.model';

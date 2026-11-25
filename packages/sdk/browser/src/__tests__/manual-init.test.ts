@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import type { MockInstance } from 'vite-plus/test';
 
 import type { ConsentClientOptions } from '../consent-client.model';
 import { autoInit, createGlobal, installGlobal } from '../global';

@@ -3,13 +3,13 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"check-types": "tsc --noEmit"
+		"check-types": "tsrs --noEmit"
 	},
 	"dependencies": {
 		"@inth/integrations": "workspace:*",
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
-		"typescript": "6.0.3"
+		"tsrs": "catalog:"
 	}
 }

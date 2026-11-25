@@ -4,7 +4,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 import type { ComponentPublicInstance } from 'vue';
 
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';

@@ -8,7 +8,14 @@
  * voiding, subject identity preservation, and reload durability.
  */
 import { policyRulePresets } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	DAY,

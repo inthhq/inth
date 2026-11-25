@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentGate } from '../components/consent-gate';
@@ -225,7 +225,7 @@ test('a site that declares nothing shows only Strictly necessary, and any banner
 		).toHaveLength(0);
 		expect(
 			document.querySelector('[data-testid="consent-dialog-category-group"]')
-		).toHaveTextContent('Strictly Necessary');
+		).toMatchTextContent('Strictly Necessary');
 		kernel.set.activeUI('banner');
 		await vi.waitFor(() => expect(banner()).not.toBeNull());
 		document

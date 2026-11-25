@@ -6,7 +6,14 @@
  * found again after another tab moved it, and which answers move a visitor.
  * Two tabs are two kernels on one in-memory store.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import type {
 	KernelConfig,

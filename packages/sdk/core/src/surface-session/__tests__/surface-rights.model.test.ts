@@ -3,7 +3,7 @@
  * kernel already enforces the rule.
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

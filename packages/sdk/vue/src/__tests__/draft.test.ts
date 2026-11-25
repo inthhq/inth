@@ -11,7 +11,7 @@ import {
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
 import type { PolicyResolution } from '@inth/sdk/schema/types';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 
 import { consentConfigKey } from '../runtime/composables/config';

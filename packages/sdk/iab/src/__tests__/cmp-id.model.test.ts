@@ -10,7 +10,7 @@
  */
 
 import { createConsentKernel } from '@inth/sdk-core';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 import { createIAB, iab } from '../index';
 import { isValidCmpId, MAX_CMP_ID, MIN_CMP_ID } from '../tcf/cmp-id.model';

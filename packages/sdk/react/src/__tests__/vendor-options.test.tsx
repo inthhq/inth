@@ -6,9 +6,9 @@
  */
 import type { Script, Vendor } from '@inth/sdk/engine';
 import { useContext, useEffect, useState } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
@@ -740,7 +740,10 @@ describe('provider vendor options', () => {
 			JSON.parse(
 				document.querySelector('[data-testid="category"]')?.textContent ??
 					'null'
-			) as { allowed: boolean; category?: unknown } | null;
+			) as {
+				allowed: boolean;
+				category?: unknown;
+			} | null;
 		render(<Host />);
 		await vi.waitFor(() => {
 			expect(read()?.allowed).toBe(true);

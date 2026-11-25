@@ -4,7 +4,7 @@
  * the request's own cookies.
  */
 import { NextRequest } from 'next/server.js';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { inthProxy } from '../proxy';
 

@@ -7,7 +7,7 @@ import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const fixtureDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const modulesDir = join(fixtureDir, 'node_modules');

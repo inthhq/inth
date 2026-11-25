@@ -7,7 +7,7 @@
  * granted, and a subject who refused all of them is finished.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import type { TrackingRequestPayload } from '../../protocol';
 import {

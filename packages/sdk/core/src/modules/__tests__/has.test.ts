@@ -7,7 +7,7 @@
  * 3. `evaluateConsent` picks IAB when model==='iab' AND target has IAB fields,
  *    otherwise falls back to category-based has.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { choiceRecords } from '../../__tests__/fixtures/kernel-fixtures';
 import type {

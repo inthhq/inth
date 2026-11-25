@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	appendInitParams,
@@ -90,7 +90,10 @@ describe('init query parameters', () => {
 		});
 		expect(
 			parseExperimentHeader(headers.get(CONSENT_EXPERIMENT_HEADER))
-		).toEqual({ arm: 'a=b', id: 'banner shape' });
+		).toEqual({
+			arm: 'a=b',
+			id: 'banner shape',
+		});
 	});
 
 	it('lets a parameter win over its header and keeps the other headers', () => {

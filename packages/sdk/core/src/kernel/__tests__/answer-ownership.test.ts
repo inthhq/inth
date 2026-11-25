@@ -11,7 +11,7 @@
  *   belong to the earlier anonymous visit and must not be applied.
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	matchedResolution,

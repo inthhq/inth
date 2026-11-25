@@ -12,7 +12,14 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 import { createSSRApp, defineComponent } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 

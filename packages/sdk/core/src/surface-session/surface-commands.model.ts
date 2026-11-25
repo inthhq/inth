@@ -243,7 +243,7 @@ export const pressSaleRight = function pressSaleRight(
 		} else {
 			// A deferred kernel records once its engine settles, before the
 			// reload, which waits for the command to complete.
-			// oxlint-disable-next-line promise/prefer-await-to-then -- The press must not wait on the network.
+			// oxlint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch -- The press must not wait on the network.
 			void result.then(
 				(recorded) => {
 					const settled = kernel.getSnapshot();

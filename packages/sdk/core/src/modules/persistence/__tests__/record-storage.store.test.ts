@@ -3,7 +3,14 @@
  * structural only, reads never write, and v3 writes round-trip through
  * both stores. See c15t/c15t#1025.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { makePolicy } from '../../../consent-record/__tests__/fixtures';
@@ -597,10 +604,16 @@ describe('records c15t stored', () => {
 		expect(marketingOf(selection.selected)).toBe(true);
 		expect(
 			readStoredNoticeDismissalFromCookieHeader(header, undefined, NOW)
-		).toMatchObject({ ok: true, record: { fingerprint: 'notice-fp-1' } });
+		).toMatchObject({
+			ok: true,
+			record: { fingerprint: 'notice-fp-1' },
+		});
 		expect(
 			readStoredVendorChoiceFromCookieHeader(header, undefined, NOW)
-		).toMatchObject({ ok: true, record: { denied: ['acme'] } });
+		).toMatchObject({
+			ok: true,
+			record: { denied: ['acme'] },
+		});
 	});
 
 	it('lose to an Inth record, wherever each is stored', () => {

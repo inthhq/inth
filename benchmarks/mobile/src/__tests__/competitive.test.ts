@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 const pythonTimeoutMs = 120_000;
 const testTimeoutMs = pythonTimeoutMs + 5_000;

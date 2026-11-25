@@ -5,7 +5,14 @@
  */
 import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
 import type {
@@ -160,7 +167,9 @@ describe('clientMode()', () => {
 		expect(() =>
 			clientMode(
 				manifest({ resolve: 'browser', snapshot: everywhereManifest }),
-				{ routePrefix: '/api/inth' }
+				{
+					routePrefix: '/api/inth',
+				}
 			)
 		).toThrow('`projectUrl` is required');
 	});

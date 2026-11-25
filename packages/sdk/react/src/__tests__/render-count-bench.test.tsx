@@ -3,7 +3,7 @@
  * re-render. The other 8 stay quiet.
  */
 import { Profiler } from 'react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider, useConsent, useSaveConsents } from '../index';

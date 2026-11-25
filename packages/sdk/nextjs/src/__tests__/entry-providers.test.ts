@@ -1,5 +1,5 @@
 import { InthProvider as ReactInthProvider } from '@inth/react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import packageJson from '../../package.json';
 import * as entry from '../index';

@@ -26,7 +26,14 @@ import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import { clearManifestCache } from '@inth/sdk/server';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { hosted } from '@inth/sdk/transports';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { testing } from '../../testing/src/testing';
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';

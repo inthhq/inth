@@ -6,7 +6,7 @@
 import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import { render, waitFor } from '@testing-library/svelte';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';

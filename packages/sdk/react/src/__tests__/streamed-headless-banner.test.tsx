@@ -8,7 +8,7 @@ import type { KernelConfig } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { act } from 'react';
 import { renderToString } from 'react-dom/server';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { StreamedConsentSurface, useHeadlessConsentUI } from '../headless';
 import { InthProvider } from '../index';

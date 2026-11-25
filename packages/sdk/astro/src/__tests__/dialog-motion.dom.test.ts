@@ -7,7 +7,7 @@
  * `svelte` to its server build, where `mount()` throws.
  */
 
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';

@@ -6,7 +6,7 @@
 import { runInNewContext } from 'node:vm';
 
 import * as v from 'valibot';
-import { assert, describe, expectTypeOf, it, vi } from 'vitest';
+import { assert, describe, expectTypeOf, it, vi } from 'vite-plus/test';
 
 import document from '../../schema/vendor/backend-openapi/openapi.json' with { type: 'json' };
 import { hashDocument, Inth, InthError } from './inth-client.api';

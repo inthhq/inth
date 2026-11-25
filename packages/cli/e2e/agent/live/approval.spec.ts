@@ -21,6 +21,21 @@ agentEnvironment(api, dashboard, "agent");
 const otpLog = logPath;
 const origin = dashboard;
 
+const otp = async (offset: number) => {
+  let code = "";
+  await expect
+    .poll(async () => {
+      const log = await readFile(otpLog, "utf-8");
+      code =
+        [
+          ...log.slice(offset).matchAll(/\[local auth\] OTP: (?<code>\d{6})/gu),
+        ].at(-1)?.[1] ?? "";
+      return code;
+    })
+    .toMatch(/^\d{6}$/u);
+  return code;
+};
+
 for (const accountState of [
   "New account",
   "Returning account requiring legal acceptance",
@@ -44,22 +59,6 @@ for (const accountState of [
       expect(result.code, result.stderr || result.stdout).toBe(0);
       expect(result.stdout.trim().split("\n")).toHaveLength(1);
       return JSON.parse(result.stdout);
-    };
-    const otp = async (offset: number) => {
-      let code = "";
-      await expect
-        .poll(async () => {
-          const log = await readFile(otpLog, "utf-8");
-          code =
-            [
-              ...log
-                .slice(offset)
-                .matchAll(/\[local auth\] OTP: (?<code>\d{6})/gu),
-            ].at(-1)?.[1] ?? "";
-          return code;
-        })
-        .toMatch(/^\d{6}$/u);
-      return code;
     };
     try {
       const needsLegalAcceptance =

@@ -4,7 +4,7 @@
  */
 import type { InitOutput } from '@inth/sdk-schema/types';
 import { v1ConsentInitQuerySchema } from '@inth/sdk-schema/v1';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
@@ -157,7 +157,11 @@ describe('init: GET /v1/consent/init', () => {
 		expect(calls[0]?.init.credentials).toBe('same-origin');
 		expect(
 			Object.fromEntries(new URL(calls[0]?.url ?? '').searchParams)
-		).toMatchObject({ country: 'FR', gpc: '1', region: 'BY' });
+		).toMatchObject({
+			country: 'FR',
+			gpc: '1',
+			region: 'BY',
+		});
 	});
 
 	test('maps the answer as the current policy contract', async () => {

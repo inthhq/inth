@@ -14,7 +14,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { createSSRApp, h } from 'vue';
 import type { App, ShallowRef } from 'vue';
 

@@ -9,8 +9,8 @@
  * ([BNR-16] in `prompt.browser.test.ts`).
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentClient } from '../consent-client.model';

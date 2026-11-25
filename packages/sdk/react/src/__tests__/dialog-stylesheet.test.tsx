@@ -8,7 +8,7 @@
 import '@inth/sdk/ui/styles.css';
 import panelStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { ConsentDialog } from '../aggregate-components';
 import { InthProvider } from '../provider';

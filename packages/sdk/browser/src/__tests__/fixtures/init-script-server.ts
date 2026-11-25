@@ -141,6 +141,21 @@ const recordAnswer = async function recordAnswer(
 	});
 };
 
+const disableFixtureCache = (url: URL, response: ServerResponse): void => {
+	if (
+		!url.pathname.startsWith('/__inth-dist__/') &&
+		!url.pathname.startsWith('/__inth-init__/')
+	) {
+		return;
+	}
+	// Vitest 5's browser server pins `Cache-Control: private,max-age=31536000`
+	// on `sec-fetch-dest: script` GETs ahead of plugin middlewares (by guarding
+	// `setHeader('Cache-Control', ...)`). Fixture routes are stateful per
+	// request, so clear it and opt out of caching.
+	response.removeHeader('Cache-Control');
+	response.setHeader('cache-control', 'no-store');
+};
+
 /**
  * Answer one fixture request, or call `next`.
  *
@@ -153,6 +168,7 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 	dist: string
 ): Promise<void> {
 	const url = new URL(request.url ?? '/', 'http://fixture.test');
+	disableFixtureCache(url, response);
 	if (url.pathname.startsWith('/__inth-dist__/')) {
 		await wait(Number(url.searchParams.get('delay') ?? 0));
 		if (countedFailure(url.searchParams)) {

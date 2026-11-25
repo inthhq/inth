@@ -1,5 +1,5 @@
 import { policyRulePresets } from '@inth/sdk/schema/types';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	autoContainerFor,
@@ -82,7 +82,10 @@ describe('policy playground helpers', () => {
 		});
 		const bumped = inspectPlaygroundRule(
 			toPolicyRule({ ...form, copyRevision: 'v2' }, base.rule),
-			{ country: 'GB', region: '' }
+			{
+				country: 'GB',
+				region: '',
+			}
 		);
 		expect(bumped.fingerprints?.choice).not.toBe(before.fingerprints?.choice);
 	});

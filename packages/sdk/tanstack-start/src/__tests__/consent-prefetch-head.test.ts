@@ -4,7 +4,7 @@
  * instead of issuing a second request.
  */
 import { primePrefetchedInitialData } from '@inth/sdk/engine';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import {
 	consentPrefetchHead,

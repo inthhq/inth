@@ -1,7 +1,14 @@
 /** @vitest-environment jsdom */
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	ALL_DENIED,
@@ -293,7 +300,10 @@ describe('ActiveCampaign helper recreation', () => {
 		);
 		updateScripts(
 			[activeCampaignTracking({ accountId: '123456', category: 'experience' })],
-			{ ...granted, experience: true }
+			{
+				...granted,
+				experience: true,
+			}
 		);
 		await Promise.resolve();
 		expect(getLoader()).toBe(loader);

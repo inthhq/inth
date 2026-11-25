@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { parseArguments } from "../src/arguments.ts";
 import { COMMAND_METADATA } from "../src/command-metadata.ts";

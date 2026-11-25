@@ -6,7 +6,7 @@
  * render reads and sends to the browser. Other mode fields, such as
  * `manifestUrl`, the server reads at runtime, so their overrides stay.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	buildOptionVariable,

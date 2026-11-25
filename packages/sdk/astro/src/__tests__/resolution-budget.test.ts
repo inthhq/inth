@@ -1,5 +1,5 @@
 import { clearManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { resolveOptions } from '../integration';
 import type { InthAstroOptions } from '../inth-options.model';

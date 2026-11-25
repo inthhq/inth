@@ -1,7 +1,7 @@
 /**
  * The surface session's reducer and Escape ladder, without a kernel.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { resolveSurfaceEscape } from '../resolve-surface-escape';
 import type { SurfaceEscapeInput } from '../resolve-surface-escape';

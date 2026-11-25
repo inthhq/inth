@@ -41,7 +41,7 @@ import {
 } from '@inth/sdk/schema/types';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vite-plus/test';
 
 import { whenIABReady } from '../lib/lazy-create-iab';
 import type { ConsentManagerOptions } from '../lib/manager-options.model';

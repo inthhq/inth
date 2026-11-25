@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 const directories: string[] = [];
 const { resolve } = createRequire(import.meta.url);

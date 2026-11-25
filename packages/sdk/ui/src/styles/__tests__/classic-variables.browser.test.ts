@@ -15,8 +15,8 @@
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
  */
-import { afterEach, beforeAll, describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
+import { afterEach, beforeAll, describe, expect, test } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 
 import bar from '../../../dist/styles/components/consent-banner.js';
 import card from '../../../dist/styles/components/consent-card.js';

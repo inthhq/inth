@@ -3,16 +3,17 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
 
+import { jsonValueSchema } from "../experiments/node/http.ts";
 import { VERSION } from "../src/version.ts";
 
 const entry = fileURLToPath(
   new URL("../experiments/node/inth.ts", import.meta.url)
 );
 const envelope = z.object({
-  data: z.json().optional(),
+  data: jsonValueSchema.optional(),
   error: z
     .object({
       code: z.string(),
@@ -113,7 +114,11 @@ describe("agent commands", () => {
     const result = spawnSync(
       process.execPath,
       [entry, "login", "--non-interactive"],
-      { encoding: "utf-8", env, timeout: 5000 }
+      {
+        encoding: "utf-8",
+        env,
+        timeout: 5000,
+      }
     );
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");

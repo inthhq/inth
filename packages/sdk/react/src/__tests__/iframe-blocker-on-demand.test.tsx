@@ -14,7 +14,7 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentKernel, KernelVendorsState } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
@@ -64,7 +64,9 @@ const renderProvider = async (
 			options={{
 				mode: Object.assign(
 					() => ({ save: () => Promise.resolve({ ok: true }) }),
-					{ kind: 'custom' as const }
+					{
+						kind: 'custom' as const,
+					}
 				),
 				persistence: false,
 				prefetch,

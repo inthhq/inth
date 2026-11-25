@@ -7,7 +7,7 @@
  * zero is required on the unchanged event.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { measureRerenders } from '../measure/rerender';
 

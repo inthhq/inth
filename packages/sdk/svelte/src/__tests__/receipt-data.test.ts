@@ -7,7 +7,7 @@
  */
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { flushSync, mount, unmount } from 'svelte';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'vite-plus/test';
 
 import Fixture from './fixtures/receipt-data-fixture.svelte';
 

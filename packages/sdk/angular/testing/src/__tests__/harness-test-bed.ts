@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { provideInth } from '@inth/angular';
 import type { InthProviderOptions } from '@inth/angular';
-import { expect, vi } from 'vitest';
+import { expect, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { offlineMode } from '../../../src/__tests__/fixtures/transport-mode';

@@ -27,7 +27,7 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { PHONE_LAYOUT_QUERY } from '@inth/sdk-core';
 import { parse } from 'postcss';
 import type { AtRule, ChildNode, Container } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	LATER_SHEETS,

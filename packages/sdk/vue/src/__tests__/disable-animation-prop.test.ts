@@ -6,7 +6,7 @@ import {
 import { translations as enTranslations } from '@inth/sdk/translations/en';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import type { Component, ComponentPublicInstance } from 'vue';
 
 import ConsentManager from '../runtime/components/dialog/manager.vue';

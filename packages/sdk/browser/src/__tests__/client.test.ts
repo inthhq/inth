@@ -10,7 +10,7 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClient } from '../consent-client.model';
 import { createScriptTagConsentClient } from '../create-script-tag-consent-client';

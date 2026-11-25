@@ -5,7 +5,14 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
-import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest';
+import {
+	beforeAll,
+	afterAll,
+	afterEach,
+	describe,
+	expect,
+	test,
+} from 'vite-plus/test';
 
 import {
 	runCommand,
@@ -107,7 +114,9 @@ const ensureBuilt = (app) =>
 			'build',
 			`--filter=@inth/${app.dir.split('/').at(-1)}`,
 		],
-		{ cwd: repository }
+		{
+			cwd: repository,
+		}
 	);
 
 const startServer = async (app) => {

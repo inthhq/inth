@@ -5,7 +5,7 @@ import type {
 	SavePayload,
 } from '@inth/sdk-core';
 import { createScriptLoader } from '@inth/sdk-core/modules/script-loader';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createIAB } from '../../../../iab/src';
 import {

@@ -15,7 +15,14 @@ import type {
 import { getSurfaceSession } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	EARLY_TAP_STYLE_ID,

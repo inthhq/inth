@@ -20,7 +20,7 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { testOptions } from '../../__tests__/test-local';
 import { provideInth } from '../core/provide-inth';

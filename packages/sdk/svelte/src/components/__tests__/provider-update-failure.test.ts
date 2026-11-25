@@ -6,7 +6,7 @@
  */
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

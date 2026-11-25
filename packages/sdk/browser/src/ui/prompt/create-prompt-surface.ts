@@ -432,6 +432,7 @@ export const createPromptSurface = function createPromptSurface(
 						el(
 							'button',
 							{
+								[EARLY_TAP_OPT_OUT]: 'off',
 								'aria-controls': inBar ? undefined : ids.panel,
 								'aria-expanded': expanded ? 'true' : 'false',
 								class: cx(noStyle, surfaceStyles.rightLink),
@@ -444,7 +445,6 @@ export const createPromptSurface = function createPromptSurface(
 								on: { click: expand, focus: warm, pointerenter: warm },
 								ref: expandRef,
 								type: 'button',
-								[EARLY_TAP_OPT_OUT]: 'off',
 							},
 							label
 						),
@@ -731,6 +731,7 @@ export const createPromptSurface = function createPromptSurface(
 			el(
 				'div',
 				{
+					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 					class: cx(noStyle, surfaceStyles.root, styles.root),
 					'data-animation': disableAnimation ? 'off' : undefined,
 					'data-blocking': layout.blocking ? 'true' : undefined,
@@ -748,7 +749,6 @@ export const createPromptSurface = function createPromptSurface(
 					dir: getTextDirection(snap.translations?.language),
 					// A prompt on its way out takes no input (PERM-05).
 					inert: phase === 'leaving',
-					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 				},
 				layout.blocking
 					? slot(

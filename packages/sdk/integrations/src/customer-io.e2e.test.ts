@@ -9,7 +9,7 @@ import {
 	expect,
 	it,
 	vi,
-} from 'vitest';
+} from 'vite-plus/test';
 
 import {
 	ALL_DENIED,

@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
 import { inth, manifest } from '../index';

@@ -4,8 +4,8 @@
  * carry React's names (`fixtures/stories.ts`).
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 
 import type { ConsentClient } from '../consent-client.model';
 import { mountStory, CONSENT_STORIES } from './fixtures/stories';

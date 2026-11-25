@@ -8,7 +8,7 @@
  * the banner and the dialog from `inth.choices.js`, and runs every consent
  * call made before it.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 type PageWindow = Window & {
 	__heard: string[];

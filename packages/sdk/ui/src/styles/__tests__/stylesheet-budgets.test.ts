@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');

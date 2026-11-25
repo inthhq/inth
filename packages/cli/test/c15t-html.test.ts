@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 
 import { runHtmlGenerationWorkflow } from "../src/native/c15t-html.ts";
 

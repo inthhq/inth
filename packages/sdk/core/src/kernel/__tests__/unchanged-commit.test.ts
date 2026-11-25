@@ -5,7 +5,7 @@
  * tests pin that the shortcut is never observable.
  */
 import { enTranslations } from '@inth/sdk-translations';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 
 import { createKernel as createConsentKernel } from '..';
 import {

@@ -11,7 +11,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import type { InitOutput } from '@inth/sdk/schema/types';
-import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
+import { afterEach, expect, onTestFinished, test, vi } from 'vite-plus/test';
 import { createApp } from 'vue';
 import type { Component } from 'vue';
 

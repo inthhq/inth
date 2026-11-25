@@ -13,7 +13,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';

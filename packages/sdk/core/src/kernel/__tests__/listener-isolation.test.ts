@@ -4,7 +4,14 @@
  * the command that caused it, and a listener that updates consent while
  * being notified cannot reorder or skip transitions for later listeners.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import type { ConsentKernel, KernelEvent } from '../../consent-kernel.model';

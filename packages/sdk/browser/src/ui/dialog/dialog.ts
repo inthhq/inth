@@ -782,6 +782,7 @@ export const createConsentDialog = function createConsentDialog(
 			el(
 				'div',
 				{
+					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 					class: cx(noStyle, styles.backdrop),
 					'data-animation': disableAnimation ? 'off' : undefined,
 					'data-edge-style': edgeStyle,
@@ -789,7 +790,6 @@ export const createConsentDialog = function createConsentDialog(
 					'data-regime': eu ? 'eu' : 'us',
 					'data-testid': 'consent-dialog-root',
 					dir: getTextDirection(snap.translations?.language),
-					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 				},
 				layer({
 					bodyRef,

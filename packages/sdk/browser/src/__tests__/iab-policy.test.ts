@@ -8,7 +8,7 @@ import type { ProviderTransportFactory } from '@inth/sdk-core';
 import { evaluateConsent } from '@inth/sdk-core';
 import { clearGVLCache } from '@inth/sdk-iab';
 import type { PolicyRule } from '@inth/sdk-schema/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type {

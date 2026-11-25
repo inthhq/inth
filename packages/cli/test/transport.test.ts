@@ -3,7 +3,7 @@
 import { once } from "node:events";
 import { createServer } from "node:http";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
 
 import { HttpClient } from "../experiments/node/http.ts";

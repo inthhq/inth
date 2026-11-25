@@ -8,7 +8,14 @@ import type { PolicyRule } from '@inth/sdk-schema/types';
  * streamed prefetch, stored denials and the browser's Global Privacy
  * Control signal. Without that module it leaves the load to `start()`.
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,

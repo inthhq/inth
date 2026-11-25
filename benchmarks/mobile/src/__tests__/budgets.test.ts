@@ -4,7 +4,7 @@
  * a row that silently stops being gated, which is the failure mode worth a test.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import androidCalibration from '../../snapshots/android-raw-classes-2026-11-13.json';
 import { loadBudgets } from '../budgets';

@@ -16,7 +16,7 @@
  *    catches a vendor refusing to install, so a check our own stub already
  *    satisfies protects nothing and reports green forever.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	loadScripts,

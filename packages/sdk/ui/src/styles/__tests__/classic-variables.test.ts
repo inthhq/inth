@@ -18,7 +18,7 @@ import { join } from 'node:path';
 
 import { parse } from 'postcss';
 import type { Container } from 'postcss';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	CLASSIC_UNMAPPED,

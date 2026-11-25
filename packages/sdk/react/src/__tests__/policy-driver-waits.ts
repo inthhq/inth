@@ -1,6 +1,6 @@
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { hasConsentUI } from '@inth/sdk/surface-actions';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 import { queuedWrites } from '../../../core/src/modules/persistence/mount';
 

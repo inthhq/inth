@@ -12,7 +12,7 @@ import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render } from 'svelte/server';
-import { afterEach, beforeAll, expect, test } from 'vitest';
+import { afterEach, beforeAll, expect, test } from 'vite-plus/test';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import { setRequestEvent } from '../lib/kit/__tests__/app-server';

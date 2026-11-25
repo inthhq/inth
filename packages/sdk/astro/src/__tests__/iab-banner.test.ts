@@ -9,7 +9,7 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';

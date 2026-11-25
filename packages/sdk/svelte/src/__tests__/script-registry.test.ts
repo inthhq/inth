@@ -5,7 +5,7 @@
  */
 import type { Script } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import type { ConsentManagerOptions } from '../lib/manager-options.model';

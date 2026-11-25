@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { assert, describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vite-plus/test';
 
 import {
 	consentInitResponseSchema,

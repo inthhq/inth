@@ -7,7 +7,7 @@
  */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import {
@@ -78,17 +78,17 @@ test('a draft stages without touching the record, re-renders on edits and saves'
 	);
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent(
+		.toMatchTextContent(
 			'{"categories":["necessary","measurement","marketing"],"dirty":false,"draft":false,"recorded":false}'
 		);
 	await screen.getByRole('button', { name: 'Stage' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('"dirty":true,"draft":true,"recorded":false');
+		.toMatchTextContent('"dirty":true,"draft":true,"recorded":false');
 	await screen.getByRole('button', { name: 'Save' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('"dirty":false,"draft":true,"recorded":true');
+		.toMatchTextContent('"dirty":false,"draft":true,"recorded":true');
 });
 
 test('ConsentDraftProvider shares one draft between siblings', async () => {
@@ -114,9 +114,9 @@ test('ConsentDraftProvider shares one draft between siblings', async () => {
 			</ConsentDraftProvider>
 		</Provider>
 	);
-	await expect.element(screen.getByRole('status')).toHaveTextContent('false');
+	await expect.element(screen.getByRole('status')).toMatchTextContent('false');
 	await screen.getByRole('button', { name: 'Stage' }).click();
-	await expect.element(screen.getByRole('status')).toHaveTextContent('true');
+	await expect.element(screen.getByRole('status')).toMatchTextContent('true');
 });
 
 test('useVendorDraft reports a stale draft and resets it', async () => {
@@ -172,7 +172,7 @@ test('useVendorDraft reports a stale draft and resets it', async () => {
 	await screen.getByRole('button', { name: 'Deny' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent(
+		.toMatchTextContent(
 			'{"dirty":true,"stale":false,"vendors":{"meta-pixel":false}}'
 		);
 	// A vendor declared under the staged denial changes the set of switches:
@@ -180,11 +180,11 @@ test('useVendorDraft reports a stale draft and resets it', async () => {
 	await screen.getByRole('button', { name: 'Declare vendor' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('"dirty":true,"stale":true');
+		.toMatchTextContent('"dirty":true,"stale":true');
 	await screen.getByRole('button', { name: 'Reset' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent(
+		.toMatchTextContent(
 			'{"dirty":false,"stale":false,"vendors":{"meta-pixel":true,"x-pixel":true}}'
 		);
 });
@@ -232,11 +232,11 @@ test('the save action outside a draft provider saves what a fresh draft shows', 
 	await screen.getByRole('button', { name: 'Save' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('{"marketing":false,"measurement":true}');
+		.toMatchTextContent('{"marketing":false,"measurement":true}');
 	await screen.getByRole('button', { name: 'Accept all' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('{"marketing":true,"measurement":true}');
+		.toMatchTextContent('{"marketing":true,"measurement":true}');
 });
 
 test('a bulk save through the shared draft discards its staged edits', async () => {
@@ -276,9 +276,9 @@ test('a bulk save through the shared draft discards its staged edits', async () 
 	await screen.getByRole('button', { name: 'Stage' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('{"dirty":true,"draft":true}');
+		.toMatchTextContent('{"dirty":true,"draft":true}');
 	await screen.getByRole('button', { name: 'Reject all' }).click();
 	await expect
 		.element(screen.getByRole('status'))
-		.toHaveTextContent('{"dirty":false,"draft":false}');
+		.toMatchTextContent('{"dirty":false,"draft":false}');
 });

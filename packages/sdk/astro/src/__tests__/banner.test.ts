@@ -1,7 +1,7 @@
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 
 import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentDialog from '../components/panel.astro';
@@ -237,7 +237,9 @@ describe('<ConsentBanner />', () => {
 
 		const german = await render(
 			await buildLocals(options, { 'accept-language': 'de' }),
-			{ legalLinks: ['privacyPolicy'] }
+			{
+				legalLinks: ['privacyPolicy'],
+			}
 		);
 		expect(german).toContain('>Datenschutzerklärung</a>');
 	});

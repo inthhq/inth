@@ -1,6 +1,13 @@
 import { firstTabbable } from '@inth/sdk/ui/utils';
 import { mount, unmount } from 'svelte';
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { ensureSurfaceStyles } from '../lib/surface-styles';
 import Fixture from './fixtures/pending-sheets-fixture.svelte';

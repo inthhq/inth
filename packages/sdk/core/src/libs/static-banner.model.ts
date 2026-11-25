@@ -76,9 +76,11 @@ export const staticBannerCopyHash = function staticBannerCopyHash(
 	translations: unknown
 ): number {
 	const source = COPY_PATHS.map(([group, key]) => {
-		const value = ((
-			translations as Record<string, Record<string, unknown> | undefined>
-		)?.[group] ?? {})[key];
+		const value = (
+			(translations as Record<string, Record<string, unknown> | undefined>)?.[
+				group
+			] ?? {}
+		)[key];
 		return typeof value === 'string' ? value : '';
 	}).join('\n');
 	let hash = 2_166_136_261;

@@ -24,7 +24,7 @@ import { promisify } from 'node:util';
 
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vite-plus/test';
 
 const FIXTURE = fileURLToPath(
 	new URL('../../test/fixtures/astro-7', import.meta.url)

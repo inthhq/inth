@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/svelte';
-import { afterEach } from 'vitest';
+import { afterEach } from 'vite-plus/test';
 
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
 

@@ -1,5 +1,5 @@
 import { createConsentKernel } from '@inth/sdk-core';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 
 import { readSelection } from '../../core/read-selection';
 import { policyResolution } from '../helpers/kernel';

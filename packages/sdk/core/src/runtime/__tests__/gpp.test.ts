@@ -4,7 +4,7 @@
  * The runtime's `gpp` option: when it loads and mounts `createGPP`, and
  * when it leaves GPP off.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { KernelTransport } from '../../consent-kernel.model';

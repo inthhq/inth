@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 const vueManifest = JSON.parse(
 	readFileSync(join(__dirname, '../../../vue/package.json'), 'utf8')

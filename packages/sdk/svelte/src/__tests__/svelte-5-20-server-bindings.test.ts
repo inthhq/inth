@@ -13,7 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 
 const LIB = join(dirname(fileURLToPath(import.meta.url)), '../lib');
 

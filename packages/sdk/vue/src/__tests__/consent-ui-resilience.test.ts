@@ -6,7 +6,7 @@
  * theme and the page reach from outside.
  */
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';

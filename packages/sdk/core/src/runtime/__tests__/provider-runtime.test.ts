@@ -6,7 +6,14 @@
  * prefetch, with the semantics React's provider has today.
  */
 import { policyRulePresets, resolvePolicyRules } from '@inth/sdk-schema/types';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

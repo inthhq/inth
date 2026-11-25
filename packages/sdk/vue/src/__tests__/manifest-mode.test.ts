@@ -6,7 +6,7 @@ import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '@inth/sdk/transports/manifest-cache';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import { manifest, selectedMode } from '../runtime/modes.model';

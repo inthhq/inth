@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 
 import { publicGenerationPlan } from "../src/native/c15t-generation.ts";
 

@@ -5,7 +5,7 @@ import type { Script } from '@inth/sdk/engine';
  * paint, so it must follow the page content.
  */
 import { renderToReadableStream } from 'react-dom/server';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import {
 	choiceRecords,

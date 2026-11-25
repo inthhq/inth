@@ -6,7 +6,7 @@
  * banner while the client reported it as shown.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClient } from '../consent-client.model';
 import { init } from './fixtures/factory-init';

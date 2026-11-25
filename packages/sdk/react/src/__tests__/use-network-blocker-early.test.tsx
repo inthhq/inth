@@ -5,7 +5,7 @@ import {
 } from '@inth/sdk/modules/network-hold';
 import { StrictMode, Suspense, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { useNetworkBlocker } from '../index';

@@ -309,9 +309,9 @@ export const createIABSurface = (
 				h(
 					'div',
 					{
+						[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 						class: css(classes.dialog.root, classes.dialog.dialogVisible),
 						'data-testid': `${prefix}-root`,
-						[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 						dir,
 						lang: language,
 					},
@@ -324,6 +324,7 @@ export const createIABSurface = (
 				h(
 					'div',
 					{
+						[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 						class: css(
 							classes.banner.root,
 							classes.banner.bannerVisible,
@@ -332,7 +333,6 @@ export const createIABSurface = (
 						'data-blocking': String(actions.blocking),
 						'data-position': 'bottom-left',
 						'data-testid': `${prefix}-root`,
-						[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 						dir,
 						lang: language,
 					},

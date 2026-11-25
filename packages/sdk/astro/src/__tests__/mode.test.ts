@@ -1,5 +1,5 @@
 import type { ProviderTransportContext } from '@inth/sdk/engine';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
@@ -25,7 +25,10 @@ describe('modes', () => {
 		});
 		expect(
 			JSON.parse(JSON.stringify(testingMode({ policy: [testRule] })))
-		).toEqual({ policy: [testRule], type: 'testing' });
+		).toEqual({
+			policy: [testRule],
+			type: 'testing',
+		});
 		expect(testingMode()).toEqual({ type: 'testing' });
 		expect(manifestMode({ source: 'runtime' })).toEqual({
 			source: 'runtime',

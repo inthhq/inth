@@ -8,7 +8,7 @@ import { css as emotionCss, flush } from '@emotion/css';
  * to win over the part's own `@layer components` styles.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClient, ConsentUIOptions } from '../consent-client.model';
 import { init } from './fixtures/factory-init';

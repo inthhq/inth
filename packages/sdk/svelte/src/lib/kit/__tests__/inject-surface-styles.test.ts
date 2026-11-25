@@ -1,6 +1,6 @@
 import { css as partsCSS } from '@inth/sdk/ui/styles/sheets/parts';
 import { css as widgetCSS } from '@inth/sdk/ui/styles/sheets/widget';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	injectSurfaceStyles,

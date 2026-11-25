@@ -12,7 +12,14 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { afterAll, beforeAll, beforeEach, expect, test, vi } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	createMavenBundle,

@@ -3,7 +3,7 @@
  * anything about a permission, and every decision here is a denial.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { buildSnapshot } from '../../__tests__/helpers/fake-native';
 import type { ConsentSnapshot } from '../../protocol';

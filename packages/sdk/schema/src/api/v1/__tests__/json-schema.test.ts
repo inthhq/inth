@@ -1,7 +1,7 @@
 import { runInNewContext } from 'node:vm';
 
 import * as v from 'valibot';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	characters,

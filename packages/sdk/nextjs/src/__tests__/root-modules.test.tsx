@@ -1,6 +1,6 @@
 import { useDeclaredVendors, useVendorAllowed } from '@inth/react';
 import { ConsentGPP } from '@inth/react/gpp';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { InthProvider } from '../inth-provider';
@@ -105,7 +105,7 @@ test('forwards vendors so the preference center lists them and gates their scrip
 	);
 	await expect
 		.element(getByTestId('probe'))
-		.toHaveTextContent('{"allowed":true,"ids":["meta-pixel"]}');
+		.toMatchTextContent('{"allowed":true,"ids":["meta-pixel"]}');
 });
 
 test('ConsentGPP mounts __gpp inside InthProvider, and unmount removes it', async () => {

@@ -51,8 +51,8 @@ import { useContext, useEffect } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { vi } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
 
 import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec.model';
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';

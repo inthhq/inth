@@ -6,7 +6,7 @@ import { CONSENT_COMPONENT_SLOT_KEY_MAP } from '@inth/sdk/schema/config';
 import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import { THEME_SLOT_COMPONENT_KEYS } from '@inth/sdk/ui/utils';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { ConsentGate } from '../components/consent-gate';

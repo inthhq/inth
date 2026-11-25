@@ -7,7 +7,7 @@
 		"build": "astro build",
 		"check-types": "astro check",
 		"dev": "astro dev",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
 		"preview": "astro preview",
 		"start": "astro dev"
 	},
@@ -25,10 +25,10 @@
 		"@astrojs/react": "^4.4.0",
 		"@astrojs/vue": "^5.1.0",
 		"@types/react": "19.2.17",
-		"oxfmt": "0.65.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"typescript": "6.0.3",
+		"vite-plus": "catalog:",
 		"vue": "^3.5.0"
 	}
 }

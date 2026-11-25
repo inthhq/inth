@@ -14,7 +14,7 @@ import {
 	closeOptInConfirmation,
 	closeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 

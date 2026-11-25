@@ -25,7 +25,7 @@ import { brotliCompressSync } from 'node:zlib';
 
 import { createDialogChunkPlugin } from '@inth/sdk/build';
 import { build } from 'vite';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const rootEngineModule = /tanstack-start\/dist\/root-engine\.js$/u;
 const dialogModule = /react\/dist\/deferred\/dialog\.js$/u;

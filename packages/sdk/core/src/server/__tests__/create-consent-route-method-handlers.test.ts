@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentRouteHandler } from '../consent-route.api';
 import {
@@ -54,7 +54,9 @@ describe('the consent route loop guard', () => {
 			});
 			const response = await handle(
 				new Request(`${SITE}/api/inth/subjects`, { method: 'POST' }),
-				{ path: 'subjects' }
+				{
+					path: 'subjects',
+				}
 			);
 			expect(response.status).toBe(500);
 			expect(fetch).not.toHaveBeenCalled();
@@ -90,7 +92,9 @@ describe('the consent route without proxy', () => {
 		});
 		const write = await handle(
 			new Request(`${SITE}/api/inth/subjects`, { method: 'POST' }),
-			{ path: 'subjects' }
+			{
+				path: 'subjects',
+			}
 		);
 		expect(write.status).toBe(405);
 		expect(write.headers.get('allow')).toBe('GET, HEAD');

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import {
 	collectResolvedPolicyRuleIssues,
@@ -96,7 +96,11 @@ describe('normalizePolicyRule', () => {
 	test('derives notice and none action constraints', () => {
 		expect(
 			normalizePolicyRule({ ...optOutNone, prompt: 'notice' }).actions
-		).toEqual({ allowed: ['dismiss'], equivalent: [], required: ['dismiss'] });
+		).toEqual({
+			allowed: ['dismiss'],
+			equivalent: [],
+			required: ['dismiss'],
+		});
 		expect(normalizePolicyRule(optOutNone).actions).toEqual({
 			allowed: [],
 			equivalent: [],
@@ -152,7 +156,9 @@ describe('normalizePolicyRule', () => {
 		expect(
 			normalizePolicyRule({ ...optOutNone, i18n: { messageProfile: 'eu' } })
 				.i18n
-		).toEqual({ messageProfile: 'eu' });
+		).toEqual({
+			messageProfile: 'eu',
+		});
 	});
 
 	test('throws the first validation error', () => {

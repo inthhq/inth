@@ -11,7 +11,14 @@
  * earlier runtime on the page can have. Each case runs both with it loaded
  * and with the page's loader reset to "not loaded yet".
  */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	choiceRecords,

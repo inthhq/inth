@@ -7,7 +7,7 @@
  * The write code is held back for the whole file, so it holds one test:
  * the page loads the code once.
  */
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { pageWriterLoader } from '../../../core/src/modules/persistence/writer-loader';

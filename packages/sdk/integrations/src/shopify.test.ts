@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { createConsentKernel, resolvePolicyRules } from '@inth/sdk/engine';
 import type { ConsentKernel, KernelTransport } from '@inth/sdk/engine';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createShopifyCustomerPrivacy, toShopifyConsent } from './shopify';
 import type {
@@ -407,7 +407,9 @@ describe('Shopify Customer Privacy bridge', () => {
 		Object.assign(
 			(window as { Shopify: { customerPrivacy: object } }).Shopify
 				.customerPrivacy,
-			{ currentVisitorConsent: () => held }
+			{
+				currentVisitorConsent: () => held,
+			}
 		);
 		// IAB consent confirmed through the CMP API leaves no explicit choice.
 		const owesChoice: ShopifyConsentSnapshot = {
@@ -524,7 +526,9 @@ describe('Shopify Customer Privacy bridge', () => {
 		Object.assign(
 			(window as { Shopify: { customerPrivacy: object } }).Shopify
 				.customerPrivacy,
-			{ currentVisitorConsent: () => ({ marketing: reported }) }
+			{
+				currentVisitorConsent: () => ({ marketing: reported }),
+			}
 		);
 		const owesChoice: ShopifyConsentSnapshot = {
 			effectivePermissions: {

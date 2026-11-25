@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 
 import { publishOrder, settingProblems, tarballProblems } from "./sdk-pack.ts";
 import type { Expectations, PackedPackage } from "./sdk-pack.ts";
@@ -87,21 +87,22 @@ test("a tarball that would install wrong is refused", () => {
   ]);
 });
 
+const aliasedTarballProblems = (target: string) =>
+  tarballProblems(
+    packed({
+      dependencies: {
+        "@inth/sdk": "0.0.0-alpha.0",
+        core: `npm:${target}@0.0.0-alpha.0`,
+      },
+    }),
+    expectations
+  );
+
 test("a dependency alias to a private package is refused", () => {
-  const aliased = (target: string) =>
-    tarballProblems(
-      packed({
-        dependencies: {
-          "@inth/sdk": "0.0.0-alpha.0",
-          core: `npm:${target}@0.0.0-alpha.0`,
-        },
-      }),
-      expectations
-    );
-  expect(aliased("@inth/sdk-core")).toEqual([
+  expect(aliasedTarballProblems("@inth/sdk-core")).toEqual([
     "dependencies names the private package @inth/sdk-core",
   ]);
-  expect(aliased("@inth/sdk")).toEqual([]);
+  expect(aliasedTarballProblems("@inth/sdk")).toEqual([]);
 });
 
 test.each([

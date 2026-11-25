@@ -423,7 +423,7 @@ export const optOutConsentSurface = function optOutConsentSurface(
 	}
 	// Fall back to the preference centre if a custom kernel reports
 	// not-available, or handle a deferred stand-in kernel once it settles.
-	// oxlint-disable-next-line promise/prefer-await-to-then -- Synchronous open must not await the network.
+	// oxlint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch -- Synchronous open must not await the network.
 	void pending.then(
 		(result) => {
 			if (actions.get(kernel) !== action) {

@@ -3,7 +3,7 @@ import {
 	policyRulePresets,
 } from '@inth/sdk-core';
 import type * as Core from '@inth/sdk-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ConsentClient, ConsentUIHandle } from '../consent-client.model';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';

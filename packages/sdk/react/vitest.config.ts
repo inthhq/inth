@@ -2,8 +2,8 @@ import { resolve } from 'node:path';
 
 import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vite-plus';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 
@@ -250,51 +250,6 @@ export default mergeConfig(
 			watch: isVitestWatchMode() ? undefined : null,
 		},
 		test: {
-			browser: {
-				commands: {
-					/**
-					 * Answers requests for `url` with `body` as JavaScript, the
-					 * way a CDN that allows CORS would, and counts them. Lets a
-					 * test load a script from an https URL whose bytes it knows.
-					 */
-					async serveScript(context, url: string, body: string) {
-						const { page } = context as unknown as {
-							page: {
-								route: (
-									url: string,
-									handler: (route: {
-										fulfill: (response: {
-											body: string;
-											contentType: string;
-											headers: Record<string, string>;
-										}) => Promise<void>;
-									}) => Promise<void>
-								) => Promise<void>;
-							};
-						};
-						await page.route(url, (route) => {
-							servedScripts.set(url, (servedScripts.get(url) ?? 0) + 1);
-							return route.fulfill({
-								body,
-								contentType: 'text/javascript',
-								headers: { 'access-control-allow-origin': '*' },
-							});
-						});
-					},
-					/** How many requests `serveScript` answered for `url`. */
-					servedScriptCount(_context, url: string) {
-						return servedScripts.get(url) ?? 0;
-					},
-				},
-				enabled: true,
-				headless: true,
-				instances: [{ browser: 'chromium' }],
-				// Headless Chromium hides scrollbars by default. Showing them keeps
-				// classic scrollbar layout (as on Windows and Linux) testable.
-				provider: playwright({
-					launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
-				}),
-			},
 			coverage: {
 				// Coverage ratchet: floors below current coverage so regressions
 				// fail CI. Raise as coverage improves; never lower.
@@ -309,6 +264,51 @@ export default mergeConfig(
 				{
 					extends: true,
 					test: {
+						browser: {
+							commands: {
+								/**
+								 * Answers requests for `url` with `body` as JavaScript, the
+								 * way a CDN that allows CORS would, and counts them. Lets a
+								 * test load a script from an https URL whose bytes it knows.
+								 */
+								async serveScript(context, url: string, body: string) {
+									const { page } = context as unknown as {
+										page: {
+											route: (
+												url: string,
+												handler: (route: {
+													fulfill: (response: {
+														body: string;
+														contentType: string;
+														headers: Record<string, string>;
+													}) => Promise<void>;
+												}) => Promise<void>
+											) => Promise<void>;
+										};
+									};
+									await page.route(url, (route) => {
+										servedScripts.set(url, (servedScripts.get(url) ?? 0) + 1);
+										return route.fulfill({
+											body,
+											contentType: 'text/javascript',
+											headers: { 'access-control-allow-origin': '*' },
+										});
+									});
+								},
+								/** How many requests `serveScript` answered for `url`. */
+								servedScriptCount(_context, url: string) {
+									return servedScripts.get(url) ?? 0;
+								},
+							},
+							enabled: true,
+							headless: true,
+							instances: [{ browser: 'chromium' }],
+							// Headless Chromium hides scrollbars by default. Showing them keeps
+							// classic scrollbar layout (as on Windows and Linux) testable.
+							provider: playwright({
+								launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
+							}),
+						},
 						exclude: [
 							'src/**/*.node.test.ts',
 							'src/**/*.node.test.tsx',
@@ -322,6 +322,7 @@ export default mergeConfig(
 							'src/**/*.e2e.test.tsx',
 						],
 						name: 'browser',
+						setupFiles: ['./src/test-setup.browser.ts'],
 					},
 				},
 				// Code that also runs in Node, such as the static banner a
@@ -329,16 +330,13 @@ export default mergeConfig(
 				{
 					extends: true,
 					test: {
-						browser: { enabled: false },
 						environment: 'node',
 						include: ['src/**/*.node.test.ts', 'src/**/*.node.test.tsx'],
 						name: 'node',
-						setupFiles: [],
 					},
 				},
 			],
 			retry: 2,
-			setupFiles: ['./src/test-setup.browser.ts'],
 		},
 	})
 );

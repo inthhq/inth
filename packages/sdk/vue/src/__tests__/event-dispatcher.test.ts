@@ -2,7 +2,7 @@ import type { Script } from '@inth/sdk/engine';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 import { defineComponent, h } from 'vue';
 
 import { inth } from '../index';
@@ -50,7 +50,9 @@ test('useEventDispatcher follows the runtime scripts, live consent and one pagev
 	});
 	const wrapper = mount(
 		defineComponent({ setup: () => () => [h(Probe), h(Probe)] }),
-		{ global: { plugins: [[inth, { runtime }]] } }
+		{
+			global: { plugins: [[inth, { runtime }]] },
+		}
 	);
 	const [first, second] = dispatchers;
 

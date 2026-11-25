@@ -3,7 +3,7 @@
  * transitions, as it stops the banner's and the dialog's.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import type { ConsentClient } from '../consent-client.model';
 import { classes } from '../generated/styles';

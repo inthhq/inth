@@ -11,7 +11,7 @@
  *    when enabled flips.
  * 6. SavePayload carries policySnapshotToken and tcString.
  */
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 import { createConsentKernel } from '../index';
 import type { KernelTransport, SavePayload } from '../index';

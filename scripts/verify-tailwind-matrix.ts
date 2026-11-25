@@ -57,10 +57,8 @@ import type {
 	TailwindMatrixPage,
 } from '../benchmarks/tailwind-matrix/fixtures';
 import { startStaticServer } from '../internals/next-compat/shared/src/suite/static-server';
-import {
-	resolvePolicyRules,
-	writePolicyResolutionWire,
-} from '../packages/sdk/schema/src/types';
+import { resolvePolicyRules } from '../packages/sdk/schema/src/shared/policy-resolution';
+import { writePolicyResolutionWire } from '../packages/sdk/schema/src/shared/policy-resolution-wire';
 import type { InitOutput } from '../packages/sdk/schema/src/types';
 import { translations as enTranslations } from '../packages/sdk/translations/src/translations/en';
 

@@ -8,7 +8,7 @@
  * renders asked for.
  */
 import { mount, unmount } from 'svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
 import ts from 'typescript';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 

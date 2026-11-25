@@ -3,7 +3,7 @@
  * banner still waits.
  */
 import { createRoot } from 'react-dom/client';
-import { expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vite-plus/test';
 
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { InthProvider as EngineProvider } from '../../provider';

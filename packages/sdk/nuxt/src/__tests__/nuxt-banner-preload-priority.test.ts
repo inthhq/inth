@@ -5,7 +5,7 @@
  * its priority, since the plugin awaits it before the app mounts, and so
  * does any chunk the app needs.
  */
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority.model';
 import { GLOBAL_COMPONENTS } from '../global-components';
@@ -21,10 +21,6 @@ const BANNER =
 
 /** A built manifest, before the module's edits. */
 const manifest = (): Record<string, ClientManifestChunk> => ({
-	'_banner-dep.js': { file: 'BannerDep.js', imports: ['_vue.js'] },
-	'_engine-dep.js': { file: 'EngDep.js', imports: ['_vue.js'] },
-	'_shared.js': { file: 'Shared.js', imports: ['_vue.js'] },
-	'_vue.js': { file: 'Vue.js' },
 	[BANNER]: {
 		file: 'Prompt.js',
 		imports: ['_banner-dep.js', '_shared.js', '_vue.js'],
@@ -37,6 +33,10 @@ const manifest = (): Record<string, ClientManifestChunk> => ({
 		isDynamicEntry: true,
 		src: ENGINE,
 	},
+	'_banner-dep.js': { file: 'BannerDep.js', imports: ['_vue.js'] },
+	'_engine-dep.js': { file: 'EngDep.js', imports: ['_vue.js'] },
+	'_shared.js': { file: 'Shared.js', imports: ['_vue.js'] },
+	'_vue.js': { file: 'Vue.js' },
 	'entry.js': {
 		dynamicImports: [ENGINE, BANNER],
 		file: 'Entry.js',

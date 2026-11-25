@@ -10,7 +10,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import { createIAB } from '../index';
 import { clearGVLCache, setMockGVL } from '../tcf/fetch-gvl.api';

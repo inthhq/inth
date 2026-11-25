@@ -2,7 +2,7 @@
  * A page that allows styles only by nonce must still get a styled banner
  * when the loader tag carries that nonce.
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 // The fixture page imports these modules. Importing them here makes Vite
 // transform them while it collects this file, outside any test's timeout.

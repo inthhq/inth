@@ -6,7 +6,7 @@ import {
 import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { configure, fireEvent, render, waitFor } from '@testing-library/svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

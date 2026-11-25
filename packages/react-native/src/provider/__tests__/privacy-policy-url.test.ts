@@ -3,7 +3,7 @@
  * Android `Uri.parse` checks in the native presenters would refuse.
  */
 
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import { isPrivacyPolicyUrl } from '../privacy-policy-url';
 

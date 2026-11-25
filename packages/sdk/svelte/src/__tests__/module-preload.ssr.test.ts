@@ -6,7 +6,7 @@
  * during a SvelteKit render or prerender.
  */
 import { render } from 'svelte/server';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import { injectModulePreloads } from '../lib/kit/inject-module-preloads';

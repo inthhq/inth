@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import bannerStyles from '@inth/sdk-ui/styles/components/consent-banner';
 import cardStyles from '@inth/sdk-ui/styles/components/consent-card';
 import drawerStyles from '@inth/sdk-ui/styles/components/consent-drawer';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, expectTypeOf, test } from 'vite-plus/test';
 
 import type { ComponentSlots, Theme } from '../theme/types';
 import { THEME_SLOT_COMPONENT_KEYS } from '../utils/theme-slots';

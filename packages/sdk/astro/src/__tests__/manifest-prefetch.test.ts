@@ -3,7 +3,7 @@ import {
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
 import { clearGvlCache, clearManifestCache } from '@inth/sdk/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createConsentMiddleware } from '../create-consent-middleware';

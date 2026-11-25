@@ -1,6 +1,6 @@
 import type { ConsentKernel, KernelActiveUI } from '@inth/sdk/engine';
 import { useContext } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { renderHook } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
@@ -65,7 +65,9 @@ describe('useConsentDialogTrigger', () => {
 	test('shows trigger before any consent exists', async () => {
 		const { result } = await renderHook(
 			() => useConsentDialogTrigger({ showWhen: 'always' }),
-			{ wrapper: createWrapper({ activeUI: 'none', hasConsented: false }) }
+			{
+				wrapper: createWrapper({ activeUI: 'none', hasConsented: false }),
+			}
 		);
 
 		expect(result.current.isVisible).toBe(true);
@@ -74,7 +76,9 @@ describe('useConsentDialogTrigger', () => {
 	test('shows trigger after consent when active UI is none', async () => {
 		const { result } = await renderHook(
 			() => useConsentDialogTrigger({ showWhen: 'always' }),
-			{ wrapper: createWrapper({ activeUI: 'none', hasConsented: true }) }
+			{
+				wrapper: createWrapper({ activeUI: 'none', hasConsented: true }),
+			}
 		);
 
 		await vi.waitFor(() => {
@@ -85,7 +89,9 @@ describe('useConsentDialogTrigger', () => {
 	test('hides trigger while its dialog is open', async () => {
 		const { result } = await renderHook(
 			() => useConsentDialogTrigger({ showWhen: 'always' }),
-			{ wrapper: createWrapper({ activeUI: 'dialog', hasConsented: false }) }
+			{
+				wrapper: createWrapper({ activeUI: 'dialog', hasConsented: false }),
+			}
 		);
 
 		await vi.waitFor(() => {

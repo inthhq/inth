@@ -6,9 +6,9 @@ import type {
 } from '@inth/sdk/engine';
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { useContext, useEffect } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
+import { page } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-react';
-import { page } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
@@ -83,7 +83,7 @@ describe('consent widget opt-out parity', () => {
 		const status = page.getByTestId('consent-widget-opt-out-status');
 		await expect.element(status).toBeVisible();
 		await expect.element(status).toHaveAttribute('role', 'status');
-		await expect.element(status).toHaveTextContent('Opt-out request honored');
+		await expect.element(status).toMatchTextContent('Opt-out request honored');
 		expect(
 			document.querySelector('[data-testid="consent-widget-opt-out-status"]')
 				?.classList
@@ -91,10 +91,10 @@ describe('consent widget opt-out parity', () => {
 
 		await expect
 			.element(page.getByTestId('opt-out-hook'))
-			.toHaveTextContent('"honored":true');
+			.toMatchTextContent('"honored":true');
 		await expect
 			.element(page.getByTestId('opt-out-hook'))
-			.toHaveTextContent('"via":"request"');
+			.toMatchTextContent('"via":"request"');
 
 		const marketing = page.getByTestId('consent-widget-switch-marketing');
 		const measurement = page.getByTestId('consent-widget-switch-measurement');
@@ -190,10 +190,10 @@ describe('consent widget opt-out parity', () => {
 		await expect.element(status).toHaveAttribute('role', 'status');
 		await expect
 			.element(status)
-			.toHaveTextContent('Opt-out preference signal honored');
+			.toMatchTextContent('Opt-out preference signal honored');
 		await expect
 			.element(page.getByTestId('opt-out-hook'))
-			.toHaveTextContent('"lock":"gpc-active"');
+			.toMatchTextContent('"lock":"gpc-active"');
 
 		for (const category of ['marketing', 'measurement'] as const) {
 			const sw = document.querySelector<HTMLButtonElement>(
@@ -285,10 +285,10 @@ describe('consent widget opt-out parity', () => {
 
 		await expect
 			.element(page.getByTestId('consent-widget-opt-out-status'))
-			.toHaveTextContent('Opt-out request honored');
+			.toMatchTextContent('Opt-out request honored');
 		await expect
 			.element(page.getByTestId('opt-out-hook'))
-			.toHaveTextContent('"lock":"held-by-account"');
+			.toMatchTextContent('"lock":"held-by-account"');
 
 		const marketing = page.getByTestId('consent-widget-switch-marketing');
 		const notice = document.querySelector<HTMLElement>(
@@ -467,7 +467,7 @@ describe('sale-and-sharing block in the widget', () => {
 		const heading = page.getByTestId('consent-widget-opt-out-heading');
 		await expect
 			.element(heading)
-			.not.toHaveTextContent(/sale|sharing|targeted/iu);
+			.not.toMatchTextContent(/sale|sharing|targeted/iu);
 
 		await vi.waitFor(() => {
 			expect(deferred.getSentPayload()).toBeDefined();
