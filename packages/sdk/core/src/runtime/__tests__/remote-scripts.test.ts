@@ -377,6 +377,66 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('starts from the cached list when its own init says the registry is unavailable', async () => {
+		const runtime = createConsentRuntimeWith(
+			{
+				mode: initMode(() =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(optOutRule({ id: 'opt-out' })),
+							version: 1,
+						},
+						scriptRegistry: { unavailable: true },
+					})
+				),
+				persistence: false,
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				readCachedScriptRegistry: () => ({ load: load() }),
+			}
+		);
+		runtime.start();
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(runtime.kernel.getSnapshot().scriptRegistry?.load).toHaveLength(1);
+		runtime.dispose();
+	});
+
+	test('keeps the list it holds over the cached one when init says unavailable', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const cached = vi.fn(() => ({ load: [] }));
+		const runtime = createConsentRuntimeWith(
+			{
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: load(acmeManifest({ alwaysLoad: true })),
+					},
+				},
+				remoteScripts: true,
+			},
+			{ ...defaultRuntimeModules, readCachedScriptRegistry: cached }
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+
+		answer.resolve({ scriptRegistry: { unavailable: true } });
+
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		expect(runtime.kernel.getSnapshot().scriptRegistry?.load).toHaveLength(1);
+		expect(tags()).toHaveLength(1);
+		runtime.dispose();
+	});
+
 	test('replaces the remote copy with a fresh lifecycle when code adds the same integration', async () => {
 		const options = {
 			enabled: false,

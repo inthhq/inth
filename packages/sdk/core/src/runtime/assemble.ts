@@ -16,6 +16,7 @@
 import { displayedCategories } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { clearKernelRecords } from '../kernel/clear-records';
+import type { InternalKernel } from '../kernel/internals';
 import { hostExperiment, startExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { removeLegacySubjectId } from '../libs/legacy-subject-id';
@@ -28,6 +29,7 @@ import type { PersistenceHandle } from '../modules/persistence/types';
 import type { ScriptLoaderHandle } from '../modules/script-loader/types';
 import { resolveWindowDebugMode } from '../modules/window-debug';
 import type { HydrationRecords } from '../types';
+import { withCachedScriptRegistry } from './cached-script-registry';
 import { stringifyRuntimeError, wireRuntimeCallbacks } from './callbacks';
 import { mountRuntimeGPP } from './gpp-mount';
 import { createJourneyController, withJourney } from './journey';
@@ -106,9 +108,19 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		serverId: options.prefetch?.journey?.id,
 	});
 	const mode = requireTransportFactory(options, modules.hostedMode);
-	const kernel = createRuntimeKernel(
+	const readCached = modules.readCachedScriptRegistry;
+	const kernel: InternalKernel = createRuntimeKernel(
 		options,
-		(transport) => withJourney(transport, journey),
+		(transport) => {
+			const withJourneyId = withJourney(transport, journey);
+			// Read when an answer arrives, once `kernel` is set: a list the
+			// runtime already holds is the one to keep.
+			return readCached
+				? withCachedScriptRegistry(withJourneyId, () =>
+						kernel.getSnapshot().scriptRegistry ? undefined : readCached()
+					)
+				: withJourneyId;
+		},
 		mode
 	);
 	// `start()` installs the blocker, often after the host rendered its

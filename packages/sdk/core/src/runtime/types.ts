@@ -7,7 +7,7 @@
  * lifecycle handle. Framework packages extend {@link ConsentRuntimeOptions}
  * with their own UI-only fields rather than restating the shared ones.
  */
-import type { Vendor } from '@inth/sdk-schema/types';
+import type { ScriptRegistryWire, Vendor } from '@inth/sdk-schema/types';
 import type { I18nConfig } from '@inth/sdk-translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
@@ -346,6 +346,12 @@ export interface ConsentRuntimeModules {
 	 * `remoteScripts` loads nothing.
 	 */
 	loadManifestRuntime?: () => Promise<RemoteManifestRuntime>;
+	/**
+	 * The last script registry the browser kept, for an init answer that
+	 * says the registry is unavailable while the runtime holds none yet. The
+	 * script-tag engines read the init script's policy cache.
+	 */
+	readCachedScriptRegistry?: () => ScriptRegistryWire | undefined;
 	/** Mounted on `start()` while enabled when `networkBlocker` is set. */
 	createNetworkBlocker: (
 		options: NetworkBlockerOptions
