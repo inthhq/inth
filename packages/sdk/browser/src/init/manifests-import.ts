@@ -8,6 +8,7 @@
 
 import type { RemoteManifestRuntime } from '@inth/sdk-core/modules/script-loader';
 
+import { readNonce } from '../auto-init';
 import { adoptedBoot } from './adopt';
 import { MANIFESTS_KEY } from './manifests-file';
 import type { ManifestsFile } from './manifests-file';
@@ -41,10 +42,12 @@ export const loadManifestsFile =
 		if (!src) {
 			throw new Error('inth.manifests.js has no URL');
 		}
+		// The nonce the page gave the tag: `data-nonce`, else its own.
+		const tag = init ?? own;
 		const file = await loadPartFile<ManifestsFile>(
 			MANIFESTS_KEY,
 			src,
-			own?.nonce || undefined
+			tag ? readNonce(tag) : undefined
 		);
 		if (!file) {
 			throw new Error(

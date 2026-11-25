@@ -34,6 +34,21 @@ describe('loadManifestsFile', () => {
 		);
 	});
 
+	test('loads it with the nonce the init tag names in data-nonce', async () => {
+		const tag = document.createElement('script');
+		tag.setAttribute('src', '/sdk/inth.js');
+		tag.setAttribute('data-nonce', 'abc123');
+		boot.script = tag;
+
+		await loadManifestsFile();
+
+		expect(loadPartFile).toHaveBeenCalledWith(
+			'__inthManifests',
+			expect.any(String),
+			'abc123'
+		);
+	});
+
 	test('uses data-manifests-src from the init tag', async () => {
 		const tag = document.createElement('script');
 		tag.setAttribute('src', '/sdk/inth.js');

@@ -80,8 +80,12 @@ const readOverrides = function readOverrides(
  * The CSP nonce the tag names: `data-nonce`, else the tag's own nonce.
  * Browsers hide a connected element's `nonce` content attribute, so the
  * property is read, not the attribute.
+ *
+ * @internal
  */
-const readNonce = function readNonce(element: Element): string | undefined {
+export const readNonce = function readNonce(
+	element: Element
+): string | undefined {
 	const explicit = element.getAttribute('data-nonce');
 	if (explicit) {
 		return explicit;
