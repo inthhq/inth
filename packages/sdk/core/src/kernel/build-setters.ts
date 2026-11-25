@@ -29,12 +29,13 @@ import {
 } from '../libs/vendors';
 import type { KernelRuntime } from './create-runtime';
 import { normalizeExternalPermissions } from './external-permissions.model';
-import { fenceReplacedUser } from './kernel-opt-out.model';
+import { fenceReplacedUser, sameAccount } from './kernel-opt-out.model';
 import {
 	copyIABAuthority,
 	DEFAULT_IAB,
 	DEFAULT_VENDORS,
 } from './kernel-snapshot.model';
+import type { SnapshotPatch } from './next-snapshot.model';
 
 /**
  * Merge an IAB patch onto the current IAB slice, returning the next
@@ -278,10 +279,16 @@ export const buildSetters = function buildSetters(
 				return;
 			}
 			fenceReplacedUser(runtime, current, nextUser);
-			commit({
+			const patch: SnapshotPatch = {
 				now: runtime.now(),
 				user: nextUser ? { ...nextUser } : null,
-			});
+			};
+			// The hold waits for the previous account's consent, which no
+			// longer applies to whoever is signed in now.
+			if (getSnapshot().userConsentPending && !sameAccount(current, nextUser)) {
+				patch.userConsentPending = false;
+			}
+			commit(patch);
 		},
 		vendors(
 			input: Partial<KernelVendorsState>,

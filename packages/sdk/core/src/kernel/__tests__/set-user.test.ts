@@ -134,3 +134,39 @@ describe('replacing the user while identify() reads the subject', () => {
 		});
 	});
 });
+
+describe('set.user() and the account hold', () => {
+	const heldKernel = () => {
+		const kernel = createKernel(
+			{
+				initialPolicyResolution: matchedResolution(optOutRule()),
+				initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+				initialUser: USER_A,
+				initialUserConsentPending: true,
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernels.push(kernel);
+		expect(kernel.getSnapshot().userConsentPending).toBe(true);
+		return kernel;
+	};
+
+	test('switching to another user releases the previous account hold', () => {
+		const kernel = heldKernel();
+		kernel.set.user(USER_B);
+		expect(kernel.getSnapshot().userConsentPending).toBe(false);
+	});
+
+	test('clearing the user releases the previous account hold', () => {
+		const kernel = heldKernel();
+		kernel.set.user(null);
+		expect(kernel.getSnapshot().userConsentPending).toBe(false);
+	});
+
+	test('a new token for the same account keeps its hold', () => {
+		const kernel = heldKernel();
+		kernel.set.user({ ...USER_A, identityToken: 'tok-a2' });
+		expect(kernel.getSnapshot().userConsentPending).toBe(true);
+	});
+});
