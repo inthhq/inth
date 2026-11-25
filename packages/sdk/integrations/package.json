@@ -313,6 +313,11 @@
 			"import": "./dist/events.js",
 			"default": "./dist/events.js"
 		},
+		"./remote": {
+			"types": "./dist-types/remote.d.ts",
+			"import": "./dist/remote.js",
+			"default": "./dist/remote.js"
+		},
 		"./hubspot": {
 			"types": "./dist-types/vendors/analytics/hubspot.d.ts",
 			"import": "./dist/vendors/analytics/hubspot.js",

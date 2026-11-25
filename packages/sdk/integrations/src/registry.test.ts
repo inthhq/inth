@@ -165,6 +165,8 @@ const getPublicScriptExportSubpaths =
 					key !== '.' &&
 					key !== './package.json' &&
 					key !== './events' &&
+					// Server-side resolver for remote integrations.
+					key !== './remote' &&
 					// A consent bridge, not a script integration.
 					key !== './shopify' &&
 					key !== './registry'

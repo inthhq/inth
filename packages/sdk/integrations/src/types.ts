@@ -431,9 +431,11 @@ export interface VendorManifest extends ManifestContract {
 }
 
 /**
- * Internal transport-ready manifest shape produced by the compile phase.
+ * Transport-ready manifest shape produced by the compile phase.
  *
- * Contains only serializable data and no runtime callbacks.
+ * Contains only serializable data and no runtime callbacks. The Inth server
+ * builds these with `@inth/integrations/remote` and sends them to the SDK,
+ * which turns each one into a `Script`.
  */
 export interface ResolvedManifest extends ManifestContract {
 	vendor: string;
