@@ -53,6 +53,7 @@ export const pardotTrackingManifest = {
 		},
 		{ args: ['hideConsentBanner', null], global: 'pdt', type: 'callGlobal' },
 		{ args: ['setOptIn', false], global: 'pdt', type: 'callGlobal' },
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	onConsentDenied: [
@@ -181,6 +182,7 @@ export const pardotTracking = function pardotTracking(
 								type: 'setGlobal',
 								value: '{{piDomain}}',
 							},
+							// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 							{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 						],
 						onConsentDenied: [],
@@ -215,6 +217,7 @@ export const pardotTracking = function pardotTracking(
 		return {
 			...script,
 			category: config.category ?? 'marketing',
+			// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 			onBeforeLoad(info) {
 				({ hasConsent } = info);
 				if (hasConsent) {

@@ -36,6 +36,7 @@ export const wisepopsManifest = {
 		},
 		{
 			defer: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},
@@ -118,6 +119,7 @@ export const wisepops = function wisepops(options: WisepopsOptions): Script {
 	return {
 		...script,
 		nonce: trimToUndefined(options.nonce),
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onLoad(info) {
 			if (!info.hasConsent) {
 				return;

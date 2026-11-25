@@ -40,6 +40,7 @@ export const theTradeDeskPixelManifest = {
 			global: 'ttdConversionEvents',
 			type: 'callGlobal',
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	persistAfterConsentRevoked: true,

@@ -68,6 +68,7 @@ export interface AmazonAdsTagOptions {
 export const amazonAdsTagManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'amazon-ads',
@@ -296,6 +297,7 @@ const createAmazonAdsTag = (options: AmazonAdsTagOptions): Script => {
 		...script,
 		async: !countryCode,
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad: update,
 		onConsentChange: update,
 		onDispose: (info) => {

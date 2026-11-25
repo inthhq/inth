@@ -171,6 +171,7 @@ export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 		callbackOnly: true,
 		category: 'necessary',
 		id: vendorId,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onConsentChange: (info) => {
 			// Removing a configuration invokes onConsentChange with false before
 			// onDispose. Do not start a synchronization during that teardown.

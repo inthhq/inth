@@ -268,6 +268,7 @@ export const rudderstackManifest = {
 				'data-rsa-write-key': '{{writeKey}}',
 			},
 
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},

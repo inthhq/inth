@@ -25,6 +25,7 @@ declare global {
 export const adrollPixelManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'adroll',
@@ -78,6 +79,7 @@ export const adrollPixel = function adrollPixel(
 	});
 	return {
 		...script,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			window.adroll_adv_id = advertiserId;
 			window.adroll_pix_id = pixelId;

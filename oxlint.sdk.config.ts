@@ -244,6 +244,26 @@ export default defineConfig({
 				},
 			},
 			{
+				// Vendor files must stay expressible as manifests the Inth server
+				// can send. See tools/oxlint/integrations.
+				excludeFiles: ['**/*.test.ts'],
+				files: [
+					'packages/sdk/integrations/src/vendors/**/*.ts',
+					'packages/sdk/integrations/src/remote.ts',
+				],
+				jsPlugins: [
+					{
+						name: 'integrations',
+						specifier: './tools/oxlint/integrations/index.ts',
+					},
+				],
+				rules: {
+					'integrations/fixed-script-host': 'error',
+					'integrations/no-url-options': 'error',
+					'integrations/no-vendor-callbacks': 'error',
+				},
+			},
+			{
 				files: [...nonReactFrameworkFiles],
 				rules: {
 					// Vue composables also use the `use*` convention, but do not follow

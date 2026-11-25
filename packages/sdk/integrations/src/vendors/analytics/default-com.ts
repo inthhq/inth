@@ -219,6 +219,7 @@ const vendorDetails = {
 export const defaultComPixelManifest = {
 	...vendorManifestContract,
 	category: '{{category}}',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'default-com',
@@ -229,6 +230,7 @@ export const defaultComPixelManifest = {
 export const defaultComFormsSdkManifest = {
 	...vendorManifestContract,
 	category: '{{category}}',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'default-com',
@@ -530,6 +532,7 @@ export const defaultComPixel = function defaultComPixel(
 	return {
 		...script,
 		alwaysLoad: alwaysLoad || undefined,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (conflictsWithPixel(configuration)) {
 				if (info.element) {
@@ -705,6 +708,7 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		id: 'default-com-forms-sdk',
 		// Initially denied owners still gate the shared SDK.
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (!claimLoader(info, 'defaultComFormsSdk') || !info.element) {
 				return;

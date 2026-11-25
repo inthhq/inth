@@ -23,6 +23,7 @@ export const gorgiasChatManifest = {
 	install: [
 		{
 			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},
@@ -176,6 +177,7 @@ export const gorgiasChat = function gorgiasChat(
 
 	return {
 		...script,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad: update,
 		onConsentChange(info) {
 			const load = update(info);

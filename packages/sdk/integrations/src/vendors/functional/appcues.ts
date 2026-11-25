@@ -30,6 +30,7 @@ export const appcuesManifest = {
 			type: 'setGlobal',
 			value: '{{settings}}',
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	onConsentDenied: [{ global: 'Appcues', method: 'reset', type: 'callGlobal' }],
@@ -92,6 +93,7 @@ export const appcues = function appcues(options: AppcuesOptions): Script {
 		const { onLoad } = script;
 		// Core checks current consent and ignores detached loader completions.
 		// Keep visitor callbacks out of the cached manifest and global queues.
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: calls the site's onReady function
 		script.onLoad = (info) => {
 			onLoad?.(info);
 			if (info.hasConsent && window.Appcues) {

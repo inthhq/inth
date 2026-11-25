@@ -24,6 +24,7 @@ export const eloquaTrackingManifest = {
 			type: 'pushToQueue',
 			value: ['elqSetSiteId', '{{siteId}}'],
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	onConsentDenied: [
@@ -469,6 +470,7 @@ export const eloquaTracking = function eloquaTracking(
 			...script,
 			category: config.category ?? 'marketing',
 			observeConsentBeforeLoad: true,
+			// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 			onBeforeLoad(info) {
 				if (hasConsent !== info.hasConsent) {
 					generation += 1;

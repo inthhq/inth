@@ -22,6 +22,7 @@ export const frontChatManifest = {
 	install: [
 		{
 			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},
@@ -94,6 +95,7 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 	return {
 		...script,
 		nonce,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onLoad(info) {
 			// Consent is captured when core inserts the loader.
 			if (!info.hasConsent) {

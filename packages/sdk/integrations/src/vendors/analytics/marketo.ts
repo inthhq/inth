@@ -24,6 +24,7 @@ declare global {
 export const marketoManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	onLoadGranted: [
 		{
@@ -87,6 +88,7 @@ export const marketoMunchkin = function marketoMunchkin(
 	return {
 		...script,
 		category,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onLoad(info) {
 			if (info.hasConsent && info.element?.isConnected) {
 				script.onLoad?.(info);

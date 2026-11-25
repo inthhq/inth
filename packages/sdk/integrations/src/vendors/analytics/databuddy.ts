@@ -141,6 +141,7 @@ export const databuddyManifest = {
 				'data-track-web-vitals': '{{trackWebVitals}}',
 			},
 
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -490,6 +491,7 @@ const createDatabuddyScript = function createDatabuddyScript(
 
 	return {
 		...script,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onConsentChange(info) {
 			script.onConsentChange?.(info);
 			if (info.hasConsent) {

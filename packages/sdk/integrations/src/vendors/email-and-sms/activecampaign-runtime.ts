@@ -201,6 +201,7 @@ export const withActiveCampaignRuntime = (
 	return {
 		...script,
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			const state = update(info);
 			const { element } = info;

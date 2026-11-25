@@ -39,6 +39,7 @@ export const zendeskWidgetManifest = {
 		},
 		{
 			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},
@@ -90,6 +91,7 @@ const createZendeskScript = (options: ZendeskWidgetOptions): Script => {
 	return {
 		...script,
 		category,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (
 				grantedRegistrations(info).length === 0 ||

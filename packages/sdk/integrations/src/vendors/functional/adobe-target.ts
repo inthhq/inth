@@ -108,6 +108,7 @@ export const adobeTargetManifest = {
 			type: 'setGlobal',
 			value: '{{targetGlobalSettings}}',
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	persistAfterConsentRevoked: true,
@@ -123,6 +124,7 @@ export const adobeTargetManifest = {
 /** Web SDK stays installed after its first grant so setConsent can stop it. */
 export const adobeTargetWebSdkManifest = {
 	...adobeTargetManifest,
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 } as const satisfies VendorManifest;
 
@@ -155,6 +157,7 @@ const createAtJsScript = function createAtJsScript(
 		...script,
 		nonce: trimToUndefined(options.nonce),
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (!getScriptRegistrations(info).some((state) => state.hasConsent)) {
 				return;
@@ -283,6 +286,7 @@ const createWebSdkScript = function createWebSdkScript(
 		...script,
 		nonce: trimToUndefined(options.nonce),
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (getScriptRegistrations(info).some((state) => state.hasConsent)) {
 				alloy = installAlloyStub();

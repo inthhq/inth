@@ -60,6 +60,7 @@ export const hubspotManifest = {
 		{
 			async: true,
 			defer: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -734,6 +735,7 @@ export const hubspot = function hubspot(options: HubSpotOptions): Script {
 		callbackOnly: true,
 		category,
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			update(info);
 			script.onBeforeLoad?.(info);

@@ -102,6 +102,7 @@ export const gainsightPxManifest = {
 				user: '{{user}}',
 			},
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	// A shared mount can start under another owner's denial; the stub's config
@@ -368,6 +369,7 @@ const createGainsightPxScript = function createGainsightPxScript(
 		}
 		originalBeforeLoad?.(info);
 	};
+	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 	script.onBeforeLoad = onBeforeLoad;
 	script.serverStart = (info, started) => {
 		if (started.onBeforeLoad !== onBeforeLoad) {

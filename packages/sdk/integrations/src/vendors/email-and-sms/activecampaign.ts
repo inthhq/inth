@@ -37,6 +37,7 @@ export const activeCampaignTrackingManifest = {
 			type: 'callGlobal',
 		},
 		{ args: ['setTrackByDefault', false], global: 'pgo', type: 'callGlobal' },
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	onConsentDenied: [

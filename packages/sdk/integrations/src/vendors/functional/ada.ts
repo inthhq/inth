@@ -214,6 +214,7 @@ export const ada = function ada(options: AdaOptions): Script {
 	return {
 		...resolveManifest(adaManifest),
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad: update,
 		onConsentChange: update,
 		onDispose: dispose,

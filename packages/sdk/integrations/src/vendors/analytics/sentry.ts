@@ -1283,6 +1283,7 @@ export const sentryManifest = {
 				crossorigin: 'anonymous',
 				integrity: '{{integrity}}',
 			},
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -1518,6 +1519,7 @@ const createCdnScript = (
 		alwaysLoad: options.loadMode === 'after-consent' ? undefined : true,
 		category,
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad: update,
 		onConsentChange: (info) => {
 			if (info.element && loadedCdnBundles.has(info.element)) {
@@ -1564,6 +1566,7 @@ const createSentryScript = (options: SentryOptions): Script => {
 	const errorsGated = options.loadMode === 'after-consent';
 	const gateOptions = {
 		errorsGated,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- not a script callback: passes the site's onError option to the consent gate
 		onError: options.onError,
 		piiCategory,
 		replayCategory,
@@ -1607,6 +1610,7 @@ const createSentryScript = (options: SentryOptions): Script => {
 		callbackOnly: true,
 		category,
 		id: scriptId,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad: gate.update,
 		onConsentChange: gate.update,
 		onDispose: gate.dispose,

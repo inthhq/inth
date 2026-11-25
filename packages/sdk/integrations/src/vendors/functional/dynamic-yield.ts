@@ -55,6 +55,7 @@ export const dynamicYieldManifest = {
 			type: 'setGlobalPath',
 			value: { accepted: true },
 		},
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
 		{ async: false, src: '{{scriptSrc}}', type: 'loadScript' },
 	],
 	onConsentDenied: [
@@ -166,6 +167,7 @@ const createDynamicYieldScript = (options: DynamicYieldOptions): Script => {
 		...resolved,
 		category,
 		nonce,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			const granted = grantedRegistration(info);
 			if (granted) {

@@ -58,6 +58,7 @@ export const customerIoManifest = {
 		{
 			async: true,
 			attributes: { 'data-global-customerio-analytics-key': 'cioanalytics' },
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -158,6 +159,7 @@ const createCustomerIo = function createCustomerIo(
 	return {
 		...script,
 		category,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			if (hasConsent !== info.hasConsent) {
 				generation += 1;

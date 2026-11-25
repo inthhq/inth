@@ -46,6 +46,7 @@ export const buildQueuePixelInstall = function buildQueuePixelInstall({
 
 	install.push({
 		async: true,
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: callers pass a placeholder for the whole URL
 		src: scriptPlaceholder,
 		type: 'loadScript',
 	});

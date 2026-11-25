@@ -297,6 +297,7 @@ export const fullStoryManifest = {
 		{
 			async: true,
 			attributes: { crossorigin: 'anonymous', 'data-fs-namespace': 'FS' },
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -429,6 +430,7 @@ const createFullStory = function createFullStory(
 		...script,
 		category,
 		observeConsentBeforeLoad: true,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			const { element, hasConsent } = info;
 			const src = element?.isConnected ? null : element?.getAttribute('src');
@@ -539,6 +541,7 @@ export const fullStory = function fullStory(options: FullStoryOptions): Script {
 	// Reject a replacement created before another Inth configuration started,
 	// before core removes the active owner. Other installations stay a
 	// per-script error so they don't block the rest of the batch.
+	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 	script.validate = () => {
 		if (typeof window === 'undefined' || !window.FS) {
 			return;

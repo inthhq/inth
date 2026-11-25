@@ -67,6 +67,7 @@ export const vercelSpeedInsightsManifest = {
 			},
 
 			defer: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -184,6 +185,7 @@ export const vercelSpeedInsights = function vercelSpeedInsights(
 		manifestOnBeforeLoad?.(info);
 		applyConsent(info);
 	};
+	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 	resolved.onBeforeLoad = onBeforeLoad;
 
 	// The HTML starts the collector only when consent allows it, and nothing

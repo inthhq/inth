@@ -23,6 +23,7 @@ declare global {
 export const pendoManifest = {
 	...vendorManifestContract,
 	category: 'measurement',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'pendo',
@@ -126,6 +127,7 @@ const createPendo = function createPendo(
 	return {
 		...script,
 		category,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad({ hasConsent: consent }) {
 			hasConsent = consent;
 		},

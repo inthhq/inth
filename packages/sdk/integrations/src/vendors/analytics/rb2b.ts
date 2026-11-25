@@ -20,6 +20,7 @@ declare global {
 export const rb2bManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
+	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
 	persistAfterConsentRevoked: true,
 	vendor: 'rb2b',

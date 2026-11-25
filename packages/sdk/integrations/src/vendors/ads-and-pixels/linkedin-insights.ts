@@ -69,6 +69,7 @@ export const linkedinInsightsManifest = {
 		{
 			async: true,
 
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},

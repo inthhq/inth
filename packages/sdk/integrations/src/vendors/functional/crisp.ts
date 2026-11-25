@@ -47,6 +47,7 @@ export const crispManifest = {
 		},
 		{
 			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},
@@ -159,6 +160,7 @@ const createCrispManifest = function createCrispManifest(
 
 	install.push({
 		async: true,
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
 		src: '{{scriptSrc}}',
 		type: 'loadScript',
 	});

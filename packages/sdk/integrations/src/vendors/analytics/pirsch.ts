@@ -50,6 +50,7 @@ export const pirschManifest = {
 			},
 
 			defer: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 			src: '{{scriptUrl}}',
 			type: 'loadScript',
 		},
@@ -182,6 +183,7 @@ export const pirsch = function pirsch(options: PirschOptions): Script {
 	// granted post-load), so custom event bindings would never initialize.
 	// Call it ourselves exactly when the native listener can no longer fire.
 	const manifestOnLoad = resolved.onLoad;
+	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 	resolved.onLoad = (info) => {
 		manifestOnLoad?.(info);
 

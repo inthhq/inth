@@ -31,6 +31,7 @@ export const luckyOrangeManifest = {
 	...vendorManifestContract,
 	category: 'measurement',
 	install: [
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
 		{ async: true, defer: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	persistAfterConsentRevoked: true,
@@ -98,6 +99,7 @@ const createLuckyOrange = function createLuckyOrange(
 	return {
 		...script,
 		category,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad({ hasConsent: consent }) {
 			hasConsent = consent;
 			if (!hasConsent || subscribed) {
