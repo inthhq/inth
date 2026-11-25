@@ -7,9 +7,11 @@ pluginManagement {
 				includeGroupAndSubgroups("com.google")
 			}
 		}
-		maven("https://maven-central.storage-download.googleapis.com/maven2/") {
-			name = "MavenCentralGoogleMirror"
-			mavenContent { releasesOnly() }
+		if (providers.gradleProperty("inth.mavenCentralMirror").orNull != "false") {
+			maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+				name = "MavenCentralGoogleMirror"
+				mavenContent { releasesOnly() }
+			}
 		}
 		mavenCentral()
 		gradlePluginPortal()
@@ -24,10 +26,14 @@ dependencyResolutionManagement {
 		google()
 		// Maven Central answers GitHub runners with 429 under load; Google's
 		// mirror serves the same releases, and Gradle falls through to Central
-		// only for an artifact the mirror lacks.
-		maven("https://maven-central.storage-download.googleapis.com/maven2/") {
-			name = "MavenCentralGoogleMirror"
-			mavenContent { releasesOnly() }
+		// only for an artifact the mirror lacks. A mirror 5xx disables it for
+		// the build and fails resolution rather than falling through, so
+		// -Pinth.mavenCentralMirror=false resolves from Central alone.
+		if (providers.gradleProperty("inth.mavenCentralMirror").orNull != "false") {
+			maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+				name = "MavenCentralGoogleMirror"
+				mavenContent { releasesOnly() }
+			}
 		}
 		mavenCentral()
 	}

@@ -604,12 +604,16 @@ jobs:
             robolectric-android-all-
       # Maven Central answers bursts with 429. Gradle retries those itself with
       # a doubling backoff from initial.backoff; the loop covers what remains.
+      # The last attempt skips Google's mirror, in case the mirror is what failed.
       - name: Fetch the Robolectric android-all jars
         if: steps.robolectric-cache.outputs.cache-hit != 'true'
         working-directory: packages/android
         run: |
           for attempt in 1 2 3; do
+            mirror=true
+            if [ "${attempt}" -eq 3 ]; then mirror=false; fi
             if timeout 600 ./gradlew :inth-consent-ui:fetchRobolectricRuntime \
+              -Pinth.mavenCentralMirror="${mirror}" \
               -Dorg.gradle.internal.repository.max.tentatives=6 \
               -Dorg.gradle.internal.repository.initial.backoff=2000 \
               --no-configuration-cache --console=plain; then
