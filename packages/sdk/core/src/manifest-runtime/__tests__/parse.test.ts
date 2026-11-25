@@ -70,7 +70,7 @@ describe('parseResolvedManifest', () => {
 		});
 	});
 
-	it.each([
+	it.each<[string, unknown]>([
 		['a non-object', 'manifest'],
 		['another kind', { ...manifest(), kind: 'other' }],
 		['a newer schema', { ...manifest(), schemaVersion: 2 }],
@@ -96,17 +96,16 @@ describe('parseResolvedManifest', () => {
 			},
 		],
 		...['src', 'onload', 'onerror', 'nonce', 'type'].map(
-			(name) =>
-				[
-					`a ${name} attribute`,
-					{
-						...manifest(),
-						loadScript: {
-							...manifest().loadScript,
-							attributes: { [name]: 'https://evil.example/x.js' },
-						},
+			(name): [string, unknown] => [
+				`a ${name} attribute`,
+				{
+					...manifest(),
+					loadScript: {
+						...manifest().loadScript,
+						attributes: { [name]: 'https://evil.example/x.js' },
 					},
-				] as const
+				},
+			]
 		),
 		['a string alwaysLoad', { ...manifest(), alwaysLoad: 'yes' }],
 		['an unknown consent signal', { ...manifest(), consentSignal: 'other' }],
