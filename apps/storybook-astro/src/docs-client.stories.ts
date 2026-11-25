@@ -59,6 +59,9 @@ export const ReactIsland: Story = {
 		const body = within(document.body);
 		const status = await body.findByTestId('measurement-status');
 		expect(status).toHaveTextContent('Measurement is not allowed.');
+		// The island can render before the prompt takes over the server
+		// markup, whose tap replay the story drops with its inline scripts.
+		await whenPromptReady();
 		await userEvent.click(
 			await body.findByRole('button', { name: /^accept all$/iu })
 		);
