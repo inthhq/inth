@@ -92,9 +92,14 @@ export const writePolicyCache = function writePolicyCache(
 		return;
 	}
 	const key = keyOf(projectUrl, overrides);
-	// A registry the server could not read never replaces the last list.
+	// A registry the server could not read never replaces the last list,
+	// while that list is fresh enough to read.
 	const scriptRegistry = isUnavailable(init.scriptRegistry)
-		? readEntry(key)?.i.scriptRegistry
+		? (
+				readPolicyCache(projectUrl, overrides)?.init as
+					| { scriptRegistry?: unknown }
+					| undefined
+			)?.scriptRegistry
 		: init.scriptRegistry;
 	store({
 		i: {

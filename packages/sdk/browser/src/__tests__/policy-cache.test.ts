@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
-import { afterEach, expect, test } from 'vite-plus/test';
+import { afterEach, expect, test, vi } from 'vite-plus/test';
 
 import {
 	createRegistryTracker,
@@ -12,6 +12,7 @@ import {
 } from '../init/policy-cache';
 
 afterEach(() => {
+	vi.useRealTimers();
 	window.localStorage.clear();
 });
 
@@ -53,6 +54,17 @@ test('keeps the last list when an answer says the registry is unavailable', () =
 	writePolicyCache(PROJECT, undefined, answer({ unavailable: true }));
 
 	expect(cachedRegistry()).toEqual(pixelList);
+});
+
+test('does not revive an expired list when an answer says the registry is unavailable', () => {
+	vi.useFakeTimers();
+	writePolicyCache(PROJECT, undefined, answer(pixelList));
+	vi.advanceTimersByTime(8 * 24 * 60 * 60 * 1000);
+
+	writePolicyCache(PROJECT, undefined, answer({ unavailable: true }));
+
+	expect(readPolicyCache(PROJECT)).toBeDefined();
+	expect(cachedRegistry()).toBeUndefined();
 });
 
 test('replaces the cached list with the one the engine has now', () => {
