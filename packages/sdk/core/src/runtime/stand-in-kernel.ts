@@ -315,6 +315,17 @@ export const createStandInKernel = function createStandInKernel(
 				listeners.delete(listener);
 			};
 		},
+		// Written like `set`'s calls, so the first load compresses the two together.
+		syncUserConsent(...args) {
+			const call = (kernel: ConsentKernel) => kernel.syncUserConsent(...args);
+			if (engine) {
+				return call(engine);
+			}
+			queued.push(call);
+			pending.push({ args, name: 'syncUserConsent' });
+			options.requestEngine();
+			return false;
+		},
 	};
 
 	const kernel = new Proxy(stub, {

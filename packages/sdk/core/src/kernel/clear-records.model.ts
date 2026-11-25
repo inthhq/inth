@@ -28,10 +28,14 @@ export const subjectAfterClear = function subjectAfterClear(
  * @internal
  */
 export const clearKernelRecords = function clearKernelRecords(
-	kernel: Pick<InternalKernel, 'events' | 'getSnapshot' | 'hydrate'>,
+	kernel: Pick<InternalKernel, 'events' | 'getSnapshot' | 'hydrate'> & {
+		bumpAccountSyncGeneration?: InternalKernel['bumpAccountSyncGeneration'];
+	},
 	now?: number
 ): void {
+	kernel.bumpAccountSyncGeneration?.();
 	kernel.hydrate({
+		accountLayer: null,
 		choice: null,
 		noticeDismissal: null,
 		now,

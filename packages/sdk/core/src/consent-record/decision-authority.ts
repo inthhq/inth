@@ -10,20 +10,20 @@
 
 import type {
 	CategoryDecision,
+	ChoiceBasis,
 	DecisionAuthority,
 	EvaluationPolicy,
 } from './types';
 
 /**
- * Whether a decision's basis is compatible with the current policy.
+ * Whether a choice basis is compatible with the current policy.
  * Legacy decisions without a material fingerprint are grandfathered, and
  * a legacy fingerprint is only compared to a legacy material fingerprint.
  */
-export const isBasisCompatible = function isBasisCompatible(
-	decision: CategoryDecision,
+export const isChoiceBasisCompatible = function isChoiceBasisCompatible(
+	basis: ChoiceBasis,
 	policy: EvaluationPolicy
 ): boolean {
-	const { basis } = decision;
 	if (basis.kind === 'choice-v1') {
 		return basis.fingerprint === policy.choice.fingerprint;
 	}
@@ -36,10 +36,25 @@ export const isBasisCompatible = function isBasisCompatible(
 	return basis.materialFingerprint === policy.legacyMaterialFingerprint;
 };
 
+/**
+ * Whether a decision's basis is compatible with the current policy.
+ * Legacy decisions without a material fingerprint are grandfathered, and
+ * a legacy fingerprint is only compared to a legacy material fingerprint.
+ */
+export const isBasisCompatible = function isBasisCompatible(
+	decision: CategoryDecision,
+	policy: EvaluationPolicy
+): boolean {
+	return isChoiceBasisCompatible(decision.basis, policy);
+};
+
 const decisionExpiry = function decisionExpiry(
 	decision: CategoryDecision,
 	policy: EvaluationPolicy
 ): number | null {
+	if (decision.expiresAt !== undefined) {
+		return decision.expiresAt;
+	}
 	return policy.choice.maxAgeMs === null
 		? null
 		: decision.confirmedAt + policy.choice.maxAgeMs;

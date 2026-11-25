@@ -10,6 +10,7 @@ import type {
 	ConsentSnapshot,
 } from '@inth/sdk-core';
 import type { ConsentRuntimeGPPFactoryOptions } from '@inth/sdk-core/runtime';
+import { consentPending } from '@inth/sdk-core/surface-state';
 
 import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id.model';
 import { createGPPCmpApi } from './create-gpp-cmp-api';
@@ -278,9 +279,9 @@ export const createGPPRuntime = function createGPPRuntime(
 		}
 		const snapshot = kernel.getSnapshot();
 		const visible = isPromptVisible(snapshot);
-		// Until the policy resolves or a new TC String decodes, keep the
-		// published sections and tell vendors to wait.
-		const resolved = snapshot.policyPending
+		// Until the policy and userConsent settle or a new TC String decodes,
+		// keep the published sections and tell vendors to wait.
+		const resolved = consentPending(snapshot)
 			? null
 			: resolveSections(snapshot, sync);
 		published = {

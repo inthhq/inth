@@ -39,6 +39,7 @@ export {
 	policyOptOutCategories,
 	saveWouldLiftOptOut,
 } from './consent-record';
+export { consentPending } from './consent-pending';
 export { createConsentKernel } from './kernel';
 
 export {

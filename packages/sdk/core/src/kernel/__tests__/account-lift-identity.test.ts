@@ -249,6 +249,55 @@ describe('the lift that follows a granting save', () => {
 	});
 });
 
+describe('the same account signing out and back in while its lift is out', () => {
+	test('A’s late direct lift answer does not lift A’s opt-out again', async () => {
+		const lift = deferred<LiftOptOutTransportResult>();
+		const liftOptOut = vi.fn((_payload: LiftOptOutPayload) => lift.promise);
+		const kernel = kernelOn({
+			identify: () => Promise.resolve({ optOut: HELD_A, subjectId: SUBJECT }),
+			liftOptOut,
+			optOut: () => Promise.resolve({ ok: true }),
+		});
+		const lifted = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+
+		const pending = kernel.commands.optIn({ uiSource: 'dialog' });
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		kernel.clearIdentity();
+		await kernel.commands.identify({ ...USER_A });
+		lift.resolve({ ok: true, optOut: null });
+		const result = await pending;
+		await flushMacrotasks();
+
+		expect(result.ok).toBe(false);
+		expect(lifted).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).toMatchObject({ heldBy: 'person' });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		kernel.dispose();
+	});
+
+	test('A’s late follow-up lift answer does not lift A’s opt-out again', async () => {
+		const lift = deferred<LiftOptOutTransportResult>();
+		const liftOptOut = vi.fn((_payload: LiftOptOutPayload) => lift.promise);
+		const kernel = kernelOn({
+			identify: () => Promise.resolve({ optOut: HELD_A, subjectId: SUBJECT }),
+			liftOptOut,
+			optOut: () => Promise.resolve({ ok: true }),
+			save: () => Promise.resolve({ ok: true }),
+		});
+		await kernel.commands.save({ marketing: true }, { uiSource: 'dialog' });
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		kernel.clearIdentity();
+		await kernel.commands.identify({ ...USER_A });
+		lift.resolve({ ok: true, optOut: null });
+		await flushMacrotasks();
+
+		expect(kernel.getSnapshot().optOut).toMatchObject({ heldBy: 'person' });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		kernel.dispose();
+	});
+});
+
 // A c15t subject id: an answer for it names its UUID, and adopting that
 // moves the visitor to the UUID.
 const LEGACY_SUBJECT = 'sub_01890000000070008000000000000001';

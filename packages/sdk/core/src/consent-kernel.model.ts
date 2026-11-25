@@ -5,6 +5,7 @@ import type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutDeviceRow,
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
@@ -14,6 +15,7 @@ import type {
 	ResolvedPolicyRule,
 	ScriptRegistryWire,
 	TranslationsResponse,
+	UserConsent,
 	Vendor,
 } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
@@ -43,6 +45,7 @@ import type {
 	RestrictionReason,
 } from './consent-record/types';
 import type { AllConsentNames } from './consent/consent-types';
+import type { AccountConsentLayer } from './kernel/account-layer';
 import type { ExperimentAssignment, ExperimentGate } from './libs/experiment';
 import type { HasCondition } from './libs/has';
 import type { VendorDetails } from './libs/script-loader/script.model';
@@ -55,6 +58,7 @@ export type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutDeviceRow,
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
@@ -63,6 +67,7 @@ export type {
 	PolicyScopeMode,
 	ResolvedPolicyRule,
 	TranslationsResponse,
+	UserConsent,
 	Vendor,
 };
 
@@ -349,12 +354,29 @@ export interface VendorChoice {
  * `now` before anything is applied; an invalid input rejects the whole
  * call.
  */
+/**
+ * Effective opt-out answer returned by a transport or init response.
+ * Carries the optional `device` row on `/v1` answers; the kernel strips
+ * `device` before storing an {@link OptOutRecord} on the snapshot.
+ */
+export type OptOutAnswer = OptOutRecord & {
+	device?: OptOutDeviceRow;
+};
+
+/**
+ * Hydration records applied to a kernel at construction or via `hydrate()`.
+ *
+ * Semantics per key: omitted preserves the current value, an explicit
+ * `null` (or empty array) clears it. Every record is validated against
+ * `now` before anything is applied; an invalid input rejects the whole
+ * call.
+ */
 export interface HydrationRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
 	/** Durable opt-out record. `null` clears it. */
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	/**
 	 * Whether this browser has already handed a GPC opt-out request to the save
 	 * outbox for the hydrated opt-out record. Omitted or `false` means not yet
@@ -378,6 +400,21 @@ export interface HydrationRecords {
 	optOutRightsConfirmed?: boolean;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
+	/**
+	 * Declared vendor IDs covered by `vendorChoice`, when known from storage.
+	 * `null` clears the covered set.
+	 */
+	vendorDeclared?: readonly string[] | null;
+	/**
+	 * Per-vendor confirmation timestamps (`vendorId -> confirmedAt`) recorded in
+	 * localStorage. `null` clears the per-vendor times map.
+	 */
+	vendorTimes?: Readonly<Record<string, number>> | null;
+	/**
+	 * Stored account consent layer, hydrated separately from browser records.
+	 * Gated by `user.externalId`. `null` clears it.
+	 */
+	accountLayer?: AccountConsentLayer | null;
 	/** Evaluation time in epoch milliseconds. Defaults to `Date.now()`. */
 	now?: number;
 }
@@ -467,6 +504,18 @@ export interface ConsentSnapshot {
 	 */
 	readonly policyPending: boolean;
 	/**
+	 * `true` while a `userConsent` Promise is pending for the current user.
+	 * While pending, optional `effectivePermissions` are `false`, `activeUI`
+	 * stays `'none'`, and gates hold consent outcomes until settlement or timeout.
+	 */
+	readonly userConsentPending: boolean;
+	/**
+	 * `true` when an active account consent layer is applied for `user`.
+	 * Present so instant-commit and deferred-boot checks always route through
+	 * the kernel when an account layer is active.
+	 */
+	readonly hasAccountLayer?: boolean;
+	/**
 	 * Epoch milliseconds of the first time each prompt surface became
 	 * visible in this kernel's lifetime, or `null` while it never has. The
 	 * event bus does not replay `surface:shown` to late subscribers; read
@@ -533,6 +582,14 @@ export interface KernelConfig {
 	initialOverrides?: KernelOverrides;
 	/** Initial identified user, if known at construction. */
 	initialUser?: KernelUser;
+	/** Initial resolved cross-domain `userConsent` document, if known at construction. */
+	initialUserConsent?: UserConsent | null;
+	/**
+	 * Marks `userConsent` as pending an in-flight Promise at construction.
+	 * Holds optional permissions at `false` and suppresses prompt surfaces until
+	 * cleared.
+	 */
+	initialUserConsentPending?: boolean;
 	/** Presentation experiment arm already assigned (a host-resolved variant). */
 	initialExperiment?: ExperimentAssignment;
 	/**
@@ -802,14 +859,18 @@ export interface LiftOptOutPayload {
 	user: Readonly<KernelUser> | null;
 	uiSource?: SaveUISource;
 	policySnapshotToken?: string | null;
+	/** Supported opt-out rights to lift, sent when lifting an account opt-out. */
+	rights?: readonly OptOutRight[];
 }
 
 /** Result returned by `transport.optOut()`. */
 export interface OptOutTransportResult {
 	ok: boolean;
 	subjectId?: string;
+	/** Verified subject link confirmation returned by the backend, when present. */
+	link?: { readonly stored?: boolean; readonly verifiedBy?: string };
 	/** Authoritative effective opt-out returned by the backend, when valid. */
-	optOut?: OptOutRecord;
+	optOut?: OptOutAnswer;
 	/** `true` when the backend answered 404 (does not store opt-outs). */
 	unsupported?: boolean;
 }
@@ -822,7 +883,7 @@ export interface LiftOptOutTransportResult {
 	 * Authoritative remaining opt-out returned by the backend, or `null` when
 	 * lifted completely. Omitted when the response carried no valid opt-out info.
 	 */
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	/** `true` when the backend answered 404 (does not store opt-outs). */
 	unsupported?: boolean;
 }
@@ -862,7 +923,7 @@ export interface KernelTransport {
 		user: KernelUser,
 		subjectId: string | null
 		// oxlint-disable-next-line no-invalid-void-type -- A transport with nothing to report returns `Promise<void>`.
-	) => Promise<{ subjectId?: string; optOut?: OptOutRecord } | void>;
+	) => Promise<{ subjectId?: string; optOut?: OptOutAnswer } | void>;
 	/**
 	 * Load the server-side record of a subject as validated receipts. The
 	 * kernel calls it after `identify` succeeds and applies the result through
@@ -1070,7 +1131,7 @@ export interface SaveResult {
 	/** Categories this save confirmed. Empty when nothing was recorded. */
 	confirmed?: readonly OptionalConsentCategory[];
 	/** Authoritative effective opt-out returned by the backend, when valid. */
-	optOut?: OptOutRecord;
+	optOut?: OptOutAnswer;
 	issues?: RecordIssue[];
 }
 
@@ -1147,6 +1208,8 @@ export interface ConsentKernel {
 		overrides: (input: KernelOverrides) => void;
 		language: (code: string) => void;
 		subjectId: (id: string | null) => void;
+		/** Replace or clear the identified user. Drops any previous user's account layer synchronously. */
+		user: (user: KernelUser | null) => void;
 		/** Detected user-agent privacy signals. */
 		privacySignals: (input: { gpc?: boolean }) => void;
 		/** Set the active UI surface. */
@@ -1257,6 +1320,12 @@ export interface ConsentKernel {
 		}) => Promise<OptInResult>;
 		identify: (user: KernelUser) => Promise<void>;
 	};
+
+	/**
+	 * Apply a resolved `userConsent` document from `@inth/node` `consents.check()`,
+	 * or clear the account consent layer with `null`. `undefined` is a no-op.
+	 */
+	syncUserConsent: (value: UserConsent | null | undefined) => boolean;
 
 	/**
 	 * Typed event stream for observability, devtools, analytics.

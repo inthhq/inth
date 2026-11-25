@@ -1,10 +1,3 @@
-import type {
-	ConsentKernel,
-	HydrationRecords,
-	HydrationResult,
-	InitResponse,
-	KernelEvent,
-} from '../consent-kernel.model';
 /**
  * Kernel verbs that only core's own modules call: the runtime, persistence
  * and the records clear. They exist on every kernel `createConsentKernel()`
@@ -15,7 +8,22 @@ import type {
  *
  * @internal
  */
+import type { UserConsent } from '@inth/sdk-schema/types';
+
+import type {
+	ConsentKernel,
+	HydrationRecords,
+	HydrationResult,
+	InitResponse,
+	KernelEvent,
+	KernelUser,
+} from '../consent-kernel.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import type {
+	AccountConsentLayer,
+	AccountLayerSource,
+	BrowserConsentRecords,
+} from './account-layer';
 
 /** @internal */
 export interface InternalKernel extends ConsentKernel {
@@ -122,6 +130,55 @@ export interface InternalKernel extends ConsentKernel {
 	 * Subscribe to changes in the in-flight opt-out and lift request count.
 	 */
 	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
+	/** Browser-made consent records kept apart from the account consent layer. */
+	getBrowserRecords: () => BrowserConsentRecords;
+	/** Current account consent layer, or `null` when none is held. */
+	getAccountLayer: () => AccountConsentLayer | null;
+	/** Provenance (`'incoming' | 'stored'`) of the current account consent layer. */
+	getAccountLayerSource: () => AccountLayerSource;
+	/**
+	 * Atomically update the current user (dropping any mismatched account layer)
+	 * and optionally set `userConsentPending` or apply a resolved `userConsent`
+	 * (`UserConsent | null`) in one single kernel commit.
+	 */
+	setUserWithPending: (
+		user: KernelUser | null,
+		options?:
+			| boolean
+			| {
+					readonly pending?: boolean;
+					readonly userConsent?: UserConsent | null;
+			  }
+	) => void;
+	/**
+	 * Monotonic generation bumped on user change, logout, clear, dispose, and
+	 * successful account opt-out lift. Async `userConsent` Promises capture it
+	 * before awaiting and drop results if it moved.
+	 */
+	getAccountSyncGeneration: () => number;
+	/** Bump the account sync generation and return the new value. */
+	bumpAccountSyncGeneration: () => number;
+	/** Arm or release the `userConsentPending` hold on the kernel snapshot. */
+	setUserConsentPending: (pending: boolean) => void;
+	/**
+	 * Sync a `UserConsent` document and optionally release `userConsentPending`
+	 * in one atomic commit so no intermediate snapshot runs with `pending: false`
+	 * before the resolved document applies.
+	 */
+	settleUserConsent: (
+		value: UserConsent | null | undefined,
+		options?: { clearPending?: boolean; forceClientSync?: boolean }
+	) => boolean;
+	/**
+	 * Subscribe to changes to the account consent layer so persistence can
+	 * schedule writes or synchronously delete account storage on drop.
+	 */
+	onAccountLayerChange: (
+		listener: (
+			layer: AccountConsentLayer | null,
+			fromHydration: boolean
+		) => void
+	) => () => void;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;

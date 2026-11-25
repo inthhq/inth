@@ -287,6 +287,8 @@ export const awaitsChoice = function awaitsChoice(
 	return (
 		snapshot.activeUI === 'banner' &&
 		snapshot.model !== 'iab' &&
+		!snapshot.userConsentPending &&
+		!snapshot.hasAccountLayer &&
 		!snapshot.externalPermissions &&
 		!snapshot.experimentPending &&
 		!snapshot.experiment &&

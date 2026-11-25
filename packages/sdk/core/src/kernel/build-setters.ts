@@ -4,6 +4,7 @@ import type {
 	KernelConfig,
 	KernelIABState,
 	KernelOverrides,
+	KernelUser,
 	KernelVendorsState,
 	ResolvedVendor,
 	VendorSource,
@@ -28,11 +29,13 @@ import {
 } from '../libs/vendors';
 import type { KernelRuntime } from './create-runtime';
 import { normalizeExternalPermissions } from './external-permissions.model';
+import { fenceReplacedUser, sameAccount } from './kernel-opt-out.model';
 import {
 	copyIABAuthority,
 	DEFAULT_IAB,
 	DEFAULT_VENDORS,
 } from './kernel-snapshot.model';
+import type { SnapshotPatch } from './next-snapshot.model';
 
 /**
  * Merge an IAB patch onto the current IAB slice, returning the next
@@ -130,6 +133,22 @@ const mergeVendors = function mergeVendors(
 /**
  * Build the `kernel.set.*` object given the kernel runtime.
  */
+const sameProperties = (
+	left: KernelUser['properties'],
+	right: KernelUser['properties']
+): boolean => {
+	const leftKeys = Object.keys(left ?? {});
+	return (
+		leftKeys.length === Object.keys(right ?? {}).length &&
+		leftKeys.every(
+			(key) =>
+				right !== undefined &&
+				Object.hasOwn(right, key) &&
+				right[key] === left?.[key]
+		)
+	);
+};
+
 export const buildSetters = function buildSetters(
 	runtime: KernelRuntime,
 	config: KernelConfig
@@ -242,6 +261,34 @@ export const buildSetters = function buildSetters(
 			if (inferred.size !== previousSize) {
 				updateCategories();
 			}
+		},
+		user(nextUser: KernelUser | null): void {
+			const current = getSnapshot().user;
+			if (current === null && nextUser === null) {
+				return;
+			}
+			if (
+				current !== null &&
+				nextUser !== null &&
+				current.externalId === nextUser.externalId &&
+				current.identityToken === nextUser.identityToken &&
+				current.identityProvider === nextUser.identityProvider &&
+				current.externalIdType === nextUser.externalIdType &&
+				sameProperties(current.properties, nextUser.properties)
+			) {
+				return;
+			}
+			fenceReplacedUser(runtime, current, nextUser);
+			const patch: SnapshotPatch = {
+				now: runtime.now(),
+				user: nextUser ? { ...nextUser } : null,
+			};
+			// The hold waits for the previous account's consent, which no
+			// longer applies to whoever is signed in now.
+			if (getSnapshot().userConsentPending && !sameAccount(current, nextUser)) {
+				patch.userConsentPending = false;
+			}
+			commit(patch);
 		},
 		vendors(
 			input: Partial<KernelVendorsState>,

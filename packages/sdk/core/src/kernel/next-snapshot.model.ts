@@ -46,6 +46,7 @@ import type { ExperimentAssignment } from '../libs/experiment';
 import type { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
 import { deriveModel } from '../policy-choice.model';
 import { evaluateExternalPermissions } from './external-permissions.model';
+import { PENDING_PERMISSIONS } from './kernel-snapshot.model';
 
 /**
  * Partial update applied to a snapshot. Only input fields are patchable;
@@ -74,6 +75,8 @@ export interface SnapshotPatch {
 	policySnapshotToken?: string | null;
 	activeUI?: KernelActiveUI;
 	policyPending?: boolean;
+	userConsentPending?: boolean;
+	hasAccountLayer?: boolean;
 	iab?: KernelIABState | null;
 	vendors?: KernelVendorsState | null;
 	vendorChoice?: VendorChoice | null;
@@ -138,6 +141,10 @@ export const isUnchangedPatch = function isUnchangedPatch(
 		pick(patch.activeUI, current.activeUI) === current.activeUI &&
 		pick(patch.policyPending, current.policyPending) ===
 			current.policyPending &&
+		pick(patch.userConsentPending, current.userConsentPending) ===
+			current.userConsentPending &&
+		Boolean(pick(patch.hasAccountLayer, current.hasAccountLayer)) ===
+			Boolean(current.hasAccountLayer) &&
 		pick(patch.iab, current.iab) === current.iab &&
 		pick(patch.vendors, current.vendors) === current.vendors &&
 		pick(patch.vendorChoice, current.vendorChoice) === current.vendorChoice &&
@@ -243,6 +250,7 @@ const deriveNextActiveUI = function deriveNextActiveUI(input: {
 	derive: boolean;
 	choiceChanged: boolean;
 	policyPending: boolean;
+	userConsentPending: boolean;
 	experimentPending: boolean;
 	promptRequirement: PromptRequirement;
 	resolution: PolicyResolution;
@@ -259,6 +267,7 @@ const deriveNextActiveUI = function deriveNextActiveUI(input: {
 			policyPending: input.policyPending,
 			promptRequirement: input.promptRequirement,
 			resolution: input.resolution,
+			userConsentPending: input.userConsentPending,
 		});
 	}
 	return input.current.activeUI;
@@ -334,6 +343,20 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		iab = { ...iab, authority: null };
 	}
 
+	const policyPending = pick(patch.policyPending, current.policyPending);
+	const externalPermissions = pick(
+		patch.externalPermissions,
+		current.externalPermissions
+	);
+	// An external CMP owns the outcome, so no account hold applies under it.
+	const userConsentPending =
+		pick(patch.userConsentPending, current.userConsentPending) &&
+		!externalPermissions;
+	const hasAccountLayer =
+		patch.hasAccountLayer === undefined
+			? Boolean(current.hasAccountLayer)
+			: patch.hasAccountLayer;
+
 	// Frozen evaluator inputs remain valid until their next deadline. Changes
 	// to presentation, identity or metadata do not alter record authority.
 	// A clock moving backwards must re-evaluate previously expired grants.
@@ -343,12 +366,9 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		noticeDismissal === current.noticeDismissal &&
 		optOut === current.optOut &&
 		privacySignals.gpc.active === current.privacySignals.gpc.active &&
+		userConsentPending === current.userConsentPending &&
 		now >= current.evaluatedAt &&
 		(current.nextDeadline === null || now < current.nextDeadline);
-	const externalPermissions = pick(
-		patch.externalPermissions,
-		current.externalPermissions
-	);
 	let evaluation = reuseEvaluation
 		? {
 				nextDeadline: current.nextDeadline,
@@ -369,6 +389,8 @@ export const buildNextSnapshot = function buildNextSnapshot(
 			iab = { ...iab, authority: null, enabled: false };
 		}
 		evaluation = evaluateExternalPermissions(externalPermissions);
+	} else if (userConsentPending) {
+		evaluation = { ...evaluation, permissions: PENDING_PERMISSIONS };
 	}
 
 	const effectivePermissions = samePermissions(
@@ -390,7 +412,6 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		? current.restrictions
 		: evaluation.restrictions;
 
-	const policyPending = pick(patch.policyPending, current.policyPending);
 	const experimentPending = pick(
 		patch.experimentPending,
 		current.experimentPending
@@ -399,6 +420,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 	const visibilityChanged =
 		resolutionChanged ||
 		policyPending !== current.policyPending ||
+		userConsentPending !== current.userConsentPending ||
 		experimentPending !== current.experimentPending;
 	const activeUI = externalPermissions
 		? 'none'
@@ -415,11 +437,12 @@ export const buildNextSnapshot = function buildNextSnapshot(
 				policyPending,
 				promptRequirement,
 				resolution,
+				userConsentPending,
 			});
 
 	const subject = pick(patch.subject, current.subject);
 
-	return {
+	const nextSnapshot: ConsentSnapshot & { hasAccountLayer?: boolean } = {
 		activeUI,
 		branding: pick(patch.branding, current.branding),
 		consentCategories,
@@ -456,9 +479,14 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		surfaceShownAt: current.surfaceShownAt,
 		translations: pick(patch.translations, current.translations),
 		user: pick(patch.user, current.user),
+		userConsentPending,
 		vendorChoice: pick(patch.vendorChoice, current.vendorChoice),
 		vendors: pick(patch.vendors, current.vendors),
 	};
+	if (hasAccountLayer) {
+		nextSnapshot.hasAccountLayer = true;
+	}
+	return nextSnapshot;
 };
 
 /**
@@ -470,6 +498,9 @@ export const snapshotChanged = function snapshotChanged(
 	current: ConsentSnapshot,
 	next: ConsentSnapshot
 ): boolean {
+	if (Boolean(current.hasAccountLayer) !== Boolean(next.hasAccountLayer)) {
+		return true;
+	}
 	for (const key of Object.keys(next) as (keyof ConsentSnapshot)[]) {
 		if (key === 'revision' || key === 'evaluatedAt') {
 			continue;

@@ -53,13 +53,13 @@
  */
 
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
-import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSnapshot,
 	KernelTransport,
 	KernelUser,
 	LiftOptOutPayload,
+	OptOutAnswer,
 	OptOutPayload,
 	SavePayload,
 	SaveResult,
@@ -70,6 +70,7 @@ import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/consent-save-rejected-error';
+import type { BrowserConsentRecords } from '../account-layer';
 import type { KernelRuntime } from '../create-runtime';
 import { answerOwnedBy, applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
@@ -102,6 +103,11 @@ export {
 
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {
+	/** Browser records the action committed (apart from any account layer). */
+	browserRecords?: Pick<
+		BrowserConsentRecords,
+		'choice' | 'vendorChoice' | 'vendorTimes'
+	>;
 	/** Records generation the action landed in. */
 	generation: number;
 	/** Local opt-out act counter when the action landed. */
@@ -135,7 +141,7 @@ export interface OptOutActionContext {
 /** Outcome of a queued account opt-out lift. */
 export interface AccountLiftOutcome {
 	ok: boolean;
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	subjectId?: string;
 	unsupported?: boolean;
 }
@@ -220,6 +226,8 @@ export interface SaveOutboxOptions {
 	store: SaveOutboxStore;
 	/** Called whenever something is left queued; replay once back online. */
 	retryWhenOnline: () => void;
+	/** Called when a backend response confirms a verified subject-to-user link. */
+	markSubjectLinked?: (subjectId: string, externalId: string) => void;
 	/** Loads the queue module. Defaults to `import('./queue')`. */
 	loadQueue?: () => Promise<{
 		createQueueWorker: (options: QueueWorkerOptions) => QueueWorker;
@@ -357,6 +365,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	transport,
 	store,
 	retryWhenOnline,
+	markSubjectLinked,
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
 	const { emit, getSnapshot } = runtime;
@@ -416,6 +425,7 @@ export const createSaveOutbox = function createSaveOutbox({
 					hasOptOutInFlight: () => directOptOutSends.size > 0,
 					isSending,
 					isSendingOptOut,
+					markSubjectLinked,
 					runtime,
 					store,
 					tools: queueTools,
@@ -507,16 +517,18 @@ export const createSaveOutbox = function createSaveOutbox({
 	const fillUnsupportedOptOutRights =
 		function fillUnsupportedOptOutRights(): void {
 			const current = getSnapshot();
-			if (!current.optOut || current.optOut.rights.length > 0) {
+			const browserOptOut = runtime.getBrowserRecords().optOut;
+			if (!browserOptOut || browserOptOut.rights.length > 0) {
 				return;
 			}
 			applySyncedOptOut(
 				runtime,
-				{ ...current.optOut, rights: [...OPT_OUT_RIGHTS] },
+				{ ...browserOptOut, rights: [...OPT_OUT_RIGHTS] },
 				{
 					actVersion: runtime.getOptOutActVersion(),
 					allowClear: false,
 					confirmed: false,
+					externalId: current.user?.externalId ?? null,
 					generation: runtime.getGeneration(),
 					subjectId: current.subject?.subjectId ?? null,
 				}
@@ -718,6 +730,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			applySyncedOptOut(runtime, result.optOut, {
 				actVersion: action.optOutActVersion,
 				allowClear: false,
+				externalId: action.snapshot.user?.externalId ?? null,
 				generation: action.generation,
 				subjectId: adopted ?? action.snapshot.subject?.subjectId ?? null,
 			});
@@ -731,15 +744,28 @@ export const createSaveOutbox = function createSaveOutbox({
 		// refuses every id costs one extra request, not a loop.
 		reassign: boolean
 	): Promise<SaveResult> {
-		const { confirmed, generation, snapshot: actionSnapshot } = action;
+		const {
+			browserRecords: actionBrowser,
+			confirmed,
+			generation,
+			snapshot: actionSnapshot,
+		} = action;
+		const effectiveActionBrowser = actionBrowser ?? {
+			choice: actionSnapshot.explicitChoice,
+			vendorChoice: actionSnapshot.vendorChoice,
+		};
 		if (payload.idempotencyKey !== undefined) {
 			saveActVersions.set(payload.idempotencyKey, action.optOutActVersion);
 		}
 		const currentPayload = (): SavePayload | null => {
 			const current = getSnapshot();
+			const switchedToDifferentUser =
+				current.user !== null &&
+				(actionSnapshot.user === null ||
+					current.user.externalId !== actionSnapshot.user.externalId);
 			if (
 				runtime.getGeneration() !== generation ||
-				current.user !== actionSnapshot.user ||
+				switchedToDifferentUser ||
 				current.evaluationPolicy.choice.fingerprint !==
 					actionSnapshot.evaluationPolicy.choice.fingerprint
 			) {
@@ -747,7 +773,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			}
 			return withoutSuperseded(
 				payload,
-				liveSupersession(actionSnapshot, current)
+				liveSupersession(effectiveActionBrowser, runtime.getBrowserRecords())
 			);
 		};
 		const save = transport?.save;
@@ -1016,15 +1042,25 @@ export const createSaveOutbox = function createSaveOutbox({
 							ownedBy
 						)
 					: undefined;
+				const effectiveSubjectId = adopted ?? act.payload.subjectId;
+				if (
+					owned &&
+					act.kind === 'record' &&
+					act.payload.user?.externalId &&
+					(result as { link?: { stored?: boolean } }).link?.stored === true
+				) {
+					markSubjectLinked?.(effectiveSubjectId, act.payload.user.externalId);
+				}
 				if (owned && result.optOut !== undefined) {
 					applySyncedOptOut(runtime, result.optOut, {
 						account: act.payload.user,
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
+						externalId: act.payload.user?.externalId ?? null,
 						generation: context.generation,
 						identity: context.identity,
 						ownAct: act.kind === 'record',
-						subjectId: adopted ?? act.payload.subjectId,
+						subjectId: effectiveSubjectId,
 					});
 				}
 			} else if (clearVersion === startedClear) {

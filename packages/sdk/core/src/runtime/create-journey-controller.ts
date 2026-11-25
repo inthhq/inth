@@ -191,6 +191,7 @@ export const createJourneyController = function createJourneyController(
 		}
 		return (
 			!snapshot.policyPending &&
+			!snapshot.userConsentPending &&
 			!snapshot.experimentPending &&
 			snapshot.promptRequirement.kind === 'none'
 		);

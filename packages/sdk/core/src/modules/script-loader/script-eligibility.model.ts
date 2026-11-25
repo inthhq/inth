@@ -16,6 +16,21 @@ import type {
 } from './script-loader.model';
 
 /**
+ * Whether scripts wait for policy or `userConsent`. An external CMP owns the
+ * outcome, so its permissions decide at once, as the category gate does.
+ * Local copy of `@inth/sdk-core`'s `consentPending`: this chunk imports
+ * values only from its own folder.
+ */
+export const isConsentPending = (
+	snapshot: Pick<
+		ConsentSnapshot,
+		'externalPermissions' | 'policyPending' | 'userConsentPending'
+	>
+): boolean =>
+	!snapshot.externalPermissions &&
+	(snapshot.policyPending || snapshot.userConsentPending === true);
+
+/**
  * Build the per-pass eligibility context from a snapshot. The kernel snapshot
  * already contains policy-effective consents, so modules must not re-apply
  * policy scope here.
@@ -59,6 +74,9 @@ export const hasScriptConsent = function hasScriptConsent(
 	const { script } = entry;
 
 	if (entry.hasIabMeta) {
+		if (isConsentPending(pass.snapshot)) {
+			return false;
+		}
 		return pass.tools.evaluate(script, pass.snapshot);
 	}
 
@@ -68,10 +86,20 @@ export const hasScriptConsent = function hasScriptConsent(
 				`Consent category "${entry.simpleCategory}" not found in consent state`
 			);
 		}
+		if (
+			isConsentPending(pass.snapshot) &&
+			(entry.simpleCategory !== 'necessary' || entry.vendor !== null)
+		) {
+			return false;
+		}
 		return (
 			(pass.consents[entry.simpleCategory] || false) &&
 			vendorAllowed(entry, pass)
 		);
+	}
+
+	if (isConsentPending(pass.snapshot)) {
+		return false;
 	}
 
 	return (

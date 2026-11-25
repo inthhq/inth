@@ -77,6 +77,8 @@ export const kernelOnly = function kernelOnly(
 	return (
 		snapshot.resolution.status !== 'matched' ||
 		snapshot.policyPending ||
+		snapshot.userConsentPending === true ||
+		snapshot.hasAccountLayer === true ||
 		Boolean(snapshot.externalPermissions) ||
 		snapshot.model === 'iab' ||
 		snapshot.evaluationPolicy.model === 'none' ||

@@ -64,7 +64,7 @@ import { createRuntime } from './create-runtime';
 import type { InternalKernel } from './kernel-internals.model';
 import { buildOptOutPayload } from './kernel-opt-out.model';
 import { createRecordsBoundary } from './kernel-records.model';
-import { buildDraft, buildInitialSnapshot } from './kernel-snapshot.model';
+import { buildDraft, buildInitialKernelState } from './kernel-snapshot.model';
 import { createBrowserOutboxStore, createSaveOutbox } from './save-outbox';
 import type { SaveOutboxOptions } from './save-outbox';
 import type { SaveOutboxStore } from './save-outbox/save-outbox.store';
@@ -102,7 +102,8 @@ export const createKernel = function createKernel(
 	const { transport } = config;
 	const dispatcher = createDispatcher();
 	const eventBus = createEventBus(dispatcher);
-	const initialSnapshot = buildInitialSnapshot(config);
+	const initialState = buildInitialKernelState(config);
+	const initialSnapshot = initialState.snapshot;
 	// The revision-0 snapshot, held immutably. This is what a server render
 	// saw, so hydration-time consumers can render exactly what the server
 	// rendered even when client boot mutations land before hydration completes.
@@ -115,11 +116,11 @@ export const createKernel = function createKernel(
 			: [];
 
 	const initialOptOutGpcReported =
-		initialSnapshot.optOut !== null &&
+		initialState.browserRecords.optOut !== null &&
 		config.initialRecords?.optOutGpcReported === true;
 
 	const initialOptOutReceiptData: Readonly<OptOutReceiptData> =
-		initialSnapshot.optOut === null
+		initialState.browserRecords.optOut === null
 			? EMPTY_OPT_OUT_RECEIPT_DATA
 			: Object.freeze({
 					localAct: config.initialRecords?.optOutLocalAct ?? null,
@@ -184,6 +185,9 @@ export const createKernel = function createKernel(
 		defaultOptOutRights,
 		dispatcher,
 		emit: eventBus.emit,
+		initialAccountLayer: initialState.accountLayer,
+		initialAccountLayerSource: initialState.accountLayerSource,
+		initialBrowserRecords: initialState.browserRecords,
 		initialOptOutGpcReported,
 		initialOptOutReceiptData,
 		initialSnapshot,
@@ -196,6 +200,9 @@ export const createKernel = function createKernel(
 	const outbox = createSaveOutbox({
 		// Tests pass `() => import('./save-outbox/queue')` or a fake of it.
 		loadQueue: seams.loadOutboxQueue as SaveOutboxOptions['loadQueue'],
+		markSubjectLinked: (subjectId, externalId) =>
+			// oxlint-disable-next-line no-use-before-define -- Called only after a send, once records exists.
+			records.markSubjectLinked(subjectId, externalId),
 		// oxlint-disable-next-line no-use-before-define -- Called only after a send, once the lifecycle exists.
 		retryWhenOnline: () => lifecycle.retryWhenOnline(),
 		runtime,
@@ -257,13 +264,19 @@ export const createKernel = function createKernel(
 	});
 	const choice = createChoiceRecorder({
 		defaultOptOutRights,
+		getProvisionalSubject: records.getProvisionalSubject,
 		initialDraft: buildDraft(config.initialDraft),
+		isSubjectLinked: records.isSubjectLinked,
+		markSubjectLinked: records.markSubjectLinked,
+		noteRecordedSubject: records.noteRecordedSubject,
 		outbox,
 		runtime,
+		transport,
 	});
 
 	return {
 		adoptInit: lifecycle.adopt,
+		bumpAccountSyncGeneration: runtime.bumpAccountSyncGeneration,
 		clearIdentity: records.clearIdentity,
 		commands: {
 			dismissNotice: choice.dismissNotice,
@@ -278,6 +291,10 @@ export const createKernel = function createKernel(
 			emit: eventBus.emit,
 			on: eventBus.on,
 		},
+		getAccountLayer: runtime.getAccountLayer,
+		getAccountLayerSource: runtime.getAccountLayerSource,
+		getAccountSyncGeneration: runtime.getAccountSyncGeneration,
+		getBrowserRecords: runtime.getBrowserRecords,
 		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
 		getProvisionalSubject: records.getProvisionalSubject,
@@ -291,6 +308,7 @@ export const createKernel = function createKernel(
 		isOptOutGpcReported: runtime.isOptOutGpcReported,
 		markLive: runtime.markLive,
 		markProvisionalSubject: records.markProvisionalSubject,
+		onAccountLayerChange: runtime.onAccountLayerChange,
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
 		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
@@ -301,7 +319,13 @@ export const createKernel = function createKernel(
 			draft: choice.draft,
 			subjectId: records.setSubjectId,
 		},
+		setUserConsentPending: (pending: boolean) => {
+			runtime.commit({ now: runtime.now(), userConsentPending: pending });
+		},
+		setUserWithPending: records.setUserAtomic,
+		settleUserConsent: records.syncUserConsent,
 		subscribe: runtime.subscribe,
+		syncUserConsent: (value) => records.syncUserConsent(value),
 	};
 };
 

@@ -9,7 +9,11 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import type { HydrationRecords, VendorChoice } from '../consent-kernel.model';
+import type {
+	HydrationRecords,
+	OptOutAnswer,
+	VendorChoice,
+} from '../consent-kernel.model';
 import {
 	checkTimestamp,
 	isNonEmptyString,
@@ -18,7 +22,7 @@ import {
 	ownValue,
 	validateExplicitChoice,
 	validateNoticeDismissal,
-	validateOptOutRecord,
+	validateOptOutAnswer,
 } from '../consent-record/consent-record-validation.model';
 import type { RecordIssue } from '../consent-record/consent-record-validation.model';
 import {
@@ -33,18 +37,23 @@ import type {
 } from '../consent-record/types';
 import type { OptOutLocalAct } from '../libs/opt-out-state.model';
 import { isValidVendorId } from '../libs/vendors';
+import { validateAccountConsentLayer } from './account-layer';
+import type { AccountConsentLayer } from './account-layer';
 
 /** Validated records with the same omit/clear semantics as the input. */
 export interface ValidatedRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
-	optOut?: OptOutRecord | null;
+	optOut?: OptOutAnswer | null;
 	optOutGpcReported?: boolean;
 	optOutReference?: string | null;
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
 	vendorChoice?: VendorChoice | null;
+	vendorDeclared?: readonly string[] | null;
+	vendorTimes?: Readonly<Record<string, number>> | null;
+	accountLayer?: AccountConsentLayer | null;
 }
 
 export type ValidateRecordsResult =
@@ -181,6 +190,87 @@ const validateOptOutMetaFields = function validateOptOutMetaFields(
 	}
 };
 
+const validateVendorDeclaredField = function validateVendorDeclaredField(
+	input: HydrationRecords,
+	records: ValidatedRecords,
+	issues: RecordIssue[]
+): void {
+	if (input.vendorDeclared === undefined) {
+		return;
+	}
+	if (input.vendorDeclared === null) {
+		records.vendorDeclared = null;
+		return;
+	}
+	if (!Array.isArray(input.vendorDeclared)) {
+		issues.push({ code: 'not-an-object', path: 'vendorDeclared' });
+		return;
+	}
+	const declared = new Set<string>();
+	let valid = true;
+	for (const [index, entry] of input.vendorDeclared.entries()) {
+		if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
+			issues.push({
+				code: 'invalid-identifier',
+				path: `vendorDeclared[${index}]`,
+			});
+			valid = false;
+			continue;
+		}
+		declared.add(entry);
+	}
+	if (valid) {
+		records.vendorDeclared = [...declared].sort();
+	}
+};
+
+const validateVendorTimesField = function validateVendorTimesField(
+	input: HydrationRecords,
+	records: ValidatedRecords,
+	issues: RecordIssue[],
+	now: number
+): void {
+	if (input.vendorTimes === undefined) {
+		return;
+	}
+	if (input.vendorTimes === null) {
+		records.vendorTimes = null;
+		return;
+	}
+	if (!isPlainRecord(input.vendorTimes)) {
+		issues.push({ code: 'not-an-object', path: 'vendorTimes' });
+		return;
+	}
+	const times: Record<string, number> = {};
+	let valid = true;
+	for (const id of ownKeys(input.vendorTimes)) {
+		if (!isNonEmptyString(id) || !isValidVendorId(id)) {
+			issues.push({
+				code: 'invalid-identifier',
+				path: `vendorTimes.${id}`,
+			});
+			valid = false;
+			continue;
+		}
+		const timestamp = ownValue(input.vendorTimes, id);
+		const timestampIssue = checkTimestamp(timestamp, now);
+		if (timestampIssue) {
+			issues.push({ code: timestampIssue, path: `vendorTimes.${id}` });
+			valid = false;
+			continue;
+		}
+		Object.defineProperty(times, id, {
+			configurable: true,
+			enumerable: true,
+			value: timestamp as number,
+			writable: true,
+		});
+	}
+	if (valid) {
+		records.vendorTimes = times;
+	}
+};
+
 /**
  * Validate hydration input. Keys that are omitted stay omitted so the
  * caller can preserve current values; `null` passes through as an explicit
@@ -235,7 +325,7 @@ export const validateHydrationRecords = function validateHydrationRecords(
 		if (input.optOut === null) {
 			records.optOut = null;
 		} else {
-			const result = validateOptOutRecord(input.optOut, now);
+			const result = validateOptOutAnswer(input.optOut, now);
 			if (result.ok === true) {
 				records.optOut = result.record;
 			} else {
@@ -263,6 +353,20 @@ export const validateHydrationRecords = function validateHydrationRecords(
 						path: `vendorChoice.${issue.path}`,
 					}))
 				);
+			}
+		}
+	}
+	validateVendorDeclaredField(input, records, issues);
+	validateVendorTimesField(input, records, issues, now);
+	if (input.accountLayer !== undefined) {
+		if (input.accountLayer === null) {
+			records.accountLayer = null;
+		} else {
+			const validatedAccount = validateAccountConsentLayer(input.accountLayer);
+			if (validatedAccount === null) {
+				issues.push({ code: 'invalid-value', path: 'accountLayer' });
+			} else {
+				records.accountLayer = validatedAccount;
 			}
 		}
 	}

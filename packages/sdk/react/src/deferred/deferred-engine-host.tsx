@@ -9,6 +9,7 @@
  * @internal
  */
 
+import { consentPending } from '@inth/sdk/engine';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { ReactNode } from 'react';
@@ -157,8 +158,8 @@ const Publisher = ({
 			(kernel as { replaySaves?: () => void }).replaySaves?.();
 		}
 		// The page already shows the resolved state; attaching while a
-		// streamed init is still applying would flash the pending one.
-		if (!kernel.getSnapshot().policyPending) {
+		// streamed init or userConsent is still settling would flash the pending one.
+		if (!consentPending(kernel.getSnapshot())) {
 			publish();
 			return;
 		}
@@ -179,7 +180,7 @@ const Publisher = ({
 			}
 		};
 		wait.off = kernel.subscribe((snapshot: ConsentSnapshot) => {
-			if (!snapshot.policyPending) {
+			if (!consentPending(snapshot)) {
 				finish();
 			}
 		});

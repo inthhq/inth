@@ -310,6 +310,24 @@ export const encodeVendorChoice = function encodeVendorChoice(
 		denied: [...record.denied].sort(),
 		version: 1,
 	};
+	if (record.granted !== undefined) {
+		encoded.granted = [...record.granted].sort();
+	}
+	if (record.vendorTimes !== undefined) {
+		const sortedTimes: Record<string, number> = {};
+		for (const id of Object.keys(record.vendorTimes).sort()) {
+			const time = record.vendorTimes[id];
+			if (time !== undefined) {
+				Object.defineProperty(sortedTimes, id, {
+					configurable: true,
+					enumerable: true,
+					value: time,
+					writable: true,
+				});
+			}
+		}
+		encoded.vendorTimes = sortedTimes;
+	}
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}
@@ -319,8 +337,8 @@ export const encodeVendorChoice = function encodeVendorChoice(
 /**
  * Compact vendor denials for the `<key>-vendors` cookie:
  * `v=1&t=<confirmedAt>&d=<uri-encoded id>|<uri-encoded id>`, followed by the
- * subject fields the consent envelope also uses (`sid`, `eid`, `idp`).
- * The `d` field is omitted when nothing is denied.
+ * subject fields (`sid`, `eid`, `idp`). The `d` field is omitted when nothing
+ * is denied; the declared/granted list stays in localStorage JSON only.
  */
 export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 	record: StoredVendorChoice

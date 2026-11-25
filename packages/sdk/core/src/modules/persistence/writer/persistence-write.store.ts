@@ -10,6 +10,7 @@
  */
 
 import type { ConsentSnapshot } from '../../../consent-kernel.model';
+import type { AccountConsentLayer } from '../../../kernel/account-layer';
 import type { OptOutReceiptData } from '../../../libs/opt-out-state.model';
 import type { StorageConfig } from '../persistence.model';
 import type {
@@ -100,7 +101,9 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	store: RecordStore,
 	snapshot: ConsentSnapshot,
 	storageConfig: StorageConfig | undefined,
-	now: number
+	now: number,
+	vendorDeclared?: readonly string[] | null,
+	vendorTimes?: Readonly<Record<string, number>> | null
 ): void {
 	if (typeof document === 'undefined') {
 		return;
@@ -113,6 +116,13 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	// vendors keeps one identity: the envelope cannot hold it without a
 	// category choice.
 	const record: StoredVendorChoice = { ...snapshot.vendorChoice };
+	if (vendorDeclared !== null && vendorDeclared !== undefined) {
+		const deniedSet = new Set(snapshot.vendorChoice.denied);
+		record.granted = vendorDeclared.filter((id) => !deniedSet.has(id)).sort();
+	}
+	if (vendorTimes !== null && vendorTimes !== undefined) {
+		record.vendorTimes = { ...vendorTimes };
+	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };
 	}
@@ -180,4 +190,24 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 		return true;
 	}
 	return Boolean(result.written?.cookie || result.written?.localStorage);
+};
+
+/**
+ * Write the account consent layer across its split cookies and localStorage,
+ * or remove them when cleared (`null`). No-op outside the browser.
+ */
+export const writeAccountLayerToStorage = function writeAccountLayerToStorage(
+	store: RecordStore,
+	layer: AccountConsentLayer | null,
+	storageConfig: StorageConfig | undefined,
+	now: number
+): boolean {
+	if (typeof document === 'undefined') {
+		return true;
+	}
+	if (!layer) {
+		store.clearStoredAccountLayer(storageConfig);
+		return true;
+	}
+	return store.writeStoredAccountLayer(layer, storageConfig, now);
 };

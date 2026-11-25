@@ -13,7 +13,11 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import { decisionAuthority, isBasisCompatible } from './decision-authority';
+import {
+	decisionAuthority,
+	isBasisCompatible,
+	isChoiceBasisCompatible,
+} from './decision-authority';
 import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
@@ -35,7 +39,11 @@ import type {
 	RestrictionReason,
 } from './types';
 
-export { OPT_OUT_REPROMPT_WAIT_MS, optInPromptAllowedAt };
+export {
+	isChoiceBasisCompatible,
+	OPT_OUT_REPROMPT_WAIT_MS,
+	optInPromptAllowedAt,
+};
 
 export interface ConsentEvaluationInput {
 	policy: EvaluationPolicy;

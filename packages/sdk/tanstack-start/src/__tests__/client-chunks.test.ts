@@ -253,8 +253,12 @@ describe('TanStack Start client chunks', () => {
 		// consent UI, the classic prompt and dialog are gone and the banner
 		// replays its own early taps: 1,006 fewer (21,730 measured). Files
 		// named after what they export give the lazy chunks longer names,
-		// which the preload lists carry: 87 bytes (21,817 measured).
-		expect(brotli).toBeLessThanOrEqual(21_890);
+		// which the preload lists carry: 87 bytes (21,817 measured), and
+		// 21,846 with the rest of that work. The early commit, the deferral
+		// checks and the plain scripts that wait for an account layer, and
+		// the stand-in kernel's queued `syncUserConsent`: 160 bytes (22,006
+		// measured).
+		expect(brotli).toBeLessThanOrEqual(22_050);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

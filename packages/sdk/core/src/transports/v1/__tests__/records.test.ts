@@ -799,6 +799,34 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		});
 	});
 
+	test('preserves device.rights, filters unsupported rights from it, and drops a write time an older backend sent', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, {
+				optOut: {
+					device: {
+						rights: ['sale', 'share', 'limit_sensitive'],
+						writtenAt: ACTION_AT + 12_000,
+					},
+					heldBy: 'both',
+					method: 'gpc',
+					recordedAt: ACTION_AT + 10_000,
+					rights: ['sale', 'share', 'targeted_ads', 'limit_sensitive'],
+				},
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+
+		const result = await transportWith(fetch).optOut(optOutPayload);
+		expect(result.optOut).toEqual({
+			device: { rights: ['sale', 'share'] },
+			heldBy: 'both',
+			method: 'gpc',
+			recordedAt: ACTION_AT + 10_000,
+			rights: ['sale', 'share', 'targeted_ads'],
+		});
+	});
+
 	test('reads a null optOut, which answers a retry that arrived after a lift, as recorded with nothing to apply', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, { optOut: null, recordId: RECORD, subjectId: SUBJECT })

@@ -16,6 +16,7 @@
  * @packageDocumentation
  */
 
+export { consentPending } from './consent-pending';
 export { allConsentNames, consentTypes } from './consent/consent-types';
 export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { has } from './libs/has';

@@ -24,6 +24,7 @@ import {
 	STORAGE_KEY_V2,
 	resolveStorageKeys,
 } from '../../../libs/storage-keys';
+import { resolveAccountStorageKeys } from '../account-keys';
 import type { StoredConsentEnvelope } from '../record-codec.model';
 import type { DecodedStoredConsent } from '../record-storage.store';
 import {
@@ -488,6 +489,12 @@ describe('raw candidate reading', () => {
 			optOutCategories: 'custom-key-opt-out-categories',
 			privacy: 'custom-key-privacy',
 			vendors: 'custom-key-vendors',
+		});
+		expect(resolveAccountStorageKeys(config)).toEqual({
+			accountChoices: 'custom-key-acct-c',
+			accountOptOut: 'custom-key-acct-o',
+			accountState: 'custom-key-acct',
+			accountVendors: 'custom-key-acct-v',
 		});
 		expect(legacySubjectIdKey(config)).toBe('custom-key-sid');
 		expect(legacySubjectIdKey(undefined)).toBe('c15t-sid');

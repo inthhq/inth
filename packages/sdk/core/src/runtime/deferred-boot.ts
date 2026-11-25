@@ -14,12 +14,14 @@
  */
 
 import type { KernelOverrides } from '../consent-kernel.model';
+import { readCookieValueFromHeader } from '../libs/cookie/read-cookie-value-from-header';
 import { hasStoredConsentRecord } from '../libs/journey.store';
 import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/prefetch.model';
 import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers.model';
+import { resolveAccountStorageKeys } from '../modules/persistence/account-keys';
 import type { SSRInitialData } from '../options/ssr-options.model';
 import { readHostedMode } from '../transports/hosted-modes.model';
 import type { ProviderTransportFactory } from '../transports/mode';
@@ -195,8 +197,46 @@ export const startPrefetchedInit = function startPrefetchedInit(
  * @returns `true` when one is present.
  * @internal
  */
+const hasStoredAccountRecord = function hasStoredAccountRecord(
+	storageKey?: string
+): boolean {
+	const keys = resolveAccountStorageKeys(
+		storageKey ? { storageKey } : undefined
+	);
+	try {
+		if (
+			typeof window !== 'undefined' &&
+			window.localStorage?.getItem(keys.accountState) !== null
+		) {
+			return true;
+		}
+	} catch {
+		// Blocked localStorage: check cookies below.
+	}
+	try {
+		if (typeof document !== 'undefined') {
+			const header = document.cookie;
+			for (const name of [
+				keys.accountChoices,
+				keys.accountVendors,
+				keys.accountOptOut,
+			]) {
+				const value = readCookieValueFromHeader(header, name);
+				if (value !== undefined && value !== '') {
+					return true;
+				}
+			}
+		}
+	} catch {
+		// Blocked cookies.
+	}
+	return false;
+};
+
 export const hasStoredConsent = function hasStoredConsent(
 	storageKey?: string
 ): boolean {
-	return hasStoredConsentRecord(storageKey);
+	return (
+		hasStoredConsentRecord(storageKey) || hasStoredAccountRecord(storageKey)
+	);
 };

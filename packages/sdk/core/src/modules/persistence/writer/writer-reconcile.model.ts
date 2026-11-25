@@ -319,7 +319,7 @@ const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
 	optOut: fingerprint([null, null, false, null, null, false]),
-	vendors: fingerprint([null, null]),
+	vendors: fingerprint([null, null, null, null]),
 };
 
 /**
@@ -331,6 +331,19 @@ const ABSENT: Record<StoredRecordKind, string> = {
  * @param read - A storage read; omitted records were unreadable.
  * @returns One fingerprint per readable record.
  */
+const vendorFingerprint = (read: StoredRead): string => {
+	const stored = read.records;
+	if (!stored.vendorChoice) {
+		return ABSENT.vendors;
+	}
+	return fingerprint([
+		stored.vendorChoice,
+		read.vendorSubject,
+		stored.vendorDeclared ?? null,
+		stored.vendorTimes ?? null,
+	]);
+};
+
 export const fingerprintStoredRecords = function fingerprintStoredRecords(
 	read: StoredRead
 ): StorageFingerprints {
@@ -359,10 +372,7 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
-		prints.vendors = fingerprint([
-			stored.vendorChoice,
-			stored.vendorChoice ? read.vendorSubject : null,
-		]);
+		prints.vendors = vendorFingerprint(read);
 	}
 	return prints;
 };
@@ -926,16 +936,26 @@ export const selectReconciledRecords = function selectReconciledRecords(
 		rules.merge
 	);
 
-	if (
-		movement.changed('vendors') &&
-		adoptNewer(
-			view.vendorChoice,
-			stored.vendorChoice ?? null,
-			movement.removed('vendors'),
-			(record) => record.confirmedAt
-		)
-	) {
-		records.vendorChoice = stored.vendorChoice ?? null;
+	if (movement.changed('vendors')) {
+		if (
+			adoptNewer(
+				view.vendorChoice,
+				stored.vendorChoice ?? null,
+				movement.removed('vendors'),
+				(record) => record.confirmedAt
+			)
+		) {
+			records.vendorChoice = stored.vendorChoice ?? null;
+			records.vendorDeclared = stored.vendorDeclared ?? null;
+			records.vendorTimes = stored.vendorTimes ?? null;
+		} else if (sameRecord(view.vendorChoice, stored.vendorChoice ?? null)) {
+			if (stored.vendorDeclared !== undefined) {
+				records.vendorDeclared = stored.vendorDeclared;
+			}
+			if (stored.vendorTimes !== undefined) {
+				records.vendorTimes = stored.vendorTimes;
+			}
+		}
 	}
 
 	reconcileOptOutRecord(view, stored, movement, records);

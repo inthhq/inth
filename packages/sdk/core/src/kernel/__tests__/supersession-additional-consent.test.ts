@@ -46,7 +46,7 @@ describe('supersession: Additional Consent', () => {
 	test('a narrowed save drops the AC string with the TC string', () => {
 		const narrowed = withoutSuperseded(payload, {
 			category: (category) => category === 'marketing',
-			vendors: false,
+			vendor: () => false,
 		});
 		expect(narrowed?.confirmed.categories).toEqual({ measurement: true });
 		expect(narrowed?.tcString).toBeNull();
@@ -56,7 +56,7 @@ describe('supersession: Additional Consent', () => {
 	test('a save nothing supersedes keeps both strings', () => {
 		const kept = withoutSuperseded(payload, {
 			category: () => false,
-			vendors: false,
+			vendor: () => false,
 		});
 		expect(kept?.tcString).toBe('CQ-tc');
 		expect(kept?.addtlConsent).toBe('2~89~dv.2572');

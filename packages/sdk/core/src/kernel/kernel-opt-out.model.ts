@@ -9,10 +9,15 @@ import type {
 	ConsentSnapshot,
 	KernelUser,
 	LiftOptOutPayload,
+	OptOutAnswer,
 	OptOutPayload,
 	SaveUISource,
 } from '../consent-kernel.model';
-import { validateOptOutRecord } from '../consent-record/consent-record-validation.model';
+import { consentPending } from '../consent-pending';
+import {
+	stripOptOutDevice,
+	validateOptOutAnswer,
+} from '../consent-record/consent-record-validation.model';
 import {
 	answersHeldOptOut,
 	carryOptOutCategories,
@@ -86,7 +91,7 @@ export const gpcSignalApplicable = function gpcSignalApplicable(
 	return (
 		live &&
 		!snapshot.externalPermissions &&
-		!snapshot.policyPending &&
+		!consentPending(snapshot) &&
 		snapshot.resolution.status === 'matched' &&
 		snapshot.privacySignals.gpc.active &&
 		snapshot.evaluationPolicy.gpcDenyCategories.length > 0
@@ -95,26 +100,30 @@ export const gpcSignalApplicable = function gpcSignalApplicable(
 
 /**
  * Whether a live kernel must record a durable GPC opt-out for `snapshot`.
+ * Checks the browser record only so an account opt-out never suppresses this
+ * device's own GPC opt-out.
  */
 export const gpcOptOutDue = function gpcOptOutDue(
 	snapshot: ConsentSnapshot,
-	live: boolean
+	live: boolean,
+	browserOptOut: Readonly<OptOutRecord> | null = snapshot.optOut
 ): boolean {
-	return gpcSignalApplicable(snapshot, live) && snapshot.optOut === null;
+	return gpcSignalApplicable(snapshot, live) && browserOptOut === null;
 };
 
 /**
  * Whether a live kernel must report an active GPC signal for an opt-out record
- * already held in `snapshot`.
+ * already held in the browser layer.
  */
 export const gpcSignalReportDue = function gpcSignalReportDue(
 	snapshot: ConsentSnapshot,
 	live: boolean,
-	gpcReported: boolean
+	gpcReported: boolean,
+	browserOptOut: Readonly<OptOutRecord> | null = snapshot.optOut
 ): boolean {
 	return (
 		gpcSignalApplicable(snapshot, live) &&
-		snapshot.optOut !== null &&
+		browserOptOut !== null &&
 		!gpcReported
 	);
 };
@@ -214,15 +223,16 @@ export const buildOptOutPayload = function buildOptOutPayload(
 };
 
 /**
- * Build the transport payload for an opt-out lift, with one idempotency key
- * and no `rights` so the backend lifts every right the device holds, and
- * account-held rights too when the current user carries a verified token.
+ * Build the transport payload for an opt-out lift, with one idempotency key.
+ * Omit `rights` for device lifts so the backend lifts every right the device
+ * holds; pass supported `rights` when lifting an account-held opt-out.
  */
 export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	snapshot: ConsentSnapshot,
 	subjectId: string,
 	actionAt: number,
-	uiSource?: SaveUISource
+	uiSource?: SaveUISource,
+	rights?: readonly OptOutRight[]
 ): LiftOptOutPayload {
 	const payload: LiftOptOutPayload = {
 		givenAt: actionAt,
@@ -233,6 +243,9 @@ export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	};
 	if (uiSource !== undefined) {
 		payload.uiSource = uiSource;
+	}
+	if (rights && rights.length > 0) {
+		payload.rights = [...rights];
 	}
 	return payload;
 };
@@ -257,6 +270,8 @@ export interface OptOutAnswerFence {
 	 * the identified one. Leave unset for an answer about the subject alone.
 	 */
 	account?: Readonly<KernelUser> | null;
+	/** External user ID active when the request started. Drops the answer on mismatch. */
+	externalId?: string | null;
 	/** Only a lift answer may clear `snapshot.optOut` to `null`. */
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
@@ -269,35 +284,6 @@ export interface OptOutAnswerFence {
 	 */
 	ownAct?: boolean;
 }
-
-/**
- * The receipt after a backend answer. This browser's act and its reference
- * stay only while the answer is that act (`localAct`); a different act was
- * not made here, so the receipt drops them.
- */
-const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
-	currentOptOut: Readonly<OptOutRecord> | null,
-	nextOptOut: OptOutRecord | null,
-	currentReceipt: Readonly<OptOutReceiptData>,
-	confirmed: boolean,
-	localAct: boolean
-): OptOutReceiptData {
-	if (nextOptOut === null) {
-		return EMPTY_OPT_OUT_RECEIPT_DATA;
-	}
-	if (currentOptOut === null || !localAct) {
-		return {
-			localAct: null,
-			reference: null,
-			rightsConfirmed: confirmed,
-		};
-	}
-	return {
-		localAct: currentReceipt.localAct,
-		reference: currentReceipt.reference,
-		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
-	};
-};
 
 /**
  * The backend never carries `categories`. An answer to this browser's own
@@ -357,6 +343,21 @@ export const sameAccount = function sameAccount(
 };
 
 /**
+ * Replacing or clearing the user ends the previous account's
+ * `identify()`, as `clearIdentity()` does: an answer to it no longer
+ * applies. A new token or properties for the same account changes nothing.
+ */
+export const fenceReplacedUser = function fenceReplacedUser(
+	runtime: Pick<KernelRuntime, 'noteIdentify'>,
+	current: Readonly<KernelUser> | null,
+	next: Readonly<KernelUser> | null
+): void {
+	if (current !== null && !sameAccount(current, next)) {
+		runtime.noteIdentify();
+	}
+};
+
+/**
  * Whether an answer to a request made for `account` at identification
  * generation `identity` still belongs to whoever is identified now: no
  * `identify()` or sign-out happened since, and `account` is the current
@@ -391,35 +392,274 @@ const fenceHolds = function fenceHolds(
 };
 
 /**
+ * The receipt after a backend answer. This browser's act and its reference
+ * stay only while the answer is that act (`localAct`); a different act was
+ * not made here, so the receipt drops them.
+ */
+const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
+	currentOptOut: Readonly<OptOutRecord> | null,
+	nextOptOut: OptOutRecord | null,
+	currentReceipt: Readonly<OptOutReceiptData>,
+	confirmed: boolean,
+	localAct: boolean
+): OptOutReceiptData {
+	if (nextOptOut === null) {
+		return EMPTY_OPT_OUT_RECEIPT_DATA;
+	}
+	if (currentOptOut === null || !localAct) {
+		return {
+			localAct: null,
+			reference: null,
+			rightsConfirmed: confirmed,
+		};
+	}
+	return {
+		localAct: currentReceipt.localAct,
+		reference: currentReceipt.reference,
+		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
+	};
+};
+
+const receiptChangedFrom = function receiptChangedFrom(
+	current: Readonly<OptOutReceiptData>,
+	next: OptOutReceiptData
+): boolean {
+	return (
+		next.localAct !== current.localAct ||
+		next.reference !== current.reference ||
+		next.rightsConfirmed !== current.rightsConfirmed
+	);
+};
+
+const commitSyncedBrowserOptOut = function commitSyncedBrowserOptOut(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	effectiveBrowserOptOut: Readonly<OptOutRecord> | null,
+	nextBrowserOptOut: OptOutRecord | null,
+	currentReceipt: Readonly<OptOutReceiptData>,
+	nextReceipt: OptOutReceiptData
+): boolean {
+	const browserChanged = !sameOptOutRecord(
+		effectiveBrowserOptOut,
+		nextBrowserOptOut
+	);
+	if (!browserChanged) {
+		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
+			return false;
+		}
+		runtime.setOptOutReceiptData(nextReceipt);
+		return true;
+	}
+	runtime.batch(() => {
+		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.commit({ now: runtime.now(), optOut: nextBrowserOptOut });
+		const after = runtime.getSnapshot();
+		if (!sameOptOutRecord(current.optOut, after.optOut) || browserChanged) {
+			runtime.emit({
+				optOut: after.optOut,
+				snapshot: after,
+				type: 'opt-out:synced',
+			});
+		}
+	});
+	return true;
+};
+
+/**
+ * The record a backend opt-out answer gives this browser, or `undefined` to
+ * keep the browser record as it is.
+ *
+ * - With `device`, the record's rights are exactly `device.rights`, the
+ *   rights on this device's own row. A `both` answer's `rights` also hold
+ *   the person's rights, which belong to the account, not this browser.
+ * - Without `device` (an older backend), a `both` answer can't say which of
+ *   its rights are this device's. While a user is set, the browser keeps its
+ *   record and doesn't confirm it. With no user set, the answer is stored
+ *   as it is.
+ * - Any other answer is stored as it is.
+ */
+export const browserOptOutFromAnswer = function browserOptOutFromAnswer(
+	answer: OptOutAnswer,
+	hasUser: boolean
+): OptOutRecord | undefined {
+	const stripped = stripOptOutDevice(answer);
+	if (answer.heldBy === 'person') {
+		return stripped;
+	}
+	if (answer.device !== undefined && answer.device.rights.length > 0) {
+		return { ...stripped, rights: [...answer.device.rights] };
+	}
+	if (answer.heldBy === 'both' && hasUser) {
+		return undefined;
+	}
+	return stripped;
+};
+
+const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	next: OptOutAnswer | null,
+	fence: OptOutAnswerFence
+): boolean {
+	// While an account layer for the current `externalId` is active:
+	// - `person` answers mean this device holds no row of its own -> unchanged.
+	// - Any `both` or `device` answer carrying `device` sets the browser device
+	//   opt-out's rights to `device.rights` (confirmed).
+	// - A `both` or `device` answer without `device` (older backend) leaves browser
+	//   rights as they were, unconfirmed.
+	const browserOptOut = runtime.getBrowserRecords().optOut;
+	const effectiveBrowserOptOut =
+		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
+	const currentReceipt = runtime.getOptOutReceiptData();
+
+	if (next === null) {
+		return commitSyncedBrowserOptOut(
+			runtime,
+			current,
+			effectiveBrowserOptOut,
+			null,
+			currentReceipt,
+			EMPTY_OPT_OUT_RECEIPT_DATA
+		);
+	}
+	if (next.heldBy === 'person') {
+		return false;
+	}
+	if (fence.confirmed === false) {
+		if (next.heldBy !== 'device') {
+			return false;
+		}
+		const fallback = answerWithHeldCategories(
+			stripOptOutDevice(next),
+			effectiveBrowserOptOut,
+			fence
+		);
+		const localAct = answersLocalAct(fallback, effectiveBrowserOptOut, fence);
+		return commitSyncedBrowserOptOut(
+			runtime,
+			current,
+			effectiveBrowserOptOut,
+			fallback,
+			currentReceipt,
+			nextSyncedOptOutReceipt(
+				effectiveBrowserOptOut,
+				fallback,
+				currentReceipt,
+				false,
+				localAct
+			)
+		);
+	}
+	if (next.device === undefined) {
+		return false;
+	}
+	if (next.device.rights.length === 0) {
+		if (effectiveBrowserOptOut === null || !fence.allowClear) {
+			return false;
+		}
+		return commitSyncedBrowserOptOut(
+			runtime,
+			current,
+			effectiveBrowserOptOut,
+			null,
+			currentReceipt,
+			EMPTY_OPT_OUT_RECEIPT_DATA
+		);
+	}
+	const deviceRecord: OptOutRecord = {
+		heldBy: 'device',
+		method: next.method,
+		recordedAt: next.recordedAt,
+		rights: [...next.device.rights],
+	};
+	const nextBrowserOptOut = answerWithHeldCategories(
+		deviceRecord,
+		effectiveBrowserOptOut,
+		fence
+	);
+	const localAct = answersLocalAct(deviceRecord, effectiveBrowserOptOut, fence);
+	const nextReceipt = nextSyncedOptOutReceipt(
+		effectiveBrowserOptOut,
+		nextBrowserOptOut,
+		currentReceipt,
+		true,
+		localAct
+	);
+	return commitSyncedBrowserOptOut(
+		runtime,
+		current,
+		effectiveBrowserOptOut,
+		nextBrowserOptOut,
+		currentReceipt,
+		nextReceipt
+	);
+};
+
+const isSyncedOptOutFenceCurrent = function isSyncedOptOutFenceCurrent(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	fence: OptOutAnswerFence
+): boolean {
+	return (
+		fenceHolds(runtime, current, fence) &&
+		(fence.externalId === undefined ||
+			(current.user?.externalId ?? null) === fence.externalId)
+	);
+};
+
+const parseSyncedOptOutInput = function parseSyncedOptOutInput(
+	incoming: OptOutAnswer | null | undefined,
+	allowClear: boolean
+): { ok: true; record: OptOutAnswer | null } | { ok: false } {
+	if (incoming === undefined || (incoming === null && !allowClear)) {
+		return { ok: false };
+	}
+	if (incoming === null) {
+		return { ok: true, record: null };
+	}
+	const validated = validateOptOutAnswer(incoming);
+	return validated.ok && validated.record.rights.length > 0
+		? { ok: true, record: validated.record }
+		: { ok: false };
+};
+
+/**
  * Apply the backend's authoritative opt-out answer to `runtime` when it is
  * still current. Emits `opt-out:synced` and never triggers another request or
  * emits `opt-out:recorded` / `opt-out:lifted`.
  */
 export const applySyncedOptOut = function applySyncedOptOut(
 	runtime: KernelRuntime,
-	incoming: OptOutRecord | null | undefined,
+	incoming: OptOutAnswer | null | undefined,
 	fence: OptOutAnswerFence
 ): boolean {
-	if (incoming === undefined) {
+	const parsed = parseSyncedOptOutInput(incoming, fence.allowClear);
+	if (!parsed.ok) {
 		return false;
 	}
-	if (incoming === null && !fence.allowClear) {
+	const rawNext = parsed.record;
+	const current = runtime.getSnapshot();
+	if (
+		!isSyncedOptOutFenceCurrent(runtime, current, fence) ||
+		(rawNext === null && optOutLiftBlocker(current) === 'gpc-active')
+	) {
 		return false;
+	}
+	const accountLayer = runtime.getAccountLayer();
+	if (
+		accountLayer !== null &&
+		current.user !== null &&
+		accountLayer.externalId === current.user.externalId
+	) {
+		return applySyncedOptOutWithAccount(runtime, current, rawNext, fence);
 	}
 	let next: OptOutRecord | null = null;
-	if (incoming !== null) {
-		const validated = validateOptOutRecord(incoming);
-		if (!validated.ok || validated.record.rights.length === 0) {
+	if (rawNext !== null) {
+		const fromAnswer = browserOptOutFromAnswer(rawNext, current.user !== null);
+		if (fromAnswer === undefined) {
 			return false;
 		}
-		next = validated.record;
-	}
-	const current = runtime.getSnapshot();
-	if (!fenceHolds(runtime, current, fence)) {
-		return false;
-	}
-	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
-		return false;
+		next = fromAnswer;
 	}
 	const localAct = answersLocalAct(next, current.optOut, fence);
 	if (next !== null) {
@@ -434,12 +674,8 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		confirmed,
 		localAct
 	);
-	const receiptChanged =
-		nextReceipt.localAct !== currentReceipt.localAct ||
-		nextReceipt.reference !== currentReceipt.reference ||
-		nextReceipt.rightsConfirmed !== currentReceipt.rightsConfirmed;
 	if (sameOptOutRecord(current.optOut, next)) {
-		if (!receiptChanged) {
+		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
 			return false;
 		}
 		runtime.setOptOutReceiptData(nextReceipt);

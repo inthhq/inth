@@ -20,13 +20,14 @@
  * development: the save already reported its first failure.
  */
 
-import type { CONSENT_MODELS, OptOutRecord } from '@inth/sdk-schema/types';
+import type { CONSENT_MODELS } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSubject,
 	KernelTransport,
 	KernelUser,
 	LiftOptOutPayload,
+	OptOutAnswer,
 	OptOutPayload,
 	SavePayload,
 } from '../../consent-kernel.model';
@@ -104,11 +105,13 @@ interface SubjectReassignment {
 
 /**
  * What `newer` covers of an older save of the same subject: the categories
- * it confirmed and, when it carried one, the vendor map.
+ * it confirmed and the vendors its vendor map carries.
  */
 const supersededBy = (newer: SavePayload): Supersession => ({
 	category: (category) => Object.hasOwn(newer.confirmed.categories, category),
-	vendors: newer.vendorChoice !== undefined,
+	vendor: (id) =>
+		newer.vendorChoice !== undefined &&
+		Object.hasOwn(newer.vendorChoice.grants, id),
 });
 
 /**
@@ -683,6 +686,8 @@ export interface QueueWorkerOptions {
 	isSending?: (payload: SavePayload) => boolean;
 	/** Whether this instance already owns a direct send for an opt-out act. */
 	isSendingOptOut?: (idempotencyKey: string) => boolean;
+	/** Called when a backend response confirms a verified subject-to-user link. */
+	markSubjectLinked?: (subjectId: string, externalId: string) => void;
 }
 
 /** The queue operations of one outbox. */
@@ -820,6 +825,7 @@ export const createQueueWorker = function createQueueWorker({
 	hasOptOutInFlight = () => false,
 	isSending = () => false,
 	isSendingOptOut = () => false,
+	markSubjectLinked,
 }: QueueWorkerOptions): QueueWorker {
 	const { batch, commit, emit, getSnapshot } = runtime;
 	const {
@@ -1390,7 +1396,7 @@ export const createQueueWorker = function createQueueWorker({
 		let rejected: string | undefined;
 		let failure: unknown;
 		let canonical: string | undefined;
-		let answeredOptOut: OptOutRecord | undefined;
+		let answeredOptOut: OptOutAnswer | undefined;
 		const actVersion = getSaveActVersion(key) ?? runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
 		const identity = runtime.getIdentityVersion();
@@ -1447,6 +1453,7 @@ export const createQueueWorker = function createQueueWorker({
 				account: entry.payload.user,
 				actVersion,
 				allowClear: false,
+				externalId: entry.payload.user?.externalId ?? null,
 				generation,
 				identity,
 				subjectId: adopted ?? subjectId,
@@ -1579,6 +1586,54 @@ export const createQueueWorker = function createQueueWorker({
 		return null;
 	};
 
+	const finishSavedOptOutReplay = async function finishSavedOptOutReplay(
+		entry: PendingOptOutEntry,
+		canonical: string | undefined,
+		moved: Map<string, string> | null,
+		owned: () => boolean,
+		context: {
+			readonly actVersion: number;
+			readonly answeredOptOut: OptOutAnswer | null | undefined;
+			readonly generation: number;
+			readonly identity: number;
+			readonly isLast: boolean;
+			readonly linkStored: boolean;
+			readonly remainingCount: number;
+		}
+	): Promise<void> {
+		const { subjectId } = entry.payload;
+		const adopted = await followCanonicalSubject(
+			subjectId,
+			canonical,
+			moved,
+			owned
+		);
+		const effectiveSubjectId = adopted ?? subjectId;
+		if (
+			entry.kind === 'record' &&
+			context.linkStored &&
+			entry.payload.user?.externalId
+		) {
+			markSubjectLinked?.(effectiveSubjectId, entry.payload.user.externalId);
+		}
+		if (
+			context.isLast &&
+			context.remainingCount === 0 &&
+			context.answeredOptOut !== undefined
+		) {
+			applySyncedOptOut(runtime, context.answeredOptOut, {
+				account: entry.payload.user,
+				actVersion: context.actVersion,
+				allowClear: entry.kind === 'lift',
+				externalId: entry.payload.user?.externalId ?? null,
+				generation: context.generation,
+				identity: context.identity,
+				ownAct: entry.kind === 'record',
+				subjectId: effectiveSubjectId,
+			});
+		}
+	};
+
 	const replayOptOutEntry = async function replayOptOutEntry(
 		transports: OptOutReplayTransports,
 		queued: PendingOptOutEntry,
@@ -1608,7 +1663,8 @@ export const createQueueWorker = function createQueueWorker({
 		let outcome: ReplayOutcome = 'retry';
 		let failure: unknown;
 		let canonical: string | undefined;
-		let answeredOptOut: OptOutRecord | null | undefined;
+		let answeredOptOut: OptOutAnswer | null | undefined;
+		let linkStored = false;
 		const actVersion = runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
 		// A queued act is the account's that made it, possibly on an earlier
@@ -1633,6 +1689,8 @@ export const createQueueWorker = function createQueueWorker({
 			outcome = result.ok ? 'saved' : 'retry';
 			canonical = result.subjectId;
 			answeredOptOut = result.optOut;
+			linkStored =
+				(result as { link?: { stored?: boolean } }).link?.stored === true;
 		} catch (error) {
 			if (isUnsupportedStatus(error)) {
 				onUnsupported();
@@ -1675,24 +1733,15 @@ export const createQueueWorker = function createQueueWorker({
 			failure
 		);
 		if (outcome === 'saved' && owned()) {
-			const { subjectId } = entry.payload;
-			const adopted = await followCanonicalSubject(
-				subjectId,
-				canonical,
-				moved,
-				owned
-			);
-			if (isLast && remainingCount === 0 && answeredOptOut !== undefined) {
-				applySyncedOptOut(runtime, answeredOptOut, {
-					account: entry.payload.user,
-					actVersion,
-					allowClear: entry.kind === 'lift',
-					generation,
-					identity,
-					ownAct: entry.kind === 'record',
-					subjectId: adopted ?? subjectId,
-				});
-			}
+			await finishSavedOptOutReplay(entry, canonical, moved, owned, {
+				actVersion,
+				answeredOptOut,
+				generation,
+				identity,
+				isLast,
+				linkStored,
+				remainingCount,
+			});
 		}
 		return { error: failure, kept };
 	};

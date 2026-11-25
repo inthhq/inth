@@ -21,6 +21,7 @@
 
 import {
 	applyExperimentAssignment,
+	consentPending,
 	isVendorAllowed,
 	resolveOptOutLink,
 } from '@inth/sdk/engine';
@@ -323,13 +324,13 @@ const dialogAdoption = new WeakMap<
 const whenPolicySettled = function whenPolicySettled(
 	kernel: ConsentKernel
 ): Promise<void> {
-	if (!kernel.getSnapshot().policyPending) {
+	if (!consentPending(kernel.getSnapshot())) {
 		return Promise.resolve();
 	}
 	// oxlint-disable-next-line promise/avoid-new -- Bridges the kernel's subscription into one awaitable.
 	return new Promise<void>((resolve) => {
 		const unsubscribe = kernel.subscribe((snapshot) => {
-			if (!snapshot.policyPending) {
+			if (!consentPending(snapshot)) {
 				unsubscribe();
 				resolve();
 			}

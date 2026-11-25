@@ -29,13 +29,15 @@ export interface DeferEngineOptions {
 	 * a `serverStart` script then waits for the engine like any other.
 	 */
 	scriptLoader?: { serverStart?: boolean };
+	/** Cross-domain user consent option; always routes through the kernel. */
+	userConsent?: unknown;
 }
 
 /**
  * Whether the visitor's state or an option needs the engine as the page
  * loads, whatever the visitor still has to answer: IAB, an experiment, an
  * external CMP's permissions, a consent source, GPP, the network blocker,
- * `enabled: false` or `persistence: false`.
+ * `enabled: false`, `persistence: false`, an account layer, or `userConsent`.
  *
  * @internal
  */
@@ -44,6 +46,9 @@ export const engineNeededNow = function engineNeededNow(
 	options: DeferEngineOptions
 ): boolean {
 	return Boolean(
+		snapshot.userConsentPending === true ||
+		snapshot.hasAccountLayer ||
+		options.userConsent !== undefined ||
 		snapshot.model === 'iab' ||
 		snapshot.experiment ||
 		snapshot.experimentPending ||

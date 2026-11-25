@@ -29,7 +29,11 @@ export const getEffectiveGateState = function getEffectiveGateState(
 	snapshot: ConsentSnapshot,
 	now = Date.now()
 ): Pick<ConsentSnapshot, 'effectivePermissions' | 'restrictions'> {
-	if (snapshot.nextDeadline === null || now < snapshot.nextDeadline) {
+	if (
+		(snapshot.userConsentPending && !snapshot.externalPermissions) ||
+		snapshot.nextDeadline === null ||
+		now < snapshot.nextDeadline
+	) {
 		return snapshot;
 	}
 	const evaluation = evaluateConsentRecord({

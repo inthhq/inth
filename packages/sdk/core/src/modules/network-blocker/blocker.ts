@@ -74,8 +74,8 @@ export const createNetworkBlockerWith = function createNetworkBlockerWith(
 	const consentPending = (): boolean =>
 		!disposed &&
 		enabled &&
-		snapshot.policyPending &&
-		snapshot.resolution.status !== 'failed';
+		((snapshot.policyPending && snapshot.resolution.status !== 'failed') ||
+			snapshot.userConsentPending === true);
 	const whenSettled = (): Promise<void> | null => {
 		if (!consentPending()) {
 			return null;

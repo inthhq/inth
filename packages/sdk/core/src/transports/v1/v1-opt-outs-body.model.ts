@@ -111,5 +111,8 @@ export const buildV1ConsentOptOutLiftBody =
 		if (payload.policySnapshotToken) {
 			body.policySnapshotToken = payload.policySnapshotToken;
 		}
+		if (payload.rights && payload.rights.length > 0) {
+			body.rights = [...payload.rights];
+		}
 		return body;
 	};

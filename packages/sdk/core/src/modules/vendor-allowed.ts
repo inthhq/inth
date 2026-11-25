@@ -12,6 +12,7 @@
  */
 
 import type { ConsentState, ConsentSnapshot } from '../consent-kernel.model';
+import { consentPending } from '../consent-pending';
 import { has } from '../libs/has';
 import { isProductionBuild } from '../libs/is-production';
 import { vendorAxisActive } from '../libs/vendors';
@@ -51,7 +52,7 @@ export const vendorAllowedUnder = function vendorAllowedUnder(
 		(entry) => entry.id === vendorId
 	);
 	if (!vendor) {
-		if (!snapshot.policyPending) {
+		if (!consentPending(snapshot)) {
 			warnUndeclaredVendor(vendorId);
 		}
 		return false;

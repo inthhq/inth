@@ -102,7 +102,7 @@ export const watchPendingOptOutConfirmation =
 				return;
 			}
 			const snapshot = kernel.getSnapshot();
-			if (snapshot.policyPending) {
+			if (snapshot.policyPending || snapshot.userConsentPending === true) {
 				return;
 			}
 			stop();

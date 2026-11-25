@@ -93,6 +93,17 @@ export type StoredNoticeDismissal = NoticeDismissal & {
 /** Local vendor denial list. Version 1 matches the kernel record. */
 export type StoredVendorChoice = VendorChoice & {
 	/**
+	 * Declared vendor IDs explicitly covered as granted by this browser vendor
+	 * decision, when known. Distinguishes "shown and granted on this site"
+	 * from "never shown on this site" when merging with an account layer.
+	 */
+	granted?: readonly string[];
+	/**
+	 * Per-vendor confirmation timestamps (`vendorId -> confirmedAt`) stored in
+	 * localStorage JSON only. Each save advances only the vendors it decided.
+	 */
+	vendorTimes?: Readonly<Record<string, number>>;
+	/**
 	 * Subject identity, carried so a visitor whose first act only decided
 	 * vendors keeps the same subject after a reload. The consent envelope needs
 	 * a category choice to exist and cannot hold it for that visitor.
@@ -780,8 +791,73 @@ const VENDOR_CHOICE_KEYS = [
 	'version',
 	'confirmedAt',
 	'denied',
+	'granted',
+	'vendorTimes',
 	'subject',
 ] as const;
+
+const validateStoredVendorTimes = function validateStoredVendorTimes(
+	raw: unknown,
+	now: number,
+	issues: StorageIssue[]
+): Record<string, number> | undefined {
+	if (raw === undefined) {
+		return undefined;
+	}
+	if (!isPlainRecord(raw)) {
+		issues.push({ code: 'not-an-object', path: 'vendorTimes' });
+		return undefined;
+	}
+	const times: Record<string, number> = {};
+	for (const id of ownKeys(raw)) {
+		if (!isNonEmptyString(id) || !isValidVendorId(id)) {
+			issues.push({ code: 'invalid-identifier', path: `vendorTimes.${id}` });
+			continue;
+		}
+		const timestamp = ownValue(raw, id);
+		const issue = checkTimestamp(timestamp, now);
+		if (issue) {
+			issues.push({ code: issue, path: `vendorTimes.${id}` });
+			continue;
+		}
+		Object.defineProperty(times, id, {
+			configurable: true,
+			enumerable: true,
+			value: timestamp as number,
+			writable: true,
+		});
+	}
+	return times;
+};
+
+const validateVendorIdList = function validateVendorIdList(
+	raw: unknown,
+	fieldName: 'denied' | 'granted',
+	issues: StorageIssue[]
+): string[] {
+	const ids: string[] = [];
+	if (Array.isArray(raw)) {
+		for (const [index, entry] of raw.entries()) {
+			// The same slug shape a declaration must have. A stored id outside
+			// it would ride into every later grant map and fail the wire schema.
+			if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
+				issues.push({
+					code: 'invalid-identifier',
+					path: `${fieldName}[${index}]`,
+				});
+				continue;
+			}
+			if (ids.includes(entry)) {
+				issues.push({ code: 'duplicate-key', path: `${fieldName}[${index}]` });
+				continue;
+			}
+			ids.push(entry);
+		}
+	} else {
+		issues.push({ code: 'not-an-object', path: fieldName });
+	}
+	return ids;
+};
 
 /** Validates a parsed vendor denial list. */
 export const decodeVendorChoice = function decodeVendorChoice(
@@ -811,25 +887,21 @@ export const decodeVendorChoice = function decodeVendorChoice(
 		issues.push({ code: timestampIssue, path: 'confirmedAt' });
 	}
 	const subject = validateSubject(ownValue(input, 'subject'), issues);
-	const rawDenied = ownValue(input, 'denied');
-	const denied: string[] = [];
-	if (Array.isArray(rawDenied)) {
-		for (const [index, entry] of rawDenied.entries()) {
-			// The same slug shape a declaration must have. A stored id outside
-			// it would ride into every later grant map and fail the wire schema.
-			if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
-				issues.push({ code: 'invalid-identifier', path: `denied[${index}]` });
-				continue;
-			}
-			if (denied.includes(entry)) {
-				issues.push({ code: 'duplicate-key', path: `denied[${index}]` });
-				continue;
-			}
-			denied.push(entry);
-		}
-	} else {
-		issues.push({ code: 'not-an-object', path: 'denied' });
-	}
+	const denied = validateVendorIdList(
+		ownValue(input, 'denied'),
+		'denied',
+		issues
+	);
+	const rawGranted = ownValue(input, 'granted');
+	const granted =
+		rawGranted === undefined
+			? undefined
+			: validateVendorIdList(rawGranted, 'granted', issues);
+	const vendorTimes = validateStoredVendorTimes(
+		ownValue(input, 'vendorTimes'),
+		now,
+		issues
+	);
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
@@ -838,10 +910,38 @@ export const decodeVendorChoice = function decodeVendorChoice(
 		denied: denied.sort(),
 		version: 1,
 	};
+	if (granted !== undefined) {
+		record.granted = granted.sort();
+	}
+	if (vendorTimes !== undefined) {
+		record.vendorTimes = vendorTimes;
+	}
 	if (subject) {
 		record.subject = subject;
 	}
 	return { ok: true, record };
+};
+
+const decodeCompactVendorList = function decodeCompactVendorList(
+	list: string | undefined,
+	fieldName: string
+): { ok: true; ids: string[] } | { ok: false; issues: StorageIssue[] } {
+	const ids: string[] = [];
+	if (list !== undefined && list !== '') {
+		for (const [index, entry] of list.split(LIST_SEPARATOR).entries()) {
+			const id = decodeComponent(entry);
+			if (id === null) {
+				return {
+					issues: [
+						{ code: 'malformed-encoding', path: `${fieldName}[${index}]` },
+					],
+					ok: false,
+				};
+			}
+			ids.push(id);
+		}
+	}
+	return { ids, ok: true };
 };
 
 /** Decodes compact vendor denials through the shared validator. */
@@ -866,23 +966,13 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
-	const list = fields.get('d');
-	const denied: unknown[] = [];
-	if (list !== undefined && list !== '') {
-		for (const [index, entry] of list.split(LIST_SEPARATOR).entries()) {
-			const id = decodeComponent(entry);
-			if (id === null) {
-				return {
-					issues: [{ code: 'malformed-encoding', path: `d[${index}]` }],
-					ok: false,
-				};
-			}
-			denied.push(id);
-		}
+	const deniedResult = decodeCompactVendorList(fields.get('d'), 'd');
+	if (!deniedResult.ok) {
+		return deniedResult;
 	}
 	const candidate: Record<string, unknown> = {
 		confirmedAt: parseCompactInteger(fields.get('t')),
-		denied,
+		denied: deniedResult.ids,
 		version: 1,
 	};
 	if (Object.keys(subject).length > 0) {
@@ -965,6 +1055,9 @@ const OPT_OUT_STORED_KEYS = [
 	'reference',
 	'localAct',
 	'rightsConfirmed',
+	// Written by earlier prereleases. Read without error and ignored.
+	'linkedExternalId',
+	'serverWrittenAt',
 ] as const;
 
 const readOptionalOptOutBoolean = function readOptionalOptOutBoolean(
@@ -1016,7 +1109,12 @@ const readOptionalOptOutMeta = function readOptionalOptOutMeta(
 			issues.push({ code: 'invalid-value', path: 'localAct' });
 		}
 	}
-	return { gpcReported, localAct, reference, rightsConfirmed };
+	return {
+		gpcReported,
+		localAct,
+		reference,
+		rightsConfirmed,
+	};
 };
 
 /**
@@ -1084,7 +1182,9 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	return { ok: true, record };
 };
 
-const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h']);
+// `s` was a server write time written by earlier prereleases. It is read
+// without error and ignored.
+const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h', 's']);
 
 const checkCompactOptOutField = function checkCompactOptOutField(
 	key: string,

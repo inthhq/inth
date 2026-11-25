@@ -24,7 +24,7 @@
  *   `init()` re-arms everything; `hydrate()` re-arms the timer only.
  */
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
-import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
@@ -35,8 +35,9 @@ import type {
 	InitResult,
 	KernelConfig,
 	KernelIABState,
-	KernelTransport,
 	KernelTranslations,
+	KernelTransport,
+	OptOutAnswer,
 } from '../consent-kernel.model';
 import type { RecordIssue } from '../consent-record/consent-record-validation.model';
 import { ownScriptRegistry } from '../libs/freeze-data.model';
@@ -45,6 +46,10 @@ import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-contr
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import { applyTranslationOverrides } from '../translations';
 import type { TranslationOverrides } from '../translations';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
 import type { KernelRuntime } from './create-runtime';
 import type { SnapshotPatch } from './kernel-patch.model';
 import {
@@ -228,9 +233,12 @@ const foldInitResponse = function foldInitResponse(
 	current: ConsentSnapshot,
 	response: InitResponse,
 	now: number,
-	translationOverrides?: TranslationOverrides
+	translationOverrides?: TranslationOverrides,
+	browser?: BrowserConsentRecords,
+	activeAccount?: AccountConsentLayer | null
 ): {
-	incomingServerOptOut: OptOutRecord | null;
+	incomingServerOptOut: OptOutAnswer | null;
+	nextAccount?: AccountConsentLayer;
 	patch: SnapshotPatch;
 	recordIssues: RecordIssue[] | null;
 } {
@@ -352,14 +360,22 @@ const foldInitResponse = function foldInitResponse(
 	}
 
 	let recordIssues: RecordIssue[] | null = null;
-	let incomingServerOptOut: OptOutRecord | null = null;
+	let incomingServerOptOut: OptOutAnswer | null = null;
+	let nextAccount: AccountConsentLayer | undefined;
 	if (response.records) {
 		const validated = validateHydrationRecords(response.records, now);
 		if (validated.ok === true) {
 			// Server receipts merge by newest confirmation per category so a
 			// local action made before init resolved is never overwritten.
-			const foldedRecords = foldServerRecords(current, validated.records, now);
-			Object.assign(patch, foldedRecords);
+			const foldedRecords = foldServerRecords(
+				current,
+				validated.records,
+				now,
+				browser,
+				activeAccount ?? null
+			);
+			Object.assign(patch, foldedRecords.patch);
+			({ nextAccount } = foldedRecords);
 			incomingServerOptOut = validated.records.optOut ?? null;
 			// Adopting stored records is not the visitor's choice: a dialog they
 			// opened while init was in flight stays open until they save.
@@ -376,7 +392,7 @@ const foldInitResponse = function foldInitResponse(
 		patch.subject = { ...subject, subjectId: response.subjectId };
 	}
 
-	return { incomingServerOptOut, patch, recordIssues };
+	return { incomingServerOptOut, nextAccount, patch, recordIssues };
 };
 
 export interface InitLifecycleOptions {
@@ -575,6 +591,84 @@ export const createInitLifecycle = function createInitLifecycle({
 		);
 	};
 
+	const activeAccountOf = (
+		current: ConsentSnapshot
+	): AccountConsentLayer | null => {
+		const accountBefore = runtime.getAccountLayer();
+		return accountBefore !== null &&
+			current.user !== null &&
+			accountBefore.externalId === current.user.externalId
+			? accountBefore
+			: null;
+	};
+
+	const announceInit = (
+		patch: SnapshotPatch,
+		nextAccount: AccountConsentLayer | undefined,
+		always: boolean
+	): void => {
+		if (nextAccount === undefined) {
+			runtime.announce(patch, 'init:applied', always);
+			return;
+		}
+		runtime.batch(() => {
+			const changed = commit(patch, {
+				accountLayer: nextAccount,
+				accountLayerSource: 'stored',
+			});
+			if (changed || always) {
+				emit({ snapshot: getSnapshot(), type: 'init:applied' });
+			}
+		});
+	};
+
+	const applyInitAnswer = (
+		snapshot: ConsentSnapshot,
+		recordsGeneration: number,
+		identity: number,
+		response: InitResponse
+	): void => {
+		const current = getSnapshot();
+		const streamedUserRecordsMatch =
+			snapshot.user === null &&
+			current.user !== null &&
+			response.records?.accountLayer?.externalId === current.user.externalId;
+		// A streamed answer can carry the signed-in user's account records
+		// for a request sent before identify(); those still belong here.
+		const recordsAreCurrent =
+			ownsRecords(snapshot, recordsGeneration, identity) ||
+			(streamedUserRecordsMatch &&
+				recordsGeneration === runtime.getGeneration() &&
+				snapshot.subject?.subjectId === current.subject?.subjectId);
+		// Policy can still resolve after clear or identification changes,
+		// but the old request no longer owns this subject's stored records.
+		const accepted = recordsAreCurrent
+			? response
+			: { ...response, records: undefined, subjectId: undefined };
+		const browserBefore = runtime.getBrowserRecords();
+		const folded = foldInitResponse(
+			current,
+			accepted,
+			runtime.now(),
+			translationOverrides,
+			browserBefore,
+			activeAccountOf(current)
+		);
+		if (folded.recordIssues && !isProductionBuild()) {
+			console.warn(
+				'[inth] Ignored invalid server records on init.',
+				folded.recordIssues
+			);
+		}
+		syncAdoptedServerOptOutReceipt(
+			runtime,
+			browserBefore.optOut,
+			folded.incomingServerOptOut,
+			folded.patch.optOut
+		);
+		announceInit(folded.patch, folded.nextAccount, snapshot.policyPending);
+	};
+
 	const runInitAttempt = async function runInitAttempt(
 		attempt: number
 	): Promise<InitResult> {
@@ -621,36 +715,7 @@ export const createInitLifecycle = function createInitLifecycle({
 					)
 				);
 			}
-			const current = getSnapshot();
-			const recordsAreCurrent = ownsRecords(
-				snapshot,
-				recordsGeneration,
-				identity
-			);
-			// Policy can still resolve after clear or identification changes,
-			// but the old request no longer owns this subject's stored records.
-			const accepted = recordsAreCurrent
-				? response
-				: { ...response, records: undefined, subjectId: undefined };
-			const folded = foldInitResponse(
-				current,
-				accepted,
-				runtime.now(),
-				translationOverrides
-			);
-			if (folded.recordIssues && !isProductionBuild()) {
-				console.warn(
-					'[inth] Ignored invalid server records on init.',
-					folded.recordIssues
-				);
-			}
-			syncAdoptedServerOptOutReceipt(
-				runtime,
-				current.optOut,
-				folded.incomingServerOptOut,
-				folded.patch.optOut
-			);
-			runtime.announce(folded.patch, 'init:applied', snapshot.policyPending);
+			applyInitAnswer(snapshot, recordsGeneration, identity, response);
 			clearRetry();
 			const result = complete({ ok: true });
 			replaySaves();
@@ -789,25 +854,33 @@ export const createInitLifecycle = function createInitLifecycle({
 		adoptedGeneration = initGeneration;
 		clearRetry();
 		const current = getSnapshot();
+		const browserBefore = runtime.getBrowserRecords();
 		const folded = foldInitResponse(
 			current,
 			response,
 			runtime.now(),
-			translationOverrides
+			translationOverrides,
+			browserBefore,
+			activeAccountOf(current)
 		);
 		syncAdoptedServerOptOutReceipt(
 			runtime,
-			current.optOut,
+			browserBefore.optOut,
 			folded.incomingServerOptOut,
 			folded.patch.optOut,
 			!afterStart
 		);
 		if (afterStart) {
-			runtime.announce(folded.patch, 'init:applied', current.policyPending);
+			announceInit(folded.patch, folded.nextAccount, current.policyPending);
 			replaySaves();
 			return;
 		}
-		commit(folded.patch);
+		commit(
+			folded.patch,
+			folded.nextAccount === undefined
+				? undefined
+				: { accountLayer: folded.nextAccount, accountLayerSource: 'stored' }
+		);
 	};
 
 	const dispose = function dispose(): void {
@@ -816,6 +889,7 @@ export const createInitLifecycle = function createInitLifecycle({
 		}
 		disposed = true;
 		timerStopped = true;
+		runtime.bumpAccountSyncGeneration();
 		clearRetry();
 		clearDeadlineTimer();
 		watchVisibility(false, false);

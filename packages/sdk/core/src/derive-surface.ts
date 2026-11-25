@@ -23,11 +23,13 @@ import type { PromptRequirement } from './consent-record/types';
 export const deriveActiveUI = function deriveActiveUI(input: {
 	promptRequirement: PromptRequirement;
 	policyPending: boolean;
+	userConsentPending?: boolean;
 	resolution: PolicyResolution;
 	/** A banner experiment is still assigning this visitor's arm. */
 	experimentPending?: boolean;
 }): KernelActiveUI {
 	return input.policyPending ||
+		input.userConsentPending ||
 		input.experimentPending ||
 		input.resolution.status === 'failed' ||
 		input.promptRequirement.kind === 'none'

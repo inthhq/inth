@@ -13,6 +13,10 @@ import type { HydrationRecords } from '../../consent-kernel.model';
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {
+	readStoredAccountLayerDetailed,
+	readStoredAccountLayerFromCookieHeader,
+} from './account-codec';
+import {
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
@@ -75,11 +79,16 @@ export interface StoredRecords {
 	 * above already exclude everything confirmed before it.
 	 */
 	epoch: number;
+	/** True when reading stored account parts threw or encountered undecodable bytes. */
+	accountDegraded?: boolean;
+	/** True when stored account parts had mixed revisions or incomplete cookie-only parts. */
+	accountPartial?: boolean;
 }
 
 /**
  * The kernel's own vendor record shape. The stored record also carries the
- * subject, which the kernel validator does not know, so it is split off.
+ * subject and optional granted list, which the kernel vendorChoice validator
+ * does not know, so they are split off.
  */
 const kernelVendorChoice = function kernelVendorChoice(
 	record: StoredVendorChoice | null
@@ -87,8 +96,25 @@ const kernelVendorChoice = function kernelVendorChoice(
 	if (!record) {
 		return null;
 	}
-	const { subject: _subject, ...vendorChoice } = record;
+	const {
+		granted: _granted,
+		subject: _subject,
+		vendorTimes: _vendorTimes,
+		...vendorChoice
+	} = record;
 	return vendorChoice;
+};
+
+/** Declared vendor IDs covered by the stored browser vendor record, if known. */
+const kernelVendorDeclared = function kernelVendorDeclared(
+	record: StoredVendorChoice | null
+): HydrationRecords['vendorDeclared'] {
+	if (!record || record.vendorTimes === undefined) {
+		return undefined;
+	}
+	return [
+		...new Set([...record.denied, ...Object.keys(record.vendorTimes)]),
+	].sort();
 };
 
 /** Strip storage-only identity before applying a notice to the kernel. */
@@ -196,6 +222,19 @@ const attachOptOutMeta = function attachOptOutMeta(
  * cleared and reads as absent, so a record written back by a runtime that
  * missed the clear cannot bring it back.
  */
+const attachVendorMeta = function attachVendorMeta(
+	records: HydrationRecords,
+	vendorRecord: StoredVendorChoice | null
+): void {
+	const vendorDeclared = kernelVendorDeclared(vendorRecord);
+	if (vendorDeclared !== undefined) {
+		records.vendorDeclared = vendorDeclared;
+	}
+	if (vendorRecord?.vendorTimes !== undefined) {
+		records.vendorTimes = vendorRecord.vendorTimes;
+	}
+};
+
 const composeRecords = function composeRecords(
 	selection: StoredConsentSelection,
 	notice: ReturnType<typeof readStoredNoticeDismissal>,
@@ -223,6 +262,7 @@ const composeRecords = function composeRecords(
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
+	attachVendorMeta(records, vendorRecord);
 	attachOptOutMeta(records, optOutRecord);
 	return {
 		candidates: selection.candidates,
@@ -337,6 +377,13 @@ const readRecords = function readRecords(
 		clearEpoch,
 		now
 	);
+	const accountRead = readStoredAccountLayerDetailed(storageConfig);
+	stored.accountDegraded = accountRead.degraded;
+	stored.accountPartial = accountRead.partial;
+	if (accountRead.layer !== null) {
+		stored.records.accountLayer = accountRead.layer;
+		stored.found = true;
+	}
 	// An absent value only clears memory when every candidate was readable.
 	// A valid record from an available source can still hydrate normally.
 	if (!selection.selected && choiceUnavailable) {
@@ -356,6 +403,8 @@ const readRecords = function readRecords(
 	}
 	if (!vendors?.ok && vendorsUnavailable) {
 		delete stored.records.vendorChoice;
+		delete stored.records.vendorDeclared;
+		delete stored.records.vendorTimes;
 	}
 	if (!optOut?.ok && optOutUnavailable) {
 		delete stored.records.optOut;
@@ -397,7 +446,7 @@ const composeFromCookieHeader = function composeFromCookieHeader(
 	storageConfig: StorageConfig | undefined,
 	now: number
 ): StoredRecords {
-	return composeRecords(
+	const stored = composeRecords(
 		readStoredConsentRecordFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredNoticeDismissalFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredVendorChoiceFromCookieHeader(cookieHeader, storageConfig, now),
@@ -405,6 +454,15 @@ const composeFromCookieHeader = function composeFromCookieHeader(
 		readStoredClearEpochFromCookieHeader(cookieHeader, storageConfig, now),
 		now
 	);
+	const accountLayer = readStoredAccountLayerFromCookieHeader(
+		cookieHeader,
+		storageConfig
+	);
+	if (accountLayer !== null) {
+		stored.records.accountLayer = accountLayer;
+		stored.found = true;
+	}
+	return stored;
 };
 
 /**

@@ -10,6 +10,7 @@
  *
  * @internal
  */
+import type { AccountConsentLayer } from '../../../kernel/account-layer';
 import type { CookieWriteReport } from '../../../libs/cookie';
 import type { StorageConfig } from '../persistence.model';
 import type {
@@ -114,6 +115,17 @@ export interface RecordStore {
 		now: number
 	) => DecodeResult<StoredOptOutRecord> & { written?: AuxiliaryWriteReport };
 	clearStoredOptOutRecord: (config?: StorageConfig) => void;
+	/**
+	 * Writes the account consent layer across its three compact cookies and
+	 * localStorage under one shared revision. Empty parts are written explicitly.
+	 * Returns `true` when at least one storage backend accepted the write.
+	 */
+	writeStoredAccountLayer: (
+		layer: AccountConsentLayer,
+		config: StorageConfig | undefined,
+		now: number
+	) => boolean;
+	clearStoredAccountLayer: (config?: StorageConfig) => void;
 }
 
 const hasLocalStorage = function hasLocalStorage(): boolean {
@@ -206,9 +218,66 @@ export const createRecordStore = function createRecordStore(
 		removeBoth(keys.optOutCategories, config);
 	};
 
+	const clearStoredAccountLayer: RecordStore['clearStoredAccountLayer'] = (
+		config
+	) => {
+		tools.clearAccount?.(config);
+	};
+
+	const writeStoredAccountLayer: RecordStore['writeStoredAccountLayer'] = (
+		layer,
+		config,
+		now
+	) => {
+		if (
+			!tools.createAccountRevision ||
+			!tools.encodeAccountLocalJson ||
+			!tools.encodeAccountChoicesCookie ||
+			!tools.encodeAccountVendorsCookie ||
+			!tools.encodeAccountOptOutCookie
+		) {
+			return false;
+		}
+		const consentKey = tools.keys(config).consent;
+		const rev = tools.createAccountRevision(now);
+		const encodeChoices = tools.encodeAccountChoicesCookie;
+		const encodeVendors = tools.encodeAccountVendorsCookie;
+		const encodeOptOut = tools.encodeAccountOptOutCookie;
+		const localWritten = writeLocalStorageText(
+			`${consentKey}-acct`,
+			tools.encodeAccountLocalJson(layer, rev)
+		);
+		// The opt-out cookie goes first and the vendors cookie, the largest,
+		// last: when the browser rejects a later cookie, the reader keeps that
+		// part from the last write that landed, and a new opt-out is already in.
+		const optOutWritten = writeCookieText(
+			`${consentKey}-acct-o`,
+			cookieText(() => encodeOptOut(layer, rev)),
+			config
+		);
+		const choicesWritten = writeCookieText(
+			`${consentKey}-acct-c`,
+			cookieText(() => encodeChoices(layer, rev)),
+			config
+		);
+		const vendorsWritten = writeCookieText(
+			`${consentKey}-acct-v`,
+			cookieText(() => encodeVendors(layer, rev)),
+			config
+		);
+		return (
+			localWritten ||
+			(choicesWritten.attempted && choicesWritten.verified) ||
+			(vendorsWritten.attempted && vendorsWritten.verified) ||
+			(optOutWritten.attempted && optOutWritten.verified)
+		);
+	};
+
 	return {
+		clearStoredAccountLayer,
 		clearStoredOptOutRecord,
 		clearStoredVendorChoice,
+		writeStoredAccountLayer,
 		writeStoredConsentEnvelope(envelope, options) {
 			const validated = tools.validateEnvelope(envelope, options.now);
 			if (validated.ok === false) {

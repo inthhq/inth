@@ -27,6 +27,7 @@ import type { StoredRecords } from '../persistence-hydrate.store';
 import type { StoredIabMetadata } from '../record-codec.model';
 import { createWriteScheduler } from './create-write-scheduler';
 import {
+	writeAccountLayerToStorage,
 	writeChoiceToStorage,
 	writeNoticeToStorage,
 	writeOptOutToStorage,
@@ -72,6 +73,29 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	// What storage held when this runtime last read or wrote each record.
 	// Reconciliation acts only on records that changed since.
 	let seen: StorageFingerprints = {};
+	let seenAccount = JSON.stringify(null);
+	const accountPrint = (
+		layer: StoredRecords['records']['accountLayer']
+	): string => JSON.stringify(layer ?? null);
+
+	/** Snapshot view with browser-made records only (never account layer). */
+	const browserSnapshot = function browserSnapshot(): ConsentSnapshot {
+		const snapshot = kernel.getSnapshot();
+		const browser = kernel.getBrowserRecords();
+		if (
+			snapshot.explicitChoice === browser.choice &&
+			snapshot.vendorChoice === browser.vendorChoice &&
+			snapshot.optOut === browser.optOut
+		) {
+			return snapshot;
+		}
+		return {
+			...snapshot,
+			explicitChoice: browser.choice,
+			optOut: browser.optOut,
+			vendorChoice: browser.vendorChoice,
+		};
+	};
 	// Records this runtime wrote with parts taken from storage that memory
 	// does not hold yet. The next reconciliation treats them as changed.
 	const unadopted = new Set<StoredRecordKind>();
@@ -162,6 +186,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		if (kind === undefined) {
 			memoryEpoch = read.epoch;
 			seenCarrier = read.subjectCarrier;
+			seenAccount = accountPrint(read.records.accountLayer);
 		}
 	};
 
@@ -244,7 +269,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	const choiceWrites = createWriteScheduler(() => {
 		const subjectOnly = !state.choiceRecorded;
 		state.choiceRecorded = false;
-		const snapshot = kernel.getSnapshot();
+		const snapshot = browserSnapshot();
 		const at = now();
 		const read = tools.read(storageConfig, at);
 		const clearMissed = read.epoch > memoryEpoch;
@@ -299,7 +324,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	const noticeWrites = createWriteScheduler(() => {
 		const subjectOnly = !state.noticeRecorded;
 		state.noticeRecorded = false;
-		const snapshot = kernel.getSnapshot();
+		const snapshot = browserSnapshot();
 		const at = now();
 		const read = tools.read(storageConfig, at);
 		const ours = tools.noticeSince(snapshot.noticeDismissal, read.epoch);
@@ -332,7 +357,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	const vendorWrites = createWriteScheduler(() => {
 		const subjectOnly = !state.vendorsRecorded;
 		state.vendorsRecorded = false;
-		const snapshot = kernel.getSnapshot();
+		const snapshot = browserSnapshot();
 		const at = now();
 		const read = tools.read(storageConfig, at);
 		const clearMissed = read.epoch > memoryEpoch;
@@ -355,11 +380,14 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			subjectOnly,
 			read
 		);
+		const browserAfterWrite = kernel.getBrowserRecords();
 		writeVendorChoiceToStorage(
 			store,
 			{ ...snapshot, subject },
 			storageConfig,
-			at
+			at,
+			browserAfterWrite.vendorDeclared,
+			browserAfterWrite.vendorTimes
 		);
 		markWritten('vendors', sameRecord(subject, snapshot.subject));
 	});
@@ -368,7 +396,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		const synced = state.optOutSynced === true;
 		state.optOutRecorded = false;
 		state.optOutSynced = false;
-		const snapshot = kernel.getSnapshot();
+		const snapshot = browserSnapshot();
 		const at = now();
 		const read = tools.read(storageConfig, at);
 		const clearMissed = read.epoch > memoryEpoch;
@@ -407,7 +435,31 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		}
 		markWritten('optOut', sameRecord(subject, snapshot.subject));
 	});
+	const accountWrites = createWriteScheduler(() => {
+		const layer = kernel.getAccountLayer();
+		const at = now();
+		if (layer !== null) {
+			const existing = tools.read(storageConfig, at).records.accountLayer;
+			if (
+				existing &&
+				tools.shouldAdoptAccount({
+					current: layer,
+					currentSource: 'stored',
+					incoming: existing,
+					incomingSource: 'stored',
+					userExternalId: layer.externalId,
+				})
+			) {
+				return;
+			}
+		}
+		const wrote = writeAccountLayerToStorage(store, layer, storageConfig, at);
+		if (wrote) {
+			seenAccount = accountPrint(layer);
+		}
+	});
 	const writes = {
+		account: accountWrites,
 		choice: choiceWrites,
 		notice: noticeWrites,
 		optOut: optOutWrites,
@@ -419,21 +471,13 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		noticeWrites.flush();
 		optOutWrites.flush();
 		vendorWrites.flush();
+		accountWrites.flush();
 	};
 
-	/**
-	 * Schedule the writes that restore what this runtime stored and another
-	 * runtime then wrote over. localStorage has no compare-and-swap, so two
-	 * tabs can both read before either writes and the second write drops the
-	 * first tab's category. A decision is written back only when this runtime
-	 * stored it, still holds it, and storage holds nothing as new for that
-	 * category. Nothing the clear epoch voids or another runtime replaced
-	 * comes back, and once storage holds the merge no tab writes again.
-	 */
 	const restoreLostWrites = function restoreLostWrites(
 		read: StoredRecords
 	): void {
-		const snapshot = kernel.getSnapshot();
+		const snapshot = browserSnapshot();
 		const storedChoice = read.records.choice;
 		if (storedChoice === undefined) {
 			return;
@@ -460,6 +504,41 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		}
 	};
 
+	const selectAccountReconcile = function selectAccountReconcile(
+		stored: StoredRecords
+	): StoredRecords['records']['accountLayer'] {
+		if (stored.accountDegraded) {
+			return undefined;
+		}
+		const normalized = stored.records.accountLayer ?? null;
+		const nextPrint = accountPrint(normalized);
+		if (nextPrint === seenAccount) {
+			return undefined;
+		}
+		const currentAccount = kernel.getAccountLayer();
+		if (normalized === null) {
+			if (stored.accountPartial) {
+				return undefined;
+			}
+			seenAccount = nextPrint;
+			return currentAccount === null ? undefined : null;
+		}
+		if (stored.accountPartial && currentAccount !== null) {
+			return undefined;
+		}
+		seenAccount = nextPrint;
+		const currentUser = kernel.getSnapshot().user;
+		return tools.shouldAdoptAccount({
+			current: currentAccount,
+			currentSource: kernel.getAccountLayerSource(),
+			incoming: normalized,
+			incomingSource: 'stored',
+			userExternalId: currentUser?.externalId ?? null,
+		})
+			? normalized
+			: undefined;
+	};
+
 	const reconcile = function reconcile(): boolean {
 		// oxlint-disable-next-line no-use-before-define -- Mutually recursive with the scheduler.
 		scheduledReconcile.cancel();
@@ -473,7 +552,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		const at = now();
 		const stored = tools.read(storageConfig, at);
 		const next = selectReconciledRecords(
-			kernel.getSnapshot(),
+			browserSnapshot(),
 			stored,
 			seen,
 			at,
@@ -494,12 +573,19 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		unadopted.clear();
 		rememberSubject(stored.records);
 		memoryEpoch = stored.epoch;
+		const accountPatch = selectAccountReconcile(stored);
 		const { records } = next;
-		if (!records) {
+		if (!records && accountPatch === undefined) {
 			restoreLostWrites(stored);
 			return false;
 		}
-		const result = kernel.hydrate(records);
+		const mergedPatch: HydrationRecords = records
+			? { ...records }
+			: { now: at };
+		if (accountPatch !== undefined) {
+			mergedPatch.accountLayer = accountPatch;
+		}
+		const result = kernel.hydrate(mergedPatch);
 		if (result.ok === false) {
 			console.warn(
 				'[inth] Stored consent records were rejected.',
@@ -507,7 +593,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			);
 			return false;
 		}
-		if (records.choice !== undefined) {
+		if (records?.choice !== undefined) {
 			storedIab = records.choice ? stored.iab : null;
 		}
 		restoreLostWrites(stored);
@@ -523,6 +609,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	return {
 		adopt(read, iab) {
 			seen = fingerprintStoredRecords(read);
+			seenAccount = accountPrint(read.records.accountLayer);
 			seenCarrier = read.subjectCarrier;
 			rememberNoticeSubject(read);
 			rememberSubject(read.records);
@@ -530,6 +617,10 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			if (iab && read.records.choice !== undefined) {
 				storedIab = read.iab;
 			}
+		},
+		cancelAccountWrite() {
+			accountWrites.cancel();
+			seenAccount = accountPrint(null);
 		},
 		clearStorage(at) {
 			// Writes queued before the clear belong to the cleared records.
@@ -539,6 +630,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			noticeWrites.cancel();
 			optOutWrites.cancel();
 			vendorWrites.cancel();
+			accountWrites.cancel();
 			unadopted.clear();
 			ownDecisions.clear();
 			storedIab = null;

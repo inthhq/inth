@@ -6,6 +6,7 @@
  *
  * @internal
  */
+import { shouldAdoptAccountLayer } from '../../kernel/account-layer';
 import { mergeNewestChoice } from '../../kernel/record-validation.model';
 import {
 	deleteCookie,
@@ -14,7 +15,17 @@ import {
 } from '../../libs/cookie';
 import { removeLocalStorageKey } from '../../libs/local-storage.store';
 import { resolveStorageKeys } from '../../libs/storage-keys';
-import { clearStoredRecords } from './persistence-clear.store';
+import {
+	createAccountRevision,
+	encodeAccountChoicesCookie,
+	encodeAccountLocalJson,
+	encodeAccountOptOutCookie,
+	encodeAccountVendorsCookie,
+} from './account-codec';
+import {
+	clearStoredAccountLayer,
+	clearStoredRecords,
+} from './persistence-clear.store';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
@@ -34,10 +45,16 @@ import type { PersistenceTools } from './writer/persistence-writer.model';
 export const persistenceTools: PersistenceTools = {
 	choiceSince: choiceSinceEpoch,
 	clear: clearStoredRecords,
+	clearAccount: clearStoredAccountLayer,
+	createAccountRevision,
 	decodeNotice: decodeNoticeDismissal,
 	decodeOptOut: decodeOptOutRecord,
 	decodeVendors: decodeVendorChoice,
 	deleteCookie,
+	encodeAccountChoicesCookie,
+	encodeAccountLocalJson,
+	encodeAccountOptOutCookie,
+	encodeAccountVendorsCookie,
 	keys: resolveStorageKeys,
 	merge: mergeNewestChoice,
 	noticeSince: noticeSinceEpoch,
@@ -45,6 +62,7 @@ export const persistenceTools: PersistenceTools = {
 	rawCookie: getRawCookieValue,
 	read: readStoredRecordsForReconcile,
 	removeLocal: removeLocalStorageKey,
+	shouldAdoptAccount: shouldAdoptAccountLayer,
 	validateEnvelope: validateStoredConsentEnvelope,
 	vendorsSince: vendorChoiceSinceEpoch,
 	writeCookie,

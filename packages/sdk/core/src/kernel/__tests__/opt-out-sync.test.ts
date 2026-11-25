@@ -1731,9 +1731,15 @@ describe('opt-out network sync and queue', () => {
 				rights: ['sale', 'share'],
 			};
 			const liftCalls: LiftOptOutPayload[] = [];
+			// A `both` answer names this device's own rights in `device`;
+			// without it, a signed-in browser keeps its own record.
+			const identifyAnswer =
+				heldBy === 'both'
+					? { ...accountOptOut, device: { rights: accountOptOut.rights } }
+					: accountOptOut;
 			const transport: KernelTransport = {
 				identify: () =>
-					Promise.resolve({ optOut: accountOptOut, subjectId: SUBJECT }),
+					Promise.resolve({ optOut: identifyAnswer, subjectId: SUBJECT }),
 				liftOptOut: (payload) => {
 					liftCalls.push(payload);
 					return Promise.resolve({

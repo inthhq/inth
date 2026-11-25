@@ -17,7 +17,7 @@
  * Clearing (`clear-records.model.ts`) is `hydrate()` with `null`s followed by
  * `records:cleared`, which the save outbox listens for.
  */
-import type { OptOutRecord } from '@inth/sdk-schema/types';
+import type { OptOutRecord, UserConsent } from '@inth/sdk-schema/types';
 
 import type {
 	ConsentSnapshot,
@@ -25,13 +25,32 @@ import type {
 	HydrationResult,
 	KernelTransport,
 	KernelUser,
+	OptOutAnswer,
 } from '../consent-kernel.model';
+import { stripOptOutDevice } from '../consent-record/consent-record-validation.model';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
+import { isProductionBuild } from '../libs/is-production';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
-import type { KernelRuntime } from './create-runtime';
+import {
+	applyLiftFloorToIncoming,
+	normalizeUserConsent,
+	shouldAdoptAccountLayer,
+} from './account-layer';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
+import type { KernelRuntime, RuntimeCommitOptions } from './create-runtime';
 import {
 	answerOwnedBy,
 	applySyncedOptOut,
+	browserOptOutFromAnswer,
+	fenceReplacedUser,
 	sameOptOutAnswer,
+	sameOptOutRecord,
 } from './kernel-opt-out.model';
 import type { SnapshotPatch } from './kernel-patch.model';
 import {
@@ -45,19 +64,94 @@ import type { ValidatedRecords } from './record-validation.model';
 /**
  * The patch server records make: the newest receipt per category, the
  * newest notice dismissal and vendor decision, and subject fields filled
- * in without dropping local identifiers.
+ * in without dropping local identifiers. Reads browser records only; when
+ * an account layer is active, splits the server opt-out into person and
+ * device parts.
  */
+const foldServerAccountLayer = function foldServerAccountLayer(
+	current: ConsentSnapshot,
+	records: ValidatedRecords,
+	activeAccount: AccountConsentLayer | null
+): AccountConsentLayer | undefined {
+	if (
+		records.accountLayer === undefined ||
+		records.accountLayer === null ||
+		!shouldAdoptAccountLayer({
+			current: activeAccount,
+			currentSource: 'stored',
+			incoming: records.accountLayer,
+			incomingSource: 'stored',
+			userExternalId: current.user?.externalId ?? null,
+		})
+	) {
+		return undefined;
+	}
+	return applyLiftFloorToIncoming(activeAccount, records.accountLayer);
+};
+
+const foldServerOptOut = function foldServerOptOut(
+	browserOptOut: BrowserConsentRecords['optOut'],
+	incoming: OptOutAnswer | null,
+	activeAccount: AccountConsentLayer | null,
+	hasUser: boolean
+): OptOutRecord | null | undefined {
+	if (activeAccount === null) {
+		if (incoming === null) {
+			return mergeNewestOptOut(browserOptOut, null);
+		}
+		const fromAnswer = browserOptOutFromAnswer(incoming, hasUser);
+		return fromAnswer === undefined
+			? undefined
+			: mergeNewestOptOut(browserOptOut, fromAnswer);
+	}
+	if (
+		incoming === null ||
+		incoming.heldBy === 'person' ||
+		incoming.device === undefined ||
+		incoming.device.rights.length === 0
+	) {
+		return undefined;
+	}
+	// While an account layer for the current `externalId` is active,
+	// only an answer carrying `device` updates the browser device record
+	// (using `device.rights`, never copying person rights).
+	const browserDeviceOptOut =
+		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
+	const incomingDevice: OptOutRecord = {
+		heldBy: 'device',
+		method: incoming.method,
+		recordedAt: incoming.recordedAt,
+		rights: [...incoming.device.rights],
+	};
+	if (
+		browserDeviceOptOut !== null &&
+		incomingDevice.recordedAt < browserDeviceOptOut.recordedAt
+	) {
+		return undefined;
+	}
+	return carryOptOutCategories(
+		incomingDevice,
+		browserDeviceOptOut,
+		browserDeviceOptOut !== null &&
+			(incomingDevice.heldBy === 'device' ||
+				answersHeldOptOut(incomingDevice, browserDeviceOptOut))
+	);
+};
+
 export const foldServerRecords = function foldServerRecords(
 	current: ConsentSnapshot,
 	records: ValidatedRecords,
-	now: number
-): SnapshotPatch {
+	now: number,
+	browser: BrowserConsentRecords = {
+		choice: current.explicitChoice,
+		optOut: current.optOut,
+		vendorChoice: current.vendorChoice,
+	},
+	activeAccount: AccountConsentLayer | null = null
+): { patch: SnapshotPatch; nextAccount?: AccountConsentLayer } {
 	const patch: SnapshotPatch = { now };
 	if (records.choice !== undefined) {
-		patch.explicitChoice = mergeNewestChoice(
-			current.explicitChoice,
-			records.choice
-		);
+		patch.explicitChoice = mergeNewestChoice(browser.choice, records.choice);
 	}
 	if (records.noticeDismissal !== undefined) {
 		const local = current.noticeDismissal;
@@ -73,15 +167,73 @@ export const foldServerRecords = function foldServerRecords(
 			: current.subject;
 	}
 	if (records.optOut !== undefined) {
-		patch.optOut = mergeNewestOptOut(current.optOut, records.optOut);
+		const foldedOptOut = foldServerOptOut(
+			browser.optOut,
+			records.optOut,
+			activeAccount,
+			current.user !== null
+		);
+		if (foldedOptOut !== undefined) {
+			patch.optOut = foldedOptOut;
+		}
 	}
 	if (records.vendorChoice !== undefined) {
 		patch.vendorChoice = mergeNewestVendorChoice(
-			current.vendorChoice,
+			browser.vendorChoice,
 			records.vendorChoice
 		);
 	}
-	return patch;
+	const nextAccount = foldServerAccountLayer(current, records, activeAccount);
+	return nextAccount === undefined ? { patch } : { nextAccount, patch };
+};
+
+/**
+ * Receipt metadata after an answer carrying `device`. The answer confirms the
+ * browser record only when it is the same act (same time and method). When
+ * the fold replaced the browser record with this answer, the receipt starts
+ * over for the new act. When the fold kept the browser record because the
+ * answer was older or different, the receipt stays as it was.
+ */
+const syncDeviceServerOptOutReceipt = function syncDeviceServerOptOutReceipt(
+	runtime: KernelRuntime,
+	beforeOptOut: Readonly<OptOutRecord> | null,
+	incomingOptOut: OptOutAnswer,
+	foldedOptOut: OptOutRecord | null | undefined,
+	fromHydration: boolean
+): void {
+	const incomingDevice = incomingOptOut.device;
+	if (incomingDevice === undefined) {
+		return;
+	}
+	const confirmed = incomingDevice.rights.length > 0;
+	if (
+		beforeOptOut !== null &&
+		beforeOptOut.heldBy !== 'person' &&
+		answersHeldOptOut(incomingOptOut, beforeOptOut)
+	) {
+		const current = runtime.getOptOutReceiptData();
+		if (confirmed && !current.rightsConfirmed) {
+			runtime.setOptOutReceiptData(
+				{
+					localAct: current.localAct,
+					reference: current.reference,
+					rightsConfirmed: true,
+				},
+				fromHydration
+			);
+		}
+		return;
+	}
+	if (
+		foldedOptOut !== null &&
+		foldedOptOut !== undefined &&
+		answersHeldOptOut(foldedOptOut, incomingOptOut)
+	) {
+		runtime.setOptOutReceiptData(
+			{ localAct: null, reference: null, rightsConfirmed: confirmed },
+			fromHydration
+		);
+	}
 };
 
 /**
@@ -97,11 +249,34 @@ export const syncAdoptedServerOptOutReceipt =
 	function syncAdoptedServerOptOutReceipt(
 		runtime: KernelRuntime,
 		beforeOptOut: Readonly<OptOutRecord> | null,
-		incomingOptOut: OptOutRecord | null | undefined,
+		incomingOptOut: OptOutAnswer | null | undefined,
 		foldedOptOut: OptOutRecord | null | undefined,
 		fromHydration = false
 	): void {
 		if (!incomingOptOut) {
+			return;
+		}
+		if (incomingOptOut.device !== undefined) {
+			syncDeviceServerOptOutReceipt(
+				runtime,
+				beforeOptOut,
+				incomingOptOut,
+				foldedOptOut,
+				fromHydration
+			);
+			return;
+		}
+		const currentSnapshot = runtime.getSnapshot();
+		const activeAccount = runtime.getAccountLayer();
+		// Older backend without `device`: never confirm under an active account
+		// layer, and never confirm a `both` answer's merged rights while a user
+		// is set.
+		if (
+			(activeAccount !== null &&
+				currentSnapshot.user !== null &&
+				activeAccount.externalId === currentSnapshot.user.externalId) ||
+			(incomingOptOut.heldBy === 'both' && currentSnapshot.user !== null)
+		) {
 			return;
 		}
 		const rightsConfirmed = incomingOptOut.rights.length > 0;
@@ -149,11 +324,35 @@ export interface RecordsBoundaryOptions {
 	) => Promise<string | null>;
 }
 
+export interface SyncUserConsentOptions {
+	/** Atomically release `userConsentPending` in the same commit. */
+	clearPending?: boolean;
+	/**
+	 * Allow re-normalizing an equal-`checkedAt` identical document against the
+	 * browser clock (used when client `start()` re-syncs an SSR-seeded doc).
+	 */
+	forceClientSync?: boolean;
+}
+
 export interface RecordsBoundary {
 	hydrate: (records: HydrationRecords) => HydrationResult;
 	identify: (user: KernelUser) => Promise<void>;
 	/** See {@link InternalKernel.clearIdentity}. */
 	clearIdentity: () => void;
+	syncUserConsent: (
+		value: UserConsent | null | undefined,
+		options?: SyncUserConsentOptions
+	) => boolean;
+	/** Atomically switch user and optionally apply pending/resolved userConsent. */
+	setUserAtomic: (
+		user: KernelUser | null,
+		options?:
+			| boolean
+			| {
+					readonly pending?: boolean;
+					readonly userConsent?: UserConsent | null;
+			  }
+	) => void;
 	setSubjectId: (id: string | null) => void;
 	/** See {@link InternalKernel.markProvisionalSubject}. */
 	markProvisionalSubject: (id: string | null) => void;
@@ -161,6 +360,10 @@ export interface RecordsBoundary {
 	getProvisionalSubject: () => string | null;
 	/** A record now carries `id`, so it is no longer provisional. */
 	noteRecordedSubject: (id: string | undefined) => void;
+	/** Whether `subjectId` was proven linked to `externalId` in this session. */
+	isSubjectLinked: (subjectId: string | null, externalId: string) => boolean;
+	/** Record a proven link between `subjectId` and `externalId` in this session. */
+	markSubjectLinked: (subjectId: string, externalId: string) => void;
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
@@ -176,6 +379,12 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// An ID Inth generated that no record carries yet. It lives in memory
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
+	// Proven (subjectId -> externalId) links established with an identityToken
+	// in this session, cleared when records or subject are reset.
+	const verifiedLinks = new Map<string, string>();
+	const recordVerifiedLink = (subjectId: string, externalId: string): void => {
+		verifiedLinks.set(subjectId, externalId);
+	};
 
 	const applyHydratedGpcMark = function applyHydratedGpcMark(
 		before: ConsentSnapshot,
@@ -251,6 +460,82 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		);
 	};
 
+	const buildHydrationCommit = function buildHydrationCommit(
+		before: ConsentSnapshot,
+		browserBefore: BrowserConsentRecords,
+		validated: ValidatedRecords,
+		at: number
+	): {
+		patch: SnapshotPatch;
+		commitOptions?: RuntimeCommitOptions;
+		reset: boolean;
+	} {
+		const {
+			accountLayer: incomingAccountLayer,
+			choice,
+			optOut: validatedOptOut,
+			optOutGpcReported: _gpcMark,
+			optOutLocalAct: _localAct,
+			optOutReference: _reference,
+			optOutRightsConfirmed: _rightsConfirmed,
+			vendorDeclared,
+			vendorTimes,
+			...rest
+		} = validated;
+		const patch: SnapshotPatch = { ...rest, now: at };
+		if (validatedOptOut !== undefined) {
+			patch.optOut =
+				validatedOptOut === null ? null : stripOptOutDevice(validatedOptOut);
+		}
+		if (choice !== undefined) {
+			patch.explicitChoice = choice;
+		}
+		let commitOptions: RuntimeCommitOptions | undefined;
+		if (incomingAccountLayer === null) {
+			commitOptions = { accountLayer: null, fromHydration: true };
+		} else if (
+			incomingAccountLayer !== undefined &&
+			shouldAdoptAccountLayer({
+				current: runtime.getAccountLayer(),
+				currentSource: runtime.getAccountLayerSource(),
+				incoming: incomingAccountLayer,
+				incomingSource: 'stored',
+				userExternalId: before.user?.externalId ?? null,
+			})
+		) {
+			commitOptions = {
+				accountLayer: applyLiftFloorToIncoming(
+					runtime.getAccountLayer(),
+					incomingAccountLayer
+				),
+				accountLayerSource: 'stored',
+				fromHydration: true,
+			};
+		}
+		if (vendorDeclared !== undefined) {
+			commitOptions = { ...commitOptions, vendorDeclared };
+		}
+		if (vendorTimes !== undefined) {
+			commitOptions = { ...commitOptions, vendorTimes };
+		}
+		const reset = choice === null || rest.subject === null;
+		if (reset) {
+			verifiedLinks.clear();
+		}
+		if (reset && before.iab) {
+			patch.iab = { ...before.iab, authority: null, tcString: null };
+		}
+		applyHydratedGpcMark(
+			{ ...before, optOut: browserBefore.optOut },
+			validated
+		);
+		applyHydratedOptOutReceipt(
+			{ ...before, optOut: browserBefore.optOut },
+			validated
+		);
+		return { commitOptions, patch, reset };
+	};
+
 	const applyRecords = function applyRecords(
 		records: HydrationRecords,
 		fromServer: boolean
@@ -262,37 +547,44 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		}
 		start();
 		const before = getSnapshot();
+		const browserBefore = runtime.getBrowserRecords();
+		const accountBefore = runtime.getAccountLayer();
+		const activeAccount =
+			accountBefore !== null &&
+			before.user !== null &&
+			accountBefore.externalId === before.user.externalId
+				? accountBefore
+				: null;
 		let patch: SnapshotPatch;
+		let commitOptions: RuntimeCommitOptions | undefined;
 		let reset = false;
 		if (fromServer) {
-			patch = foldServerRecords(before, validated.records, at);
+			const folded = foldServerRecords(
+				before,
+				validated.records,
+				at,
+				browserBefore,
+				activeAccount
+			);
+			({ patch } = folded);
+			if (folded.nextAccount !== undefined) {
+				commitOptions = { accountLayer: folded.nextAccount };
+			}
 			syncAdoptedServerOptOutReceipt(
 				runtime,
-				before.optOut,
+				browserBefore.optOut,
 				validated.records.optOut,
 				patch.optOut
 			);
 		} else {
-			const {
-				choice,
-				optOutGpcReported: _gpcMark,
-				optOutLocalAct: _localAct,
-				optOutReference: _reference,
-				optOutRightsConfirmed: _rightsConfirmed,
-				...rest
-			} = validated.records;
-			patch = { ...rest, now: at };
-			if (choice !== undefined) {
-				patch.explicitChoice = choice;
-			}
-			reset = choice === null || rest.subject === null;
-			if (reset && before.iab) {
-				patch.iab = { ...before.iab, authority: null, tcString: null };
-			}
-			applyHydratedGpcMark(before, validated.records);
-			applyHydratedOptOutReceipt(before, validated.records);
+			({ commitOptions, patch, reset } = buildHydrationCommit(
+				before,
+				browserBefore,
+				validated.records,
+				at
+			));
 		}
-		const changed = commit(patch);
+		const changed = commit(patch, commitOptions);
 		const touchedOptOut =
 			validated.records.optOut !== undefined ||
 			validated.records.optOutGpcReported !== undefined;
@@ -300,10 +592,11 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			runtime.syncGpcSignal(at);
 		}
 		const after = getSnapshot();
+		const browserAfter = runtime.getBrowserRecords();
 		if (
 			reset ||
-			after.explicitChoice !== before.explicitChoice ||
-			after.optOut !== before.optOut ||
+			browserAfter.choice !== browserBefore.choice ||
+			browserAfter.optOut !== browserBefore.optOut ||
 			after.subject !== before.subject
 		) {
 			runtime.invalidateRecords();
@@ -380,15 +673,147 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				effectiveSubjectId = adopted;
 			}
 		}
+		if (
+			user.identityToken &&
+			linkedId !== null &&
+			effectiveSubjectId !== null
+		) {
+			recordVerifiedLink(effectiveSubjectId, user.externalId);
+		}
 		if (attempt === identifyGeneration() && linked?.optOut !== undefined) {
 			applySyncedOptOut(runtime, linked.optOut, {
 				actVersion: optOutActVersion,
 				allowClear: false,
+				externalId: user.externalId,
 				generation,
 				subjectId: effectiveSubjectId,
 			});
 		}
 		return effectiveSubjectId;
+	};
+
+	const clearPendingIfRequested = function clearPendingIfRequested(
+		before: ConsentSnapshot,
+		at: number,
+		clearPending: boolean
+	): void {
+		if (clearPending && before.userConsentPending) {
+			commit({ now: at, userConsentPending: false }, { preserveDialog: true });
+		}
+	};
+
+	const validateIncomingUserConsent = function validateIncomingUserConsent(
+		before: ConsentSnapshot,
+		value: UserConsent,
+		at: number,
+		options?: SyncUserConsentOptions
+	): AccountConsentLayer | null {
+		const { user } = before;
+		if (!user || !user.externalId) {
+			if (!isProductionBuild()) {
+				console.warn(
+					'[inth] Ignoring userConsent because no user with an externalId is set.'
+				);
+			}
+			return null;
+		}
+		const normalized = normalizeUserConsent(value, at);
+		if (!normalized) {
+			if (!isProductionBuild()) {
+				console.warn('[inth] Ignoring malformed userConsent document.');
+			}
+			return null;
+		}
+		if (normalized.externalId !== user.externalId) {
+			if (!isProductionBuild()) {
+				console.warn(
+					'[inth] Ignoring userConsent because user.externalId does not match userConsent.sync.externalId.'
+				);
+			}
+			return null;
+		}
+		const currentAccount = runtime.getAccountLayer();
+		if (
+			!shouldAdoptAccountLayer({
+				current: currentAccount,
+				currentSource: runtime.getAccountLayerSource(),
+				forceClientSync: options?.forceClientSync,
+				incoming: normalized,
+				incomingSource: 'incoming',
+				userExternalId: user.externalId,
+			})
+		) {
+			return null;
+		}
+		return applyLiftFloorToIncoming(currentAccount, normalized);
+	};
+
+	const syncUserConsent = function syncUserConsent(
+		value: UserConsent | null | undefined,
+		options?: SyncUserConsentOptions
+	): boolean {
+		const clearPending = options?.clearPending === true;
+		const before = getSnapshot();
+		const at = runtime.now();
+		if (value === undefined || before.externalPermissions) {
+			clearPendingIfRequested(before, at, clearPending);
+			return false;
+		}
+		if (value === null) {
+			const hadAccount = runtime.getAccountLayer() !== null;
+			const patch: SnapshotPatch = { now: at };
+			if (clearPending) {
+				patch.userConsentPending = false;
+			}
+			let changed = false;
+			runtime.batch(() => {
+				if (!hadAccount) {
+					runtime.bumpAccountSyncGeneration();
+				}
+				changed = commit(patch, {
+					accountLayer: null,
+					forceAccountNotify: true,
+					preserveDialog: true,
+				});
+				const after = getSnapshot();
+				if (hadAccount && !sameOptOutRecord(before.optOut, after.optOut)) {
+					emit({
+						optOut: after.optOut,
+						snapshot: after,
+						type: 'opt-out:synced',
+					});
+				}
+			});
+			return changed;
+		}
+
+		const normalized = validateIncomingUserConsent(before, value, at, options);
+		if (!normalized) {
+			clearPendingIfRequested(before, at, clearPending);
+			return false;
+		}
+
+		const patch: SnapshotPatch = { now: at };
+		if (clearPending) {
+			patch.userConsentPending = false;
+		}
+		let changed = false;
+		runtime.batch(() => {
+			changed = commit(patch, {
+				accountLayer: normalized,
+				accountLayerSource: 'incoming',
+				preserveDialog: true,
+			});
+			const after = getSnapshot();
+			if (!sameOptOutRecord(before.optOut, after.optOut)) {
+				emit({
+					optOut: after.optOut,
+					snapshot: after,
+					type: 'opt-out:synced',
+				});
+			}
+		});
+		return changed;
 	};
 
 	return {
@@ -410,7 +835,6 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			commit(patch);
 		},
-
 		getProvisionalSubject: () => provisionalSubjectId,
 
 		hydrate: (records) => applyRecords(records, false),
@@ -452,8 +876,16 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			await loadSubjectRecord(linkedId, attempt);
 		},
 
+		isSubjectLinked(subjectId, externalId) {
+			return subjectId !== null && verifiedLinks.get(subjectId) === externalId;
+		},
+
 		markProvisionalSubject(id) {
 			provisionalSubjectId = id;
+		},
+
+		markSubjectLinked(subjectId, externalId) {
+			recordVerifiedLink(subjectId, externalId);
 		},
 
 		noteRecordedSubject(id) {
@@ -467,6 +899,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			if ((subject?.subjectId ?? null) === id) {
 				return;
 			}
+			verifiedLinks.clear();
 			runtime.invalidateRecords();
 			const patch: SnapshotPatch = {};
 			if (iab) {
@@ -480,5 +913,86 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			commit(patch);
 		},
+
+		setUserAtomic(user, options) {
+			const before = getSnapshot();
+			const at = runtime.now();
+			const nextUser = user ? { ...user } : null;
+			const resolvedOptions =
+				typeof options === 'boolean' ? { pending: options } : options;
+			const sameUser =
+				(before.user?.externalId ?? null) === (nextUser?.externalId ?? null);
+			fenceReplacedUser(runtime, before.user, nextUser);
+			const patch: SnapshotPatch = { now: at, user: nextUser };
+			let commitOptions: RuntimeCommitOptions | undefined;
+
+			if (resolvedOptions?.userConsent === null) {
+				patch.userConsentPending = false;
+				commitOptions = {
+					accountLayer: null,
+					forceAccountNotify: true,
+					preserveDialog: true,
+					suppressAccountDropOptOutSynced: true,
+				};
+			} else if (resolvedOptions?.userConsent !== undefined) {
+				patch.userConsentPending = false;
+				const incoming = normalizeUserConsent(resolvedOptions.userConsent, at);
+				if (
+					incoming !== null &&
+					nextUser !== null &&
+					incoming.externalId === nextUser.externalId
+				) {
+					let adoptedAccount: AccountConsentLayer | null = null;
+					if (sameUser) {
+						const currentAccount = runtime.getAccountLayer();
+						if (
+							shouldAdoptAccountLayer({
+								current: currentAccount,
+								currentSource: runtime.getAccountLayerSource(),
+								incoming,
+								incomingSource: 'incoming',
+								userExternalId: nextUser.externalId,
+							})
+						) {
+							adoptedAccount = applyLiftFloorToIncoming(
+								currentAccount,
+								incoming
+							);
+						}
+					} else {
+						adoptedAccount = incoming;
+					}
+					if (adoptedAccount !== null) {
+						commitOptions = {
+							accountLayer: adoptedAccount,
+							accountLayerSource: 'incoming',
+							preserveDialog: true,
+							suppressAccountDropOptOutSynced: true,
+						};
+					}
+				} else {
+					commitOptions = { suppressAccountDropOptOutSynced: true };
+				}
+			} else if (resolvedOptions?.pending !== undefined) {
+				patch.userConsentPending = resolvedOptions.pending;
+			}
+
+			runtime.batch(() => {
+				commit(patch, commitOptions);
+				const after = getSnapshot();
+				if (
+					resolvedOptions?.userConsent !== undefined &&
+					!sameOptOutRecord(before.optOut, after.optOut)
+				) {
+					emit({
+						optOut: after.optOut,
+						snapshot: after,
+						type: 'opt-out:synced',
+					});
+				}
+			});
+		},
+
+		syncUserConsent,
 	};
 };
