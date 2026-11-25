@@ -77,7 +77,7 @@ export interface RemoteStandIns {
 /**
  * The entries of an init answer's `scriptRegistry.load` that the engine
  * would load: well formed, for a known category, and not claimed by a
- * script in `codeScripts` (by `integration ?? vendor ?? id`).
+ * script in `codeScripts` (by `integration ?? vendor ?? id`, or by `id`).
  */
 export const readRemoteStandIns = function readRemoteStandIns(
 	data: SSRInitialData | undefined,
@@ -89,10 +89,12 @@ export const readRemoteStandIns = function readRemoteStandIns(
 	if (!Array.isArray(load)) {
 		return result;
 	}
+	// The loader's rule: a code script claims its key and its `id`.
 	const claimed = new Set(
-		codeScripts.map(
-			(script) => script.integration ?? script.vendor ?? script.id
-		)
+		codeScripts.flatMap((script) => [
+			script.integration ?? script.vendor ?? script.id,
+			script.id,
+		])
 	);
 	for (const entry of load) {
 		const manifest = isRecord(entry) ? entry.manifest : undefined;

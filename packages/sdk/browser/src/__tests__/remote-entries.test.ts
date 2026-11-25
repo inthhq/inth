@@ -61,6 +61,14 @@ describe('readRemoteStandIns', () => {
 		expect(read).toEqual({ categories: [], scripts: [] });
 	});
 
+	test('skips an entry whose id a code script uses, whatever its vendor', () => {
+		const read = readRemoteStandIns(answer({ load: [entry('acme-pixel')] }), [
+			{ category: 'marketing', id: 'acme-pixel', vendor: 'acme-legacy' },
+		]);
+
+		expect(read).toEqual({ categories: [], scripts: [] });
+	});
+
 	test('reads nothing without a list', () => {
 		expect(readRemoteStandIns(answer({ sources: {} }), [])).toEqual({
 			categories: [],

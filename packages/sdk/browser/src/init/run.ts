@@ -909,7 +909,7 @@ export const runInitScript = function runInitScript(
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 		const handled = Promise.all([pending, records]).then(
 			([answer, readable]) => {
-				if (api || boot.commit || boot.disposed) {
+				if (boot.commit || boot.disposed) {
 					return;
 				}
 				// A registry the server could not read keeps the last list, for
@@ -919,6 +919,11 @@ export const runInitScript = function runInitScript(
 					readPolicyCache(projectUrl, current.overrides)
 				);
 				lastInit = data;
+				if (api) {
+					// The engine took over first and runs this page. The answer
+					// still keeps the cache current when the visitor chooses.
+					return;
+				}
 				if (!readable) {
 					// A stored choice the init script could not read: the engine
 					// decides, now.

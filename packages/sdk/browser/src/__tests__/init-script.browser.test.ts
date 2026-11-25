@@ -903,6 +903,28 @@ describe('scripts the Inth server lists', () => {
 		expect(bannerOf(win)).toBeNull();
 	});
 
+	it('caches the list from an answer that arrives after the engine took over', async () => {
+		// Longer than the engine waits for the init script's answer.
+		await setInitDelay(3500);
+		const win = await open({ remote: 'gated' });
+		win.inth.openDialog();
+		await expect.poll(() => win.inth.client, { timeout: 8000 }).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).toBeNull();
+
+		await expect
+			.poll(() => win.inth.client?.getSnapshot().policyPending, {
+				timeout: 10_000,
+			})
+			.toBe(false);
+		(win.inth.client as { acceptAll?: () => unknown } | null)?.acceptAll?.();
+		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
+
+		// The next page starts from this list.
+		await expect
+			.poll(() => win.localStorage.getItem('inth-init-policy') ?? '')
+			.toContain('remote-pixel');
+	});
+
 	it('loads nothing the server lists with data-remote-scripts="false"', async () => {
 		const win = await open({ 'no-remote': true, remote: 'always' });
 
