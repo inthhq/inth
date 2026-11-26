@@ -3,6 +3,7 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { isHostname } from '../_shared/hostname';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
 import { resolveScriptUrl } from '../_shared/script-url';
@@ -146,7 +147,7 @@ export const pardotTracking = function pardotTracking(
 	if (!domain) {
 		return skipMissingId('pardotTracking', 'piDomain', skipped);
 	}
-	if (!/^[a-z\d](?:[a-z\d.-]*[a-z\d])?$/iu.test(domain)) {
+	if (!isHostname(domain)) {
 		return skipScript(
 			'pardotTracking: tracker domain must be a hostname',
 			skipped

@@ -104,13 +104,18 @@ it.each(['abc', '1&aid=2', '9007199254740993'])(
 		);
 	}
 );
-it('rejects a tracker URL where a hostname is required', () => {
+it.each([
+	'https://example.com/?x=1',
+	'10.0.0.1',
+	'go..example.com',
+	'localhost',
+])('rejects the tracker domain %s where a hostname is required', (piDomain) => {
 	expectSkippedScript(
 		() =>
 			pardotTracking({
 				piAId: '123456',
 				piCId: '654321',
-				piDomain: 'https://example.com/?x=1',
+				piDomain,
 			}),
 		{ category: 'marketing', id: 'salesforce-pardot' },
 		'pardotTracking: tracker domain must be a hostname'
