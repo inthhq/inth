@@ -1,17 +1,17 @@
 {
-	"name": "@inth/example-html",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "bun serve.ts --check",
-		"dev": "bun serve.ts",
-		"start": "bun serve.ts"
-	},
-	"dependencies": {
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/bun": "1.3.9",
-		"@types/node": "25.5.0"
-	}
+  "name": "@inth/example-html",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun serve.ts --check",
+    "dev": "bun serve.ts",
+    "start": "bun serve.ts"
+  },
+  "dependencies": {
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.9",
+    "@types/node": "25.5.0"
+  }
 }

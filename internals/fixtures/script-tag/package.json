@@ -1,24 +1,24 @@
 {
-	"name": "@inth/fixture-script-tag",
-	"version": "0.1.0",
-	"private": true,
-	"description": "The @inth/sdk script tag on plain HTML pages, the way a CMS, page builder or static site loads it.",
-	"scripts": {
-		"build": "bun serve.ts --check",
-		"dev": "bun serve.ts",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"start": "bun serve.ts"
-	},
-	"dependencies": {
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@inth/doc-snippets-html": "workspace:*",
-		"@tailwindcss/postcss": "4.3.3",
-		"@types/bun": "1.3.9",
-		"@types/node": "25.5.0",
-		"postcss": "8.5.16",
-		"tailwindcss": "4.3.3",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/fixture-script-tag",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The @inth/sdk script tag on plain HTML pages, the way a CMS, page builder or static site loads it.",
+  "scripts": {
+    "build": "bun serve.ts --check",
+    "dev": "bun serve.ts",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "start": "bun serve.ts"
+  },
+  "dependencies": {
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@inth/doc-snippets-html": "workspace:*",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/bun": "1.3.9",
+    "@types/node": "25.5.0",
+    "postcss": "8.5.16",
+    "tailwindcss": "4.3.3",
+    "vite-plus": "catalog:"
+  }
 }

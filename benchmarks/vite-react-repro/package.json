@@ -1,30 +1,30 @@
 {
-	"name": "@inth/vite-react-repro",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/first-paint bun run scripts/run-first-paint-bench.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/first-paint bun run scripts/run-first-paint-bench.ts",
-		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/first-paint bun run scripts/run-first-paint-bench.ts",
-		"build": "vp build",
-		"dev": "vp dev",
-		"preview": "vp preview"
-	},
-	"dependencies": {
-		"@inth/react": "workspace:*",
-		"react": "19.2.0",
-		"react-dom": "19.2.0"
-	},
-	"devDependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"@vitejs/plugin-react": "5.1.0",
-		"playwright": "catalog:",
-		"rollup-plugin-visualizer": "7.0.1",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/vite-react-repro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/first-paint bun run scripts/run-first-paint-bench.ts",
+    "bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/first-paint bun run scripts/run-first-paint-bench.ts",
+    "bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/first-paint bun run scripts/run-first-paint-bench.ts",
+    "build": "vp build",
+    "dev": "vp dev",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@inth/react": "workspace:*",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.1.0",
+    "playwright": "catalog:",
+    "rollup-plugin-visualizer": "7.0.1",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

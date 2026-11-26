@@ -1,174 +1,174 @@
 {
-	"name": "@inth/sdk-browser",
-	"version": "0.0.0-alpha.0",
-	"private": true,
-	"description": "Script-tag build of Inth for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
-	"keywords": [
-		"banner",
-		"cmp",
-		"consent",
-		"consent-banner",
-		"consent-management",
-		"consent-management-platform",
-		"consent-manager",
-		"cookie",
-		"cookie-banner",
-		"cookie-consent",
-		"framer",
-		"gdpr",
-		"global-privacy-control",
-		"headless",
-		"iab-tcf",
-		"inth",
-		"javascript",
-		"no-build",
-		"privacy",
-		"script-blocking",
-		"script-tag",
-		"squarespace",
-		"vanilla-js",
-		"webflow",
-		"wordpress"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/browser"
-	},
-	"files": [
-		"dist",
-		"dist-types",
-		"AGENTS.md",
-		"SKILL.md",
-		"docs",
-		"README.md",
-		"CHANGELOG.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"./dist/inth.js",
-		"./dist/inth.hosted.js",
-		"./dist/inth.commit.js",
-		"./dist/inth.records.js",
-		"./dist/inth.dialog.js",
-		"./dist/inth.local.js",
-		"./dist/inth.offline.js",
-		"./dist/inth.iab.js",
-		"./dist/inth.headless.js",
-		"./dist/inth.devtools.js",
-		"./dist/inth.gpp.js",
-		"**/*.css"
-	],
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"unpkg": "./dist/inth.js",
-	"jsdelivr": "./dist/inth.js",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		},
-		"./hosted": {
-			"types": "./dist-types/hosted.d.ts",
-			"import": "./dist/hosted.js",
-			"default": "./dist/hosted.js"
-		},
-		"./testing": {
-			"types": "./dist-types/testing.d.ts",
-			"import": "./dist/testing.js",
-			"default": "./dist/testing.js"
-		},
-		"./headless": {
-			"types": "./dist-types/headless.d.ts",
-			"import": "./dist/headless.js",
-			"default": "./dist/headless.js"
-		},
-		"./devtools": {
-			"types": "./dist-types/devtools.d.ts",
-			"import": "./dist/devtools.js",
-			"default": "./dist/devtools.js"
-		},
-		"./gpp": {
-			"types": "./dist-types/gpp.d.ts",
-			"import": "./dist/gpp.js",
-			"default": "./dist/gpp.js"
-		},
-		"./styles.css": "./dist/inth.css",
-		"./inth.js": "./dist/inth.js",
-		"./inth.hosted.js": "./dist/inth.hosted.js",
-		"./inth.commit.js": "./dist/inth.commit.js",
-		"./inth.records.js": "./dist/inth.records.js",
-		"./inth.dialog.js": "./dist/inth.dialog.js",
-		"./inth.testing.js": "./dist/inth.testing.js",
-		"./inth.headless.js": "./dist/inth.headless.js",
-		"./inth.devtools.js": "./dist/inth.devtools.js",
-		"./inth.gpp.js": "./dist/inth.gpp.js",
-		"./iab": {
-			"types": "./dist-types/iab.d.ts",
-			"import": "./dist/iab.js",
-			"default": "./dist/iab.js"
-		},
-		"./inth.iab.js": "./dist/inth.iab.js",
-		"./iab/styles.css": "./dist/inth.iab.css",
-		"./postcss-tailwind3": {
-			"types": "./dist-types/postcss-tailwind3.d.ts",
-			"import": "./dist/postcss-tailwind3.js",
-			"default": "./dist/postcss-tailwind3.js"
-		},
-		"./prefetch": {
-			"types": "./dist-types/prefetch.d.ts",
-			"import": "./dist/prefetch.js",
-			"default": "./dist/prefetch.js"
-		}
-	},
-	"scripts": {
-		"build": "pnpm run prebuild && rslib build && bun scripts/copy-styles.ts && node ../../../scripts/normalize-dist-types.mjs",
-		"check-types": "pnpm run prebuild && tsrs --noEmit",
-		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"prebuild": "genversion --esm --semi src/version.ts && bun scripts/build-styles.ts",
-		"test": "pnpm run prebuild && vp test run",
-		"test:watch": "pnpm run prebuild && vp test"
-	},
-	"dependencies": {
-		"@inth/sdk-core": "workspace:*",
-		"@inth/sdk-dev-tools": "workspace:*",
-		"@inth/sdk-iab": "workspace:*",
-		"@inth/sdk-schema": "workspace:*",
-		"@inth/sdk-translations": "workspace:*",
-		"@inth/sdk-ui": "workspace:*"
-	},
-	"devDependencies": {
-		"@emotion/css": "11.13.5",
-		"@inth/conformance": "workspace:*",
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/node": "25.5.0",
-		"@vitest/browser-playwright": "catalog:",
-		"@vitest/coverage-istanbul": "catalog:",
-		"esbuild": "^0.28.1",
-		"genversion": "3.2.0",
-		"jsdom": "^25.0.0",
-		"playwright": "catalog:",
-		"postcss": "8.5.10",
-		"tsrs": "catalog:",
-		"typescript": "7.0.2",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	},
-	"browserslist": [
-		">0.5%",
-		"last 2 versions",
-		"not dead",
-		"not op_mini all"
-	]
+  "name": "@inth/sdk-browser",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "description": "Script-tag build of Inth for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
+  "keywords": [
+    "banner",
+    "cmp",
+    "consent",
+    "consent-banner",
+    "consent-management",
+    "consent-management-platform",
+    "consent-manager",
+    "cookie",
+    "cookie-banner",
+    "cookie-consent",
+    "framer",
+    "gdpr",
+    "global-privacy-control",
+    "headless",
+    "iab-tcf",
+    "inth",
+    "javascript",
+    "no-build",
+    "privacy",
+    "script-blocking",
+    "script-tag",
+    "squarespace",
+    "vanilla-js",
+    "webflow",
+    "wordpress"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/browser"
+  },
+  "files": [
+    "dist",
+    "dist-types",
+    "AGENTS.md",
+    "SKILL.md",
+    "docs",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/inth.js",
+    "./dist/inth.hosted.js",
+    "./dist/inth.commit.js",
+    "./dist/inth.records.js",
+    "./dist/inth.dialog.js",
+    "./dist/inth.local.js",
+    "./dist/inth.offline.js",
+    "./dist/inth.iab.js",
+    "./dist/inth.headless.js",
+    "./dist/inth.devtools.js",
+    "./dist/inth.gpp.js",
+    "**/*.css"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "unpkg": "./dist/inth.js",
+  "jsdelivr": "./dist/inth.js",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./hosted": {
+      "types": "./dist-types/hosted.d.ts",
+      "import": "./dist/hosted.js",
+      "default": "./dist/hosted.js"
+    },
+    "./testing": {
+      "types": "./dist-types/testing.d.ts",
+      "import": "./dist/testing.js",
+      "default": "./dist/testing.js"
+    },
+    "./headless": {
+      "types": "./dist-types/headless.d.ts",
+      "import": "./dist/headless.js",
+      "default": "./dist/headless.js"
+    },
+    "./devtools": {
+      "types": "./dist-types/devtools.d.ts",
+      "import": "./dist/devtools.js",
+      "default": "./dist/devtools.js"
+    },
+    "./gpp": {
+      "types": "./dist-types/gpp.d.ts",
+      "import": "./dist/gpp.js",
+      "default": "./dist/gpp.js"
+    },
+    "./styles.css": "./dist/inth.css",
+    "./inth.js": "./dist/inth.js",
+    "./inth.hosted.js": "./dist/inth.hosted.js",
+    "./inth.commit.js": "./dist/inth.commit.js",
+    "./inth.records.js": "./dist/inth.records.js",
+    "./inth.dialog.js": "./dist/inth.dialog.js",
+    "./inth.testing.js": "./dist/inth.testing.js",
+    "./inth.headless.js": "./dist/inth.headless.js",
+    "./inth.devtools.js": "./dist/inth.devtools.js",
+    "./inth.gpp.js": "./dist/inth.gpp.js",
+    "./iab": {
+      "types": "./dist-types/iab.d.ts",
+      "import": "./dist/iab.js",
+      "default": "./dist/iab.js"
+    },
+    "./inth.iab.js": "./dist/inth.iab.js",
+    "./iab/styles.css": "./dist/inth.iab.css",
+    "./postcss-tailwind3": {
+      "types": "./dist-types/postcss-tailwind3.d.ts",
+      "import": "./dist/postcss-tailwind3.js",
+      "default": "./dist/postcss-tailwind3.js"
+    },
+    "./prefetch": {
+      "types": "./dist-types/prefetch.d.ts",
+      "import": "./dist/prefetch.js",
+      "default": "./dist/prefetch.js"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run prebuild && rslib build && bun scripts/copy-styles.ts && node ../../../scripts/normalize-dist-types.mjs",
+    "check-types": "pnpm run prebuild && tsrs --noEmit",
+    "dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "prebuild": "genversion --esm --semi src/version.ts && bun scripts/build-styles.ts",
+    "test": "pnpm run prebuild && vp test run",
+    "test:watch": "pnpm run prebuild && vp test"
+  },
+  "dependencies": {
+    "@inth/sdk-core": "workspace:*",
+    "@inth/sdk-dev-tools": "workspace:*",
+    "@inth/sdk-iab": "workspace:*",
+    "@inth/sdk-schema": "workspace:*",
+    "@inth/sdk-translations": "workspace:*",
+    "@inth/sdk-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@emotion/css": "11.13.5",
+    "@inth/conformance": "workspace:*",
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/node": "25.5.0",
+    "@vitest/browser-playwright": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
+    "esbuild": "^0.28.1",
+    "genversion": "3.2.0",
+    "jsdom": "^25.0.0",
+    "playwright": "catalog:",
+    "postcss": "8.5.10",
+    "tsrs": "catalog:",
+    "typescript": "7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "browserslist": [
+    ">0.5%",
+    "last 2 versions",
+    "not dead",
+    "not op_mini all"
+  ]
 }

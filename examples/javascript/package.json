@@ -1,20 +1,20 @@
 {
-	"name": "@inth/example-javascript",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "vp build",
-		"check-types": "tsrs --noEmit",
-		"dev": "vp dev --host 127.0.0.1",
-		"start": "vp preview --host 127.0.0.1"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"tsrs": "catalog:",
-		"vite": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/example-javascript",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp build",
+    "check-types": "tsrs --noEmit",
+    "dev": "vp dev --host 127.0.0.1",
+    "start": "vp preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsrs": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

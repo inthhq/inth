@@ -1,99 +1,99 @@
 {
-	"name": "@inth/sdk-schema",
-	"version": "0.0.0-alpha.0",
-	"private": true,
-	"description": "Valibot schemas and TypeScript types for the Inth consent API, shared by the backend, frontends and Node.js SDK.",
-	"keywords": [
-		"ccpa",
-		"consent",
-		"gdpr",
-		"privacy",
-		"schema",
-		"typescript",
-		"valibot",
-		"validation"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/schema"
-	},
-	"files": [
-		"dist",
-		"dist-types"
-	],
-	"type": "module",
-	"sideEffects": false,
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		},
-		"./types": {
-			"types": "./dist-types/types.d.ts",
-			"import": "./dist/types.js",
-			"default": "./dist/types.js"
-		},
-		"./config": {
-			"types": "./dist-types/config/index.d.ts",
-			"import": "./dist/config.js",
-			"default": "./dist/config.js"
-		},
-		"./geo": {
-			"types": "./dist-types/shared/geo-headers.d.ts",
-			"import": "./dist/geo.js",
-			"default": "./dist/geo.js"
-		},
-		"./canonical-order": {
-			"types": "./dist-types/shared/canonical-order.d.ts",
-			"import": "./dist/canonical-order.js",
-			"default": "./dist/canonical-order.js"
-		},
-		"./v1": {
-			"types": "./dist-types/api/v1/index.d.ts",
-			"import": "./dist/api/v1/index.js",
-			"default": "./dist/api/v1/index.js"
-		}
-	},
-	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"check-types": "tsrs --noEmit && tsrs -p tsconfig.type-tests.json",
-		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"test": "vp test run --passWithNoTests",
-		"test:watch": "vp test"
-	},
-	"dependencies": {
-		"@inth/sdk-translations": "workspace:*",
-		"base-x": "5.0.1",
-		"valibot": "1.4.2"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/bun": "1.3.9",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "25.0.1",
-		"tsrs": "catalog:",
-		"typescript": "7.0.2",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	},
-	"browserslist": [
-		">0.2%",
-		"not dead",
-		"not op_mini all"
-	]
+  "name": "@inth/sdk-schema",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "description": "Valibot schemas and TypeScript types for the Inth consent API, shared by the backend, frontends and Node.js SDK.",
+  "keywords": [
+    "ccpa",
+    "consent",
+    "gdpr",
+    "privacy",
+    "schema",
+    "typescript",
+    "valibot",
+    "validation"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/schema"
+  },
+  "files": [
+    "dist",
+    "dist-types"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist-types/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./config": {
+      "types": "./dist-types/config/index.d.ts",
+      "import": "./dist/config.js",
+      "default": "./dist/config.js"
+    },
+    "./geo": {
+      "types": "./dist-types/shared/geo-headers.d.ts",
+      "import": "./dist/geo.js",
+      "default": "./dist/geo.js"
+    },
+    "./canonical-order": {
+      "types": "./dist-types/shared/canonical-order.d.ts",
+      "import": "./dist/canonical-order.js",
+      "default": "./dist/canonical-order.js"
+    },
+    "./v1": {
+      "types": "./dist-types/api/v1/index.d.ts",
+      "import": "./dist/api/v1/index.js",
+      "default": "./dist/api/v1/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
+    "check-types": "tsrs --noEmit && tsrs -p tsconfig.type-tests.json",
+    "dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "test": "vp test run --passWithNoTests",
+    "test:watch": "vp test"
+  },
+  "dependencies": {
+    "@inth/sdk-translations": "workspace:*",
+    "base-x": "5.0.1",
+    "valibot": "1.4.2"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/bun": "1.3.9",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "25.0.1",
+    "tsrs": "catalog:",
+    "typescript": "7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ]
 }

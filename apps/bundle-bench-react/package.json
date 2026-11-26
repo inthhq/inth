@@ -1,23 +1,23 @@
 {
-	"name": "@inth/bundle-bench-react",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"bundle-bench": "bun run src/report.ts"
-	},
-	"dependencies": {
-		"@inth/react": "workspace:*",
-		"@radix-ui/react-accordion": "1.2.15",
-		"@radix-ui/react-dialog": "1.1.18",
-		"@radix-ui/react-slot": "1.3.0",
-		"@radix-ui/react-switch": "1.3.2",
-		"react": "^19.2.7",
-		"react-dom": "^19.2.7"
-	},
-	"devDependencies": {
-		"@types/bun": "1.3.9",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/bundle-bench-react",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bundle-bench": "bun run src/report.ts"
+  },
+  "dependencies": {
+    "@inth/react": "workspace:*",
+    "@radix-ui/react-accordion": "1.2.15",
+    "@radix-ui/react-dialog": "1.1.18",
+    "@radix-ui/react-slot": "1.3.0",
+    "@radix-ui/react-switch": "1.3.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.9",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "typescript": "6.0.3"
+  }
 }

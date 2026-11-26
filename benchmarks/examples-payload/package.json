@@ -1,26 +1,26 @@
 {
-	"name": "@inth/examples-payload-bench",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"bench": "vpx run.ts --out ../../.benchmarks/current/examples-payload",
-		"bench:ci": "vpx run.ts --out ../../.benchmarks/head/examples-payload",
-		"build": "echo 'examples payload harness is source-only; it builds the examples itself'",
-		"test": "vp test run"
-	},
-	"dependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"playwright": "catalog:"
-	},
-	"devDependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"@inth/svelte": "workspace:*",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "25.0.1",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	}
+  "name": "@inth/examples-payload-bench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "vpx run.ts --out ../../.benchmarks/current/examples-payload",
+    "bench:ci": "vpx run.ts --out ../../.benchmarks/head/examples-payload",
+    "build": "echo 'examples payload harness is source-only; it builds the examples itself'",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "playwright": "catalog:"
+  },
+  "devDependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "@inth/svelte": "workspace:*",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "25.0.1",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
 }

@@ -1,21 +1,21 @@
 {
-	"name": "@inth/fixture-javascript",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "vp build",
-		"check-types": "tsrs --noEmit",
-		"dev": "vp dev --host 127.0.0.1",
-		"start": "vp preview --host 127.0.0.1"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "25.5.0",
-		"tsrs": "catalog:",
-		"vite": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/fixture-javascript",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp build",
+    "check-types": "tsrs --noEmit",
+    "dev": "vp dev --host 127.0.0.1",
+    "start": "vp preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "tsrs": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

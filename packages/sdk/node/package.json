@@ -1,76 +1,76 @@
 {
-	"name": "@inth/node",
-	"version": "0.0.0-alpha.0",
-	"description": "Server client for the Inth API: check what a user consents to, identify users, and publish, check and record acceptance of legal documents. Runs on Node.js, Vercel Functions and Cloudflare Workers.",
-	"keywords": [
-		"ccpa",
-		"consent",
-		"gdpr",
-		"inth",
-		"legal-documents",
-		"privacy",
-		"terms-of-service"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/node"
-	},
-	"files": [
-		"dist",
-		"dist-types",
-		"AGENTS.md",
-		"SKILL.md",
-		"docs"
-	],
-	"type": "module",
-	"sideEffects": false,
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		}
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/node",
-		"check-types": "pnpm run prebuild && tsrs --noEmit && tsrs -p tsconfig.test.json",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"prebuild": "genversion --esm --semi src/version.ts",
-		"prepack": "pnpm run build:docs && pnpm run build",
-		"test": "pnpm run prebuild && vp test run",
-		"test:watch": "pnpm run prebuild && vp test"
-	},
-	"dependencies": {
-		"valibot": "1.4.2"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"genversion": "3.2.0",
-		"tsrs": "catalog:",
-		"typescript": "7.0.2",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	},
-	"engines": {
-		"node": ">=20.3"
-	}
+  "name": "@inth/node",
+  "version": "0.0.0-alpha.0",
+  "description": "Server client for the Inth API: check what a user consents to, identify users, and publish, check and record acceptance of legal documents. Runs on Node.js, Vercel Functions and Cloudflare Workers.",
+  "keywords": [
+    "ccpa",
+    "consent",
+    "gdpr",
+    "inth",
+    "legal-documents",
+    "privacy",
+    "terms-of-service"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/node"
+  },
+  "files": [
+    "dist",
+    "dist-types",
+    "AGENTS.md",
+    "SKILL.md",
+    "docs"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/node",
+    "check-types": "pnpm run prebuild && tsrs --noEmit && tsrs -p tsconfig.test.json",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "prebuild": "genversion --esm --semi src/version.ts",
+    "prepack": "pnpm run build:docs && pnpm run build",
+    "test": "pnpm run prebuild && vp test run",
+    "test:watch": "pnpm run prebuild && vp test"
+  },
+  "dependencies": {
+    "valibot": "1.4.2"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "genversion": "3.2.0",
+    "tsrs": "catalog:",
+    "typescript": "7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=20.3"
+  }
 }

@@ -1,33 +1,33 @@
 {
-	"name": "@inth/vitest-config",
-	"version": "1.0.0",
-	"private": true,
-	"type": "module",
-	"exports": {
-		"./base": {
-			"types": "./src/base-config.ts",
-			"import": "./src/base-config.ts"
-		},
-		"./ui": {
-			"types": "./src/ui-config.ts",
-			"import": "./src/ui-config.ts"
-		}
-	},
-	"scripts": {
-		"check-types": "tsrs --noEmit",
-		"dev": "echo '@inth/vitest-config has no watch task'",
-		"fmt": "vp fmt -c ../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../oxlint.sdk.config.ts ./src"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"@vitest/ui": "catalog:",
-		"jsdom": "^29.1.1",
-		"tsrs": "catalog:",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	}
+  "name": "@inth/vitest-config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": {
+      "types": "./src/base-config.ts",
+      "import": "./src/base-config.ts"
+    },
+    "./ui": {
+      "types": "./src/ui-config.ts",
+      "import": "./src/ui-config.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsrs --noEmit",
+    "dev": "echo '@inth/vitest-config has no watch task'",
+    "fmt": "vp fmt -c ../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../oxlint.sdk.config.ts ./src"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "@vitest/ui": "catalog:",
+    "jsdom": "^29.1.1",
+    "tsrs": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
 }

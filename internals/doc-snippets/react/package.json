@@ -1,19 +1,19 @@
 {
-	"name": "@inth/doc-snippets-react",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"check-types": "tsrs --noEmit"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/react": "workspace:*",
-		"react": "19.2.7",
-		"react-dom": "19.2.7"
-	},
-	"devDependencies": {
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"tsrs": "catalog:"
-	}
+  "name": "@inth/doc-snippets-react",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsrs --noEmit"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/react": "workspace:*",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "tsrs": "catalog:"
+  }
 }

@@ -1,26 +1,26 @@
 {
-	"name": "@inth/fixture-acceptance",
-	"version": "0.0.0",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"check-types": "tsrs --noEmit",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts src",
-		"test": "vp test run",
-		"test:ssr": "vp test run --config vitest.ssr.config.ts",
-		"test:starters": "vp test run --config vitest.starters.config.ts"
-	},
-	"devDependencies": {
-		"@inth/nextjs": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "25.0.1",
-		"playwright": "catalog:",
-		"tsrs": "catalog:",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	}
+  "name": "@inth/fixture-acceptance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsrs --noEmit",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts src",
+    "test": "vp test run",
+    "test:ssr": "vp test run --config vitest.ssr.config.ts",
+    "test:starters": "vp test run --config vitest.starters.config.ts"
+  },
+  "devDependencies": {
+    "@inth/nextjs": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "25.0.1",
+    "playwright": "catalog:",
+    "tsrs": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
 }

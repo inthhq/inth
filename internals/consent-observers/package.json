@@ -1,33 +1,33 @@
 {
-	"name": "@inth/consent-observers",
-	"version": "0.0.0",
-	"private": true,
-	"description": "Consumer fixture: observes consent through the packed public exports of inth, the way an external integration would.",
-	"type": "module",
-	"scripts": {
-		"fmt": "vp fmt -c ../../oxfmt.sdk.config.ts --write .",
-		"install:packed": "bun scripts/install-packed.ts",
-		"lint": "vp lint -c ../../oxlint.sdk.config.ts .",
-		"test": "bun scripts/install-packed.ts && tsrs --noEmit && vp test run"
-	},
-	"dependencies": {
-		"@inth/nextjs": "workspace:*",
-		"@inth/react": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"@inth/tanstack-start": "workspace:*"
-	},
-	"devDependencies": {
-		"@inth/next-compat-shared": "workspace:*",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "^25.0.0",
-		"react": "19.2.7",
-		"react-dom": "19.2.7",
-		"tsrs": "catalog:",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	}
+  "name": "@inth/consent-observers",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Consumer fixture: observes consent through the packed public exports of inth, the way an external integration would.",
+  "type": "module",
+  "scripts": {
+    "fmt": "vp fmt -c ../../oxfmt.sdk.config.ts --write .",
+    "install:packed": "bun scripts/install-packed.ts",
+    "lint": "vp lint -c ../../oxlint.sdk.config.ts .",
+    "test": "bun scripts/install-packed.ts && tsrs --noEmit && vp test run"
+  },
+  "dependencies": {
+    "@inth/nextjs": "workspace:*",
+    "@inth/react": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "@inth/tanstack-start": "workspace:*"
+  },
+  "devDependencies": {
+    "@inth/next-compat-shared": "workspace:*",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "^25.0.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "tsrs": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
 }
