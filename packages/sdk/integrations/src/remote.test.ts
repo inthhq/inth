@@ -115,10 +115,21 @@ const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
 /**
  * Options a dashboard sets in another shape than the npm helper takes them.
  * Sentry's form takes the parts of a sentry.io DSN; a site passes the DSN.
+ * Zaraz's form keys purposes by purpose ID; a site keys them by category.
  */
 const dashboardToNpm: Partial<
 	Record<BuiltInScriptIntegrationKey, (options: Options) => Options>
 > = {
+	// A dashboard keys the mapping by Zaraz purpose ID; a site by category.
+	cloudflareZaraz: ({ purposes, ...rest }) => {
+		const byCategory: Record<string, string[]> = {};
+		for (const [purpose, category] of Object.entries(
+			purposes as Record<string, string>
+		)) {
+			(byCategory[category] ??= []).push(purpose);
+		}
+		return { ...rest, purposes: byCategory };
+	},
 	// The remote form defaults to classic mode, the helper to consent mode.
 	// The helper's consent mode takes the tracker hostname as piDomain.
 	pardotTracking: (options) => {
@@ -167,7 +178,11 @@ const hostOptions: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
 	pardotTracking: 'piHostname',
 };
 
-/** Hosts each integration may load its script from. */
+/**
+ * Hosts each integration may load its script from. An empty list is an
+ * integration that loads no script, such as Zaraz, which runs from
+ * Cloudflare's edge.
+ */
 const vendorHosts: Record<string, readonly string[]> = {
 	activeCampaignTracking: ['diffuser-cdn.app-us1.com'],
 	adobeAnalytics: ['assets.adobedtm.com'],
@@ -180,6 +195,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	clay: ['static.claydar.com'],
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
+	cloudflareZaraz: [],
 	crisp: ['client.crisp.chat'],
 	customerIo: ['cdp.customer.io', 'cdp-eu.customer.io'],
 	databuddy: ['cdn.databuddy.cc'],
@@ -251,6 +267,7 @@ const vendorLevels: Partial<
 > = {
 	activeCampaignTracking: 4,
 	amazonAdsTag: 4,
+	cloudflareZaraz: 4,
 	customerIo: 3,
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),
@@ -615,14 +632,19 @@ describe('remoteIntegrations', () => {
 			const manifest = remoteIntegrations[key]?.resolveRemote(options);
 			const src = manifest?.loadScript?.src;
 
-			expect(src).toBeDefined();
-			const url = new URL(src as string);
-			expect(url.protocol).toBe('https:');
+			const url = src === undefined ? undefined : new URL(src);
+			const hosts = vendorHosts[key];
 			const hostOption = hostOptions[key as BuiltInScriptIntegrationKey];
-			expect([
-				...(vendorHosts[key] ?? []),
+			const allowed = [
+				...(hosts ?? []),
 				...(hostOption === undefined ? [] : [options[hostOption]]),
-			]).toContain(url.host);
+			];
+
+			expect(url?.protocol ?? 'no script').toBe(
+				hosts?.length === 0 ? 'no script' : 'https:'
+			);
+			// A script's host is listed; no script, no host.
+			expect(url ? allowed.includes(url.host) : hosts?.length === 0).toBe(true);
 		}
 	);
 

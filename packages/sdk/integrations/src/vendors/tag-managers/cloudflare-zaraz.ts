@@ -1,16 +1,15 @@
-import type { AllConsentNames, ConsentState, Script } from '@inth/sdk/engine';
-import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
+import type { AllConsentNames, Script } from '@inth/sdk/engine';
+import { cloudflareZarazScript } from '@inth/sdk/manifest-runtime/adapters/cloudflare-zaraz';
+import type { CloudflareZarazAdapterOptions } from '@inth/sdk/manifest-runtime/adapters/cloudflare-zaraz';
 
-import { signalConsents } from '../../engine/vendor-consent';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import type { RemoteOptionValues } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
+import { vendorManifestContract } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 
-/** The Zaraz Consent API methods used by the bridge. */
-export interface ZarazConsentApi {
-	APIReady: boolean;
-	modal?: unknown;
-	getAll: () => Record<string, boolean>;
-	set: (permissions: Record<string, boolean>) => void;
-	sendQueuedEvents: () => void;
-}
+export type { ZarazConsentApi } from '@inth/sdk/manifest-runtime/adapters/cloudflare-zaraz';
 
 export interface CloudflareZarazOptions {
 	/** Map Inth categories to purpose IDs from the Zaraz dashboard. */
@@ -28,31 +27,114 @@ export interface CloudflareZarazOptions {
 	onError?: (error: unknown) => void;
 }
 
-const readyEvent = 'zarazConsentAPIReady';
-const vendorId = 'cloudflare-zaraz';
+/**
+ * Zaraz runs from Cloudflare's edge, so the manifest loads nothing. The
+ * Cloudflare Zaraz adapter in `@inth/sdk` keeps Zaraz's purposes in step
+ * with Inth consent. Like the manifest helpers, the vendor slug lets
+ * visitors turn Zaraz off inside a granted category.
+ */
+export const cloudflareZarazManifest = {
+	...vendorManifestContract,
+	alwaysLoad: true,
+	category: 'necessary',
+	install: [],
+	vendor: 'cloudflare-zaraz',
+	vendorDetails: {
+		homepageUrl: 'https://developers.cloudflare.com/zaraz/',
+		legalName: 'Cloudflare, Inc.',
+		name: 'Cloudflare Zaraz',
+		privacyPolicyUrl: 'https://www.cloudflare.com/privacypolicy/',
+	},
+} as const satisfies VendorManifest;
 
-const isConsentApi = (api: unknown): api is ZarazConsentApi =>
-	typeof api === 'object' &&
-	api !== null &&
-	'APIReady' in api &&
-	api.APIReady === true &&
-	'getAll' in api &&
-	typeof api.getAll === 'function' &&
-	'set' in api &&
-	typeof api.set === 'function' &&
-	'sendQueuedEvents' in api &&
-	typeof api.sendQueuedEvents === 'function';
+/**
+ * The manifest for Zaraz: no script, and the Cloudflare Zaraz adapter with
+ * the purpose mapping. The npm helper and the Inth server both build it
+ * here.
+ */
+export const resolveCloudflareZarazManifest =
+	function resolveCloudflareZarazManifest({
+		hideBuiltInModal,
+		purposes,
+		sendQueuedEvents,
+	}: Omit<CloudflareZarazOptions, 'onError' | 'onReady'>): ResolvedManifest {
+		const options: CloudflareZarazAdapterOptions = {
+			hideBuiltInModal: hideBuiltInModal !== false,
+			purposes: Object.fromEntries(
+				Object.entries(purposes).map(([category, ids]) => [
+					category,
+					[...(ids ?? [])],
+				])
+			),
+			sendQueuedEvents: sendQueuedEvents !== false,
+		};
+		return {
+			...getCompiledManifest(cloudflareZarazManifest, {}),
+			adapter: {
+				id: 'cloudflare-zaraz',
+				options: options as unknown as NonNullable<
+					ResolvedManifest['adapter']
+				>['options'],
+			},
+			requires: 4,
+		};
+	};
 
-const getConsentApi = (): ZarazConsentApi | undefined => {
-	if (typeof window === 'undefined' || !('zaraz' in window)) {
-		return;
+const cloudflareZarazRemoteOptions = {
+	hideBuiltInModal: {
+		default: true,
+		kind: 'boolean',
+		label: 'Hide the Zaraz consent modal',
+	},
+	purposes: {
+		keyExample: 'aBcD',
+		keyPattern: '^[A-Za-z0-9_-]{1,64}$',
+		kind: 'map',
+		label: 'Zaraz purpose IDs and the Inth category each follows',
+		maxEntries: 50,
+		required: true,
+		values: [
+			'necessary',
+			'functionality',
+			'experience',
+			'measurement',
+			'marketing',
+		],
+	},
+	sendQueuedEvents: {
+		default: true,
+		kind: 'boolean',
+		label: "Replay Zaraz's queued events after a purpose is allowed",
+	},
+} as const;
+
+/** The manifest for options a dashboard set: purpose IDs to categories. */
+const resolveCloudflareZarazRemote = ({
+	purposes,
+	...options
+}: RemoteOptionValues<
+	typeof cloudflareZarazRemoteOptions
+>): ResolvedManifest => {
+	const byCategory: Partial<Record<AllConsentNames, string[]>> = {};
+	for (const [purpose, category] of Object.entries(purposes)) {
+		(byCategory[category] ??= []).push(purpose);
 	}
-	const { zaraz } = window;
-	if (typeof zaraz !== 'object' || zaraz === null || !('consent' in zaraz)) {
-		return;
-	}
-	return isConsentApi(zaraz.consent) ? zaraz.consent : undefined;
+	return resolveCloudflareZarazManifest({ ...options, purposes: byCategory });
 };
+
+/**
+ * What the Inth server may set for Zaraz: the purpose mapping, keyed by
+ * Zaraz purpose ID, and the two switches. `onReady` and `onError` are the
+ * site's own functions, so npm-only. Marked pure so a bundler drops it
+ * from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'cloudflareZaraz',
+		cloudflareZarazRemoteOptions,
+		resolveCloudflareZarazRemote
+	);
 
 /**
  * Synchronize Inth effective permissions with externally loaded Zaraz tools.
@@ -70,133 +152,14 @@ const getConsentApi = (): ZarazConsentApi | undefined => {
  * ```
  */
 export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
-	const mappings = new Map<string, AllConsentNames>();
-	for (const category of POLICY_CONSENT_CATEGORIES) {
-		for (const purpose of options.purposes[category] ?? []) {
-			if (!purpose.trim() || purpose !== purpose.trim()) {
-				throw new Error(
-					'Zaraz purpose IDs must be non-empty and have no surrounding whitespace.'
-				);
-			}
-			if (mappings.has(purpose)) {
-				throw new Error(`Zaraz purpose '${purpose}' is mapped more than once.`);
-			}
-			mappings.set(purpose, category);
+	const { adapter, ...manifest } = resolveCloudflareZarazManifest(options);
+	return cloudflareZarazScript(
+		resolvedManifestToScript(manifest),
+		adapter?.options as unknown as CloudflareZarazAdapterOptions,
+		{
+			// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: passes the site's onError function to the adapter, not a script callback
+			onError: options.onError,
+			onReady: options.onReady,
 		}
-	}
-	if (mappings.size === 0) {
-		throw new Error('Map at least one Zaraz purpose to an Inth category.');
-	}
-
-	let latest: ConsentState | undefined;
-	let listeningDocument: Document | undefined;
-	let initialized = false;
-	const pendingReplay = new Set<string>();
-	const synchronize = (): boolean => {
-		const api = getConsentApi();
-		if (!latest || !api) {
-			return false;
-		}
-		const previous = api.getAll();
-		const permissions: Record<string, boolean> = {};
-		let changed = false;
-		for (const purpose of Object.keys(previous)) {
-			const category = mappings.get(purpose);
-			const allowed = category !== undefined && latest[category] === true;
-			// Purpose IDs are external keys, including names such as __proto__.
-			Object.defineProperty(permissions, purpose, {
-				enumerable: true,
-				value: allowed,
-			});
-			changed ||= previous[purpose] !== allowed;
-			if (allowed && previous[purpose] !== true) {
-				pendingReplay.add(purpose);
-			}
-		}
-		for (const purpose of pendingReplay) {
-			if (permissions[purpose] !== true) {
-				pendingReplay.delete(purpose);
-			}
-		}
-		if (options.hideBuiltInModal !== false && api.modal === true) {
-			api.modal = false;
-		}
-		if (changed) {
-			api.set(permissions);
-		}
-		if (pendingReplay.size > 0 && options.sendQueuedEvents !== false) {
-			api.sendQueuedEvents();
-		}
-		pendingReplay.clear();
-		return true;
-	};
-	const apply = (): boolean => {
-		try {
-			if (!synchronize()) {
-				return false;
-			}
-		} catch (error) {
-			if (!options.onError) {
-				throw error;
-			}
-			options.onError(error);
-			return false;
-		}
-		listeningDocument?.removeEventListener(readyEvent, apply);
-		listeningDocument = undefined;
-		if (!initialized) {
-			initialized = true;
-			options.onReady?.();
-		}
-		return true;
-	};
-	const update: NonNullable<Script['onConsentChange']> = (info) => {
-		latest = signalConsents(info);
-		if (typeof document === 'undefined') {
-			return;
-		}
-		let applied = false;
-		try {
-			applied = apply();
-		} finally {
-			// Preserve retries even when errors propagate to the loader's debug hook.
-			if (!applied && !listeningDocument) {
-				listeningDocument = document;
-				document.addEventListener(readyEvent, apply);
-			}
-		}
-	};
-	return {
-		alwaysLoad: true,
-		callbackOnly: true,
-		category: 'necessary',
-		id: vendorId,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onConsentChange: (info) => {
-			// Removing a configuration invokes onConsentChange with false before
-			// onDispose. Do not start a synchronization during that teardown.
-			// A vendor the visitor turned off also arrives without consent and
-			// still needs its purposes denied.
-			if (info.hasConsent || info.vendor?.granted === false) {
-				update(info);
-			}
-		},
-		onDispose: () => {
-			listeningDocument?.removeEventListener(readyEvent, apply);
-			listeningDocument = undefined;
-			latest = undefined;
-			initialized = false;
-			pendingReplay.clear();
-		},
-		onLoad: update,
-		// Like the manifest helpers, the script ID doubles as the vendor slug,
-		// so visitors can turn Zaraz off inside a granted category.
-		vendor: vendorId,
-		vendorDetails: {
-			homepageUrl: 'https://developers.cloudflare.com/zaraz/',
-			legalName: 'Cloudflare, Inc.',
-			name: 'Cloudflare Zaraz',
-			privacyPolicyUrl: 'https://www.cloudflare.com/privacypolicy/',
-		},
-	};
+	);
 };

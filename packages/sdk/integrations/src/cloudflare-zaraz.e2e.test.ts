@@ -4,7 +4,15 @@ import type { Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { ALL_DENIED } from './e2e-test-utils';
+import { fromRemote } from './__tests__/remote-path';
+import {
+	ALL_DENIED,
+	grantedMarketingConsents,
+	loadScripts,
+	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
+} from './e2e-test-utils';
 import { cloudflareZaraz } from './vendors/tag-managers/cloudflare-zaraz';
 import type { ZarazConsentApi } from './vendors/tag-managers/cloudflare-zaraz';
 
@@ -433,5 +441,72 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 		{ marketing: ['same'], measurement: ['same'] },
 	])('rejects an ambiguous or empty mapping: %j', (purposes) => {
 		expect(() => cloudflareZaraz({ purposes })).toThrow();
+	});
+});
+
+/** Options a dashboard sets: purposes keyed by Zaraz purpose ID. */
+interface DashboardOptions {
+	purposes: Record<string, 'marketing' | 'measurement'>;
+	sendQueuedEvents?: boolean;
+}
+
+describe.each([
+	[
+		'npm helper',
+		({ purposes, ...options }: DashboardOptions) => {
+			const byCategory: Record<string, string[]> = {};
+			for (const [purpose, category] of Object.entries(purposes)) {
+				(byCategory[category] ??= []).push(purpose);
+			}
+			return cloudflareZaraz({ ...options, purposes: byCategory });
+		},
+	],
+	[
+		'remote manifest',
+		(options: DashboardOptions) => fromRemote('cloudflareZaraz', options),
+	],
+] as const)('Zaraz dashboard settings through the %s', (_label, build) => {
+	registerVendorContractCleanup();
+
+	it('denies unmapped purposes, and replays queued events only after a real grant', async () => {
+		const { api, order } = installZaraz({
+			ads: false,
+			analytics: false,
+			unmapped: true,
+		});
+		const scripts = [
+			build({ purposes: { ads: 'marketing', analytics: 'measurement' } }),
+		];
+		loadScripts(scripts, ALL_DENIED);
+		await settleScripts();
+		expect(api.getAll()).toEqual({
+			ads: false,
+			analytics: false,
+			unmapped: false,
+		});
+		expect(api.modal).toBe(false);
+		expect(api.sendQueuedEvents).not.toHaveBeenCalled();
+
+		updateScripts(scripts, grantedMarketingConsents);
+		expect(api.getAll()).toEqual({
+			ads: true,
+			analytics: false,
+			unmapped: false,
+		});
+		expect(order).toEqual(['set', 'set', 'flush']);
+
+		// The same grant again changes nothing, so nothing replays.
+		updateScripts(scripts, grantedMarketingConsents);
+		expect(api.sendQueuedEvents).toHaveBeenCalledOnce();
+	});
+
+	it('waits for zarazConsentAPIReady when the API is not ready yet', async () => {
+		const scripts = [build({ purposes: { ads: 'marketing' } })];
+		loadScripts(scripts, grantedMarketingConsents);
+		await settleScripts();
+
+		const { api } = installZaraz({ ads: false });
+		document.dispatchEvent(new Event('zarazConsentAPIReady'));
+		expect(api.getAll()).toEqual({ ads: true });
 	});
 });

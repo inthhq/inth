@@ -51,10 +51,12 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-oracle-eloqua.js`, the Eloqua consent dispatcher: 2,074.
  * `inth.adapter-salesforce-pardot.js`, Pardot's consent cycle: 570.
  * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
+ * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
 	'inth.adapter-amazon-ads.js': 1550,
+	'inth.adapter-cloudflare-zaraz.js': 1270,
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
@@ -64,7 +66,7 @@ const BUDGETS = {
 	'inth.adapter-salesforce-pardot.js': 600,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 12070,
+	'inth.manifests3.js': 12110,
 };
 
 it.each(Object.entries(BUDGETS))(
@@ -112,6 +114,7 @@ it('keeps adapter code out of the runtime files and the Sentry gate in its own',
 it.each([
 	['inth.adapter-activecampaign.js', 'an unmanaged tracker exists'],
 	['inth.adapter-amazon-ads.js', 'amzn-consent.js'],
+	['inth.adapter-cloudflare-zaraz.js', 'zarazConsentAPIReady'],
 	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
 	['inth.adapter-oracle-eloqua.js', 'consent dispatch failed'],
 ])('keeps the code of %s in its own file', (file, message) => {

@@ -89,6 +89,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-salesforce-pardot',
 	'inth.adapter-hubspot',
 	'inth.adapter-amazon-ads',
+	'inth.adapter-cloudflare-zaraz',
 	'inth.adapter-sentry',
 	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
@@ -284,6 +285,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-amazon-ads',
 			'./src/entries/cdn-adapter-amazon-ads.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-cloudflare-zaraz',
+			'./src/entries/cdn-adapter-cloudflare-zaraz.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(
