@@ -7,6 +7,12 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
+	fromRemote,
+	remoteLoaderOption,
+	splitRemote,
+} from './__tests__/remote-path';
+
+import {
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
@@ -342,6 +348,51 @@ describe('Adobe Target core-loader contracts', () => {
 		updateScripts(scripts, grantedExperience);
 		await vi.runOnlyPendingTimersAsync();
 		expect(commands.at(-1)).toEqual(['setConsent', consent('in')]);
+	});
+
+	it('shares one SDK between two loaders that list the same server entry, and waits for both to grant', async () => {
+		vi.useFakeTimers();
+		const { load } = splitRemote([fromRemote('adobeTarget', webSdkOptions)]);
+		const firstKernel = createConsentKernel({ initialScriptRegistry: { load } });
+		const secondKernel = createConsentKernel({
+			initialScriptRegistry: { load },
+		});
+		const first = createScriptLoader({
+			kernel: firstKernel,
+			remote: remoteLoaderOption,
+			scripts: [],
+		});
+		const second = createScriptLoader({
+			kernel: secondKernel,
+			remote: remoteLoaderOption,
+			scripts: [],
+		});
+		try {
+			await firstKernel.commands.save({ experience: true });
+			await vi.waitFor(() =>
+				expect((window as TargetWindow).alloy).toBeDefined()
+			);
+			const { commands } = activateAlloy();
+			getLoader().dispatchEvent(new Event('load'));
+			await vi.runOnlyPendingTimersAsync();
+			await vi.runOnlyPendingTimersAsync();
+			// The second loader still denies experience.
+			expect(commands).toEqual([]);
+			await secondKernel.commands.save({ experience: true });
+			await vi.runOnlyPendingTimersAsync();
+			await vi.runOnlyPendingTimersAsync();
+			expect(document.head.querySelectorAll('script')).toHaveLength(1);
+			expect(commands.map(([command]) => command)).toEqual([
+				'configure',
+				'setConsent',
+			]);
+			expect(commands.at(-1)).toEqual(['setConsent', consent('in')]);
+		} finally {
+			first.dispose();
+			second.dispose();
+			firstKernel.dispose();
+			secondKernel.dispose();
+		}
 	});
 
 	it('shares one SDK across equal registrations and denies only when the last one is disposed', async () => {
