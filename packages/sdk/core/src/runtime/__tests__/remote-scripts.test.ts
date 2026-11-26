@@ -1212,6 +1212,143 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('keeps a started script when its new manifest names an adapter that is still downloading', async () => {
+		vi.resetModules();
+		const manifests = await import('../../manifest-runtime/index');
+		const { sentryAdapter } =
+			await import('../../manifest-runtime/adapters/sentry');
+		const adapter = Promise.withResolvers<typeof sentryAdapter>();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		// The same entry as a plain manifest, before the server adds its adapter.
+		const plain = {
+			id: 'sentry',
+			integration: 'sentry',
+			manifest: acmeManifest({
+				alwaysLoad: true,
+				loadScript: { async: true, src: SENTRY_SRC, type: 'loadScript' },
+				vendor: 'sentry',
+			}),
+		};
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: [plain] },
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve(
+						manifests.withAdapters(manifests, () => adapter.promise)
+					),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags(SENTRY_SRC)).toHaveLength(1));
+		const [tag] = tags(SENTRY_SRC);
+
+		answer.resolve({ scriptRegistry: { load: [sentryEntry()] } });
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+		expect(tags(SENTRY_SRC)).toHaveLength(1);
+		expect(tags(SENTRY_SRC)[0]).toBe(tag);
+
+		adapter.resolve(sentryAdapter);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+		expect(tags(SENTRY_SRC)).toHaveLength(1);
+		expect(tags(SENTRY_SRC)[0]).toBe(tag);
+		runtime.dispose();
+	});
+
+	test('reports the check that refuses the replacement of a started script, and keeps the started script', async () => {
+		vi.resetModules();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const manifests = await import('../../manifest-runtime/index');
+		const { sentryAdapter } =
+			await import('../../manifest-runtime/adapters/sentry');
+		let builds = 0;
+		const conflicting = manifests.withAdapters(manifests, () =>
+			Promise.resolve({
+				...sentryAdapter,
+				script: (base: Script, options: never) => {
+					builds += 1;
+					const refuse = builds > 1;
+					return {
+						...sentryAdapter.script(base, options),
+						validate: () => {
+							if (refuse) {
+								throw new Error('reload the page to change Sentry');
+							}
+						},
+					};
+				},
+			})
+		);
+		const changed = sentryEntry({
+			options: {
+				...(
+					sentryEntry().manifest as unknown as {
+						adapter: { options: Record<string, unknown> };
+					}
+				).adapter.options,
+				piiCategory: 'marketing',
+			},
+		});
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: [sentryEntry()] },
+				},
+				remoteScripts: true,
+				scriptLoader: { onDebug },
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () => Promise.resolve(conflicting),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags(SENTRY_SRC)).toHaveLength(1));
+		const [tag] = tags(SENTRY_SRC);
+
+		answer.resolve({ scriptRegistry: { load: [changed] } });
+
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message:
+						'Remote script sentry does not load: reload the page to change Sentry.',
+					scriptId: 'sentry',
+				})
+			)
+		);
+		expect(tags(SENTRY_SRC)[0]).toBe(tag);
+		runtime.dispose();
+	});
+
 	test('refuses an entry that names an adapter this SDK does not ship', async () => {
 		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
 		const runtime = startOff({

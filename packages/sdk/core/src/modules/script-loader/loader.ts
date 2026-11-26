@@ -1057,6 +1057,15 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		heldKeys = inUse;
 	};
+	/** Whether the script registered with `id` has started. */
+	const hasStarted = (id: string): boolean =>
+		loadedElements.has(id) || retainedElements.has(id);
+	/**
+	 * Whether `script` is the registered remote script for its ID and has
+	 * started. A code script that won the ID has its own element.
+	 */
+	const remoteStarted = (script: Script): boolean =>
+		activeRemote.get(script.id) === script && hasStarted(script.id);
 	/**
 	 * The script to register for an entry whose manifest changed. Once the
 	 * earlier script has started, it keeps running with its own setup and
@@ -1071,19 +1080,13 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	): Script => {
 		// By the script's own ID: an adapter can register a script under an
 		// ID other than its entry's, such as Default Forms.
-		// Only when this remote script is the registered one: a code script
-		// that won the ID has its own element.
-		if (
-			!earlier ||
-			activeRemote.get(earlier.id) !== earlier ||
-			!(loadedElements.has(earlier.id) || retainedElements.has(earlier.id))
-		) {
+		if (!earlier || !remoteStarted(earlier)) {
 			return fresh;
 		}
 		try {
 			fresh.validate?.(fresh);
 		} catch (error) {
-			reportRefused(id, error);
+			reportRefused(fresh.id, error);
 		}
 		if (JSON.stringify(earlier.category) === JSON.stringify(fresh.category)) {
 			return earlier;
@@ -1139,17 +1142,24 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 					};
 				}
 				if (refusal) {
-					if (waiting) {
+					if (!waiting) {
+						reportRemote(
+							'error',
+							entry.id,
+							`Remote script ${entry.id} (${entry.integration}) does not load: ${refusal.reason}.`
+						);
+					}
+					// A started script keeps running when its new manifest does
+					// not build, now or while the code it needs downloads, as
+					// `keepStarted` keeps it once that manifest builds.
+					if (cached?.script && remoteStarted(cached.script)) {
+						next.set(entry.id, cached);
+						scripts.push(cached.script);
 						continue;
 					}
-					reportRemote(
-						'error',
-						entry.id,
-						`Remote script ${entry.id} (${entry.integration}) does not load: ${refusal.reason}.`
-					);
 					// Parse it again for a later list, once the code it needs
 					// may have loaded.
-					if (refusal.needsCode) {
+					if (waiting || refusal.needsCode) {
 						continue;
 					}
 				}
