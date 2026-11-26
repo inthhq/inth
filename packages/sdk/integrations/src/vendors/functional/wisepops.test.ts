@@ -10,7 +10,7 @@ import {
 	expectSkippedScript,
 	runOnBeforeLoad,
 } from '../../__tests__/helpers';
-import { wisepops } from './wisepops';
+import { resolveWisepopsManifest, wisepops } from './wisepops';
 import type { WisepopsOptions, WisepopsRuntimeOptions } from './wisepops';
 
 const queuedCalls = function queuedCalls(): unknown[][] {
@@ -157,5 +157,20 @@ describe('wisepops', () => {
 	it('can be constructed during SSR', () => {
 		vi.stubGlobal('window', undefined);
 		expect(() => wisepops({ siteId: 'test-site' })).not.toThrow();
+	});
+
+	it('leaves out browserStorage false, which Wisepops uses anyway', () => {
+		// A dashboard form fills the default in; Wisepops must get the same
+		// options as a site that left it unset.
+		const manifest = resolveWisepopsManifest({
+			options: { autoPageview: 'url', browserStorage: false },
+			siteId: 'test-site',
+		});
+
+		expect(manifest.setupSteps).toContainEqual(
+			expect.objectContaining({
+				args: ['options', { autoPageview: 'url', defaultConsent: 'denied' }],
+			})
+		);
 	});
 });

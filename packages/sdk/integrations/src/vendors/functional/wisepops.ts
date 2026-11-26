@@ -1,8 +1,10 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { trimToUndefined } from '../_shared/script-url';
 
@@ -36,8 +38,7 @@ export const wisepopsManifest = {
 		},
 		{
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-			src: '{{scriptSrc}}',
+			src: 'https://wisepops.net/loader.js?v=3&h={{siteParam}}',
 			type: 'loadScript',
 		},
 	],
@@ -80,6 +81,80 @@ export interface WisepopsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link wisepops}. `siteId` must
+ * already be trimmed and non-empty.
+ */
+export const resolveWisepopsManifest = function resolveWisepopsManifest({
+	siteId,
+	category = 'marketing',
+	options,
+}: Pick<WisepopsOptions, 'siteId' | 'category' | 'options'>): ResolvedManifest {
+	const runtimeOptions: Record<string, unknown> = {
+		...options,
+		defaultConsent: 'denied',
+	};
+	// Wisepops uses cookies unless told otherwise, so `false` is left out and
+	// a dashboard form, which fills it in, sends what a site that left it
+	// unset sends.
+	if (runtimeOptions.browserStorage === false) {
+		delete runtimeOptions.browserStorage;
+	}
+	return getCompiledManifest(wisepopsManifest, {
+		category,
+		runtimeOptions,
+		siteParam: encodeURIComponent(siteId),
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `category`, `nonce` and turning off automatic page views stay
+ * npm-only. Marked pure so a bundler drops it from an npm bundle that never
+ * reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'wisepops',
+		{
+			options: {
+				fields: {
+					autoPageview: {
+						default: 'url',
+						kind: 'enum',
+						label: 'Count page views',
+						values: ['url', 'init'],
+					},
+					browserStorage: {
+						default: false,
+						kind: 'boolean',
+						label: 'Store in localStorage instead of cookies',
+					},
+					cookieMaxSize: {
+						example: 4096,
+						integer: true,
+						kind: 'number',
+						label: 'Largest cookie, in bytes',
+						min: 1,
+						required: false,
+					},
+				},
+				kind: 'object',
+				label: 'Wisepops options',
+				required: false,
+			},
+			siteId: {
+				example: 'AbC123dEf4',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolveWisepopsManifest
+	);
+
+/**
  * Creates a Wisepops script gated on marketing consent by default.
  *
  * The helper creates the snippet queue only after the mapped consent permits
@@ -107,24 +182,10 @@ export const wisepops = function wisepops(options: WisepopsOptions): Script {
 		});
 	}
 
-	const script = resolveManifest(wisepopsManifest, {
-		category,
-		runtimeOptions: {
-			...options.options,
-			defaultConsent: 'denied',
-		},
-		scriptSrc: `https://wisepops.net/loader.js?v=3&h=${encodeURIComponent(siteId)}`,
-	});
-
 	return {
-		...script,
+		...resolvedManifestToScript(
+			resolveWisepopsManifest({ category, options: options.options, siteId })
+		),
 		nonce: trimToUndefined(options.nonce),
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onLoad(info) {
-			if (!info.hasConsent) {
-				return;
-			}
-			script.onLoad?.(info);
-		},
 	};
 };

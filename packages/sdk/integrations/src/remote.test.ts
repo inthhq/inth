@@ -137,6 +137,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	umamiAnalytics: ['cloud.umami.is'],
 	vector: ['cdn.vector.co'],
 	vercelAnalytics: ['va.vercel-scripts.com'],
+	wisepops: ['wisepops.net'],
 	xPixel: ['static.ads-twitter.com'],
 };
 

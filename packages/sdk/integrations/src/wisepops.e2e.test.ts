@@ -6,12 +6,14 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { wisepops } from './vendors/functional/wisepops';
@@ -323,3 +325,45 @@ describe('Wisepops loader contract', () => {
 		}
 	});
 });
+
+describe.each(npmAndRemote('wisepops', wisepops))(
+	'Wisepops dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.wisepops;
+		});
+
+		it('sets the saved options with denied cookie consent before append, and grants after load', async () => {
+			const { calls } = installWisepopsTestDouble();
+			const scripts = [
+				build({
+					options: {
+						autoPageview: 'init',
+						browserStorage: true,
+						cookieMaxSize: 2048,
+					},
+					siteId: 'inthfake',
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(window.wisepops).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(calls).toEqual([
+				[
+					'options',
+					{
+						autoPageview: 'init',
+						browserStorage: true,
+						cookieMaxSize: 2048,
+						defaultConsent: 'denied',
+					},
+				],
+			]);
+			getLoader().dispatchEvent(new Event('load'));
+			expect(calls.at(-1)).toEqual(['consent', 'granted']);
+		});
+	}
+);
