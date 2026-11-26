@@ -8,6 +8,7 @@ import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
+import type { SSRInitialData } from '../../../options/ssr';
 import { InthApiError } from '../error';
 import { createV1HostedTransport } from '../hosted';
 import {
@@ -216,6 +217,29 @@ describe('init: GET /v1/consent/init', () => {
 
 		expect(calls).toHaveLength(1);
 	});
+
+	test.each([
+		['made for another level', { manifestLevel: 2 }, 1],
+		['made for this level', { manifestLevel: 1 }, 0],
+		['that names no level, made for level 1', {}, 0],
+	])(
+		'initial data %s answers init only at its level',
+		async (_case, requestContext, requests) => {
+			const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
+			const transport = createV1HostedTransport({
+				fetch,
+				initialData: Promise.resolve({
+					init: INIT_OUTPUT,
+					metadata: { requestContext },
+				} as SSRInitialData),
+				projectUrl: PROJECT_URL,
+			});
+
+			await transport.init({ overrides: {}, user: null });
+
+			expect(calls).toHaveLength(requests);
+		}
+	);
 
 	test('honours initUrl', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));

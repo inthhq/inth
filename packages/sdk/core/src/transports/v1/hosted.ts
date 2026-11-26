@@ -11,6 +11,7 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import { consumePrefetchedInitialData } from '../../libs/prefetch/prefetch';
+import { matchesManifestLevel } from '../../libs/request-context';
 import type { SSRInitialData } from '../../options/ssr';
 import type { InitContext, KernelOverrides } from '../../types';
 import {
@@ -90,15 +91,16 @@ const allowedInitHeaders = function allowedInitHeaders(
 };
 
 /**
- * Whether initial data answers this init: it has a payload, and when it
- * says which journey and experiment arm its request carried, they are this
- * init's.
+ * Whether initial data answers this init: it has a payload, its request was
+ * made for this SDK's manifest runtime level (level 1 when it names none),
+ * and when it says which journey and experiment arm its request carried,
+ * they are this init's.
  */
 const usableInitialData = function usableInitialData(
 	data: SSRInitialData | undefined,
 	{ experiment, journey }: Pick<InitContext, 'experiment' | 'journey'>
 ): data is SSRInitialData & { init: InitOutput } {
-	if (!data?.init) {
+	if (!data?.init || !matchesManifestLevel(data.metadata?.requestContext)) {
 		return false;
 	}
 	const sentArm = data.metadata?.experiment;
