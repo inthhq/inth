@@ -6,6 +6,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -105,12 +106,103 @@ const getLoader = function getLoader(): HTMLScriptElement | null {
 	);
 };
 
-describe('Insider loader contract', () => {
+const cleanUp = function cleanUp(): void {
 	registerVendorContractCleanup();
 	afterEach(() => {
 		vi.unstubAllGlobals();
 		delete window.InsiderQueue;
 	});
+};
+
+// The partner name and ID are all a dashboard can set, so these scenarios
+// also run through the manifest the Inth server sends.
+describe.each(npmAndRemote('insiderTag', insiderTag))(
+	'Insider loader contract through the %s',
+	(_label, build) => {
+		cleanUp();
+
+		it('does not recover historical identity or reset preserved currency when the caller omits them', () => {
+			window.InsiderQueue = [
+				{ type: 'user', value: { email: 'previous@example.com' } },
+				{ type: 'currency', value: 'EUR' },
+			];
+			loadScripts([build(account)], grantedMarketingConsents);
+			const runtime = installSdkModel();
+			expect(runtime.events).toEqual([
+				{
+					currency: 'EUR',
+					profileEmail: 'previous@example.com',
+					user: { gdpr_optin: true },
+				},
+			]);
+		});
+
+		it('deduplicates equivalent registrations without replacing the queue', () => {
+			const append = installHeadProbe(() => undefined);
+			loadScripts([build(account)], grantedMarketingConsents);
+			const queue = window.InsiderQueue;
+			const element = getLoader();
+			updateScripts([build(account)], grantedMarketingConsents);
+			expect(append).toHaveBeenCalledTimes(1);
+			expect(getLoader()).toBe(element);
+			expect(window.InsiderQueue).toBe(queue);
+			expect(queue).toEqual([
+				{ type: 'user', value: { gdpr_optin: true } },
+				{ type: 'other' },
+				{ type: 'init' },
+			]);
+		});
+
+		it('sends false, a neutral page and init to a running SDK and removes the loader', () => {
+			const scripts = [build(account)];
+			loadScripts(scripts, grantedMarketingConsents);
+			const element = getLoader();
+			expect(element).not.toBeNull();
+			element?.dispatchEvent(new Event('load'));
+			// Behavioral test double for the public queue method, not a vendor SDK capture.
+			const push = vi.fn();
+			const runtime = { push };
+			window.InsiderQueue = runtime;
+
+			const result = updateScripts(scripts, ALL_DENIED);
+
+			expect(result.unloaded).toEqual(['insider']);
+			expect(getLoader()).toBeNull();
+			expect(window.InsiderQueue).toBe(runtime);
+			expect(push.mock.calls).toEqual([
+				[{ type: 'user', value: { gdpr_optin: false } }],
+				[{ type: 'other' }],
+				[{ type: 'init' }],
+			]);
+			expect(push.mock.contexts).toEqual([runtime, runtime, runtime]);
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(window.InsiderQueue).toBe(runtime);
+			expect(getLoader()).not.toBe(element);
+			expect(push.mock.calls.slice(3)).toEqual([
+				[{ type: 'user', value: { gdpr_optin: true } }],
+				[{ type: 'other' }],
+				[{ type: 'init' }],
+			]);
+		});
+
+		it('does not recreate the queue on a denied fresh page', () => {
+			const scripts = [build(account)];
+			loadScripts(scripts, grantedMarketingConsents);
+			updateScripts(scripts, ALL_DENIED);
+			clearAllScripts();
+			delete window.InsiderQueue;
+			loadScripts(scripts, ALL_DENIED);
+			expect(window.InsiderQueue).toBeUndefined();
+			expect(getLoader()).toBeNull();
+		});
+	}
+);
+
+// Current user attributes, currency, page context and a custom consent
+// condition are npm-only, as are scenarios for invalid IDs.
+describe('Insider loader contract', () => {
+	cleanUp();
 
 	it('has no vendor global, resource request, or storage write before marketing consent', () => {
 		const append = installHeadProbe(() => undefined);
@@ -213,22 +305,6 @@ describe('Insider loader contract', () => {
 		}
 	);
 
-	it('does not recover historical identity or reset preserved currency when the caller omits them', () => {
-		window.InsiderQueue = [
-			{ type: 'user', value: { email: 'previous@example.com' } },
-			{ type: 'currency', value: 'EUR' },
-		];
-		loadScripts([insiderTag(account)], grantedMarketingConsents);
-		const runtime = installSdkModel();
-		expect(runtime.events).toEqual([
-			{
-				currency: 'EUR',
-				profileEmail: 'previous@example.com',
-				user: { gdpr_optin: true },
-			},
-		]);
-	});
-
 	it('sends only false user consent on denial even when caller attributes contain true', () => {
 		const options = {
 			...account,
@@ -271,22 +347,6 @@ describe('Insider loader contract', () => {
 		);
 	});
 
-	it('deduplicates equivalent registrations without replacing the queue', () => {
-		const append = installHeadProbe(() => undefined);
-		loadScripts([insiderTag(account)], grantedMarketingConsents);
-		const queue = window.InsiderQueue;
-		const element = getLoader();
-		updateScripts([insiderTag(account)], grantedMarketingConsents);
-		expect(append).toHaveBeenCalledTimes(1);
-		expect(getLoader()).toBe(element);
-		expect(window.InsiderQueue).toBe(queue);
-		expect(queue).toEqual([
-			{ type: 'user', value: { gdpr_optin: true } },
-			{ type: 'other' },
-			{ type: 'init' },
-		]);
-	});
-
 	it('provides user, page payload and init before the permitted loader is appended', () => {
 		const pageType = {
 			type: 'category' as const,
@@ -313,39 +373,6 @@ describe('Insider loader contract', () => {
 		updateScripts(scripts, { ...grantedMarketingConsents, measurement: true });
 		expect(appendCount).toBe(1);
 		expect(window.InsiderQueue).toEqual(beforeAppend);
-	});
-
-	it('sends false, a neutral page and init to a running SDK and removes the loader', () => {
-		const scripts = [insiderTag(account)];
-		loadScripts(scripts, grantedMarketingConsents);
-		const element = getLoader();
-		expect(element).not.toBeNull();
-		element?.dispatchEvent(new Event('load'));
-		// Behavioral test double for the public queue method, not a vendor SDK capture.
-		const push = vi.fn();
-		const runtime = { push };
-		window.InsiderQueue = runtime;
-
-		const result = updateScripts(scripts, ALL_DENIED);
-
-		expect(result.unloaded).toEqual(['insider']);
-		expect(getLoader()).toBeNull();
-		expect(window.InsiderQueue).toBe(runtime);
-		expect(push.mock.calls).toEqual([
-			[{ type: 'user', value: { gdpr_optin: false } }],
-			[{ type: 'other' }],
-			[{ type: 'init' }],
-		]);
-		expect(push.mock.contexts).toEqual([runtime, runtime, runtime]);
-
-		updateScripts(scripts, grantedMarketingConsents);
-		expect(window.InsiderQueue).toBe(runtime);
-		expect(getLoader()).not.toBe(element);
-		expect(push.mock.calls.slice(3)).toEqual([
-			[{ type: 'user', value: { gdpr_optin: true } }],
-			[{ type: 'other' }],
-			[{ type: 'init' }],
-		]);
 	});
 
 	it.each(['configured', 'manual SPA'])(
@@ -458,17 +485,6 @@ describe('Insider loader contract', () => {
 			{ type: 'home' },
 			{ type: 'init' },
 		]);
-	});
-
-	it('does not recreate the queue on a denied fresh page', () => {
-		const scripts = [insiderTag(account)];
-		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, ALL_DENIED);
-		clearAllScripts();
-		delete window.InsiderQueue;
-		loadScripts(scripts, ALL_DENIED);
-		expect(window.InsiderQueue).toBeUndefined();
-		expect(getLoader()).toBeNull();
 	});
 
 	it('uses the configured category instead of marketing', () => {
