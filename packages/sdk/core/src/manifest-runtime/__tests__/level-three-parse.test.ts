@@ -257,6 +257,38 @@ describe('level 3', () => {
 		expect(parseResolvedManifest(input).ok).toBe(false);
 	});
 
+	it('refuses a nested call or write the level 1 checks refuse, at any depth', () => {
+		const write = {
+			path: ['document', 'body', 'innerHTML'],
+			type: 'setGlobalPath',
+			value: '<i>',
+		};
+		const navigate = {
+			global: 'location',
+			method: 'assign',
+			type: 'callGlobal',
+		};
+		const inputs = [
+			ifStep({ loaded: true }, [write]),
+			ifStep({ loaded: true }, [call], { else: [navigate] }),
+			listen({ steps: [write] }),
+			{ ...call, then: [navigate] },
+			ifStep({ loaded: true }, [
+				listen({ steps: [{ ...call, then: [write] }] }),
+			]),
+			{ ...navigate, then: [call] },
+		];
+
+		expect(
+			inputs.map((step) => parseResolvedManifest(withSetup(step)))
+		).toEqual(
+			inputs.map(() => ({
+				ok: false,
+				reason: expect.stringMatching(/ (?:calls|writes) /u),
+			}))
+		);
+	});
+
 	it('accepts an if step in onDisposeSteps', () => {
 		expect(
 			parseResolvedManifest(

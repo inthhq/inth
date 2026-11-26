@@ -274,6 +274,47 @@ describe('if', () => {
 	});
 });
 
+test('skips a nested call or write the parser would refuse', async () => {
+	win.__api = { init: () => Promise.resolve() };
+	const write = {
+		path: ['document', 'body', 'innerHTML'],
+		type: 'setGlobalPath',
+		value: '<i id="injected"></i>',
+	};
+	// Built without the parser, as a manifest that slipped past it would be.
+	mount([
+		resolvedManifestToScript({
+			...fromJSON({ alwaysLoad: true }),
+			setupSteps: [
+				ifStep({ flag: 'x' }, [], [write]),
+				ifStep({ not: { flag: 'x' } }, [
+					write,
+					{ name: ['__api'], type: 'setGlobal', value: 'x' },
+					recordStep('if'),
+				]),
+				{
+					event: 'vendor:ready',
+					steps: [write, recordStep('listen')],
+					target: 'window',
+					type: 'listen',
+				},
+				{
+					global: '__api',
+					method: 'init',
+					then: [write, recordStep('then')],
+					type: 'callGlobal',
+				},
+			] as never,
+		}),
+	]);
+	window.dispatchEvent(new Event('vendor:ready'));
+	await settle();
+
+	expect(document.getElementById('injected')).toBeNull();
+	expect(typeof (win.__api as { init?: unknown }).init).toBe('function');
+	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then']]);
+});
+
 describe('lost', () => {
 	test("holds for a category the script's previous callback had and this one has not", () => {
 		const { kernel } = mount([
