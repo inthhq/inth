@@ -57,6 +57,7 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
  * `inth.adapter-ada.js`, Ada's start and stop chain: 932.
+ * `inth.adapter-zendesk.js`, Zendesk's loader reference and cookie range: 741.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
@@ -73,6 +74,7 @@ const BUDGETS = {
 	'inth.adapter-oracle-eloqua.js': 2110,
 	'inth.adapter-salesforce-pardot.js': 600,
 	'inth.adapter-sentry.js': 6280,
+	'inth.adapter-zendesk.js': 770,
 	'inth.manifests.js': 9590,
 	'inth.manifests3.js': 12110,
 };

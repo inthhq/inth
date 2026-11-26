@@ -251,6 +251,7 @@ export const ADAPTER_LEVELS = {
 	'oracle-eloqua': 4,
 	'salesforce-pardot': 4,
 	sentry: 4,
+	zendesk: 4,
 } as const satisfies Readonly<Record<string, Level>>;
 
 /**

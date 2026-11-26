@@ -251,6 +251,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/ada.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/ada.js"
 		},
+		"./manifest-runtime/adapters/zendesk": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/zendesk.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/zendesk.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/zendesk.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

@@ -29,6 +29,7 @@ const ADAPTER_MODULES: Record<
 	'salesforce-pardot': async () =>
 		(await import('./salesforce-pardot')).pardotAdapter,
 	sentry: async () => (await import('./sentry')).sentryAdapter,
+	zendesk: async () => (await import('./zendesk')).zendeskAdapter,
 };
 
 /** Imports the adapter module for `id`. */

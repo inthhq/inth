@@ -113,6 +113,7 @@ const sharedRegistrationCallbacks: Partial<
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
 	gainsightPx: ['onDispose', 'onLoad'],
 	luckyOrange: ['onLoad'],
+	zendeskWidget: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
 };
 
 /**
@@ -296,6 +297,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	vercelSpeedInsights: ['va.vercel-scripts.com'],
 	wisepops: ['wisepops.net'],
 	xPixel: ['static.ads-twitter.com'],
+	zendeskWidget: ['static.zdassets.com'],
 };
 
 /**
@@ -337,6 +339,7 @@ const vendorLevels: Partial<
 	pendo: 3,
 	pirsch: 3,
 	sentry: 4,
+	zendeskWidget: 4,
 };
 
 /**

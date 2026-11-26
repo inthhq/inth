@@ -28,7 +28,8 @@ export type InitFile =
 	| 'adapter-lucky-orange'
 	| 'adapter-oracle-eloqua'
 	| 'adapter-salesforce-pardot'
-	| 'adapter-sentry';
+	| 'adapter-sentry'
+	| 'adapter-zendesk';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
@@ -46,6 +47,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-oracle-eloqua': '__inthAdapterOracleEloquaSrc',
 	'adapter-salesforce-pardot': '__inthAdapterSalesforcePardotSrc',
 	'adapter-sentry': '__inthAdapterSentrySrc',
+	'adapter-zendesk': '__inthAdapterZendeskSrc',
 	commit: '__inthCommitSrc',
 	dialog: '__inthDialogSrc',
 	hosted: '__inthHostedSrc',

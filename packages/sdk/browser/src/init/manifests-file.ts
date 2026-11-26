@@ -51,6 +51,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	'oracle-eloqua': '__inthAdapterOracleEloqua',
 	'salesforce-pardot': '__inthAdapterSalesforcePardot',
 	sentry: '__inthAdapterSentry',
+	zendesk: '__inthAdapterZendesk',
 };
 
 /** What an adapter's file publishes. @internal */

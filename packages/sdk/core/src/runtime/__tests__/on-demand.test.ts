@@ -393,6 +393,7 @@ describe('on-demand chunks', () => {
 			'manifest-runtime/adapters/oracle-eloqua',
 			'manifest-runtime/adapters/salesforce-pardot',
 			'manifest-runtime/adapters/sentry',
+			'manifest-runtime/adapters/zendesk',
 			'manifest-runtime/index',
 			'manifest-runtime/level-three',
 			'modules/clear-on-revocation/clear',

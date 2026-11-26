@@ -1,9 +1,11 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { zendeskScript } from '@inth/sdk/manifest-runtime/adapters/zendesk';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { permitted } from '../_shared/permitted';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,
@@ -24,7 +26,11 @@ declare global {
 	}
 }
 
-/** Zendesk Messaging loader and the vendor's pre-load command queue. */
+/**
+ * Zendesk Messaging loader and the vendor's pre-load command queue. The
+ * Zendesk adapter in `@inth/sdk` points the loader at Inth's element and
+ * sets the cookie range.
+ */
 export const zendeskWidgetManifest = {
 	...vendorManifestContract,
 	category: 'functionality',
@@ -39,11 +45,11 @@ export const zendeskWidgetManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-			src: '{{scriptSrc}}',
+			src: 'https://static.zdassets.com/ekr/snippet.js?key={{encodedKey}}',
 			type: 'loadScript',
 		},
 	],
+	resourceKey: 'zendesk:{{key}}',
 	vendor: 'zendesk',
 	vendorDetails: {
 		homepageUrl: 'https://www.zendesk.com/',
@@ -61,62 +67,53 @@ export interface ZendeskWidgetOptions {
 	category?: Script['category'];
 }
 
+/**
+ * The manifest for Zendesk Messaging: the snippet for the widget key, and
+ * the Zendesk adapter. The key must already be trimmed and non-empty. The
+ * npm helper and the Inth server both build it here.
+ */
+export const resolveZendeskWidgetManifest =
+	function resolveZendeskWidgetManifest({
+		category = 'functionality',
+		key,
+	}: ZendeskWidgetOptions): ResolvedManifest {
+		return {
+			...getCompiledManifest(zendeskWidgetManifest, {
+				encodedKey: encodeURIComponent(key),
+				key,
+			}),
+			adapter: { id: 'zendesk', options: {} },
+			category,
+			requires: 4,
+		};
+	};
+
+/**
+ * What the Inth server may set for Zendesk Messaging: the widget key.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'zendeskWidget',
+		{
+			key: {
+				example: '0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d',
+				kind: 'id',
+				label: 'Widget key',
+				pattern: '^[A-Za-z0-9-]{1,64}$',
+				required: true,
+			},
+		},
+		resolveZendeskWidgetManifest
+	);
+
 const createZendeskScript = (options: ZendeskWidgetOptions): Script => {
-	const category = options.category ?? 'functionality';
-	const script = resolveManifest(zendeskWidgetManifest, {
-		scriptSrc: `https://static.zdassets.com/ekr/snippet.js?key=${encodeURIComponent(options.key)}`,
+	const { adapter: _adapter, ...manifest } =
+		resolveZendeskWidgetManifest(options);
+	return zendeskScript(resolvedManifestToScript(manifest), {
+		registrations: getScriptRegistrations,
 	});
-	let installed = false;
-
-	const grantedRegistrations = (info: ScriptCallbackInfo) =>
-		getScriptRegistrations(info).filter(
-			// Configuration removal reports hasConsent: false even while granted.
-			(state) => permitted(state, category)
-		);
-
-	const updateCookieRange = (info: ScriptCallbackInfo): void => {
-		if (!installed || typeof window === 'undefined') {
-			return;
-		}
-		const granted = grantedRegistrations(info);
-		let range: 'all' | 'functional' | 'none' = 'none';
-		if (granted.length > 0) {
-			range = granted.every((state) => state.consents.measurement)
-				? 'all'
-				: 'functional';
-		}
-		window.zE?.('messenger:set', 'cookies', range);
-	};
-
-	return {
-		...script,
-		category,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			if (
-				grantedRegistrations(info).length === 0 ||
-				!info.element ||
-				typeof window === 'undefined'
-			) {
-				return;
-			}
-			script.onBeforeLoad?.(info);
-			if (typeof window.zE !== 'function') {
-				return;
-			}
-
-			// The official loader reads zE.s when no ze-snippet element exists.
-			// Preserve core's DOM ID so load tracking and removal keep working.
-			window.zE.s = info.element;
-			installed = true;
-			updateCookieRange(info);
-		},
-		onConsentChange: updateCookieRange,
-		onDispose() {
-			installed = false;
-		},
-		resourceKey: `zendesk:${options.key}`,
-	};
 };
 
 const reuseZendeskScript = createScriptReuse<ZendeskWidgetOptions>();

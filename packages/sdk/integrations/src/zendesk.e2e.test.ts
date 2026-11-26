@@ -13,12 +13,14 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
 	isArgumentsPayload,
+	settleScripts,
 	toArgs,
 	updateScripts,
 } from './e2e-test-utils';
@@ -376,3 +378,53 @@ describe('Zendesk Messaging loader contract', () => {
 		}
 	);
 });
+
+describe.each(npmAndRemote('zendeskWidget', zendeskWidget))(
+	'Zendesk Messaging dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.zE;
+			delete window.zEmbed;
+		});
+
+		it('points zE.s at the loader on every grant and follows measurement in the cookie range', async () => {
+			const scripts = [build({ key: 'widget-key' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.head.querySelector('script')).toBeNull();
+
+			updateScripts(scripts, allWidgetConsents);
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe(
+				'https://static.zdassets.com/ekr/snippet.js?key=widget-key'
+			);
+			expect(window.zE?.s).toBe(loader);
+			expect(window.zE?._?.map(toArgs)).toEqual([
+				['messenger:set', 'cookies', 'all'],
+			]);
+			const api = vi.fn();
+			window.zE = api;
+			loader.dispatchEvent(new Event('load'));
+
+			updateScripts(scripts, functionalityConsents);
+			expect(api).toHaveBeenLastCalledWith(
+				'messenger:set',
+				'cookies',
+				'functional'
+			);
+			updateScripts(scripts, ALL_DENIED);
+			expect(api).toHaveBeenLastCalledWith('messenger:set', 'cookies', 'none');
+
+			// zE is the loaded API now, not a stub the manifest defines.
+			updateScripts(scripts, functionalityConsents);
+			expect((api as { s?: unknown }).s).toBe(getLoader());
+			expect(api).toHaveBeenLastCalledWith(
+				'messenger:set',
+				'cookies',
+				'functional'
+			);
+		});
+	}
+);
