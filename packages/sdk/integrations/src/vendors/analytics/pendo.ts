@@ -42,23 +42,36 @@ const hasApi = {
 } as const satisfies ManifestCondition;
 
 /**
- * Flags: `initialized` once `initialize` ran; `on` while events are sent;
- * `off` once they were stopped; `granting` while an activation runs, cleared
- * by a withdrawal, even one inside `initialize`; `resume` when an activation
- * restarts events stopped before.
+ * Flags: `fileLoaded` once the agent's file loaded; `initialized` once
+ * `initialize` ran; `on` while events are sent; `off` once they were
+ * stopped; `granting` while an activation runs, cleared by a withdrawal,
+ * even one inside `initialize`; `resume` when an activation restarts events
+ * stopped before.
  */
+const stop = [
+	{ name: 'off', type: 'setFlag', value: true },
+	{ name: 'on', type: 'setFlag', value: false },
+	{ name: 'granting', type: 'setFlag', value: false },
+	{ global: 'pendo', method: 'stopSendingEvents', type: 'callGlobal' },
+] as const satisfies ManifestStep[];
+
 const stopSending = [
 	{
-		then: [
-			{ name: 'off', type: 'setFlag', value: true },
-			{ name: 'on', type: 'setFlag', value: false },
-			{ name: 'granting', type: 'setFlag', value: false },
-			{ global: 'pendo', method: 'stopSendingEvents', type: 'callGlobal' },
-		],
+		then: stop,
 		type: 'if',
-		when: {
-			all: [{ loaded: true }, { not: { flag: 'off' } }, hasApi],
-		},
+		when: { all: [{ loaded: true }, { not: { flag: 'off' } }, hasApi] },
+	},
+] as const satisfies ManifestStep[];
+
+/**
+ * The loader removes a removed script's element before disposing it, so
+ * `loaded` no longer holds then; the agent its file started still sends.
+ */
+const stopOnDispose = [
+	{
+		then: stop,
+		type: 'if',
+		when: { all: [{ flag: 'fileLoaded' }, { not: { flag: 'off' } }, hasApi] },
 	},
 ] as const satisfies ManifestStep[];
 
@@ -130,7 +143,10 @@ const applyConsent = [
 /** Pendo's agent, without initialization before consent. */
 export const pendoManifest: VendorManifest = {
 	...vendorManifestContract,
-	afterLoad: applyConsent,
+	afterLoad: [
+		{ name: 'fileLoaded', type: 'setFlag', value: true },
+		...applyConsent,
+	],
 	category: '{{category}}',
 	install: [
 		{
@@ -140,7 +156,7 @@ export const pendoManifest: VendorManifest = {
 		},
 	],
 	onConsentChange: applyConsent,
-	onDispose: stopSending,
+	onDispose: stopOnDispose,
 	persistAfterConsentRevoked: true,
 	vendor: 'pendo',
 	vendorDetails: {

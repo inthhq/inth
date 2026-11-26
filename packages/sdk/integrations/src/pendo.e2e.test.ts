@@ -137,6 +137,23 @@ describe('Pendo event lifecycle', () => {
 		expect(runtime.clearSession).not.toHaveBeenCalled();
 		expect(getLoader()).toBe(loader);
 	});
+	it('stops sending events when the script is removed after it initialized', async () => {
+		const scripts = [pendo({ apiKey: 'removed-key' })];
+		loadScripts(scripts, granted);
+		const runtime = {
+			initialize: vi.fn(),
+			startSendingEvents: vi.fn(),
+			stopSendingEvents: vi.fn(),
+		};
+		window.pendo = runtime;
+		getLoader().dispatchEvent(new Event('load'));
+		await Promise.resolve();
+		expect(runtime.initialize).toHaveBeenCalledOnce();
+
+		updateScripts([], granted);
+
+		expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
+	});
 	it('does not initialize after in-flight withdrawal; first regrant initializes without changing identity', async () => {
 		const scripts = [pendo({ apiKey: 'late-key' })];
 		loadScripts(scripts, granted);
