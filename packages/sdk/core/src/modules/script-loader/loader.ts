@@ -907,11 +907,15 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	 * the new script.
 	 */
 	const keepStarted = (
-		id: string,
 		earlier: Script | null | undefined,
 		fresh: Script
 	): Script => {
-		if (!earlier || !(loadedElements.has(id) || retainedElements.has(id))) {
+		// By the script's own ID: an adapter can register a script under an
+		// ID other than its entry's, such as Default Forms.
+		if (
+			!earlier ||
+			!(loadedElements.has(earlier.id) || retainedElements.has(earlier.id))
+		) {
 			return fresh;
 		}
 		if (JSON.stringify(earlier.category) === JSON.stringify(fresh.category)) {
@@ -935,7 +939,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				if (parsed.ok) {
 					const fresh = loaded.resolvedManifestToScript(parsed.manifest);
 					remoteObjects.add(fresh);
-					script = keepStarted(entry.id, cached?.script, fresh);
+					script = keepStarted(cached?.script, fresh);
 				} else {
 					reportRemote(
 						'error',

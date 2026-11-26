@@ -467,6 +467,74 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('keeps a started script registered under an ID other than its entry when a later init changes its manifest', async () => {
+		vi.resetModules();
+		const base = await import('../../manifest-runtime/index');
+		const disposed = vi.fn();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const withAccount = (account: string) =>
+			load(
+				acmeManifest({
+					alwaysLoad: true,
+					setupSteps: [
+						{
+							queue: 'acmeQueue',
+							type: 'pushToQueue',
+							value: ['init', account],
+						},
+					],
+				})
+			);
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: withAccount('ACME-OLD') },
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				// Registers under its own ID, as Default Forms' adapter does.
+				loadManifestRuntime: () =>
+					Promise.resolve({
+						...base,
+						resolvedManifestToScript: (manifest) => {
+							const script = base.resolvedManifestToScript(manifest);
+							return {
+								...script,
+								id: `${script.id}-sdk`,
+								onDispose: () => {
+									disposed();
+								},
+							};
+						},
+					}),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		const [tag] = tags();
+
+		answer.resolve({ scriptRegistry: { load: withAccount('ACME-NEW') } });
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(disposed).not.toHaveBeenCalled();
+		expect(tags()[0]).toBe(tag);
+		runtime.dispose();
+	});
+
 	test('stops a running script when a later init moves it to a denied category', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({
