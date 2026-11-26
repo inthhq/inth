@@ -84,6 +84,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.manifests',
 	'inth.manifests3',
 	'inth.adapter-sentry',
+	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
 	'inth.adapter-gainsight-px',
 	'inth.adapter-lucky-orange',
@@ -259,6 +260,10 @@ export default defineConfig({
 		scriptTagLib('inth.manifests', './src/entries/cdn-manifests.ts'),
 		scriptTagLib('inth.manifests3', './src/entries/cdn-manifests3.ts'),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
+		scriptTagLib(
+			'inth.adapter-databuddy',
+			'./src/entries/cdn-adapter-databuddy.ts'
+		),
 		scriptTagLib(
 			'inth.adapter-fullstory',
 			'./src/entries/cdn-adapter-fullstory.ts'

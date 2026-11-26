@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { RemoteManifestRuntime } from '../../modules/script-loader/types';
+import * as databuddy from '../adapters/databuddy';
 import * as fullStory from '../adapters/fullstory';
 import * as gainsightPx from '../adapters/gainsight-px';
 import { importAdapter } from '../adapters/index';
@@ -180,6 +181,61 @@ describe('the FullStory adapter', () => {
 		expect(fullStory.fullStoryEndpoints('o-ABC-na1')).toEqual({
 			host: 'fullstory.com',
 			script: 'edge.fullstory.com/s/fs.js',
+		});
+	});
+});
+
+describe('the Databuddy adapter', () => {
+	const replay = { maskText: true, recordIframes: false };
+
+	it('takes a client ID, replay switches and a release, and nothing else', async () => {
+		expect(
+			await reasonFor(
+				'databuddy',
+				{ clientId: 'db_1', replay, version: '2026-10-30.1' },
+				'databuddy'
+			)
+		).toBeUndefined();
+		expect(
+			await reasonFor(
+				'databuddy',
+				{ apiUrl: 'https://x.example', clientId: 'db_1', replay },
+				'databuddy'
+			)
+		).toBe(
+			'its databuddy adapter options are wrong: it has the unknown option apiUrl'
+		);
+		expect(
+			await reasonFor(
+				'databuddy',
+				{ clientId: 'db_1', replay: { scriptUrl: 'https://x.example' } },
+				'databuddy'
+			)
+		).toBe(
+			'its databuddy adapter options are wrong: its replay is not maskText and recordIframes switches'
+		);
+		expect(
+			await reasonFor(
+				'databuddy',
+				{ clientId: 'db_1', replay, version: '../x' },
+				'databuddy'
+			)
+		).toBe(
+			'its databuddy adapter options are wrong: its version is not a release'
+		);
+	});
+
+	it('points a known release at its replay file with its integrity', () => {
+		expect(databuddy.databuddyCdnFile('replay', '2026-10-30.1')).toEqual({
+			integrity:
+				'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
+			name: 'replay.2026-10-30.1.js',
+			src: 'https://cdn.databuddy.cc/replay.2026-10-30.1.js',
+		});
+		expect(databuddy.databuddyCdnFile('replay', undefined)).toEqual({
+			integrity: undefined,
+			name: 'replay.js',
+			src: 'https://cdn.databuddy.cc/replay.js',
 		});
 	});
 });

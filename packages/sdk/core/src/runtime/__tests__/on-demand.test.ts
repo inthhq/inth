@@ -378,6 +378,7 @@ describe('on-demand chunks', () => {
 			// Only a page with `remoteScripts` on loads the manifest runtime,
 			// only one with a level 3 manifest its level 3 part, and only one
 			// with a manifest that names an adapter that adapter.
+			'manifest-runtime/adapters/databuddy',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',
 			'manifest-runtime/adapters/index',

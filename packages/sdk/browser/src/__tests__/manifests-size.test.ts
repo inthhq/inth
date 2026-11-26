@@ -32,20 +32,23 @@ import { expect, it } from 'vite-plus/test';
  * with the call-time checks, and 11,936 with the later-run, refusal and
  * `ifNullish` changes. Level 4 leaves them at 9,576 and 11,968: the engine
  * loads, checks and runs adapters (`withAdapters`), so neither runtime file
- * has adapter code. `inth.adapter-sentry.js`, the Sentry consent gate:
- * 6,215, then 6,268 with a type check on every option and the sentry.io
- * DSN pattern.
+ * has adapter code. `inth.manifests3.js` reads a manifest's level from the
+ * adapter ID table, about 10 bytes per ID. `inth.adapter-sentry.js`, the
+ * Sentry consent gate: 6,215, then 6,268 with a type check on every option
+ * and the sentry.io DSN pattern.
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 441.
  * `inth.adapter-gainsight-px.js`, the Gainsight PX installation checks: 1,482.
  * `inth.adapter-fullstory.js`, the FullStory stub and recorder gate: 2,097.
+ * `inth.adapter-databuddy.js`, Databuddy's session replay recorder: 1,195.
  */
 const BUDGETS = {
+	'inth.adapter-databuddy.js': 1220,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 11980,
+	'inth.manifests3.js': 12020,
 };
 
 it.each(Object.entries(BUDGETS))(

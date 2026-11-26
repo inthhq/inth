@@ -70,15 +70,6 @@ export const remoteModeStatus = {
  * later pull request, by registry key, and why. The remote definition must
  * not declare them.
  */
-export const remoteOptionStatus = {
-	databuddy: {
-		// Session replay's golden trace records a replay.js tag without an id,
-		// and loadScriptStep always sets one. The helper also shares one script
-		// across rerenders with equal options; a fresh registration disposes
-		// the old one, which stops the recorder, and the new one skips
-		// replay.js because databuddyReplay is still defined.
-		replay: adapter,
-	},
-} as const satisfies Partial<
+export const remoteOptionStatus = {} as const satisfies Partial<
 	Record<BuiltInScriptIntegrationKey, Record<string, RemoteStatus>>
 >;

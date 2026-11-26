@@ -15,6 +15,7 @@ export type InitFile =
 	| 'dialog'
 	| 'manifests'
 	| 'manifests3'
+	| 'adapter-databuddy'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
 	| 'adapter-sentry'
@@ -22,6 +23,7 @@ export type InitFile =
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
+	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
 	'adapter-lucky-orange': '__inthAdapterLuckyOrangeSrc',

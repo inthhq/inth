@@ -37,6 +37,7 @@ export interface ManifestsFile extends PartFile, RemoteManifestRuntime {}
  * manifest names that adapter, and installs it into the runtime file.
  */
 export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
+	databuddy: '__inthAdapterDatabuddy',
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
 	'lucky-orange': '__inthAdapterLuckyOrange',

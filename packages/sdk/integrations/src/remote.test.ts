@@ -109,6 +109,7 @@ const sharedRegistrationCallbacks: Partial<
  * browser, so the remote script has none.
  */
 const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
+	'databuddy',
 	'gainsightPx',
 ]);
 
@@ -219,8 +220,12 @@ const vendorHosts: Record<string, readonly string[]> = {
  * level that runs the features its manifest uses. Every other integration
  * is level 2, since each manifest carries `globals`, which is level 2.
  */
-const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
+const vendorLevels: Partial<
+	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
+> = {
 	customerIo: 3,
+	// Session replay names the Databuddy adapter.
+	databuddy: (options) => (options.replay === undefined ? 2 : 4),
 	fullStory: 4,
 	gainsightPx: 4,
 	luckyOrange: 4,
@@ -409,8 +414,9 @@ describe('remoteIntegrations', () => {
 			options
 		) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
 
+		const listed = vendorLevels[key as BuiltInScriptIntegrationKey];
 		expect(manifestLevel(manifest)).toBe(
-			vendorLevels[key as BuiltInScriptIntegrationKey] ?? 2
+			typeof listed === 'function' ? listed(options) : (listed ?? 2)
 		);
 	});
 
@@ -509,9 +515,9 @@ describe('remoteIntegrations', () => {
 			expect(withoutFunctions(fromRemote)).toEqual(withoutFunctions(fromNpm));
 			const shared =
 				sharedRegistrationCallbacks[key as BuiltInScriptIntegrationKey] ?? [];
-			const npmServerStart = npmOnlyServerStart.has(
-				key as BuiltInScriptIntegrationKey
-			);
+			const npmServerStart =
+				npmOnlyServerStart.has(key as BuiltInScriptIntegrationKey) &&
+				remoteIntegrations[key]?.resolveRemote(options).adapter !== undefined;
 			const own = (script: Script) =>
 				functionNames(script).filter(
 					(name) =>

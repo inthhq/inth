@@ -1,4 +1,10 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import {
+	DATABUDDY_DEFAULT_API_URL,
+	databuddyCdnFile,
+	databuddyReplayScript,
+} from '@inth/sdk/manifest-runtime/adapters/databuddy';
+import type { DatabuddyAdapterOptions } from '@inth/sdk/manifest-runtime/adapters/databuddy';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
 import { defineRemote } from '../../remote-define';
@@ -46,63 +52,6 @@ declare global {
 	}
 }
 
-const cdnBaseUrl = 'https://cdn.databuddy.cc';
-
-type DatabuddyFile = 'databuddy' | 'replay';
-
-/**
- * SRI hashes of the Databuddy releases whose files are known, by version.
- * Databuddy publishes no hashes, so a pinned release not listed here loads
- * without one.
- */
-const releaseIntegrity: Readonly<
-	Record<string, Readonly<Record<DatabuddyFile, string>>>
-> = {
-	'2026-10-30.1': {
-		databuddy:
-			'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s',
-		replay:
-			'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
-	},
-};
-
-/**
- * The file name and integrity of a Databuddy CDN file. Without `version` it
- * is Databuddy's unversioned file, which changes with each release, so it
- * loads without integrity.
- */
-const cdnFile = function cdnFile(
-	file: DatabuddyFile,
-	version: string | undefined
-): { integrity: string | undefined; name: string } {
-	if (version === undefined) {
-		return { integrity: undefined, name: `${file}.js` };
-	}
-	return {
-		integrity: Object.hasOwn(releaseIntegrity, version)
-			? releaseIntegrity[version]?.[file]
-			: undefined,
-		name: `${file}.${version}.js`,
-	};
-};
-
-/**
- * The URL and integrity of a Databuddy CDN file. An `override` URL wins and
- * loads without integrity, since Inth cannot know its bytes.
- */
-const resolveCdnScript = function resolveCdnScript(
-	file: DatabuddyFile,
-	version: string | undefined,
-	override: string | undefined
-): { integrity: string | undefined; src: string } {
-	const src = trimToUndefined(override);
-	if (src !== undefined) {
-		return { integrity: undefined, src };
-	}
-	const { integrity, name } = cdnFile(file, version);
-	return { integrity, src: `${cdnBaseUrl}/${name}` };
-};
-
 const disableTracker = {
 	path: ['databuddy', 'options', 'disabled'],
 	type: 'setGlobalPath',
@@ -138,7 +87,7 @@ const enableConfig = {
  * Databuddy loads only with measurement consent. On revocation the manifest
  * sets `options.disabled`, which stops the main tracker, and disables the
  * config a script still downloading will read. `replay.js` ignores that flag,
- * so the helper's `replay` option stops it separately.
+ * so with the `replay` option the Databuddy adapter in `@inth/sdk` stops it.
  * Config is seeded via `window.databuddyConfig` before the script loads.
  */
 export const databuddyManifest = {
@@ -389,77 +338,43 @@ export interface DatabuddyReplayOptions {
 	scriptUrl?: string;
 }
 
-interface ReplaySettings {
-	apiUrl: string;
-	clientId: string;
-	integrity: string | undefined;
-	maskText: boolean | undefined;
-	recordIframes: boolean | undefined;
-	scriptUrl: string;
-}
-
 /**
- * Starts and stops `replay.js` from consent. The recorder is a separate
- * script that ignores `options.disabled`, so revocation calls its own
- * `stop()`. A removed `<script>` that finishes downloading does not start,
- * because `replay.js` checks that it is still in the document.
+ * The adapter's replay settings ({@link DatabuddyAdapterOptions}) for a
+ * site's or a dashboard's `replay`, as JSON.
  */
-const createReplayLoader = function createReplayLoader(
-	settings: ReplaySettings
-) {
-	let element: HTMLScriptElement | undefined;
-
-	return {
-		start(info: ScriptCallbackInfo) {
-			if (window.databuddyReplay || element?.isConnected) {
-				return;
-			}
-			element = document.createElement('script');
-			element.async = true;
-			element.src = settings.scriptUrl;
-			element.setAttribute('crossorigin', 'anonymous');
-			if (settings.integrity) {
-				element.setAttribute('integrity', settings.integrity);
-			}
-			element.setAttribute('data-api-url', settings.apiUrl);
-			element.setAttribute('data-client-id', settings.clientId);
-			const maskText = booleanDataAttribute(settings.maskText);
-			if (maskText !== undefined) {
-				element.setAttribute('data-mask-text', maskText);
-			}
-			const recordIframes = booleanDataAttribute(settings.recordIframes);
-			if (recordIframes !== undefined) {
-				element.setAttribute('data-record-iframes', recordIframes);
-			}
-			if (info.element?.nonce) {
-				element.nonce = info.element.nonce;
-			}
-			document.head.appendChild(element);
-		},
-		stop() {
-			element?.remove();
-			element = undefined;
-			// Core may dispose a loader created during server rendering.
-			if (typeof window !== 'undefined') {
-				window.databuddyReplay?.stop();
-			}
-		},
-	};
+const replaySettings = (
+	replay: DatabuddyConsentOptions['replay']
+): Record<string, boolean> | undefined => {
+	if (!replay) {
+		return undefined;
+	}
+	const { maskText, recordIframes } = replay === true ? {} : replay;
+	const settings: Record<string, boolean> = {};
+	if (maskText !== undefined) {
+		settings.maskText = maskText;
+	}
+	if (recordIframes !== undefined) {
+		settings.recordIframes = recordIframes;
+	}
+	return settings;
 };
 
 /**
- * Builds the serializable manifest behind {@link databuddy} without
- * `replay`. `clientId` must already be trimmed and non-empty.
+ * Builds the serializable manifest behind {@link databuddy}. With `replay`
+ * it names the Databuddy adapter, which runs `replay.js`; without it, the
+ * manifest's own steps do everything. `clientId` must already be trimmed
+ * and non-empty.
  */
 export const resolveDatabuddyManifest = function resolveDatabuddyManifest(
-	options: Omit<DatabuddyConsentOptions, 'scriptUrl' | 'replay'>
+	options: Omit<DatabuddyConsentOptions, 'scriptUrl'>
 ): ResolvedManifest {
 	const { clientId } = options;
-	const apiUrl = options.apiUrl ?? 'https://basket.databuddy.cc';
+	const apiUrl = options.apiUrl ?? DATABUDDY_DEFAULT_API_URL;
 	const features = options.features ?? {};
-	const loader = cdnFile('databuddy', trimToUndefined(options.version));
+	const version = trimToUndefined(options.version);
+	const loader = databuddyCdnFile('databuddy', version);
 
-	return getCompiledManifest(
+	const manifest = getCompiledManifest(
 		options.loadMode === 'always'
 			? databuddyAlwaysLoadManifest
 			: databuddyManifest,
@@ -484,13 +399,28 @@ export const resolveDatabuddyManifest = function resolveDatabuddyManifest(
 			trackWebVitals: booleanDataAttribute(features.webVitals),
 		}
 	);
+	const replay = replaySettings(options.replay);
+	if (replay === undefined) {
+		return manifest;
+	}
+	const adapterOptions: Record<string, string | Record<string, boolean>> = {
+		clientId,
+		replay,
+	};
+	if (version !== undefined) {
+		adapterOptions.version = version;
+	}
+	return {
+		...manifest,
+		adapter: { id: 'databuddy', options: adapterOptions },
+		requires: 4,
+	};
 };
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver. `replay` stays npm-only for now: a fresh registration would stop
- * the recorder for good where the helper shares one script, so it waits for
- * an adapter. `apiUrl`, the config objects and `scriptUrl` stay npm-only.
+ * resolver. `replay` names the Databuddy adapter. `apiUrl`, the config
+ * objects and the script URLs stay npm-only.
  * Marked pure so a bundler drops it from an npm bundle that never reads it.
  */
 export const remote =
@@ -538,6 +468,23 @@ export const remote =
 				label: 'When to load',
 				values: ['after-consent', 'always'],
 			},
+			replay: {
+				fields: {
+					maskText: {
+						default: true,
+						kind: 'boolean',
+						label: 'Mask page text in recordings',
+					},
+					recordIframes: {
+						default: false,
+						kind: 'boolean',
+						label: 'Record your own embedded pages',
+					},
+				},
+				kind: 'object',
+				label: 'Session replay',
+				required: false,
+			},
 			version: {
 				example: '2026-10-30.1',
 				kind: 'id',
@@ -552,10 +499,8 @@ export const remote =
 const createDatabuddyScript = function createDatabuddyScript(
 	options: DatabuddyConsentOptions
 ): Script {
-	const { clientId } = options;
-	const apiUrl = options.apiUrl ?? 'https://basket.databuddy.cc';
-	const version = trimToUndefined(options.version);
-	const resolved = resolvedManifestToScript(resolveDatabuddyManifest(options));
+	const { adapter, ...manifest } = resolveDatabuddyManifest(options);
+	const resolved = resolvedManifestToScript(manifest);
 	// A site's own URL loads without integrity, since Inth cannot know its
 	// bytes.
 	const script: Script =
@@ -569,46 +514,21 @@ const createDatabuddyScript = function createDatabuddyScript(
 						)
 					),
 				};
-	if (!options.replay) {
+	if (adapter === undefined) {
 		return script;
 	}
-
-	const replayOptions = options.replay === true ? {} : options.replay;
-	const replayScript = resolveCdnScript(
-		'replay',
-		version,
-		replayOptions.scriptUrl
-	);
-	const replay = createReplayLoader({
-		apiUrl,
-		clientId,
-		integrity: replayScript.integrity,
-		maskText: replayOptions.maskText,
-		recordIframes: replayOptions.recordIframes,
-		scriptUrl: replayScript.src,
-	});
-
+	const replay = options.replay === true ? {} : options.replay;
 	return {
-		...script,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion: replay needs an adapter
-		onConsentChange(info) {
-			script.onConsentChange?.(info);
-			if (info.hasConsent) {
-				replay.start(info);
-			} else {
-				replay.stop();
+		...databuddyReplayScript(
+			script,
+			adapter.options as unknown as DatabuddyAdapterOptions,
+			{
+				apiUrl: options.apiUrl,
+				scriptUrl: trimToUndefined(replay ? replay.scriptUrl : undefined),
 			}
-		},
-		onDispose(info) {
-			script.onDispose?.(info);
-			replay.stop();
-		},
-		onLoad(info) {
-			script.onLoad?.(info);
-			if (info.hasConsent) {
-				replay.start(info);
-			}
-		},
+		),
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: a site's server render starts databuddy.js from the HTML; the Inth server's adapter scripts start in the browser
+		serverStart: script.serverStart,
 	};
 };
 

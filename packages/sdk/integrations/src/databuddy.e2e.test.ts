@@ -2,9 +2,12 @@
  * @vitest-environment jsdom
  */
 
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { npmAndRemote } from './__tests__/remote-path';
+import { remoteTraceFactory } from './__tests__/trace/remote';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -464,5 +467,102 @@ describe.each(npmAndRemote('databuddy', databuddy))(
 			expect(win.databuddyConfig).toMatchObject({ disabled: false });
 			expect(win.databuddy?.options.disabled).toBe(false);
 		});
+
+		it('loads replay.js without an id once measurement is granted, and stops it on refusal', async () => {
+			const { replayScripts, stop } = probeDatabuddyScripts();
+			const scripts = [
+				build({
+					clientId: 'db_contract',
+					replay: { maskText: false, recordIframes: true },
+					version: '2026-10-30.1',
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(replayScripts).toEqual([]);
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			const [replay] = replayScripts;
+			expect(replayScripts).toHaveLength(1);
+			expect(replay?.src).toBe(
+				'https://cdn.databuddy.cc/replay.2026-10-30.1.js'
+			);
+			expect(replay?.hasAttribute('id')).toBe(false);
+			expect(replay?.getAttribute('integrity')).toMatch(/^sha384-/u);
+			expect(replay?.dataset).toMatchObject({
+				apiUrl: 'https://basket.databuddy.cc',
+				clientId: 'db_contract',
+				maskText: 'false',
+				recordIframes: 'true',
+			});
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(stop).toHaveBeenCalledTimes(1);
+			expect(replay?.isConnected).toBe(false);
+		});
 	}
 );
+
+describe('databuddy session replay from the Inth server', () => {
+	registerVendorContractCleanup();
+
+	it('keeps one recorder running when a changed manifest replaces the registration', async () => {
+		const { replayScripts, stop } = probeDatabuddyScripts();
+		// Each call builds a fresh script, as the remote loader does when the
+		// manifest it receives changes.
+		const build = await remoteTraceFactory('databuddy', {
+			clientId: 'db_contract',
+			replay: { maskText: true, recordIframes: false },
+		})();
+		const kernel = createConsentKernel();
+		await kernel.commands.save(grantedMeasurementConsents);
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [build(undefined as never)],
+		});
+		try {
+			expect(replayScripts).toHaveLength(1);
+
+			loader.updateScripts([build(undefined as never)]);
+
+			// The incoming registration finds the recorder running, and the
+			// outgoing one's dispose leaves it to the incoming one.
+			expect(replayScripts).toHaveLength(1);
+			expect(replayScripts[0]?.isConnected).toBe(true);
+			expect(stop).not.toHaveBeenCalled();
+
+			await kernel.commands.save(ALL_DENIED);
+			expect(stop).toHaveBeenCalledTimes(1);
+			expect(replayScripts[0]?.isConnected).toBe(false);
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
+
+	it('stops the recorder when the replacement comes with a withdrawal', async () => {
+		const { replayScripts, stop } = probeDatabuddyScripts();
+		const build = await remoteTraceFactory('databuddy', {
+			clientId: 'db_contract',
+			replay: { maskText: true, recordIframes: false },
+		})();
+		const kernel = createConsentKernel();
+		await kernel.commands.save(grantedMeasurementConsents);
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [build(undefined as never)],
+		});
+		try {
+			const withdrawn = kernel.commands.save(ALL_DENIED);
+			loader.updateScripts([build(undefined as never)]);
+			await withdrawn;
+
+			expect(stop).toHaveBeenCalledTimes(1);
+			expect(replayScripts).toHaveLength(1);
+			expect(replayScripts[0]?.isConnected).toBe(false);
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
+});
