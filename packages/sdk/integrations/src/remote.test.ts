@@ -46,6 +46,29 @@ const npmHelper = function npmHelper(
 	return helper as (options: Options) => Script;
 };
 
+/**
+ * Options the npm helper's type requires but the remote form defaults, so a
+ * site always passes one. The npm call takes the remote default for these;
+ * every other option is passed as the sample has it.
+ */
+const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
+	gtag: ['category'],
+};
+
+/** `options` as a site would pass them to the npm helper. */
+const npmInput = function npmInput(key: string, options: Options): Options {
+	const integration = remoteIntegrations[key] as RemoteIntegration;
+	const required = npmRequired[key as BuiltInScriptIntegrationKey] ?? [];
+	const input = { ...options };
+	for (const name of required) {
+		const spec = integration.options[name];
+		if (input[name] === undefined && spec && 'default' in spec) {
+			input[name] = spec.default;
+		}
+	}
+	return input;
+};
+
 /** Hosts each integration may load its script from. */
 const vendorHosts: Record<string, readonly string[]> = {
 	googleTagManager: ['www.googletagmanager.com'],
@@ -165,6 +188,29 @@ const functionNames = function functionNames(script: Script): string[] {
 		.sort();
 };
 
+/**
+ * The script a browser builds for `options` saved for `key`: the server
+ * validates them (filling remote defaults) and resolves the manifest, the
+ * manifest crosses the wire as JSON, and the SDK parses it.
+ */
+const remoteScript = function remoteScript(
+	key: string,
+	options: Options
+): Script {
+	const validated = validateRemoteOptions(key, options);
+	if (!validated.ok) {
+		throw new Error(validated.issues.join('; '));
+	}
+	const wire: unknown = JSON.parse(
+		JSON.stringify(remoteIntegrations[key]?.resolveRemote(validated.options))
+	);
+	const parsed = parseResolvedManifest(wire);
+	if (!parsed.ok) {
+		throw new Error(`${key}: ${parsed.reason}`);
+	}
+	return resolvedManifestToScript(parsed.manifest);
+};
+
 describe('remoteIntegrations', () => {
 	it('lists each integration under its registry key', () => {
 		for (const [key, integration] of Object.entries(remoteIntegrations)) {
@@ -221,13 +267,9 @@ describe('remoteIntegrations', () => {
 	it.each(cases)(
 		'%s %s builds the same script as the npm helper',
 		(key, _label, options) => {
-			// The server resolves validated options, with defaults filled in.
-			const fromNpm = npmHelper(key)(
-				withDefaults(remoteIntegrations[key] as RemoteIntegration, options)
-			);
-			const fromRemote = resolvedManifestToScript(
-				remoteIntegrations[key]?.resolveRemote(options) as never
-			);
+			// A site passes the options as they are; it gets no remote default.
+			const fromNpm = npmHelper(key)(npmInput(key, options));
+			const fromRemote = remoteScript(key, options);
 
 			expect(withoutFunctions(fromRemote)).toEqual(withoutFunctions(fromNpm));
 			expect(functionNames(fromRemote)).toEqual(functionNames(fromNpm));
