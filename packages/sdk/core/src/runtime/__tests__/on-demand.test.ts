@@ -378,11 +378,15 @@ describe('on-demand chunks', () => {
 			// Only a page with `remoteScripts` on loads the manifest runtime,
 			// only one with a level 3 manifest its level 3 part, and only one
 			// with a manifest that names an adapter that adapter.
+			'manifest-runtime/adapters/activecampaign',
 			'manifest-runtime/adapters/databuddy',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',
+			'manifest-runtime/adapters/hubspot',
 			'manifest-runtime/adapters/index',
 			'manifest-runtime/adapters/lucky-orange',
+			'manifest-runtime/adapters/oracle-eloqua',
+			'manifest-runtime/adapters/salesforce-pardot',
 			'manifest-runtime/adapters/sentry',
 			'manifest-runtime/index',
 			'manifest-runtime/level-three',
