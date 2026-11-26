@@ -2,6 +2,7 @@
 
 | Key | Integration | Options |
 | --- | --- | --- |
+| `optimizelyWeb` | Optimizely Web Experimentation | `projectId` (required): ID such as `12345678` |
 | `googleTagManager` | Google Tag Manager | `id` (required): ID such as `GTM-ABC1234`; `loadMode`: `always` or `after-consent`, default `always` |
 | `gtag` | Google Tag | `category`: `measurement` or `marketing`, default `measurement`; `id` (required): ID such as `G-ABC123XYZ`; `loadMode`: `always` or `after-consent`, default `always` |
 | `ahrefsAnalytics` | Ahrefs Web Analytics | `key` (required): ID such as `aBcD1234eFgH5678` |
@@ -16,6 +17,7 @@
 | `oneDollarStats` | OneDollarStats |  |
 | `hotjar` | Hotjar | `siteId` (required): ID such as `1234567` |
 | `hightouch` | Hightouch | `trackPageView`: `true` or `false`, default `true`; `writeKey` (required): ID such as `a1b2c3d4e5f6a7b8c9d0` |
+| `rudderstack` | RudderStack | `dataPlaneHost` (required): hostname such as `example.dataplane.rudderstack.com`; `trackPageView`: `true` or `false`, default `true`; `writeKey` (required): ID such as `2AbCdEfGhIjKlMnOpQrStUvWxYz` |
 | `logRocket` | LogRocket | `appId` (required): ID such as `abc123/my-app` |
 | `matomoAnalytics` | Matomo | `cloudId` (required): ID such as `example.matomo.cloud`; `disableCookies`: `true` or `false`, default `false`; `enableLinkTracking`: `true` or `false`, default `false`; `siteId`: ID such as `1`; `trackPageView`: `true` or `false`, default `true` |
 | `posthog` | PostHog | `id` (required): ID such as `phc_abc123XYZ`; `loadMode`: `always` or `after-consent`, default `always`; `region`: `eu` or `us`, default `eu` |
@@ -26,6 +28,9 @@
 | `statableAnalytics` | Statable | `siteId` (required): ID such as `12345` |
 | `umamiAnalytics` | Umami | `autoTrack`: `true` or `false`, default `true`; `domains`: up to 20 IDs such as `example.com`; `websiteId` (required): ID such as `94db1cb1-74f4-4a40-ad6c-962362670409` |
 | `vercelAnalytics` | Vercel Web Analytics | `debug`: `true` or `false`, default `false`; `disableAutoTrack`: `true` or `false`, default `false`; `dsn`: ID such as `prj_AbC123dEf456` |
+| `crisp` | Crisp | `cookieDomain`: ID such as `example.com`; `cookieExpiry`: integer, at least 1; `locale`: ID such as `en`; `safeMode`: `true` or `false`, default `false`; `websiteId` (required): ID such as `6a3c2f1e-8b4d-4c7a-9e5f-0d1b2c3a4e5f` |
+| `intercom` | Intercom | `appId` (required): ID such as `abc12345`; `region`: `us`, `eu` or `au`, default `us` |
+| `klaviyo` | Klaviyo | `mode`: `full` or `forms-only`, default `full`; `publicApiKey` (required): ID such as `AbC123` |
 | `metaPixel` | Meta Pixel | `pixelId` (required): ID such as `123456789012345` |
 | `openaiPixel` | OpenAI Pixel | `debug`: `true` or `false`, default `false`; `pixelId` (required): ID such as `px_abc123` |
 | `pinterestTag` | Pinterest Tag | `tagId` (required): ID such as `2613654212508`; `trackPageVisit`: `true` or `false`, default `true` |

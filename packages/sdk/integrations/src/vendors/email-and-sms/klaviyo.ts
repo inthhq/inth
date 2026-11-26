@@ -1,10 +1,12 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { httpsScriptUrl } from '../_shared/script-url';
+import { httpsScriptUrl, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -34,8 +36,7 @@ export const klaviyoManifest = {
 	install: [
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://static.klaviyo.com/onsite/js/{{publicApiKey}}/klaviyo.js',
 			type: 'loadScript',
 		},
 	],
@@ -123,6 +124,48 @@ export const klaviyoFormsOnlyManifest = {
 } as const satisfies VendorManifest;
 
 /**
+ * Builds the serializable manifest behind {@link klaviyo}. The key must
+ * already be a trimmed six-character public API key.
+ */
+export const resolveKlaviyoManifest = function resolveKlaviyoManifest({
+	publicApiKey,
+	mode = 'full',
+	category = DEFAULT_CATEGORIES[mode],
+}: Omit<KlaviyoOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(
+		mode === 'forms-only' ? klaviyoFormsOnlyManifest : klaviyoManifest,
+		{ category, publicApiKey }
+	);
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; a custom consent condition and `scriptUrl` stay npm-only. Marked
+ * pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'klaviyo',
+		{
+			mode: {
+				default: 'full',
+				kind: 'enum',
+				label: 'Mode',
+				values: ['full', 'forms-only'],
+			},
+			publicApiKey: {
+				example: 'AbC123',
+				kind: 'id',
+				label: 'Public API key',
+				pattern: '^[A-Za-z0-9]{6}$',
+				required: true,
+			},
+		},
+		resolveKlaviyoManifest
+	);
+
+/**
  * Creates a Klaviyo onsite script.
  *
  * By default Klaviyo.js loads only once both marketing and measurement are
@@ -163,13 +206,10 @@ export const klaviyo = function klaviyo(options: KlaviyoOptions): Script {
 		return skipScript(problem, { category, manifest: klaviyoManifest });
 	}
 
-	return resolveManifest(
-		mode === 'forms-only' ? klaviyoFormsOnlyManifest : klaviyoManifest,
-		{
-			category,
-			scriptUrl:
-				httpsScriptUrl('klaviyo', options.scriptUrl) ??
-				`https://static.klaviyo.com/onsite/js/${publicApiKey}/klaviyo.js`,
-		}
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveKlaviyoManifest({ category, mode, publicApiKey })
+		),
+		httpsScriptUrl('klaviyo', options.scriptUrl)
 	);
 };

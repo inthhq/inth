@@ -25,6 +25,35 @@ describe('intercom', () => {
 		});
 	});
 
+	it.each([
+		['us', 'https://api-iam.intercom.io'],
+		['eu', 'https://api-iam.eu.intercom.io'],
+		['au', 'https://api-iam.au.intercom.io'],
+	] as const)('uses the %s API base for the region', (region, apiBase) => {
+		const script = intercom({ appId: 'abc123', region });
+
+		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));
+
+		expect(getTestGlobal().intercomSettings).toEqual({
+			api_base: apiBase,
+			app_id: 'abc123',
+		});
+	});
+
+	it('prefers apiBase over region', () => {
+		const script = intercom({
+			apiBase: 'https://api-iam.example.test',
+			appId: 'abc123',
+			region: 'eu',
+		});
+
+		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));
+
+		expect(getTestGlobal().intercomSettings).toMatchObject({
+			api_base: 'https://api-iam.example.test',
+		});
+	});
+
 	it('sets Intercom settings and queues calls before loading the widget', () => {
 		const globalRef = getTestGlobal();
 		const script = intercom({

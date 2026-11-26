@@ -150,6 +150,82 @@ describe('rudderstack', () => {
 		);
 	});
 
+	const queuedLoad = function queuedLoad(
+		script: ReturnType<typeof rudderstack>
+	): unknown {
+		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));
+		return (
+			getTestGlobal().rudderanalytics as RudderStackQueue | undefined
+		)?.[0];
+	};
+
+	it('sends events to https://<dataPlaneHost> for a hostname', () => {
+		const script = rudderstack({
+			dataPlaneHost: ' Example.DataPlane.RudderStack.com ',
+			writeKey: 'WRITE_KEY',
+		});
+
+		expect(queuedLoad(script)).toEqual(
+			toArgumentsArray([
+				'load',
+				'WRITE_KEY',
+				'https://example.dataplane.rudderstack.com',
+				{},
+			])
+		);
+	});
+
+	it('prefers dataPlaneUrl over dataPlaneHost', () => {
+		const script = rudderstack({
+			dataPlaneHost: 'example.dataplane.rudderstack.com',
+			dataPlaneUrl: 'https://inth-live-probe.invalid/v1',
+			writeKey: 'WRITE_KEY',
+		});
+
+		expect(queuedLoad(script)).toEqual(
+			toArgumentsArray([
+				'load',
+				'WRITE_KEY',
+				'https://inth-live-probe.invalid/v1',
+				{},
+			])
+		);
+	});
+
+	it('uses dataPlaneHost when dataPlaneUrl is blank', () => {
+		const script = rudderstack({
+			dataPlaneHost: 'example.dataplane.rudderstack.com',
+			dataPlaneUrl: '  ',
+			writeKey: 'WRITE_KEY',
+		});
+
+		expect(queuedLoad(script)).toEqual(
+			toArgumentsArray([
+				'load',
+				'WRITE_KEY',
+				'https://example.dataplane.rudderstack.com',
+				{},
+			])
+		);
+	});
+
+	it.each([
+		'https://example.dataplane.rudderstack.com',
+		'example.dataplane.rudderstack.com:8080',
+		'example.dataplane.rudderstack.com/v1',
+		'10.0.0.1',
+		'localhost',
+	])(
+		'logs and skips the script for the data plane host %s',
+		(dataPlaneHost) => {
+			expectSkippedScript(
+				() => rudderstack({ dataPlaneHost, writeKey: 'WRITE_KEY' }),
+				{ category: 'measurement', id: 'rudderstack' },
+				'rudderstack: dataPlaneHost must be a hostname with no scheme, port or path'
+			);
+		}
+	);
+
 	it('throws for a non-HTTPS scriptUrl override', () => {
 		expect(() =>
 			rudderstack({

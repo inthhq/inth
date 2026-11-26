@@ -130,7 +130,7 @@ export const insiderManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper puts the partnerName option in the host, as a useinsider.com subdomain
+			// oxlint-disable-next-line integrations/fixed-script-host -- npm-only: the host is the partner's useinsider.com subdomain, which the rule allows only for a hostname option
 			src: '{{scriptSrc}}',
 			type: 'loadScript',
 		},

@@ -1,16 +1,21 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 export const INTERCOM_API_BASES = {
 	au: 'https://api-iam.au.intercom.io',
 	eu: 'https://api-iam.eu.intercom.io',
 	us: 'https://api-iam.intercom.io',
 } as const;
+
+/** An Intercom data hosting region, the key of its API base. */
+export type IntercomRegion = keyof typeof INTERCOM_API_BASES;
 
 export type IntercomApiBase =
 	| (typeof INTERCOM_API_BASES)[keyof typeof INTERCOM_API_BASES]
@@ -115,8 +120,7 @@ export const intercomManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://widget.intercom.io/widget/{{appId}}',
 			type: 'loadScript',
 		},
 	],
@@ -136,11 +140,18 @@ export interface IntercomOptions {
 	appId: string;
 
 	/**
-	 * Regional Intercom API base.
+	 * Regional Intercom API base. Wins over `region`.
 	 *
-	 * @default 'https://api-iam.intercom.io'
+	 * @default The API base of `region`
 	 */
 	apiBase?: IntercomApiBase;
+
+	/**
+	 * The region that hosts your Intercom workspace, which picks the API base.
+	 *
+	 * @default 'us'
+	 */
+	region?: IntercomRegion;
 
 	/**
 	 * Additional serializable Intercom settings merged into
@@ -151,6 +162,54 @@ export interface IntercomOptions {
 	/** Intercom loader URL. */
 	scriptSrc?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link intercom}. The app ID must
+ * already be trimmed and non-empty.
+ */
+export const resolveIntercomManifest = function resolveIntercomManifest({
+	appId,
+	region = 'us',
+	apiBase = INTERCOM_API_BASES[region],
+	settings,
+}: Omit<IntercomOptions, 'scriptSrc'>): ResolvedManifest {
+	return getCompiledManifest(intercomManifest, {
+		appId,
+		settings: {
+			...(settings ?? {}),
+			api_base: apiBase,
+			app_id: appId,
+		},
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `settings`, which can carry visitor identity, a custom
+ * `apiBase` and `scriptSrc` stay npm-only. Marked pure so a bundler drops it
+ * from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'intercom',
+		{
+			appId: {
+				example: 'abc12345',
+				kind: 'id',
+				label: 'App ID',
+				pattern: '^[a-z0-9]+$',
+				required: true,
+			},
+			region: {
+				default: 'us',
+				kind: 'enum',
+				label: 'Region',
+				values: ['us', 'eu', 'au'],
+			},
+		},
+		resolveIntercomManifest
+	);
 
 /**
  * Creates an Intercom messenger script.
@@ -173,9 +232,8 @@ export interface IntercomOptions {
  */
 export const intercom = function intercom({
 	appId,
-	apiBase = INTERCOM_API_BASES.us,
-	settings,
 	scriptSrc,
+	...options
 }: IntercomOptions): Script {
 	const normalizedAppId = readId(appId);
 	if (normalizedAppId === undefined) {
@@ -185,15 +243,10 @@ export const intercom = function intercom({
 		});
 	}
 
-	return resolveManifest(intercomManifest, {
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			`https://widget.intercom.io/widget/${normalizedAppId}`
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveIntercomManifest({ ...options, appId: normalizedAppId })
 		),
-		settings: {
-			...(settings ?? {}),
-			api_base: apiBase,
-			app_id: normalizedAppId,
-		},
-	});
+		scriptSrc
+	);
 };

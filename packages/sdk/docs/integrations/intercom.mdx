@@ -11,7 +11,7 @@ The `intercom` helper keeps the Intercom Messenger off the page until `functiona
 
 ## Configure Intercom
 
-Copy `app_id` from your Intercom snippet and remove the original snippet from your app. Set `apiBase` if your workspace is hosted in the EU or Australia.
+Copy `app_id` from your Intercom snippet and remove the original snippet from your app. Set `region` if your workspace is hosted in the EU or Australia.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -30,7 +30,8 @@ export const scripts = [intercom({ appId: 'YOUR_APP_ID' })];
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `appId` | Required | Trimmed and used for `app_id` and the loader URL. Empty or whitespace-only values log an error and skip loading. |
-| `apiBase` | `https://api-iam.intercom.io` | Regional API base. `INTERCOM_API_BASES` from `@inth/integrations/intercom` exports `us`, `eu`, and `au`. |
+| `region` | `us` | `us`, `eu` or `au`. Picks the API base from `INTERCOM_API_BASES`, exported by `@inth/integrations/intercom`. |
+| `apiBase` | The API base of `region` | Regional API base URL. Wins over `region`. |
 | `settings` | None | Extra JSON-serializable fields merged into `window.intercomSettings`. `appId` and `apiBase` override any `app_id` or `api_base` here. |
 | `scriptSrc` | `https://widget.intercom.io/widget/<appId>` | Loader URL override. Blank values use the default. |
 

@@ -1,10 +1,12 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -22,8 +24,7 @@ export const optimizelyWebManifest = {
 	install: [
 		{
 			async: false,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://cdn.optimizely.com/js/{{projectId}}.js',
 			type: 'loadScript',
 		},
 	],
@@ -56,6 +57,41 @@ export interface OptimizelyWebOptions {
 }
 
 const PROJECT_ID_PATTERN = /^\d+$/u;
+
+/**
+ * Builds the serializable manifest behind {@link optimizelyWeb}. The project
+ * ID must already be a trimmed project number.
+ */
+export const resolveOptimizelyWebManifest =
+	function resolveOptimizelyWebManifest({
+		projectId,
+	}: {
+		projectId: string;
+	}): ResolvedManifest {
+		return getCompiledManifest(optimizelyWebManifest, { projectId });
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; a custom consent condition, `scriptSrc` and the CSP nonce stay
+ * npm-only. Marked pure so a bundler drops it from an npm bundle that never
+ * reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'optimizelyWeb',
+		{
+			projectId: {
+				example: '12345678',
+				kind: 'id',
+				label: 'Project ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+		},
+		resolveOptimizelyWebManifest
+	);
 
 /**
  * Creates an Optimizely Web snippet gated on experience consent.
@@ -91,12 +127,10 @@ export const optimizelyWeb = function optimizelyWeb(
 	}
 
 	return {
-		...resolveManifest(optimizelyWebManifest, {
-			scriptSrc: resolveScriptUrl(
-				options.scriptSrc,
-				`https://cdn.optimizely.com/js/${projectId}.js`
-			),
-		}),
+		...withScriptUrl(
+			resolvedManifestToScript(resolveOptimizelyWebManifest({ projectId })),
+			options.scriptSrc
+		),
 		category,
 		nonce: trimToUndefined(options.nonce),
 	};

@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -47,8 +49,7 @@ export const crispManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://client.crisp.chat/l.js',
 			type: 'loadScript',
 		},
 	],
@@ -88,7 +89,7 @@ export interface CrispOptions {
 }
 
 const createCrispManifest = function createCrispManifest(
-	options: CrispOptions
+	options: Omit<CrispOptions, 'scriptSrc'>
 ): VendorManifest {
 	const install: VendorManifest['install'] = [
 		{
@@ -160,8 +161,7 @@ const createCrispManifest = function createCrispManifest(
 
 	install.push({
 		async: true,
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-		src: '{{scriptSrc}}',
+		src: 'https://client.crisp.chat/l.js',
 		type: 'loadScript',
 	});
 
@@ -170,6 +170,74 @@ const createCrispManifest = function createCrispManifest(
 		install,
 	};
 };
+
+/**
+ * Builds the serializable manifest behind {@link crisp}. The website ID must
+ * already be trimmed and non-empty.
+ */
+export const resolveCrispManifest = function resolveCrispManifest(
+	options: Omit<CrispOptions, 'scriptSrc'>
+): ResolvedManifest {
+	return getCompiledManifest(createCrispManifest(options), {
+		cookieDomain: options.cookieDomain,
+		cookieExpiry: options.cookieExpiry,
+		locale: options.locale,
+		sessionMerge: options.sessionMerge,
+		tokenId: options.tokenId,
+		websiteId: options.websiteId,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `tokenId` and `sessionMerge`, which belong to one visitor's
+ * session, and `scriptSrc` stay npm-only. Marked pure so a bundler drops it
+ * from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'crisp',
+		{
+			cookieDomain: {
+				example: 'example.com',
+				kind: 'id',
+				label: 'Cookie domain',
+				pattern:
+					'^\\.?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$',
+				required: false,
+			},
+			cookieExpiry: {
+				example: 15_552_000,
+				integer: true,
+				kind: 'number',
+				label: 'Cookie lifetime in seconds',
+				min: 1,
+				required: false,
+			},
+			locale: {
+				example: 'en',
+				kind: 'id',
+				label: 'Locale',
+				pattern: '^[a-z]{2,3}(?:-[a-z]{2,4})?$',
+				required: false,
+			},
+			safeMode: {
+				default: false,
+				kind: 'boolean',
+				label: 'Safe mode',
+			},
+			websiteId: {
+				example: '6a3c2f1e-8b4d-4c7a-9e5f-0d1b2c3a4e5f',
+				kind: 'id',
+				label: 'Website ID',
+				pattern:
+					'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+				required: true,
+			},
+		},
+		resolveCrispManifest
+	);
 
 /**
  * Creates a Crisp chat script.
@@ -199,16 +267,11 @@ export const crisp = function crisp(options: CrispOptions): Script {
 		});
 	}
 
-	return resolveManifest(createCrispManifest(options), {
-		cookieDomain: options.cookieDomain,
-		cookieExpiry: options.cookieExpiry,
-		locale: options.locale,
-		scriptSrc: resolveScriptUrl(
-			options.scriptSrc,
-			'https://client.crisp.chat/l.js'
+	const { scriptSrc, ...manifestOptions } = options;
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveCrispManifest({ ...manifestOptions, websiteId })
 		),
-		sessionMerge: options.sessionMerge,
-		tokenId: options.tokenId,
-		websiteId,
-	});
+		scriptSrc
+	);
 };

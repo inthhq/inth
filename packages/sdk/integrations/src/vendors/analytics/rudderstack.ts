@@ -1,17 +1,17 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
+import { isHostname } from '../_shared/hostname';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 import {
 	httpsScriptUrl,
 	isHttpsUrl,
-	resolveScriptUrl,
+	withScriptUrl,
 } from '../_shared/script-url';
-
-const DEFAULT_RUDDERSTACK_SCRIPT_URL =
-	'https://cdn.rudderlabs.com/v3/modern/rsa.min.js';
 
 export const RUDDERSTACK_QUEUE_METHODS = [
 	'setDefaultInstanceKey',
@@ -268,8 +268,7 @@ export const rudderstackManifest = {
 				'data-rsa-write-key': '{{writeKey}}',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.rudderlabs.com/v3/modern/rsa.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -324,16 +323,39 @@ export interface RudderStackConsentManagementOptions {
 	mapping: Partial<Record<RudderStackConsentCategory, string[]>>;
 }
 
-export interface RudderStackOptions {
+/** The data plane as a full URL. */
+export interface RudderStackDataPlaneUrl {
+	/**
+	 * RudderStack HTTPS data plane URL. Wins over `dataPlaneHost`.
+	 */
+	dataPlaneUrl: string;
+	dataPlaneHost?: string;
+}
+
+/** The data plane as a hostname, served over HTTPS at its root. */
+export interface RudderStackDataPlaneHost {
+	dataPlaneUrl?: undefined;
+	/**
+	 * Hostname of the RudderStack data plane, such as
+	 * `example.dataplane.rudderstack.com`, with no scheme, port or path. The
+	 * SDK sends events to `https://<dataPlaneHost>`.
+	 */
+	dataPlaneHost: string;
+}
+
+/**
+ * RudderStack options: the data plane as a URL or as a hostname. When both
+ * are set, `dataPlaneUrl` wins.
+ */
+export type RudderStackOptions = RudderStackSourceOptions &
+	(RudderStackDataPlaneUrl | RudderStackDataPlaneHost);
+
+/** The source and how the SDK loads. */
+export interface RudderStackSourceOptions {
 	/**
 	 * RudderStack source write key.
 	 */
 	writeKey: string;
-
-	/**
-	 * RudderStack HTTPS data plane URL.
-	 */
-	dataPlaneUrl: string;
 
 	/**
 	 * Opt into RudderStack's pre-consent mode with Inth as the consent
@@ -464,70 +486,23 @@ const buildPreConsentLoadOptions = function buildPreConsentLoadOptions(
 };
 
 /**
- * Creates a RudderStack JavaScript SDK script.
+ * Builds the serializable manifest behind {@link rudderstack}. The write key
+ * must already be trimmed, and the data plane a valid https URL or hostname.
  *
- * @see https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-javascript-sdk/quickstart/
- *
- * @throws {Error} When `scriptUrl` is not HTTPS or `consentManagement` is
- *   invalid.
- *
- * @remarks
- * When `writeKey` or `dataPlaneUrl` is missing or blank, or `dataPlaneUrl`
- * is not an HTTPS URL, the helper logs the problem with `console.error` and
- * returns a script that never loads.
- *
- * RudderStack collects customer behavior and sends it to destinations through
- * your configured data plane. By default Inth gates the browser SDK on
- * `measurement` consent and unloads it when that consent is revoked.
- * `loadOptions` is passed directly as the third `load()` argument and must be
- * JSON-serializable.
- *
- * Pass `consentManagement` to opt into RudderStack's pre-consent mode instead:
- * the SDK loads immediately with no persistent storage and buffered events,
- * and Inth signals every consent decision through `rudderanalytics.consent()`
- * with your mapped consent IDs — preserving pre-consent event attribution for
- * users who consent. Requires consent IDs on every RudderStack destination.
- *
- * @example
- * ```ts
- * import { rudderstack } from '@inth/integrations/rudderstack';
- *
- * rudderstack({
- * 	writeKey: 'WRITE_KEY',
- * 	dataPlaneUrl: 'https://example.dataplane.rudderstack.com',
- * 	loadOptions: {
- * 		useBeacon: true,
- * 	},
- * });
- * ```
+ * @throws {Error} When `consentManagement` is invalid.
  */
-export const rudderstack = function rudderstack({
+export const resolveRudderstackManifest = function resolveRudderstackManifest({
 	writeKey,
 	dataPlaneUrl,
+	dataPlaneHost,
 	consentManagement,
 	loadOptions = {},
 	trackPageView = true,
-	scriptUrl,
-}: RudderStackOptions): Script {
-	const normalizedWriteKey = readId(writeKey);
-	if (normalizedWriteKey === undefined) {
-		return skipMissingId('rudderstack', 'writeKey', skippedRudderstackScript);
-	}
-	const normalizedDataPlaneUrl = readId(dataPlaneUrl);
-	if (normalizedDataPlaneUrl === undefined) {
-		return skipMissingId(
-			'rudderstack',
-			'dataPlaneUrl',
-			skippedRudderstackScript
-		);
-	}
-	if (!isHttpsUrl(normalizedDataPlaneUrl)) {
-		return skipScript(
-			'rudderstack: dataPlaneUrl must be a valid https URL',
-			skippedRudderstackScript
-		);
-	}
-
+}: Omit<RudderStackSourceOptions, 'scriptUrl'> &
+	(
+		| { dataPlaneUrl: string; dataPlaneHost?: string }
+		| { dataPlaneUrl?: undefined; dataPlaneHost: string }
+	)): ResolvedManifest {
 	let manifest: VendorManifest = rudderstackManifest;
 	let resolvedLoadOptions = loadOptions;
 
@@ -562,13 +537,128 @@ export const rudderstack = function rudderstack({
 		} satisfies VendorManifest;
 	}
 
-	return resolveManifest(manifest, {
-		dataPlaneUrl: normalizedDataPlaneUrl,
+	return getCompiledManifest(manifest, {
+		dataPlaneUrl: dataPlaneUrl ?? `https://${dataPlaneHost}`,
 		loadOptions: resolvedLoadOptions,
-		scriptUrl: resolveScriptUrl(
-			httpsScriptUrl('rudderstack', scriptUrl),
-			DEFAULT_RUDDERSTACK_SCRIPT_URL
-		),
-		writeKey: normalizedWriteKey,
+		writeKey,
 	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; a data plane URL with a port or path, `loadOptions`,
+ * `consentManagement` and `scriptUrl` stay npm-only. Marked pure so a bundler
+ * drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'rudderstack',
+		{
+			// The data plane receives events; the SDK itself always loads from
+			// RudderStack's CDN.
+			dataPlaneHost: {
+				example: 'example.dataplane.rudderstack.com',
+				kind: 'hostname',
+				label: 'Data plane hostname',
+				required: true,
+			},
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+			writeKey: {
+				example: '2AbCdEfGhIjKlMnOpQrStUvWxYz',
+				kind: 'id',
+				label: 'Write key',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveRudderstackManifest
+	);
+
+/**
+ * Creates a RudderStack JavaScript SDK script.
+ *
+ * @see https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-javascript-sdk/quickstart/
+ *
+ * @throws {Error} When `scriptUrl` is not HTTPS or `consentManagement` is
+ *   invalid.
+ *
+ * @remarks
+ * When `writeKey` is missing or blank, both `dataPlaneUrl` and
+ * `dataPlaneHost` are, `dataPlaneUrl` is not an HTTPS URL, or `dataPlaneHost`
+ * is not a hostname, the helper logs the problem with `console.error` and
+ * returns a script that never loads.
+ *
+ * RudderStack collects customer behavior and sends it to destinations through
+ * your configured data plane. By default Inth gates the browser SDK on
+ * `measurement` consent and unloads it when that consent is revoked.
+ * `loadOptions` is passed directly as the third `load()` argument and must be
+ * JSON-serializable.
+ *
+ * Pass `consentManagement` to opt into RudderStack's pre-consent mode instead:
+ * the SDK loads immediately with no persistent storage and buffered events,
+ * and Inth signals every consent decision through `rudderanalytics.consent()`
+ * with your mapped consent IDs — preserving pre-consent event attribution for
+ * users who consent. Requires consent IDs on every RudderStack destination.
+ *
+ * @example
+ * ```ts
+ * import { rudderstack } from '@inth/integrations/rudderstack';
+ *
+ * rudderstack({
+ * 	writeKey: 'WRITE_KEY',
+ * 	dataPlaneUrl: 'https://example.dataplane.rudderstack.com',
+ * 	loadOptions: {
+ * 		useBeacon: true,
+ * 	},
+ * });
+ * ```
+ */
+export const rudderstack = function rudderstack({
+	scriptUrl,
+	dataPlaneUrl: dataPlaneUrlOption,
+	dataPlaneHost: dataPlaneHostOption,
+	...options
+}: RudderStackOptions): Script {
+	const writeKey = readId(options.writeKey);
+	if (writeKey === undefined) {
+		return skipMissingId('rudderstack', 'writeKey', skippedRudderstackScript);
+	}
+
+	let dataPlane: { dataPlaneUrl: string } | { dataPlaneHost: string };
+	const dataPlaneUrl = readId(dataPlaneUrlOption);
+	const dataPlaneHost = readId(dataPlaneHostOption)?.toLowerCase();
+	if (dataPlaneUrl !== undefined) {
+		if (!isHttpsUrl(dataPlaneUrl)) {
+			return skipScript(
+				'rudderstack: dataPlaneUrl must be a valid https URL',
+				skippedRudderstackScript
+			);
+		}
+		dataPlane = { dataPlaneUrl };
+	} else if (dataPlaneHost === undefined) {
+		return skipMissingId(
+			'rudderstack',
+			'dataPlaneUrl',
+			skippedRudderstackScript
+		);
+	} else if (isHostname(dataPlaneHost)) {
+		dataPlane = { dataPlaneHost };
+	} else {
+		return skipScript(
+			'rudderstack: dataPlaneHost must be a hostname with no scheme, port or path',
+			skippedRudderstackScript
+		);
+	}
+
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveRudderstackManifest({ ...options, ...dataPlane, writeKey })
+		),
+		httpsScriptUrl('rudderstack', scriptUrl)
+	);
 };

@@ -35,7 +35,8 @@ export const scripts = [
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `writeKey` | Required | Source write key, trimmed. Blank values log an error and skip loading. |
-| `dataPlaneUrl` | Required | HTTPS data plane URL. Missing, invalid, or non-HTTPS URLs log an error and skip loading. |
+| `dataPlaneUrl` | Required unless `dataPlaneHost` is set | HTTPS data plane URL. Missing, invalid, or non-HTTPS URLs log an error and skip loading. Wins over `dataPlaneHost`. |
+| `dataPlaneHost` | None | Data plane hostname, such as `example.dataplane.rudderstack.com`, with no scheme, port or path. Events go to `https://<dataPlaneHost>`. A remote integration uses this. Anything other than a hostname logs an error and skips loading. |
 | `consentManagement` | None | `{ mapping }` from Inth categories to RudderStack consent IDs. Switches to destination consent mode. |
 | `loadOptions` | `{}` | Third argument to `rudderanalytics.load()`. Must be JSON-serializable. |
 | `trackPageView` | `true` | Queues `rudderanalytics.page()` before the loader. |
