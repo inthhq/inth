@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Script } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import {
 	afterEach,
 	beforeEach,
@@ -11,7 +12,7 @@ import {
 	vi,
 } from 'vite-plus/test';
 
-import { fromRemote } from './__tests__/remote-path';
+import { fromRemote, splitRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
@@ -209,5 +210,72 @@ describe('Default from npm and from the Inth server on one page', () => {
 		expect(error).toHaveBeenCalledWith(
 			'defaultComFormsSdk: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run.'
 		);
+	});
+});
+
+describe('Default Pixel from the Inth server with another key after it started', () => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		for (const key of ['__defaultPixel__', 'posthog']) {
+			Reflect.deleteProperty(window, key);
+		}
+	});
+
+	it('keeps the started Pixel and still loads the other entries in the list', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const debug = vi.fn<(event: { action: string; message: string }) => void>();
+		const pixel = (publicKey: string) =>
+			fromRemote('defaultComPixel', { loadMode: 'always', publicKey });
+		const runtime = createConsentRuntime({
+			mode: Object.assign(
+				() => ({
+					init: () => answer.promise,
+					save: () => Promise.resolve({ ok: true }),
+				}),
+				{ kind: 'custom' as const }
+			),
+			persistence: false,
+			prefetch: {
+				initialScriptRegistry: { load: splitRemote([pixel('inthfake')]).load },
+			},
+			remoteScripts: true,
+			scriptLoader: { onDebug: debug },
+		});
+		try {
+			runtime.start();
+			await vi.waitFor(() =>
+				expect(document.querySelectorAll('script')).toHaveLength(1)
+			);
+			const started = document.querySelector('script');
+
+			answer.resolve({
+				scriptRegistry: {
+					load: splitRemote([
+						pixel('otherkey'),
+						fromRemote('posthog', { id: 'phc_abc123' }),
+					]).load,
+				},
+			});
+
+			await vi.waitFor(() =>
+				expect(document.querySelector('script[src*="posthog"]')).not.toBeNull()
+			);
+			expect(started?.isConnected).toBe(true);
+			expect(
+				document.querySelectorAll(
+					'script[src="https://handshake.default.com/index.js"]'
+				)
+			).toHaveLength(1);
+			expect(window.__defaultPixel__).toMatchObject({ key: 'inthfake' });
+			expect(debug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message:
+						'Remote script default-com does not load: defaultComPixel: Reload the page to change Default Pixel configuration.',
+				})
+			);
+		} finally {
+			runtime.dispose();
+		}
 	});
 });
