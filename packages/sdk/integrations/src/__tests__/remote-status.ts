@@ -43,7 +43,6 @@ export const remoteStatus = {
 	hubspot: adapter,
 	luckyOrange: adapter,
 	pendo: level3,
-	pirsch: level3,
 	sentry: adapterSentry,
 	zendeskWidget: level3,
 } as const satisfies Partial<Record<BuiltInScriptIntegrationKey, RemoteStatus>>;

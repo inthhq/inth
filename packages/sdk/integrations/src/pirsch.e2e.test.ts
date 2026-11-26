@@ -4,12 +4,14 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { pirsch } from './vendors/analytics/pirsch';
 
@@ -69,3 +71,47 @@ describe('pirsch contract', () => {
 		});
 	});
 });
+
+describe.each(npmAndRemote('pirsch', pirsch))(
+	'pirsch contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('loads the extended script with dashboard options after consent', async () => {
+			let attributes: Record<string, string | boolean | null> | undefined;
+			installHeadProbe((node) => {
+				if (node.src.startsWith('https://api.pirsch.io/')) {
+					attributes = {
+						dataCode: node.getAttribute('data-code'),
+						dataDomain: node.getAttribute('data-domain'),
+						defer: node.defer,
+						disablePageViews: node.hasAttribute('data-disable-page-views'),
+						id: node.id,
+						src: node.src,
+					};
+				}
+			});
+			const script = build({
+				disablePageViews: true,
+				domain: ['rollup.example.com'],
+				extended: true,
+				identificationCode: 'PIRSCHCONTRACT',
+			});
+
+			loadScripts([script], ALL_DENIED);
+			await settleScripts();
+			expect(attributes).toBeUndefined();
+
+			loadScripts([script], grantedMeasurementConsents);
+			await settleScripts();
+			expect(attributes).toEqual({
+				dataCode: 'PIRSCHCONTRACT',
+				dataDomain: 'rollup.example.com',
+				defer: true,
+				disablePageViews: true,
+				id: 'pirschextendedjs',
+				src: 'https://api.pirsch.io/pirsch-extended.js',
+			});
+		});
+	}
+);

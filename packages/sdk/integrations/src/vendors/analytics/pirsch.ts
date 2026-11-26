@@ -1,11 +1,14 @@
+/* oxlint-disable unicorn/no-thenable -- `if` steps have a `then` field. */
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { listDataAttribute } from '../_shared/attributes';
+import { levelThreeScript } from '../_shared/level-three';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -23,18 +26,27 @@ declare global {
 	}
 }
 
-const DEFAULT_PIRSCH_SCRIPT_URL = 'https://api.pirsch.io/pa.js';
-const DEFAULT_PIRSCH_EXTENDED_SCRIPT_URL =
-	'https://api.pirsch.io/pirsch-extended.js';
-
 /**
  * Pirsch vendor manifest.
  *
  * Configures Pirsch through script attributes. Pirsch finds the script element
  * by a fixed element id, so the `id` attribute is part of the loader contract.
+ *
+ * pa.js runs `pirschInit()` only from a DOMContentLoaded listener, but Inth
+ * usually inserts the script after that event fired (consent granted after
+ * the page loaded), so custom event bindings would never start. The manifest
+ * calls it once the file loads, exactly when the native listener can no
+ * longer fire.
  */
 export const pirschManifest = {
 	...vendorManifestContract,
+	afterLoad: [
+		{
+			then: [{ global: 'pirschInit', type: 'callGlobal' }],
+			type: 'if',
+			when: { documentReady: true },
+		},
+	],
 	category: 'measurement',
 	install: [
 		{
@@ -50,8 +62,7 @@ export const pirschManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://api.pirsch.io/{{scriptFile}}',
 			type: 'loadScript',
 		},
 	],
@@ -118,26 +129,65 @@ const presenceDataAttribute = function presenceDataAttribute(
 	return undefined;
 };
 
-const getPirschScriptElementId = function getPirschScriptElementId(
-	options: PirschOptions
-): string {
-	if (options.extended === true) {
-		return 'pirschextendedjs';
-	}
-
-	return 'pianjs';
+/**
+ * Builds the serializable manifest behind {@link pirsch}. The identification
+ * code must already be trimmed and non-empty.
+ */
+export const resolvePirschManifest = function resolvePirschManifest(
+	options: Omit<PirschOptions, 'scriptUrl'>
+): ResolvedManifest {
+	const extended = options.extended === true;
+	return getCompiledManifest(pirschManifest, {
+		dev: trimToUndefined(options.dev),
+		disablePageViews: presenceDataAttribute(options.disablePageViews),
+		domain: listDataAttribute(options.domain),
+		eventEndpoint: trimToUndefined(options.eventEndpoint),
+		hitEndpoint: trimToUndefined(options.hitEndpoint),
+		identificationCode: options.identificationCode,
+		scriptElementId: extended ? 'pirschextendedjs' : 'pianjs',
+		scriptFile: extended ? 'pirsch-extended.js' : 'pa.js',
+	});
 };
 
-const getPirschScriptUrl = function getPirschScriptUrl(
-	options: PirschOptions
-): string {
-	const defaultScriptUrl =
-		options.extended === true
-			? DEFAULT_PIRSCH_EXTENDED_SCRIPT_URL
-			: DEFAULT_PIRSCH_SCRIPT_URL;
-
-	return resolveScriptUrl(options.scriptUrl, defaultScriptUrl);
-};
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `dev`, the endpoint overrides and `scriptUrl` stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'pirsch',
+		{
+			disablePageViews: {
+				default: false,
+				kind: 'boolean',
+				label: 'Disable automatic page views',
+			},
+			domain: {
+				example: 'rollup.example.com',
+				kind: 'idList',
+				label: 'Additional dashboard domains',
+				maxItems: 20,
+				pattern:
+					'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$',
+				required: false,
+			},
+			extended: {
+				default: false,
+				kind: 'boolean',
+				label: 'Load the extended script',
+			},
+			identificationCode: {
+				example: 'abcdefghijklmnopqrstuvwxyz012345',
+				kind: 'id',
+				label: 'Identification code',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+		},
+		resolvePirschManifest
+	);
 
 /**
  * Creates a Pirsch Analytics script.
@@ -167,30 +217,8 @@ export const pirsch = function pirsch(options: PirschOptions): Script {
 		});
 	}
 
-	const resolved = resolveManifest(pirschManifest, {
-		dev: trimToUndefined(options.dev),
-		disablePageViews: presenceDataAttribute(options.disablePageViews),
-		domain: listDataAttribute(options.domain),
-		eventEndpoint: trimToUndefined(options.eventEndpoint),
-		hitEndpoint: trimToUndefined(options.hitEndpoint),
-		identificationCode,
-		scriptElementId: getPirschScriptElementId(options),
-		scriptUrl: getPirschScriptUrl(options),
-	});
-
-	// pa.js only runs pirschInit() from a DOMContentLoaded listener, but Inth
-	// usually injects the script after that event has already fired (consent
-	// granted post-load), so custom event bindings would never initialize.
-	// Call it ourselves exactly when the native listener can no longer fire.
-	const manifestOnLoad = resolved.onLoad;
-	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-	resolved.onLoad = (info) => {
-		manifestOnLoad?.(info);
-
-		if (document.readyState !== 'loading') {
-			window.pirschInit?.();
-		}
-	};
-
-	return resolved;
+	return withScriptUrl(
+		levelThreeScript(resolvePirschManifest({ ...options, identificationCode })),
+		options.scriptUrl
+	);
 };

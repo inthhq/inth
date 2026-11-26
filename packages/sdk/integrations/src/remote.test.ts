@@ -165,7 +165,9 @@ const vendorHosts: Record<string, readonly string[]> = {
  * level that runs the features its manifest uses. Every other integration
  * is level 2, since each manifest carries `globals`, which is level 2.
  */
-const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {};
+const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
+	pirsch: 3,
+};
 
 /**
  * Values that cover an option: each enum value, both booleans, the example
@@ -367,7 +369,7 @@ describe('remoteIntegrations', () => {
 				options
 			) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
 
-			expect(manifest.requires).toBe(2);
+			expect(manifest.requires).toBeGreaterThanOrEqual(2);
 			expect(manifest.globals).toEqual(manifestRoots(manifest));
 			expect(
 				manifest.globals.filter((name) => !isDeclarableGlobal(name))

@@ -7,7 +7,8 @@ import {
 	getTestGlobal,
 	setupScriptHelperTest,
 } from '../../__tests__/helpers';
-import { pirsch } from './pirsch';
+import { manifestLevel } from '../../remote';
+import { pirsch, remote } from './pirsch';
 
 describe('pirsch', () => {
 	setupScriptHelperTest();
@@ -106,6 +107,17 @@ describe('pirsch', () => {
 		script.onLoad?.(createCallbackInfo({ id: script.id }));
 
 		expect(pirschInit).not.toHaveBeenCalled();
+	});
+
+	it('needs manifest runtime level 3 for its documentReady check', () => {
+		const manifest = remote.resolve({
+			disablePageViews: false,
+			extended: false,
+			identificationCode: 'PIRSCH-CONTRACT',
+		});
+
+		expect(manifestLevel(manifest)).toBe(3);
+		expect(manifest.requires).toBe(3);
 	});
 
 	it('logs and skips the script for an empty identificationCode', () => {
