@@ -4,17 +4,16 @@ import type { BuiltInScriptIntegrationKey } from '../registry';
  * Why a registry vendor has no `remote` export yet.
  *
  * - `pending`: a later pull request in the remote-scripts stack converts it.
- *   `pr` is its place in the stack: 11 needs the level 3 runtime, 12 and
- *   13 an adapter.
+ *   `pr` is its place in the stack: 12 and 13 need an adapter. The level 2
+ *   (8, 9) and level 3 (11) batches left none pending.
  * - `npm-only`: it stays an npm helper on purpose, for `reason`.
  *
  * The PR that adds a vendor's `remote` export deletes its row here.
  */
 export type RemoteStatus =
-	| { status: 'pending'; pr: 11 | 12 | 13 }
+	| { status: 'pending'; pr: 12 | 13 }
 	| { status: 'npm-only'; reason: string };
 
-const level3 = { pr: 11, status: 'pending' } as const;
 const adapterSentry = { pr: 12, status: 'pending' } as const;
 const adapter = { pr: 13, status: 'pending' } as const;
 
