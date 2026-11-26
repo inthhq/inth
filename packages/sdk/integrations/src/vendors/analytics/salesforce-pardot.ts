@@ -1,8 +1,9 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { pardotConsentScript } from '@inth/sdk/manifest-runtime/adapters/salesforce-pardot';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
 import { defineRemote } from '../../remote-define';
-import { getCompiledManifest, resolveManifest } from '../../resolve';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
 import { isHostname } from '../_shared/hostname';
@@ -20,7 +21,11 @@ declare global {
 	}
 }
 
-/** Account Engagement tracking with its consent queue. */
+/**
+ * Account Engagement tracking with its consent queue, from the tracker
+ * hostname: the site's own tracker domain, or Pardot's. The Salesforce
+ * Pardot adapter in `@inth/sdk` grants tracking once the SDK loads.
+ */
 export const pardotTrackingManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
@@ -41,7 +46,7 @@ export const pardotTrackingManifest = {
 			ifUndefined: false,
 			name: 'piDomain',
 			type: 'setGlobal',
-			value: '{{piDomain}}',
+			value: '{{piHostname}}',
 		},
 		{
 			ifUndefined: false,
@@ -50,14 +55,17 @@ export const pardotTrackingManifest = {
 			type: 'defineStubFunction',
 		},
 		{
-			args: ['create', '{{piAId}}', '{{piCId}}', '{{piDomain}}'],
+			args: ['create', '{{piAId}}', '{{piCId}}', '{{piHostname}}'],
 			global: 'pdt',
 			type: 'callGlobal',
 		},
 		{ args: ['hideConsentBanner', null], global: 'pdt', type: 'callGlobal' },
 		{ args: ['setOptIn', false], global: 'pdt', type: 'callGlobal' },
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: consent mode needs an adapter; its tracker host is the site's own domain
-		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
+		{
+			async: true,
+			src: 'https://{{piHostname}}/pdt.js?aid={{piAId}}',
+			type: 'loadScript',
+		},
 	],
 	onConsentDenied: [
 		{ args: ['revokeConsent'], global: 'pdt', type: 'callGlobal' },
@@ -149,11 +157,39 @@ export const resolvePardotClassicManifest =
 	};
 
 /**
- * What the Inth server may set for this vendor: classic mode only. Consent
- * mode, the helper's default, grants once per consent cycle after its SDK
- * loads and replays saved configuration for a late download, which needs
- * an adapter, so `mode` offers `classic` alone. `category` and `scriptUrl`
- * stay npm-only. Marked pure so a bundler drops it from an npm bundle that
+ * Builds the serializable manifest for {@link pardotTracking} in consent
+ * mode: the consent queue on `piHostname`, and the Salesforce Pardot
+ * adapter. The IDs must already be positive integers and `piHostname` a
+ * lowercase hostname. The npm helper and the Inth server both build it
+ * here.
+ */
+export const resolvePardotConsentManifest =
+	function resolvePardotConsentManifest({
+		piAId,
+		piCId,
+		piHostname,
+	}: {
+		piAId: string | number;
+		piCId: string | number;
+		piHostname: string;
+	}): ResolvedManifest {
+		return {
+			...getCompiledManifest(pardotTrackingManifest, {
+				piAId: Number(piAId),
+				piCId: Number(piCId),
+				piHostname,
+			}),
+			adapter: { id: 'salesforce-pardot', options: {} },
+			requires: 4,
+		};
+	};
+
+/**
+ * What the Inth server may set for this vendor, in either mode. Consent
+ * mode, the default as in the helper, loads `pdt.js` from the tracker
+ * hostname, which defaults to Pardot's own host as in classic mode; the
+ * helper requires it in consent mode. `category` and `scriptUrl` stay
+ * npm-only. Marked pure so a bundler drops it from an npm bundle that
  * never reads it.
  */
 export const remote =
@@ -162,10 +198,10 @@ export const remote =
 		'pardotTracking',
 		{
 			mode: {
-				default: 'classic',
+				default: 'consent',
 				kind: 'enum',
 				label: 'Tracking mode',
-				values: ['classic'],
+				values: ['consent', 'classic'],
 			},
 			piAId: {
 				example: '123456',
@@ -182,24 +218,19 @@ export const remote =
 				required: true,
 			},
 			piHostname: {
-				example: 'pi.pardot.com',
+				example: 'go.example.com',
 				kind: 'hostname',
 				label: 'Tracker hostname',
 				required: false,
 			},
 		},
-		resolvePardotClassicManifest
+		({ mode, piAId, piCId, piHostname = 'pi.pardot.com' }) =>
+			mode === 'classic'
+				? resolvePardotClassicManifest({ piAId, piCId, piHostname })
+				: resolvePardotConsentManifest({ piAId, piCId, piHostname })
 	);
 
 const reusePardotTracking = createScriptReuse<PardotTrackingOptions>();
-
-interface PardotSdkLifecycle {
-	queue: IArguments[];
-	queueConsumed: boolean;
-	restoreConsent?: () => void;
-}
-
-const sdkLifecycles = new WeakMap<Document, PardotSdkLifecycle>();
 
 /**
  * Loads Account Engagement after the mapped consent is granted.
@@ -270,83 +301,8 @@ export const pardotTracking = function pardotTracking(
 		options.scriptUrl,
 		`https://${domain}/pdt.js?aid=${Number(piAId)}`
 	);
-	const create = (config: PardotTrackingOptions): Script => {
-		const script = resolveManifest(pardotTrackingManifest, {
-			piAId: Number(piAId),
-			piCId: Number(piCId),
-			piDomain: domain,
-			scriptUrl,
-		});
-		let hasConsent = false;
-		let loaded = false;
-		let started = false;
-		let sdkLifecycle: PardotSdkLifecycle | undefined;
-		const restoreConsent = () => {
-			if (loaded && hasConsent && started) {
-				window.pdt?.('setOptIn', true);
-			}
-		};
-		const grant = (info: ScriptCallbackInfo): void => {
-			if (loaded && hasConsent && info.element?.isConnected && !started) {
-				started = true;
-				script.onLoad?.(info);
-			}
-		};
-		return {
-			...script,
-			category: config.category ?? 'marketing',
-			// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion: consent mode needs an adapter
-			onBeforeLoad(info) {
-				({ hasConsent } = info);
-				if (hasConsent) {
-					script.onBeforeLoad?.(info);
-					sdkLifecycle = sdkLifecycles.get(document);
-					if (!sdkLifecycle) {
-						sdkLifecycle = { queue: [], queueConsumed: false };
-						sdkLifecycles.set(document, sdkLifecycle);
-					}
-					sdkLifecycle.queue = window.pdt?.cq?.slice() ?? [];
-					sdkLifecycle.queueConsumed = false;
-					sdkLifecycle.restoreConsent = restoreConsent;
-					const lifecycle = sdkLifecycle;
-					// A disposed download can still execute after a replacement loads.
-					// Every execution after the first needs its own tracker configuration.
-					info.element?.addEventListener(
-						'load',
-						() => {
-							if (lifecycle.queueConsumed) {
-								for (const args of lifecycle.queue) {
-									window.pdt?.(...Array.from(args));
-								}
-							}
-							lifecycle.queueConsumed = true;
-							lifecycle.restoreConsent?.();
-						},
-						{ once: true }
-					);
-				}
-			},
-			onConsentChange(info) {
-				({ hasConsent } = info);
-				if (!hasConsent) {
-					started = false;
-				}
-				script.onConsentChange?.(info);
-				grant(info);
-			},
-			onDispose() {
-				if (sdkLifecycle?.restoreConsent === restoreConsent) {
-					sdkLifecycle.restoreConsent = undefined;
-				}
-			},
-			onLoad(info) {
-				loaded = true;
-				if (info.hasConsent) {
-					grant(info);
-				}
-			},
-		};
-	};
+	// Equal options share one script, so its registrations share one
+	// consent cycle: npm-only, since the Inth server sends one registration.
 	return reusePardotTracking(
 		{
 			category,
@@ -355,6 +311,16 @@ export const pardotTracking = function pardotTracking(
 			piDomain: domain,
 			scriptUrl,
 		},
-		create
+		(config) => {
+			const { adapter: _adapter, ...manifest } = resolvePardotConsentManifest({
+				piAId,
+				piCId,
+				piHostname: domain,
+			});
+			return pardotConsentScript({
+				...withScriptUrl(resolvedManifestToScript(manifest), config.scriptUrl),
+				category: config.category ?? 'marketing',
+			});
+		}
 	);
 };

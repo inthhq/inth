@@ -21,6 +21,7 @@ export type InitFile =
 	| 'adapter-gainsight-px'
 	| 'adapter-lucky-orange'
 	| 'adapter-oracle-eloqua'
+	| 'adapter-salesforce-pardot'
 	| 'adapter-sentry';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
@@ -31,6 +32,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
 	'adapter-lucky-orange': '__inthAdapterLuckyOrangeSrc',
 	'adapter-oracle-eloqua': '__inthAdapterOracleEloquaSrc',
+	'adapter-salesforce-pardot': '__inthAdapterSalesforcePardotSrc',
 	'adapter-sentry': '__inthAdapterSentrySrc',
 	commit: '__inthCommitSrc',
 	dialog: '__inthDialogSrc',

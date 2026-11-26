@@ -39,6 +39,8 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   same way.
  * - `dist/inth.adapter-oracle-eloqua.js` — the Oracle Eloqua adapter, the
  *   same way.
+ * - `dist/inth.adapter-salesforce-pardot.js` — the Salesforce Pardot adapter,
+ *   the same way.
  * - `dist/inth.adapter-sentry.js` — the Sentry adapter, which the engine
  *   loads beside the manifest runtime only when a manifest names it.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
@@ -89,6 +91,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.manifests3',
 	'inth.adapter-activecampaign',
 	'inth.adapter-oracle-eloqua',
+	'inth.adapter-salesforce-pardot',
 	'inth.adapter-sentry',
 	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
@@ -272,6 +275,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-oracle-eloqua',
 			'./src/entries/cdn-adapter-oracle-eloqua.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-salesforce-pardot',
+			'./src/entries/cdn-adapter-salesforce-pardot.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(

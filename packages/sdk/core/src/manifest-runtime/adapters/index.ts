@@ -18,6 +18,8 @@ const ADAPTER_MODULES: Record<
 	'lucky-orange': async () =>
 		(await import('./lucky-orange')).luckyOrangeAdapter,
 	'oracle-eloqua': async () => (await import('./oracle-eloqua')).eloquaAdapter,
+	'salesforce-pardot': async () =>
+		(await import('./salesforce-pardot')).pardotAdapter,
 	sentry: async () => (await import('./sentry')).sentryAdapter,
 };
 

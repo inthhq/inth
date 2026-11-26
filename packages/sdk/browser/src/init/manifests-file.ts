@@ -43,6 +43,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	'gainsight-px': '__inthAdapterGainsightPx',
 	'lucky-orange': '__inthAdapterLuckyOrange',
 	'oracle-eloqua': '__inthAdapterOracleEloqua',
+	'salesforce-pardot': '__inthAdapterSalesforcePardot',
 	sentry: '__inthAdapterSentry',
 };
 

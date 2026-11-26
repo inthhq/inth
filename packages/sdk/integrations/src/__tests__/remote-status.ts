@@ -53,13 +53,7 @@ export const remoteStatus = {
  * registry key, then by the value of its `mode` option, and why. The remote
  * definition's `mode` enum must not offer them.
  */
-export const remoteModeStatus = {
-	pardotTracking: {
-		// Consent mode grants once per consent cycle after its SDK loads, and
-		// replays saved configuration when a disposed download runs late.
-		consent: adapter,
-	},
-} as const satisfies Partial<
+export const remoteModeStatus = {} as const satisfies Partial<
 	Record<BuiltInScriptIntegrationKey, Record<string, RemoteStatus>>
 >;
 

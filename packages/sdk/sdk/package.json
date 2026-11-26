@@ -216,6 +216,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/oracle-eloqua.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/oracle-eloqua.js"
 		},
+		"./manifest-runtime/adapters/salesforce-pardot": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/salesforce-pardot.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/salesforce-pardot.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/salesforce-pardot.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

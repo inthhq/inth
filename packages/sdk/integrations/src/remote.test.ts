@@ -86,8 +86,6 @@ const npmHelper = function npmHelper(
  */
 const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
 	gtag: ['category'],
-	// The helper defaults to consent mode, which the server does not send.
-	pardotTracking: ['mode'],
 };
 
 /**
@@ -120,6 +118,15 @@ const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
 const dashboardToNpm: Partial<
 	Record<BuiltInScriptIntegrationKey, (options: Options) => Options>
 > = {
+	// Pardot's consent mode takes its tracker hostname as piDomain, and
+	// requires it; the remote form defaults it to Pardot's host.
+	pardotTracking: (options) => {
+		if (options.mode === 'classic') {
+			return options;
+		}
+		const { piHostname = 'pi.pardot.com', ...rest } = options;
+		return { ...rest, piDomain: piHostname };
+	},
 	sentry: ({
 		ingestRegion,
 		organizationId,
@@ -149,6 +156,14 @@ const npmInput = function npmInput(key: string, options: Options): Options {
 		}
 	}
 	return input;
+};
+
+/**
+ * Hostname options whose value an integration may load its script from:
+ * the customer's own tracker domain.
+ */
+const hostOptions: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
+	pardotTracking: 'piHostname',
 };
 
 /** Hosts each integration may load its script from. */
@@ -219,8 +234,9 @@ const vendorHosts: Record<string, readonly string[]> = {
 
 /**
  * The manifest runtime level of each integration above level 2: the lowest
- * level that runs the features its manifest uses. Every other integration
- * is level 2, since each manifest carries `globals`, which is level 2.
+ * level that runs the features its manifest uses, or that level for the
+ * options a dashboard saved. Every other integration is level 2, since
+ * each manifest carries `globals`, which is level 2.
  */
 const vendorLevels: Partial<
 	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
@@ -233,6 +249,8 @@ const vendorLevels: Partial<
 	fullStory: 4,
 	gainsightPx: 4,
 	luckyOrange: 4,
+	// Classic mode is a plain manifest; consent mode names an adapter.
+	pardotTracking: ({ mode }) => (mode === 'classic' ? 2 : 4),
 	pendo: 3,
 	pirsch: 3,
 	sentry: 4,
@@ -457,7 +475,11 @@ describe('remoteIntegrations', () => {
 
 		const listed = vendorLevels[key as BuiltInScriptIntegrationKey];
 		expect(manifestLevel(manifest)).toBe(
-			typeof listed === 'function' ? listed(options) : (listed ?? 2)
+			typeof listed === 'function'
+				? listed(
+						withDefaults(remoteIntegrations[key] as RemoteIntegration, options)
+					)
+				: (listed ?? 2)
 		);
 	});
 
@@ -585,7 +607,11 @@ describe('remoteIntegrations', () => {
 			expect(src).toBeDefined();
 			const url = new URL(src as string);
 			expect(url.protocol).toBe('https:');
-			expect(vendorHosts[key]).toContain(url.host);
+			const hostOption = hostOptions[key as BuiltInScriptIntegrationKey];
+			expect([
+				...(vendorHosts[key] ?? []),
+				...(hostOption === undefined ? [] : [options[hostOption]]),
+			]).toContain(url.host);
 		}
 	);
 

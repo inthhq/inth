@@ -85,3 +85,21 @@ describe('the Oracle Eloqua adapter', () => {
 		}
 	});
 });
+
+describe('the Salesforce Pardot adapter', () => {
+	it('ships at level 4 and loads by its ID', async () => {
+		expect(ADAPTER_LEVELS['salesforce-pardot']).toBe(4);
+		expect((await importAdapter('salesforce-pardot')).id).toBe(
+			'salesforce-pardot'
+		);
+	});
+
+	it('takes no options: the account and tracker host are in the steps', async () => {
+		const adapter = await importAdapter('salesforce-pardot');
+
+		expect(adapter.problem({})).toBeUndefined();
+		expect(adapter.problem({ piHostname: 'go.example.com' })).toBe(
+			'it has the unknown option piHostname'
+		);
+	});
+});

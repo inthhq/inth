@@ -243,6 +243,7 @@ export const ADAPTER_LEVELS = {
 	'gainsight-px': 4,
 	'lucky-orange': 4,
 	'oracle-eloqua': 4,
+	'salesforce-pardot': 4,
 	sentry: 4,
 } as const satisfies Readonly<Record<string, Level>>;
 

@@ -170,6 +170,11 @@
 			"import": "./dist/manifest-runtime/adapters/oracle-eloqua.js",
 			"default": "./dist/manifest-runtime/adapters/oracle-eloqua.js"
 		},
+		"./manifest-runtime/adapters/salesforce-pardot": {
+			"types": "./dist-types/manifest-runtime/adapters/salesforce-pardot.d.ts",
+			"import": "./dist/manifest-runtime/adapters/salesforce-pardot.js",
+			"default": "./dist/manifest-runtime/adapters/salesforce-pardot.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

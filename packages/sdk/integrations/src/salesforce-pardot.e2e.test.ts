@@ -10,7 +10,7 @@ import {
 	vi,
 } from 'vite-plus/test';
 
-import { npmAndRemote } from './__tests__/remote-path';
+import { fromRemote, npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -438,6 +438,61 @@ describe.each(npmAndRemote('pardotTracking', pardotTracking))(
 			expect(window.piCId).toBe(654_321);
 			expect(window.piHostname).toBe('go.example.com');
 			expect(window.pdt).toBeUndefined();
+		});
+	}
+);
+
+describe.each([
+	[
+		'npm helper',
+		(piHostname: string) =>
+			pardotTracking({
+				piAId: '123456',
+				piCId: '654321',
+				piDomain: piHostname,
+			}),
+	],
+	[
+		'remote manifest',
+		// A dashboard saves the tracker domain as the tracker hostname.
+		(piHostname: string) =>
+			fromRemote('pardotTracking', {
+				piAId: '123456',
+				piCId: '654321',
+				piHostname,
+			}),
+	],
+] as const)(
+	'Salesforce Account Engagement consent dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			clearAllScripts();
+			for (const name of GLOBALS) {
+				Reflect.deleteProperty(window, name);
+			}
+		});
+
+		it('loads pdt.js from the tracker hostname and sends one page view per consent cycle', async () => {
+			const pageView = vi.fn();
+			const scripts = [build('go.example.com')];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script[src]')).toBeNull();
+			expect(window.pdt).toBeUndefined();
+
+			updateScripts(scripts, granted);
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe('https://go.example.com/pdt.js?aid=123456');
+			expect(window.piDomain).toBe('go.example.com');
+			executeSdk(loader, pageView);
+			expect(pageView).toHaveBeenCalledOnce();
+
+			updateScripts(scripts, unrelated);
+			updateScripts(scripts, granted);
+			expect(pageView).toHaveBeenCalledTimes(2);
+			expect(getLoader()).toBe(loader);
 		});
 	}
 );
