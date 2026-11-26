@@ -10,7 +10,7 @@ import {
 	matchedResolution,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createV1HostedTransport } from '../hosted';
-import { KEY, recordAnswer } from './fixtures';
+import { KEY, recordAnswer, THIS_LEVEL_METADATA } from './fixtures';
 
 afterEach(() => {
 	vi.useRealTimers();
@@ -128,7 +128,10 @@ describe('initialData', () => {
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			headers: { 'sec-gpc': '1' },
 			initUrl: '/internal/consent/init',
-			initialData: Promise.resolve({ init: REALISTIC_INIT_OUTPUT }),
+			initialData: Promise.resolve({
+				init: REALISTIC_INIT_OUTPUT,
+				metadata: THIS_LEVEL_METADATA,
+			}),
 			projectUrl: 'https://api.example.com/inth',
 		});
 

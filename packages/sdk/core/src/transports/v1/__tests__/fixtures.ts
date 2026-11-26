@@ -1,5 +1,7 @@
 import { vi } from 'vite-plus/test';
 
+import { MANIFEST_RUNTIME_LEVEL } from '../../../manifest-runtime/level';
+import type { SSRInitialData } from '../../../options/ssr';
 import type { SavePayload } from '../../../types';
 
 export const PROJECT_URL = 'https://your-project.inth.app';
@@ -8,6 +10,14 @@ export const LEGACY_SUBJECT = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
 export const RECORD = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 export const KEY = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
 export const ACTION_AT = 1_763_467_200_000;
+
+/**
+ * Initial data metadata as a producer at this SDK's level stamps it. Data
+ * that names no level counts as level 1, which a later level fetches again.
+ */
+export const THIS_LEVEL_METADATA = {
+	requestContext: { manifestLevel: MANIFEST_RUNTIME_LEVEL },
+} as SSRInitialData['metadata'];
 
 /** One recorded call to a stubbed `fetch`. */
 export interface FetchCall {

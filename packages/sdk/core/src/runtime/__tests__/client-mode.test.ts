@@ -16,10 +16,14 @@ import {
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
 import { primePrefetchedInitialData } from '../../libs/prefetch/prefetch';
+import { MANIFEST_RUNTIME_LEVEL } from '../../manifest-runtime/level';
 import { hosted, manifest } from '../../modes';
 import { createBrowserManifestTransport } from '../../transports/manifest-browser';
 import type { ProviderTransportContext } from '../../transports/mode';
-import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
+import {
+	recordAnswer,
+	THIS_LEVEL_METADATA,
+} from '../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../transports/v1/hosted';
 import type { InitContext, KernelTransport, SavePayload } from '../../types';
 import {
@@ -153,7 +157,7 @@ describe('clientMode()', () => {
 		};
 
 		expect(await asked({ resolve: 'browser' })).toBe(
-			'/api/inth/v1/consent/manifest?manifestLevel=1'
+			`/api/inth/v1/consent/manifest?manifestLevel=${MANIFEST_RUNTIME_LEVEL}`
 		);
 		expect(
 			await asked({ manifestUrl: '/policy.json', resolve: 'browser' })
@@ -385,6 +389,7 @@ describe('lazyHosted()', () => {
 					location: { countryCode: 'DE', regionCode: null },
 					translations: { language: 'en', translations: { common: {} } },
 				},
+				metadata: THIS_LEVEL_METADATA,
 			} as never),
 			projectUrl: 'https://backend.example',
 			routePrefix: '/api/inth',

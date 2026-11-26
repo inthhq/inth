@@ -9,6 +9,7 @@ import {
 } from 'vite-plus/test';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';
+import { THIS_LEVEL_METADATA } from '../../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../../transports/v1/hosted';
 import type { KernelJourney } from '../../../types';
 import { buildPrefetchScript, primePrefetchedInitialData } from '../prefetch';
@@ -274,6 +275,7 @@ describe('hosted browser prefetch consumption', () => {
 			const transport = createV1HostedTransport({
 				initialData: Promise.resolve({
 					init: await response().json(),
+					metadata: THIS_LEVEL_METADATA,
 				}),
 				projectUrl: '/api/inth',
 			});

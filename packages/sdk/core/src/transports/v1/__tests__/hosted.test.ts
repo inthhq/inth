@@ -8,6 +8,7 @@ import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
+import { MANIFEST_RUNTIME_LEVEL } from '../../../manifest-runtime/level';
 import type { SSRInitialData } from '../../../options/ssr';
 import { InthApiError } from '../error';
 import { createV1HostedTransport } from '../hosted';
@@ -20,6 +21,7 @@ import {
 	savePayload,
 	stubFetch,
 	SUBJECT,
+	THIS_LEVEL_METADATA,
 	v1Error,
 } from './fixtures';
 
@@ -208,7 +210,10 @@ describe('init: GET /v1/consent/init', () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
 			fetch,
-			initialData: Promise.resolve({ init: INIT_OUTPUT }),
+			initialData: Promise.resolve({
+				init: INIT_OUTPUT,
+				metadata: THIS_LEVEL_METADATA,
+			}),
 			projectUrl: PROJECT_URL,
 		});
 
@@ -219,9 +224,13 @@ describe('init: GET /v1/consent/init', () => {
 	});
 
 	test.each([
-		['made for another level', { manifestLevel: 2 }, 1],
-		['made for this level', { manifestLevel: 1 }, 0],
-		['that names no level, made for level 1', {}, 0],
+		[
+			'made for a newer level',
+			{ manifestLevel: MANIFEST_RUNTIME_LEVEL + 1 },
+			1,
+		],
+		['made for this level', { manifestLevel: MANIFEST_RUNTIME_LEVEL }, 0],
+		['that names no level, so level 1', {}, 1],
 	])(
 		'initial data %s answers init only at its level',
 		async (_case, requestContext, requests) => {
