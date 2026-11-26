@@ -482,7 +482,9 @@ export const parseResolvedManifest = function parseResolvedManifest(
 	if (problem === undefined) {
 		return { manifest: value as unknown as ResolvedManifest, ok: true };
 	}
-	return (value.requires as number) >= 3 && !levelThree()
+	const level = typeof value.requires === 'number' ? value.requires : 1;
+	// A level above this SDK's needs code no later download brings.
+	return level >= 3 && level <= MANIFEST_RUNTIME_LEVEL && !levelThree()
 		? { needsCode: true, ok: false, reason: problem }
 		: { ok: false, reason: problem };
 };

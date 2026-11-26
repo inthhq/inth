@@ -275,7 +275,7 @@ describe('parseResolvedManifest', () => {
 			'setupSteps has a step of unknown type "defer"',
 		],
 	])(
-		'refuses %s while the level 3 part is not installed',
+		'refuses %s while the level 3 part is not installed, as needing code',
 		(_label, step, reason) => {
 			expect(
 				parseResolvedManifest({
@@ -283,7 +283,7 @@ describe('parseResolvedManifest', () => {
 					requires: 3,
 					setupSteps: [step],
 				})
-			).toEqual({ ok: false, reason });
+			).toEqual({ needsCode: true, ok: false, reason });
 		}
 	);
 
