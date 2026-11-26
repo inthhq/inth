@@ -39,7 +39,6 @@ export const remoteStatus = {
 	// manifest never reaches the init() path (gorgias.test.ts, "waits for the
 	// real loader proxy contract").
 	gorgiasChat: adapter,
-	hubspot: adapter,
 	// The helper points zE.s at the loader's element on every grant, also when
 	// zE is already a function (the stub of an earlier grant, or the loaded
 	// API on a remount). setGlobalPath walks only object-valued path segments

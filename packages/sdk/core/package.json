@@ -175,6 +175,11 @@
 			"import": "./dist/manifest-runtime/adapters/salesforce-pardot.js",
 			"default": "./dist/manifest-runtime/adapters/salesforce-pardot.js"
 		},
+		"./manifest-runtime/adapters/hubspot": {
+			"types": "./dist-types/manifest-runtime/adapters/hubspot.d.ts",
+			"import": "./dist/manifest-runtime/adapters/hubspot.js",
+			"default": "./dist/manifest-runtime/adapters/hubspot.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

@@ -1,0 +1,735 @@
+/**
+ * The HubSpot adapter: runs HubSpot's tracking code and chat widget under
+ * Inth consent. Before it inserts `#hs-script-loader` it checks for another
+ * HubSpot installation (an element with that ID, or a loader with another
+ * URL, nonce or integrity), and it forwards consent with
+ * `setHubSpotConsent`, every purpose masked to denied while the script's
+ * condition or the vendor switch does not allow HubSpot, and
+ * `revokeCookieConsent` when a purpose is lost. With chat it loads the
+ * widget once functionality is allowed and removes it when it is not.
+ *
+ * A manifest from the Inth server names it as `adapter: { id: 'hubspot' }`
+ * with {@link HubSpotAdapterOptions}; the `hubspot()` helper in
+ * `@inth/integrations` builds its script with the same function, and adds
+ * what only a site's own code can pass: a CSP nonce for the loader.
+ */
+import type {
+	Script,
+	ScriptCallbackInfo,
+} from '../../libs/script-loader/types';
+import type { ManifestAdapter } from '../adapter';
+
+interface HubSpotConsent {
+	advertisement: boolean;
+	analytics: boolean;
+	functionality: boolean;
+}
+
+interface HubSpotCommandQueue {
+	push: (command: unknown[]) => unknown;
+}
+
+interface HubSpotConversationsClient {
+	clear: (options: { resetWidget: boolean }) => void;
+	off: (event: 'widgetLoaded', callback: () => void) => void;
+	on: (event: 'widgetLoaded', callback: () => void) => void;
+	widget: {
+		load: () => void;
+		remove: () => void;
+		status?: () => { loaded: boolean };
+	};
+}
+
+type HubSpotWindow = Window & {
+	_hsp?: HubSpotCommandQueue;
+	_hsq?: HubSpotCommandQueue;
+	disableHubSpotCookieBanner?: boolean;
+	HubSpotConversations?: HubSpotConversationsClient;
+	hsConversationsOnReady?: (() => void)[];
+	hsConversationsSettings?: Record<string, unknown> & {
+		loadImmediately?: boolean;
+	};
+};
+
+/** What a manifest's `adapter.options` hold for HubSpot. */
+export interface HubSpotAdapterOptions {
+	/** The numeric Hub ID, without leading zeros. */
+	portalId: string;
+	/** Whether to run the chat widget once functionality is allowed. */
+	chat: boolean;
+}
+
+/** What only the npm helper passes. */
+export interface HubSpotExtras {
+	/** The CSP nonce for the loader tag the adapter inserts. */
+	nonce?: string;
+}
+
+/**
+ * Whether HubSpot may run: the script's condition holds and the visitor has
+ * not turned the vendor off.
+ */
+const permitted = (
+	info: Pick<ScriptCallbackInfo, 'hasConsent' | 'vendor'>
+): boolean => info.vendor?.granted !== false && info.hasConsent;
+
+const DENIED_CONSENT: HubSpotConsent = {
+	advertisement: false,
+	analytics: false,
+	functionality: false,
+};
+const ownedLoaders = new WeakSet<HTMLScriptElement>();
+const warnedLoaders = new WeakSet<Element>();
+
+const consentFor = function consentFor(
+	info: ScriptCallbackInfo
+): HubSpotConsent {
+	if (!permitted(info)) {
+		return DENIED_CONSENT;
+	}
+	return {
+		advertisement: info.consents.marketing === true,
+		analytics: info.consents.measurement === true,
+		functionality: info.consents.functionality === true,
+	};
+};
+
+const hasLostConsent = function hasLostConsent(
+	previous: HubSpotConsent,
+	next: HubSpotConsent
+): boolean {
+	return (
+		(previous.advertisement && !next.advertisement) ||
+		(previous.analytics && !next.analytics) ||
+		(previous.functionality && !next.functionality)
+	);
+};
+
+interface HubSpotInstallation {
+	portalId: string;
+	src: string;
+	nonce: string | undefined;
+	integrity?: string;
+	crossorigin?: string;
+}
+
+interface HubSpotOwner {
+	chat: boolean;
+	info: ScriptCallbackInfo;
+}
+
+const controllers = new WeakMap<Window, ReturnType<typeof createController>>();
+
+const sameConsent = (left: HubSpotConsent, right: HubSpotConsent) =>
+	left.advertisement === right.advertisement &&
+	left.analytics === right.analytics &&
+	left.functionality === right.functionality;
+
+const currentInfo = (info: ScriptCallbackInfo): ScriptCallbackInfo =>
+	info.getCurrentConsent?.() ?? info;
+
+/**
+ * Whether a loader built for `next` keeps the SRI check `required` asks
+ * for: a required hash or credentials mode must match, or the browser would
+ * run HubSpot without the check its source promised
+ */
+const keepsIntegrity = (
+	required: Pick<HubSpotInstallation, 'crossorigin' | 'integrity'>,
+	next: Pick<HubSpotInstallation, 'crossorigin' | 'integrity'>
+) =>
+	(required.integrity === undefined || required.integrity === next.integrity) &&
+	(required.crossorigin === undefined ||
+		required.crossorigin === next.crossorigin);
+
+const createController = (
+	host: HubSpotWindow,
+	installation: HubSpotInstallation
+) => {
+	const owners = new Map<symbol, Map<symbol, HubSpotOwner>>();
+	const rejected = new Set<symbol>();
+	// Live registrations rejected for a conflicting installation, retried if
+	// this controller is dropped before HubSpot starts.
+	const retries = new Map<symbol, Map<symbol, () => void>>();
+	let consent = DENIED_CONSENT;
+	let started = false;
+	let revision = 0;
+	let client: HubSpotConversationsClient | undefined;
+	let ready: (() => void) | undefined;
+	let widgetLoaded: (() => void) | undefined;
+	let chatRequested = false;
+	let chatClearPending = false;
+	// remove() has no cancellation handle. Retain in-flight knowledge even
+	// after the last registration leaves, until that client's completion.
+	const pendingClients = new WeakSet<HubSpotConversationsClient>();
+	// A client that stops being current with a load in flight keeps a one-shot
+	// guard until it completes, even after chat ownership ends.
+	const pendingGuards = new Map<HubSpotConversationsClient, () => void>();
+	// Clients showing a widget Inth loaded or adopted. Only the current one may.
+	const loadedClients = new WeakSet<HubSpotConversationsClient>();
+	let requestSync: (() => void) | undefined;
+	const readWidgetLoaded = (conversations: HubSpotConversationsClient) => {
+		const loaded = conversations.widget.status?.().loaded === true;
+		if (loaded) {
+			pendingClients.delete(conversations);
+			loadedClients.add(conversations);
+		}
+		return loaded;
+	};
+	let externalConflict = false;
+	let loadSuspensions = 0;
+
+	const aggregate = () => {
+		const active = [...owners.values()].flatMap((entries) => [
+			...entries.values(),
+		]);
+		const states = active.map((owner) => currentInfo(owner.info));
+		return {
+			chat: active.some((owner) => owner.chat),
+			consent:
+				states.length === 0
+					? DENIED_CONSENT
+					: states.map(consentFor).reduce((left, right) => ({
+							advertisement: left.advertisement && right.advertisement,
+							analytics: left.analytics && right.analytics,
+							functionality: left.functionality && right.functionality,
+						})),
+			gate: states.length > 0 && states.every((info) => permitted(info)),
+		};
+	};
+
+	const allowsChat = (state: ReturnType<typeof aggregate>) =>
+		state.chat && state.gate && state.consent.functionality;
+	const removeChat = (conversations: HubSpotConversationsClient) => {
+		const latest = aggregate();
+		chatClearPending = false;
+		if (!latest.chat || allowsChat(latest)) {
+			return;
+		}
+		chatRequested = false;
+		loadedClients.delete(conversations);
+		conversations.widget.remove();
+		conversations.clear({ resetWidget: false });
+	};
+
+	// The current client's own listener handles its completion. Any other late
+	// load follows one rule: only the current client may show Inth's widget.
+	const settleLateLoad = (conversations: HubSpotConversationsClient) => {
+		if (started && conversations === client) {
+			return;
+		}
+		const latest = aggregate();
+		const allowed = allowsChat(latest);
+		if (allowed && host.HubSpotConversations === conversations) {
+			// The page switched back to this client; the next sync adopts it.
+			loadedClients.add(conversations);
+			requestSync?.();
+			return;
+		}
+		loadedClients.delete(conversations);
+		conversations.widget.remove();
+		if (latest.chat && !allowed) {
+			conversations.clear({ resetWidget: false });
+		}
+	};
+
+	const guardPendingLoad = (conversations?: HubSpotConversationsClient) => {
+		if (
+			!conversations ||
+			conversations === client ||
+			!pendingClients.has(conversations) ||
+			pendingGuards.has(conversations)
+		) {
+			return;
+		}
+		const guard = () => {
+			conversations.off('widgetLoaded', guard);
+			pendingGuards.delete(conversations);
+			pendingClients.delete(conversations);
+			settleLateLoad(conversations);
+		};
+		pendingGuards.set(conversations, guard);
+		conversations.on('widgetLoaded', guard);
+	};
+
+	// The current client's own listener takes over its completion.
+	const releasePendingGuard = (conversations: HubSpotConversationsClient) => {
+		const guard = pendingGuards.get(conversations);
+		if (guard) {
+			pendingGuards.delete(conversations);
+			conversations.off('widgetLoaded', guard);
+		}
+	};
+
+	const handOffClient = (
+		previous: HubSpotConversationsClient | undefined,
+		next: HubSpotConversationsClient
+	) => {
+		if (previous && loadedClients.has(previous)) {
+			// Only the current client may show Inth's widget.
+			loadedClients.delete(previous);
+			previous.widget.remove();
+		}
+		guardPendingLoad(previous);
+		releasePendingGuard(next);
+	};
+
+	const detachChat = () => {
+		const previousReady = ready;
+		const previousListener = widgetLoaded;
+		const previousClient = client;
+		ready = undefined;
+		widgetLoaded = undefined;
+		client = undefined;
+		if (previousReady) {
+			const index = host.hsConversationsOnReady?.indexOf(previousReady) ?? -1;
+			if (index !== -1) {
+				host.hsConversationsOnReady?.splice(index, 1);
+			}
+		}
+		if (previousListener) {
+			previousClient?.off('widgetLoaded', previousListener);
+		}
+		guardPendingLoad(previousClient);
+	};
+
+	const loaderAvailable = () => {
+		if (externalConflict) {
+			return false;
+		}
+		const existing = host.document.getElementById('hs-script-loader');
+		if (!existing) {
+			return true;
+		}
+		if (!(existing instanceof HTMLScriptElement)) {
+			if (!warnedLoaders.has(existing)) {
+				warnedLoaders.add(existing);
+				console.warn(
+					'hubspot: #hs-script-loader belongs to a non-script element. HubSpot will not load; remove or rename the conflicting ID and reload.'
+				);
+			}
+			return false;
+		}
+		if (
+			existing.src !== installation.src ||
+			(installation.nonce !== undefined &&
+				existing.nonce !== installation.nonce) ||
+			!keepsIntegrity(installation, {
+				crossorigin: existing.getAttribute('crossorigin') ?? undefined,
+				integrity: existing.getAttribute('integrity') ?? undefined,
+			})
+		) {
+			externalConflict = true;
+			if (!warnedLoaders.has(existing)) {
+				warnedLoaders.add(existing);
+				console.warn(
+					'hubspot: #hs-script-loader has an incompatible URL, nonce or integrity. Consent forwarding and automatic chat will not start. Remove the other installation and reload.'
+				);
+			}
+			return false;
+		}
+		if (!ownedLoaders.has(existing) && !warnedLoaders.has(existing)) {
+			warnedLoaders.add(existing);
+			console.warn(
+				'hubspot: #hs-script-loader already exists. Reusing it; remove other HubSpot installations to keep loading consent-gated.'
+			);
+		}
+		return true;
+	};
+
+	const ensureLoader = () => {
+		if (
+			!aggregate().gate ||
+			!loaderAvailable() ||
+			host.document.getElementById('hs-script-loader')
+		) {
+			return;
+		}
+		const element = host.document.createElement('script');
+		element.async = true;
+		element.defer = true;
+		element.id = 'hs-script-loader';
+		element.src = installation.src;
+		if (installation.nonce) {
+			element.nonce = installation.nonce;
+		}
+		if (installation.integrity) {
+			element.setAttribute('integrity', installation.integrity);
+		}
+		if (installation.crossorigin) {
+			element.setAttribute('crossorigin', installation.crossorigin);
+		}
+		// A copy that fails its integrity check, or a 423 or 410, fires
+		// `error`. Core does not watch this tag, so pass it to each owner.
+		element.addEventListener('error', () => {
+			const error = new Error(`Failed to load script: ${installation.src}`);
+			for (const registrations of owners.values()) {
+				for (const owner of registrations.values()) {
+					owner.info.reportLoadError?.(error);
+				}
+			}
+		});
+		ownedLoaders.add(element);
+		host.document.head.appendChild(element);
+	};
+
+	const syncChat = (refresh: () => void, allowLoad: boolean) => {
+		const token = revision;
+		if (!started) {
+			return;
+		}
+		requestSync = refresh;
+		const state = aggregate();
+		if (!state.chat) {
+			detachChat();
+			return;
+		}
+		const conversations = host.HubSpotConversations;
+		if (!conversations) {
+			if (!ready) {
+				const callback = () => {
+					if (ready !== callback || !started) {
+						return;
+					}
+					const index = host.hsConversationsOnReady?.indexOf(callback) ?? -1;
+					if (index !== -1) {
+						host.hsConversationsOnReady?.splice(index, 1);
+					}
+					ready = undefined;
+					refresh();
+				};
+				ready = callback;
+				host.hsConversationsOnReady ??= [];
+				host.hsConversationsOnReady.push(callback);
+			}
+			return;
+		}
+		if (client !== conversations) {
+			const previousListener = widgetLoaded;
+			const previousClient = client;
+			widgetLoaded = undefined;
+			client = undefined;
+			if (previousListener) {
+				previousClient?.off('widgetLoaded', previousListener);
+			}
+			handOffClient(previousClient, conversations);
+			const loaded = readWidgetLoaded(conversations);
+			if (revision !== token || !started) {
+				return;
+			}
+			client = conversations;
+			chatRequested = loaded;
+			// A retained client may have emitted widgetLoaded before attachment.
+			chatClearPending = true;
+			const callback = () => {
+				if (widgetLoaded !== callback || client !== conversations || !started) {
+					return;
+				}
+				pendingClients.delete(conversations);
+				const latest = aggregate();
+				if (latest.chat && !allowsChat(latest)) {
+					removeChat(conversations);
+				} else if (allowsChat(latest)) {
+					chatRequested = true;
+					loadedClients.add(conversations);
+				}
+			};
+			widgetLoaded = callback;
+			conversations.on('widgetLoaded', callback);
+			if (revision !== token || !started) {
+				return;
+			}
+		}
+		if (chatClearPending) {
+			removeChat(conversations);
+		}
+		if (revision !== token || !started) {
+			return;
+		}
+		const latest = aggregate();
+		if (
+			allowLoad &&
+			allowsChat(latest) &&
+			!chatRequested &&
+			!pendingClients.has(conversations)
+		) {
+			chatRequested = true;
+			pendingClients.add(conversations);
+			conversations.widget.load();
+		}
+	};
+
+	const canStart = (gate: boolean, allowLoad: boolean) =>
+		allowLoad && gate && loaderAvailable();
+	const reconcile = (force: boolean, allowLoad = true) => {
+		if (owners.size === 0) {
+			return;
+		}
+		const canLoad = allowLoad && loadSuspensions === 0;
+		let sendConsent = force;
+		revision += 1;
+		const token = revision;
+		const next = aggregate();
+		if (!started) {
+			if (!canStart(next.gate, canLoad)) {
+				return;
+			}
+			started = true;
+			host.disableHubSpotCookieBanner = true;
+			host._hsq ??= new Array<unknown[]>();
+			host._hsp ??= new Array<unknown[]>();
+			host.hsConversationsSettings = {
+				...host.hsConversationsSettings,
+				loadImmediately: false,
+			};
+			sendConsent = true;
+		}
+		const changed = !sameConsent(consent, next.consent);
+		const revoke = hasLostConsent(consent, next.consent);
+		chatClearPending ||=
+			next.chat && consent.functionality && !next.consent.functionality;
+		// Commit state before calling APIs that can synchronously change consent
+		// or dispose a registration. Every privileged effect rereads the gate.
+		const { consent: nextConsent } = next;
+		consent = nextConsent;
+		const isCurrent = () => {
+			if (revision !== token) {
+				return false;
+			}
+			const latest = aggregate();
+			if (
+				!sameConsent(latest.consent, next.consent) ||
+				latest.gate !== next.gate ||
+				latest.chat !== next.chat
+			) {
+				reconcile(false, canLoad);
+				return false;
+			}
+			return true;
+		};
+		if (revoke) {
+			host._hsp?.push(['revokeCookieConsent']);
+		}
+		if (!isCurrent()) {
+			return;
+		}
+		if (changed || sendConsent) {
+			host._hsp?.push(['setHubSpotConsent', { ...consent }]);
+		}
+		if (!isCurrent()) {
+			return;
+		}
+		syncChat(() => reconcile(false), canLoad);
+		if (!isCurrent()) {
+			return;
+		}
+		if (canLoad) {
+			ensureLoader();
+		}
+	};
+
+	return {
+		/** No owners and nothing started, so a later installation may differ. */
+		idle: () => owners.size === 0 && !started,
+		/** Registrations to retry against a fresh controller. */
+		pendingRetries: () =>
+			[...retries.values()].flatMap((entries) => [...entries.values()]),
+		release(config: symbol, registration: symbol, info: ScriptCallbackInfo) {
+			const pending = retries.get(config);
+			pending?.delete(registration);
+			if (pending?.size === 0) {
+				retries.delete(config);
+			}
+			const registrations = owners.get(config);
+			const owner = registrations?.get(registration);
+			if (!owner) {
+				return;
+			}
+			owner.info = info;
+			// Disposal can observe a queued grant. Apply withdrawal, but start no
+			// new work until the departing registration has been released.
+			loadSuspensions += 1;
+			reconcile(false, false);
+			registrations?.delete(registration);
+			if (registrations?.size === 0) {
+				owners.delete(config);
+			}
+			if (owners.size === 0) {
+				chatRequested = false;
+				detachChat();
+			}
+			if (info.replacing === true) {
+				// The incoming registration will supply its own gate. Keep this
+				// restriction through synchronous callbacks from consent commands.
+				reconcile(false, false);
+				if (info.afterReplacement) {
+					info.afterReplacement(() => {
+						loadSuspensions -= 1;
+						reconcile(false);
+					});
+					return;
+				}
+			}
+			loadSuspensions -= 1;
+			if (owners.size > 0 && info.replacing !== true) {
+				reconcile(false);
+			}
+		},
+		update(
+			config: symbol,
+			registration: symbol,
+			settings: HubSpotInstallation,
+			chat: boolean,
+			info: ScriptCallbackInfo,
+			retry: () => void
+		) {
+			if (
+				settings.portalId !== installation.portalId ||
+				settings.src !== installation.src ||
+				(settings.nonce !== undefined &&
+					settings.nonce !== installation.nonce) ||
+				!keepsIntegrity(settings, installation)
+			) {
+				let pending = retries.get(config);
+				if (!pending) {
+					pending = new Map();
+					retries.set(config, pending);
+				}
+				pending.set(registration, retry);
+				if (!rejected.has(config)) {
+					rejected.add(config);
+					console.warn(
+						'hubspot: conflicting portal, loader URL, explicit nonce or integrity. Keep one compatible HubSpot installation per page; reload to change it. This configuration will not control the installed SDK.'
+					);
+				}
+				return;
+			}
+			let registrations = owners.get(config);
+			if (!registrations) {
+				registrations = new Map();
+				owners.set(config, registrations);
+			}
+			registrations.set(registration, { chat, info });
+			reconcile(true);
+		},
+	};
+};
+
+/**
+ * `base`, the script built from HubSpot's manifest, made to insert the
+ * loader from `base.src` (or the URL `scriptLoader.sources` or the script
+ * registry chose) once HubSpot may run, and to forward consent and run
+ * chat as {@link HubSpotAdapterOptions} say.
+ */
+export const hubspotScript = function hubspotScript(
+	base: Script,
+	{ chat, portalId }: HubSpotAdapterOptions,
+	{ nonce }: HubSpotExtras = {}
+): Script {
+	const script = base;
+	// The adapter inserts the loader itself, in the browser, so a server
+	// render writes no inline start.
+	const { serverStart: _serverStart, ...rest } = base;
+	const config = Symbol('hubspot-configuration');
+	const fallbackRegistration = Symbol('hubspot-registration');
+	const settings = {
+		nonce,
+		portalId,
+		src: script.src as string,
+	};
+	const update = (info: ScriptCallbackInfo) => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		// The loader passes the URL `scriptLoader.sources` or the script
+		// registry chose; the vendor URL captured above is only the default
+		const { source } = info;
+		const installation: HubSpotInstallation = {
+			...settings,
+			src: new URL(source?.src ?? settings.src, document.baseURI).href,
+		};
+		if (source?.integrity) {
+			installation.integrity = source.integrity;
+		}
+		if (source?.crossorigin) {
+			installation.crossorigin = source.crossorigin;
+		}
+		let controller = controllers.get(window);
+		if (!controller) {
+			controller = createController(window as HubSpotWindow, installation);
+			controllers.set(window, controller);
+		}
+		controller.update(
+			config,
+			info.registration ?? fallbackRegistration,
+			installation,
+			chat,
+			info,
+			() => update(info)
+		);
+	};
+	return {
+		...rest,
+		callbackOnly: true,
+		observeConsentBeforeLoad: true,
+		onBeforeLoad(info) {
+			update(info);
+			script.onBeforeLoad?.(info);
+		},
+		onConsentChange(info) {
+			update(info);
+			script.onConsentChange?.(info);
+		},
+		onDispose(info) {
+			if (typeof window === 'undefined') {
+				return;
+			}
+			const controller = controllers.get(window);
+			controller?.release(
+				config,
+				info.registration ?? fallbackRegistration,
+				info
+			);
+			// Lock the installation only once HubSpot starts; an unused controller
+			// from an initially denied owner must not reject a new configuration.
+			if (controller?.idle() && controllers.get(window) === controller) {
+				controllers.delete(window);
+				for (const retry of controller.pendingRetries()) {
+					retry();
+				}
+			}
+			script.onDispose?.(info);
+		},
+	};
+};
+
+const PORTAL_ID = /^[0-9]{1,20}$/u;
+
+const OPTION_NAMES: ReadonlySet<string> = new Set(['chat', 'portalId']);
+
+/**
+ * Why `options` are not {@link HubSpotAdapterOptions} the Inth server may
+ * send, or `undefined`.
+ */
+export const hubspotOptionsProblem = function hubspotOptionsProblem(
+	options: Readonly<Record<string, unknown>>
+): string | undefined {
+	const extra = Object.keys(options).find((name) => !OPTION_NAMES.has(name));
+	if (extra !== undefined) {
+		return `it has the unknown option ${extra}`;
+	}
+	if (
+		!(typeof options.portalId === 'string' && PORTAL_ID.test(options.portalId))
+	) {
+		return 'its portalId is not a Hub ID';
+	}
+	return typeof options.chat === 'boolean'
+		? undefined
+		: 'its chat is not true or false';
+};
+
+/** The HubSpot adapter, as a manifest's `adapter: { id: 'hubspot' }` runs it. */
+export const hubspotAdapter: ManifestAdapter<HubSpotAdapterOptions> = {
+	id: 'hubspot',
+	problem: hubspotOptionsProblem,
+	script: (base, options) => hubspotScript(base, options),
+};

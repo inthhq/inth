@@ -1,14 +1,17 @@
 /**
  * @vitest-environment jsdom
  */
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
+	clearAllScripts,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
+	settleScripts,
 	updateScripts,
 	registerVendorContractCleanup,
 } from './e2e-test-utils';
@@ -69,3 +72,109 @@ describe('HubSpot core loader consent contract', () => {
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 });
+
+describe.each(npmAndRemote('hubspot', hubspot))(
+	'HubSpot dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		isolateHubSpotPage();
+		afterEach(() => {
+			clearAllScripts();
+		});
+
+		/** The commands HubSpot's file runs from `_hsp`, once it has loaded. */
+		const loadTracking = (loader: HTMLScriptElement | null) => {
+			const queued = (window._hsp ?? []) as unknown[][];
+			const commands: unknown[][] = [...queued];
+			window._hsp = { push: (command) => commands.push(command) };
+			loader?.dispatchEvent(new Event('load'));
+			return commands;
+		};
+
+		it('loads the regional loader after marketing consent and forwards each purpose', async () => {
+			const scripts = [build({ portalId: '053', region: 'eu1' })];
+			loadScripts(scripts, grantedMeasurementConsents);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect('_hsp' in window).toBe(false);
+
+			updateScripts(scripts, {
+				...grantedMarketingConsents,
+				measurement: true,
+			});
+			await settleScripts();
+			const loader =
+				document.querySelector<HTMLScriptElement>('#hs-script-loader');
+			expect(loader?.src).toBe('https://js-eu1.hs-scripts.com/53.js');
+			expect(window.disableHubSpotCookieBanner).toBe(true);
+			const commands = loadTracking(loader);
+			expect(commands).toEqual([
+				[
+					'setHubSpotConsent',
+					{ advertisement: true, analytics: true, functionality: false },
+				],
+			]);
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(commands.slice(1)).toEqual([
+				['revokeCookieConsent'],
+				[
+					'setHubSpotConsent',
+					{ advertisement: true, analytics: false, functionality: false },
+				],
+			]);
+			// Without marketing, the loader's condition, every purpose is denied.
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(commands.slice(3)).toEqual([
+				['revokeCookieConsent'],
+				[
+					'setHubSpotConsent',
+					{ advertisement: false, analytics: false, functionality: false },
+				],
+			]);
+			expect(document.querySelectorAll('script')).toHaveLength(1);
+		});
+
+		it('leaves another installation alone', async () => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const other = document.createElement('div');
+			other.id = 'hs-script-loader';
+			document.body.append(other);
+			loadScripts([build({ portalId: '53' })], grantedMarketingConsents);
+			await settleScripts();
+
+			expect(document.querySelector('script')).toBeNull();
+			expect('_hsp' in window).toBe(false);
+			expect(warn).toHaveBeenCalledWith(
+				'hubspot: #hs-script-loader belongs to a non-script element. HubSpot will not load; remove or rename the conflicting ID and reload.'
+			);
+		});
+
+		it('loads the chat widget with functionality consent and removes it when that is withdrawn', async () => {
+			const widget = { load: vi.fn(), remove: vi.fn() };
+			const clear = vi.fn();
+			const scripts = [build({ chat: true, portalId: '53' })];
+			const all = { ...grantedMarketingConsents, functionality: true };
+			loadScripts(scripts, all);
+			await settleScripts();
+			expect(window.hsConversationsSettings).toEqual({
+				loadImmediately: false,
+			});
+			loadTracking(document.querySelector('#hs-script-loader'));
+			window.HubSpotConversations = {
+				clear,
+				off: vi.fn(),
+				on: vi.fn(),
+				widget,
+			};
+			for (const ready of window.hsConversationsOnReady ?? []) {
+				ready();
+			}
+			expect(widget.load).toHaveBeenCalledOnce();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(widget.remove).toHaveBeenCalledOnce();
+			expect(clear).toHaveBeenCalledWith({ resetWidget: false });
+		});
+	}
+);

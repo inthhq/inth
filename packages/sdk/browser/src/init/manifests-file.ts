@@ -41,6 +41,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	databuddy: '__inthAdapterDatabuddy',
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
+	hubspot: '__inthAdapterHubspot',
 	'lucky-orange': '__inthAdapterLuckyOrange',
 	'oracle-eloqua': '__inthAdapterOracleEloqua',
 	'salesforce-pardot': '__inthAdapterSalesforcePardot',

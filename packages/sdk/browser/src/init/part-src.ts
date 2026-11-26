@@ -19,6 +19,7 @@ export type InitFile =
 	| 'adapter-databuddy'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
+	| 'adapter-hubspot'
 	| 'adapter-lucky-orange'
 	| 'adapter-oracle-eloqua'
 	| 'adapter-salesforce-pardot'
@@ -30,6 +31,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
+	'adapter-hubspot': '__inthAdapterHubspotSrc',
 	'adapter-lucky-orange': '__inthAdapterLuckyOrangeSrc',
 	'adapter-oracle-eloqua': '__inthAdapterOracleEloquaSrc',
 	'adapter-salesforce-pardot': '__inthAdapterSalesforcePardotSrc',

@@ -191,6 +191,12 @@ const vendorHosts: Record<string, readonly string[]> = {
 	heap: ['cdn.us.heap-api.com'],
 	hightouch: ['cdn.hightouch-events.com'],
 	hotjar: ['static.hotjar.com'],
+	hubspot: [
+		'js.hs-scripts.com',
+		'js-eu1.hs-scripts.com',
+		'js-na1.hs-scripts.com',
+		'js-na2.hs-scripts.com',
+	],
 	insiderTag: ['acmestore.api.useinsider.com'],
 	intercom: ['widget.intercom.io'],
 	klaviyo: ['static.klaviyo.com'],
@@ -248,6 +254,7 @@ const vendorLevels: Partial<
 	eloquaTracking: 4,
 	fullStory: 4,
 	gainsightPx: 4,
+	hubspot: 4,
 	luckyOrange: 4,
 	// Classic mode is a plain manifest; consent mode names an adapter.
 	pardotTracking: ({ mode }) => (mode === 'classic' ? 2 : 4),
@@ -654,8 +661,8 @@ describe('validateRemoteOptions', () => {
 	});
 
 	it('rejects an unknown integration', () => {
-		expect(validateRemoteOptions('hubspot', { id: '123' })).toEqual({
-			issues: [expect.stringContaining('hubspot')],
+		expect(validateRemoteOptions('notAVendor', { id: '123' })).toEqual({
+			issues: ["Unknown remote integration 'notAVendor'"],
 			ok: false,
 		});
 	});

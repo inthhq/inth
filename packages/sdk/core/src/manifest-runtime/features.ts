@@ -241,6 +241,7 @@ export const ADAPTER_LEVELS = {
 	databuddy: 4,
 	fullstory: 4,
 	'gainsight-px': 4,
+	hubspot: 4,
 	'lucky-orange': 4,
 	'oracle-eloqua': 4,
 	'salesforce-pardot': 4,

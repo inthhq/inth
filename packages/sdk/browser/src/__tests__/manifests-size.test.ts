@@ -45,6 +45,8 @@ import { expect, it } from 'vite-plus/test';
  * a failed load, and the option patterns the dashboard shares.
  * `inth.adapter-activecampaign.js`, the ActiveCampaign ownership checks
  * and tracking reconciler: 1,525.
+ * `inth.adapter-hubspot.js`, HubSpot's loader checks, consent forwarding
+ * and chat lifecycle: 2,794.
  * `inth.adapter-oracle-eloqua.js`, the Eloqua consent dispatcher: 2,074.
  * `inth.adapter-salesforce-pardot.js`, Pardot's consent cycle: 570.
  */
@@ -53,12 +55,13 @@ const BUDGETS = {
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
+	'inth.adapter-hubspot.js': 2830,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-oracle-eloqua.js': 2110,
 	'inth.adapter-salesforce-pardot.js': 600,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 12050,
+	'inth.manifests3.js': 12070,
 };
 
 it.each(Object.entries(BUDGETS))(
@@ -101,4 +104,26 @@ it('keeps adapter code out of the runtime files and the Sentry gate in its own',
 	expect(read('inth.hosted.js')).toContain('is not an id with options');
 	expect(read('inth.hosted.js')).not.toContain('sentryReplaySession');
 	expect(read('inth.adapter-sentry.js')).toContain('sentryReplaySession');
+});
+
+it.each([
+	['inth.adapter-activecampaign.js', 'an unmanaged tracker exists'],
+	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
+	['inth.adapter-oracle-eloqua.js', 'consent dispatch failed'],
+])('keeps the code of %s in its own file', (file, message) => {
+	const read = (name: string) =>
+		readFileSync(
+			resolve(dirname(fileURLToPath(import.meta.url)), '../../dist', name),
+			'utf8'
+		);
+
+	// A message only that adapter logs.
+	expect(read(file)).toContain(message);
+	for (const name of [
+		'inth.hosted.js',
+		'inth.manifests.js',
+		'inth.manifests3.js',
+	]) {
+		expect(read(name)).not.toContain(message);
+	}
 });

@@ -103,3 +103,25 @@ describe('the Salesforce Pardot adapter', () => {
 		);
 	});
 });
+
+describe('the HubSpot adapter', () => {
+	it('ships at level 4 and loads by its ID', async () => {
+		expect(ADAPTER_LEVELS.hubspot).toBe(4);
+		expect((await importAdapter('hubspot')).id).toBe('hubspot');
+	});
+
+	it('takes a Hub ID and the chat choice', async () => {
+		const adapter = await importAdapter('hubspot');
+
+		expect(adapter.problem({ chat: false, portalId: '53' })).toBeUndefined();
+		expect(adapter.problem({ chat: false, nonce: 'abc', portalId: '53' })).toBe(
+			'it has the unknown option nonce'
+		);
+		expect(adapter.problem({ chat: false, portalId: '53.js' })).toBe(
+			'its portalId is not a Hub ID'
+		);
+		expect(adapter.problem({ chat: 'yes', portalId: '53' })).toBe(
+			'its chat is not true or false'
+		);
+	});
+});
