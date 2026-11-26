@@ -173,9 +173,13 @@ const settlePreparing = async (): Promise<void> => {
 /**
  * Waits until a loader that started loading the manifest runtime has built
  * its remote scripts, including ones that waited for the level 3 part or
- * an adapter. Resolves at once for a scenario with none.
+ * an adapter. Resolves at once for a scenario with none. Throws for a
+ * refused entry, unless its message matches `expectRefusal`; with
+ * `expectRefusal`, throws unless one does.
  */
-export const settleRemote = async function settleRemote(): Promise<void> {
+export const settleRemote = async function settleRemote(
+	expectRefusal?: RegExp
+): Promise<void> {
 	if (runtimeLoad !== undefined) {
 		await runtimeLoad;
 		// The loader awaited the same promise first, so its scripts are built,
@@ -183,8 +187,16 @@ export const settleRemote = async function settleRemote(): Promise<void> {
 		await Promise.resolve();
 		await settlePreparing();
 	}
-	if (refused.length > 0) {
-		throw new Error(`The loader refused a remote script: ${refused.join(' ')}`);
+	const unexpected = refused.filter((message) => !expectRefusal?.test(message));
+	if (expectRefusal && unexpected.length === refused.length) {
+		throw new Error(
+			`The loader refused no remote script with ${String(expectRefusal)}`
+		);
+	}
+	if (unexpected.length > 0) {
+		throw new Error(
+			`The loader refused a remote script: ${unexpected.join(' ')}`
+		);
 	}
 };
 

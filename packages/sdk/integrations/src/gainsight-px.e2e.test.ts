@@ -1260,10 +1260,30 @@ describe('Gainsight PX from the Inth server', () => {
 		const scripts = [fromRemote('gainsightPx', { productKey: 'AP-OWN-2' })];
 
 		loadScripts(scripts, grantedConsents);
-		await settleScripts();
+		await settleScripts(/another Gainsight PX installation/u);
 
 		expect(append).not.toHaveBeenCalled();
 		expect(external).not.toHaveBeenCalled();
 		expect(getAptrinsic()).toBe(external);
+	});
+
+	it('still loads the other entries in the list once another PX installation has started', async () => {
+		const external = Object.assign(vi.fn(), { __sdkBundleStarted: true });
+		Reflect.set(window, 'aptrinsic', external);
+		const scripts = [
+			fromRemote('gainsightPx', { productKey: 'AP-OWN-2' }),
+			fromRemote('redditPixel', { pixelId: 'a2_abcdef123456' }),
+		];
+
+		loadScripts(scripts, { ...grantedConsents, marketing: true });
+		await settleScripts(
+			/^Remote script gainsight-px does not load: .*another Gainsight PX installation is already running\. Remove the other PX snippet and reload the page\.$/u
+		);
+
+		expect(
+			document.querySelector('script[src*="redditstatic.com/ads/pixel.js"]')
+		).not.toBeNull();
+		expect(document.querySelector('script[src*="aptrinsic"]')).toBeNull();
+		expect(external).not.toHaveBeenCalled();
 	});
 });
