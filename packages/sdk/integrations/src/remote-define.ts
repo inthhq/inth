@@ -186,6 +186,14 @@ export interface RemoteDefinition<
 	 * Receives options that passed validation.
 	 */
 	readonly resolve: (options: RemoteOptionValues<TSpecs>) => ResolvedManifest;
+	/**
+	 * Why options that pass every option's own spec still cannot run
+	 * together, such as a mode that needs an optional value, or
+	 * `undefined`.
+	 */
+	readonly problem?: (
+		options: RemoteOptionValues<TSpecs>
+	) => string | undefined;
 }
 
 const deepFreeze = function deepFreeze<T>(value: T): T {
@@ -222,7 +230,8 @@ export const defineRemote = function defineRemote<
 >(
 	key: BuiltInScriptIntegrationKey,
 	options: TSpecs,
-	resolve: (options: RemoteOptionValues<TSpecs>) => ResolvedManifest
+	resolve: (options: RemoteOptionValues<TSpecs>) => ResolvedManifest,
+	problem?: (options: RemoteOptionValues<TSpecs>) => string | undefined
 ): RemoteDefinition<TSpecs> {
-	return Object.freeze({ key, options: deepFreeze(options), resolve });
+	return Object.freeze({ key, options: deepFreeze(options), problem, resolve });
 };

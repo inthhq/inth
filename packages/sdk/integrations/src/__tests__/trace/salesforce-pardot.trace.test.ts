@@ -11,7 +11,7 @@ describe('npm helper', async () => {
 });
 
 describe('remote manifest', async () => {
-	// Consent mode, the default, through the manifest the Inth server sends:
+	// Consent mode through the manifest the Inth server sends:
 	// the spec's tracker domain is the dashboard's tracker hostname. The
 	// runtime loads the Salesforce Pardot adapter the manifest names. The
 	// loader keeps the script an entry built while its manifest is
@@ -19,7 +19,12 @@ describe('remote manifest', async () => {
 	await describeGoldenTraces(load, {
 		factory: remoteTraceFactory(
 			'pardotTracking',
-			{ piAId: '123456', piCId: '654321', piHostname: 'go.example.com' },
+			{
+				mode: 'consent',
+				piAId: '123456',
+				piCId: '654321',
+				piHostname: 'go.example.com',
+			},
 			{ keepScript: true }
 		),
 		names: ['salesforce-pardot'],

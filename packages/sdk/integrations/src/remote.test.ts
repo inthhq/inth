@@ -118,14 +118,14 @@ const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
 const dashboardToNpm: Partial<
 	Record<BuiltInScriptIntegrationKey, (options: Options) => Options>
 > = {
-	// Pardot's consent mode takes its tracker hostname as piDomain, and
-	// requires it; the remote form defaults it to Pardot's host.
+	// The remote form defaults to classic mode, the helper to consent mode.
+	// The helper's consent mode takes the tracker hostname as piDomain.
 	pardotTracking: (options) => {
-		if (options.mode === 'classic') {
-			return options;
+		if (options.mode !== 'consent') {
+			return { ...options, mode: 'classic' };
 		}
-		const { piHostname = 'pi.pardot.com', ...rest } = options;
-		return { ...rest, piDomain: piHostname };
+		const { piHostname, ...rest } = options;
+		return { ...rest, piDomain: piHostname as string };
 	},
 	sentry: ({
 		ingestRegion,
@@ -256,8 +256,9 @@ const vendorLevels: Partial<
 	gainsightPx: 4,
 	hubspot: 4,
 	luckyOrange: 4,
-	// Classic mode is a plain manifest; consent mode names an adapter.
-	pardotTracking: ({ mode }) => (mode === 'classic' ? 2 : 4),
+	// Classic mode, the default, is a plain manifest; consent mode names an
+	// adapter.
+	pardotTracking: ({ mode }) => (mode === 'consent' ? 4 : 2),
 	pendo: 3,
 	pirsch: 3,
 	sentry: 4,
@@ -802,6 +803,43 @@ describe('validateRemoteOptions', () => {
 				version: '2026-10-30.1234567',
 			}).ok
 		).toBe(false);
+	});
+
+	it('reads Pardot options without a mode as classic mode on pi.pardot.com', () => {
+		const validated = validateRemoteOptions('pardotTracking', {
+			piAId: '123456',
+			piCId: '654321',
+		});
+
+		expect(validated).toEqual({
+			ok: true,
+			options: { mode: 'classic', piAId: '123456', piCId: '654321' },
+		});
+		const script = remoteScript('pardotTracking', {
+			piAId: '123456',
+			piCId: '654321',
+		});
+		expect(script.src).toBe('https://pi.pardot.com/pd.js');
+	});
+
+	it('refuses Pardot consent mode without a tracker hostname', () => {
+		expect(
+			validateRemoteOptions('pardotTracking', {
+				mode: 'consent',
+				piAId: '123456',
+				piCId: '654321',
+			})
+		).toEqual({
+			issues: ["'piHostname' is required in consent mode"],
+			ok: false,
+		});
+		expect(() =>
+			remoteIntegrations.pardotTracking?.resolveRemote({
+				mode: 'consent',
+				piAId: '123456',
+				piCId: '654321',
+			})
+		).toThrow("'piHostname' is required in consent mode");
 	});
 
 	it('rejects an ID that is not a string', () => {

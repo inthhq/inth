@@ -457,6 +457,7 @@ describe.each([
 		// A dashboard saves the tracker domain as the tracker hostname.
 		(piHostname: string) =>
 			fromRemote('pardotTracking', {
+				mode: 'consent',
 				piAId: '123456',
 				piCId: '654321',
 				piHostname,

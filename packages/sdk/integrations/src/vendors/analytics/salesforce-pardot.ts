@@ -185,12 +185,13 @@ export const resolvePardotConsentManifest =
 	};
 
 /**
- * What the Inth server may set for this vendor, in either mode. Consent
- * mode, the default as in the helper, loads `pdt.js` from the tracker
- * hostname, which defaults to Pardot's own host as in classic mode; the
- * helper requires it in consent mode. `category` and `scriptUrl` stay
- * npm-only. Marked pure so a bundler drops it from an npm bundle that
- * never reads it.
+ * What the Inth server may set for this vendor, in either mode. Without a
+ * mode it is classic mode, which loads `pd.js` from Pardot's own host and
+ * reads the tracker hostname, `pi.pardot.com` unless set. Consent mode
+ * loads `pdt.js` from the tracker hostname, so it needs one set, as the
+ * helper needs `piDomain`. `category` and `scriptUrl` stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads
+ * it.
  */
 export const remote =
 	/* @__PURE__ */
@@ -198,7 +199,7 @@ export const remote =
 		'pardotTracking',
 		{
 			mode: {
-				default: 'consent',
+				default: 'classic',
 				kind: 'enum',
 				label: 'Tracking mode',
 				values: ['consent', 'classic'],
@@ -224,10 +225,14 @@ export const remote =
 				required: false,
 			},
 		},
-		({ mode, piAId, piCId, piHostname = 'pi.pardot.com' }) =>
-			mode === 'classic'
-				? resolvePardotClassicManifest({ piAId, piCId, piHostname })
-				: resolvePardotConsentManifest({ piAId, piCId, piHostname })
+		({ mode, piAId, piCId, piHostname }) =>
+			mode === 'consent' && piHostname !== undefined
+				? resolvePardotConsentManifest({ piAId, piCId, piHostname })
+				: resolvePardotClassicManifest({ piAId, piCId, piHostname }),
+		({ mode, piHostname }) =>
+			mode === 'consent' && piHostname === undefined
+				? "'piHostname' is required in consent mode"
+				: undefined
 	);
 
 const reusePardotTracking = createScriptReuse<PardotTrackingOptions>();

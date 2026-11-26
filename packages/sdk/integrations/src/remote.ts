@@ -81,6 +81,16 @@ export interface RemoteIntegration {
 	) => ResolvedManifest;
 }
 
+/** Checks `input` against each option's spec, then against `problem`. */
+const validateDefinition = function validateDefinition(
+	{ key, options, problem }: RemoteDefinition,
+	input: unknown
+): RemoteOptionsValidation {
+	const result = validateOptionValues(key, options, input);
+	const issue = result.ok ? problem?.(result.options as never) : undefined;
+	return issue === undefined ? result : { issues: [issue], ok: false };
+};
+
 const toIntegration = function toIntegration(
 	definition: RemoteDefinition
 ): RemoteIntegration {
@@ -92,7 +102,7 @@ const toIntegration = function toIntegration(
 		label,
 		options,
 		resolveRemote(input: Readonly<Record<string, unknown>>): ResolvedManifest {
-			const result = validateOptionValues(key, options, input);
+			const result = validateDefinition(definition, input);
 			if (!result.ok) {
 				throw new Error(result.issues.join('; '));
 			}
@@ -112,6 +122,10 @@ const toIntegration = function toIntegration(
  * vendor in the registry whose file exports `remote`. Integrations that run
  * their own lifecycle code stay npm-only.
  */
+const definitionsByKey: ReadonlyMap<string, RemoteDefinition> = new Map(
+	remoteDefinitions.map((definition) => [definition.key, definition])
+);
+
 export const remoteIntegrations: Readonly<Record<string, RemoteIntegration>> =
 	Object.freeze(
 		Object.fromEntries(
@@ -132,12 +146,10 @@ export const validateRemoteOptions = function validateRemoteOptions(
 	key: string,
 	input: unknown
 ): RemoteOptionsValidation {
-	const integration = Object.hasOwn(remoteIntegrations, key)
-		? remoteIntegrations[key]
-		: undefined;
-	if (integration === undefined) {
+	const definition = definitionsByKey.get(key);
+	if (definition === undefined) {
 		return { issues: [`Unknown remote integration '${key}'`], ok: false };
 	}
 
-	return validateOptionValues(key, integration.options, input);
+	return validateDefinition(definition, input);
 };
