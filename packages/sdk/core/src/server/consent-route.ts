@@ -985,7 +985,12 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			),
 			policySnapshotToken: mapped.policySnapshotToken,
 			resolvedPrivacySignals: mapped.resolvedPrivacySignals,
-			scriptRegistry: mapped.scriptRegistry,
+			// The backend may list entries for another level, or not filter at
+			// all; the browser refuses any above its own.
+			scriptRegistry: registryForManifestLevel(
+				mapped.scriptRegistry,
+				level ?? 1
+			),
 			subjectId: mapped.subjectId,
 			translations: payload.translations,
 			vendorListVersion: mapped.vendorListVersion,

@@ -1376,6 +1376,42 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 		);
 	});
 
+	test('serves only the remote scripts the browser level runs, without requires: 1, whatever backend /init lists', async () => {
+		const entry = (id: string, requires: number) => ({
+			id,
+			integration: id,
+			manifest: { category: 'measurement', requires, vendor: id },
+		});
+		// A backend that does not filter by level, or filters for another.
+		const localFetch = backendInit({
+			location: { countryCode: null, regionCode: null },
+			scriptRegistry: {
+				load: [entry('level-one', 1), entry('needs-two', 2)],
+			},
+			translations: { language: 'en', translations: {} },
+		});
+		const handle = route({ projectUrl: '/api/self-host' });
+		const served = async (query: string) => {
+			const response = await handle(
+				request(`/api/inth/v1/consent/init${query}`),
+				{ localFetch }
+			);
+			return ((await response.json()) as InitOutput).scriptRegistry?.load;
+		};
+
+		expect(await served('')).toEqual([
+			{
+				id: 'level-one',
+				integration: 'level-one',
+				manifest: { category: 'measurement', vendor: 'level-one' },
+			},
+		]);
+		expect((await served('?manifestLevel=2'))?.map(({ id }) => id)).toEqual([
+			'level-one',
+			'needs-two',
+		]);
+	});
+
 	test('forwards the browser query overrides to backend /init as headers', async () => {
 		// Server to server there is no CORS, and every backend version reads
 		// the headers.
