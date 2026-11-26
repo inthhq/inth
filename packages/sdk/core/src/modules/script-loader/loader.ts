@@ -1208,8 +1208,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const pending = loaded.prepare?.(entries.map(({ manifest }) => manifest));
 		setRemoteScripts(buildRemote(loaded, pending !== undefined));
+		// Runnable now: a later list builds with it at once, so it drops an
+		// entry it removed before the snapshot that brought it reconciles,
+		// even while this list's code still downloads.
+		runtime = loaded;
 		if (!pending) {
-			runtime = loaded;
 			return;
 		}
 		let use = loaded;
@@ -1222,7 +1225,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		} catch {
 			// The parser refuses, and reports, each entry that needed it.
 		}
-		runtime = use;
+		if (use !== loaded) {
+			runtime = use;
+		}
 		if (!disposed && remoteEntries === entries) {
 			setRemoteScripts(buildRemote(use));
 		}

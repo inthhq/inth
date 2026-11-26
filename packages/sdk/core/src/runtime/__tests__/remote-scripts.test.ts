@@ -1051,6 +1051,64 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('drops an entry a later list removes while the first list still waits for an adapter file', async () => {
+		vi.resetModules();
+		const manifests = await import('../../manifest-runtime/index');
+		const adapter = Promise.withResolvers<never>();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: [...load(acmeManifest()), sentryEntry()],
+					},
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve(
+						manifests.withAdapters(manifests, () => adapter.promise)
+					),
+			}
+		);
+		runtime.start();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		// Opt-out allows marketing, and the new list no longer has Acme.
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: { load: [sentryEntry()] },
+		});
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		expect(tags()).toHaveLength(0);
+		expect((window as { acmeQueue?: unknown[] }).acmeQueue).toBeUndefined();
+		adapter.reject(new Error('offline'));
+		runtime.dispose();
+	});
+
 	test('keeps the registration a refused entry would replace while the list waits for level 3 code', async () => {
 		vi.resetModules();
 		const answer = Promise.withResolvers<Record<string, unknown>>();
