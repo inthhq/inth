@@ -199,6 +199,9 @@ const readMap = function readMap(
 			`'${path}' must have at most ${spec.maxEntries} entries`
 		);
 	}
+	if (spec.required && entries.length === 0) {
+		return fail(issues, `'${path}' must have at least one entry`);
+	}
 	const count = issues.length;
 	const result: [string, string][] = [];
 	for (const [name, item] of entries) {

@@ -74,7 +74,8 @@ export interface RemoteIdListOption {
 
 /**
  * Up to `maxEntries` keys matching `keyPattern`, each mapped to one of
- * `values`. `__proto__`, `prototype` and `constructor` are never keys.
+ * `values`. `__proto__`, `prototype` and `constructor` are never keys. A
+ * required map needs at least one entry.
  */
 export interface RemoteMapOption {
 	kind: 'map';
