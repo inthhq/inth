@@ -110,9 +110,9 @@ describe('loadManifestsFile', () => {
 		expect(runtime).toMatchObject({ key: '__inthManifests' });
 		expect(runtime.prepare?.([...first])).toBeUndefined();
 		// A later list that needs level 3 tries the file again.
-		await expect(runtime.prepare?.([{ requires: 3 }])).resolves.toEqual({
-			key: '__inthManifests3',
-		});
+		await expect(
+			runtime.prepare?.([{ requires: 3 }])
+		).resolves.toMatchObject({ key: '__inthManifests3' });
 	});
 
 	test('uses data-manifests3-src from the init tag', async () => {
@@ -200,6 +200,28 @@ describe('loadManifestsFile', () => {
 			);
 			const parsed = runtime.parseResolvedManifest(manifest);
 			expect(parsed.ok).toBe(true);
+			expect(runtime.resolvedManifestToScript(manifest as never)).toMatchObject(
+				{ adapted: true, vendor: 'sentry' }
+			);
+		});
+
+		test('runs adapters in inth.manifests.js when inth.manifests3.js fails for the first list', async () => {
+			initTag();
+			loadPartFile.mockImplementation((key: string) => {
+				if (key === '__inthManifests3') {
+					return Promise.resolve(undefined) as never;
+				}
+				return Promise.resolve(
+					key === '__inthAdapterSentry'
+						? { adapter: sentryAdapter, key }
+						: runtimeFile(key)
+				) as never;
+			});
+
+			const runtime = await loadManifestsFile([manifest]);
+			await runtime.prepare?.([manifest]);
+
+			expect(runtime).toMatchObject({ key: '__inthManifests' });
 			expect(runtime.resolvedManifestToScript(manifest as never)).toMatchObject(
 				{ adapted: true, vendor: 'sentry' }
 			);
