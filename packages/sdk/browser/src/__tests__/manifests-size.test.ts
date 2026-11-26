@@ -57,6 +57,7 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
  * `inth.adapter-ada.js`, Ada's start and stop chain: 932.
+ * `inth.adapter-dynamic-yield.js`, api_static.js and the shared consent signal: 879.
  * `inth.adapter-gorgias.js`, Gorgias's wait for init() and Segment switch: 665.
  * `inth.adapter-zendesk.js`, Zendesk's loader reference and cookie range: 741.
  */
@@ -68,6 +69,7 @@ const BUDGETS = {
 	'inth.adapter-cloudflare-zaraz.js': 1270,
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-default-com.js': 2280,
+	'inth.adapter-dynamic-yield.js': 910,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-gorgias.js': 690,

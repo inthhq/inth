@@ -6,12 +6,15 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
+import { remoteTraceFactory } from './__tests__/trace/remote';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { dynamicYield } from './vendors/functional/dynamic-yield';
@@ -539,5 +542,83 @@ describe('Dynamic Yield real-core loader contract', () => {
 		expect(loader('static').nonce).toBe('provider-nonce');
 		clearAllScripts();
 		expect(document.head.querySelector('script')).toBeNull();
+	});
+});
+
+describe.each(npmAndRemote('dynamicYield', dynamicYield))(
+	'Dynamic Yield dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.DY;
+		});
+
+		it('loads api_static.js after api_dynamic.js, not async and with no id, and follows consent', async () => {
+			const scripts = [build({ region: 'eu', sectionId: '1234567' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(window.DY).toBeUndefined();
+
+			updateScripts(scripts, grantedConsents);
+			await settleScripts();
+			const dynamic = loader('dynamic');
+			expect(dynamic.src).toBe(
+				'https://cdn-eu.dynamicyield.com/api/1234567/api_dynamic.js'
+			);
+			expect(document.head.querySelector('script[src$="api_static.js"]')).toBe(
+				null
+			);
+			expect(window.DY?.userActiveConsent).toEqual({ accepted: true });
+
+			dynamic.dispatchEvent(new Event('load'));
+			const staticElement = loader('static');
+			expect(staticElement.src).toBe(
+				'https://cdn-eu.dynamicyield.com/api/1234567/api_static.js'
+			);
+			expect(staticElement.async).toBe(false);
+			expect(staticElement.id).toBe('');
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(window.DY?.userActiveConsent).toEqual({ accepted: false });
+		});
+	}
+);
+
+describe('Dynamic Yield replaced by a script the remote runtime builds again', () => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		delete window.DY;
+	});
+
+	// The remote loader builds a fresh script when the manifest it receives
+	// changes. The outgoing registration's cleanup must not leave the
+	// incoming, granted one reading denied.
+	it('keeps the incoming granted registration reading granted', async () => {
+		const build = await remoteTraceFactory('dynamicYield', {
+			sectionId: '1234567',
+		})();
+		const kernel = createConsentKernel();
+		await kernel.commands.save({ experience: true });
+		const handle = createScriptLoader({ kernel, scripts: [build()] });
+		try {
+			loader('dynamic').dispatchEvent(new Event('load'));
+			const staticElement = loader('static');
+
+			handle.updateScripts([build()]);
+			await Promise.resolve();
+
+			expect(window.DY?.userActiveConsent).toEqual({ accepted: true });
+			// The incoming registration has its own api_dynamic.js, and loads
+			// its own api_static.js after it.
+			expect(staticElement.isConnected).toBe(false);
+			loader('dynamic').dispatchEvent(new Event('load'));
+			expect(
+				document.head.querySelectorAll('script[src$="api_static.js"]')
+			).toHaveLength(1);
+			expect(window.DY?.userActiveConsent).toEqual({ accepted: true });
+		} finally {
+			handle.dispose();
+			kernel.dispose();
+		}
 	});
 });

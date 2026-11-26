@@ -261,6 +261,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/gorgias.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/gorgias.js"
 		},
+		"./manifest-runtime/adapters/dynamic-yield": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/dynamic-yield.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/dynamic-yield.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/dynamic-yield.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

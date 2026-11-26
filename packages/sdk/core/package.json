@@ -215,6 +215,11 @@
 			"import": "./dist/manifest-runtime/adapters/gorgias.js",
 			"default": "./dist/manifest-runtime/adapters/gorgias.js"
 		},
+		"./manifest-runtime/adapters/dynamic-yield": {
+			"types": "./dist-types/manifest-runtime/adapters/dynamic-yield.d.ts",
+			"import": "./dist/manifest-runtime/adapters/dynamic-yield.js",
+			"default": "./dist/manifest-runtime/adapters/dynamic-yield.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

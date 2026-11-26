@@ -17,16 +17,9 @@ export type RemoteStatus =
 const adapter = { pr: 13, status: 'pending' } as const;
 
 /** Every registry key without a `remote` export, and why. */
-export const remoteStatus = {
-	// A level 2 manifest cannot express two behaviours its golden trace
-	// records. The helper inserts api_static.js without an id, and
-	// loadScriptStep always sets one. And when a registration replaces
-	// another, the outgoing one's dispose runs after the incoming one has
-	// started, so a dispose step that sets userActiveConsent to
-	// { accepted: false }, as the helper does on a plain dispose, would
-	// leave the incoming, granted registration reading denied.
-	dynamicYield: adapter,
-} as const satisfies Partial<Record<BuiltInScriptIntegrationKey, RemoteStatus>>;
+export const remoteStatus = {} as const satisfies Partial<
+	Record<BuiltInScriptIntegrationKey, RemoteStatus>
+>;
 
 /**
  * Modes of a remote vendor that its remote definition leaves out, by

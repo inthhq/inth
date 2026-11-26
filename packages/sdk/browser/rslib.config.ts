@@ -97,6 +97,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-fullstory',
 	'inth.adapter-gainsight-px',
 	'inth.adapter-lucky-orange',
+	'inth.adapter-dynamic-yield',
 	'inth.adapter-gorgias',
 	'inth.adapter-zendesk',
 	'inth.adapter-ada',
@@ -319,6 +320,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-lucky-orange',
 			'./src/entries/cdn-adapter-lucky-orange.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-dynamic-yield',
+			'./src/entries/cdn-adapter-dynamic-yield.ts'
 		),
 		scriptTagLib(
 			'inth.adapter-gorgias',

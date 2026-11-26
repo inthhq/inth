@@ -385,6 +385,7 @@ describe('on-demand chunks', () => {
 			'manifest-runtime/adapters/cloudflare-zaraz',
 			'manifest-runtime/adapters/databuddy',
 			'manifest-runtime/adapters/default-com',
+			'manifest-runtime/adapters/dynamic-yield',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',
 			'manifest-runtime/adapters/gorgias',

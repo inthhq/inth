@@ -111,6 +111,7 @@ const sharedRegistrationCallbacks: Partial<
 > = {
 	amazonAdsTag: ['onLoad'],
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
+	dynamicYield: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
 	gainsightPx: ['onDispose', 'onLoad'],
 	luckyOrange: ['onLoad'],
 	zendeskWidget: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
@@ -251,6 +252,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	customerIo: ['cdp.customer.io', 'cdp-eu.customer.io'],
 	databuddy: ['cdn.databuddy.cc'],
 	defaultComPixel: ['handshake.default.com'],
+	dynamicYield: ['cdn.dynamicyield.com', 'cdn-eu.dynamicyield.com'],
 	eloquaTracking: ['img.en25.com'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
@@ -338,6 +340,7 @@ const vendorLevels: Partial<
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),
 	defaultComPixel: 4,
+	dynamicYield: 4,
 	eloquaTracking: 4,
 	fullStory: 4,
 	gainsightPx: 4,

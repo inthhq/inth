@@ -22,6 +22,7 @@ export type InitFile =
 	| 'adapter-cloudflare-zaraz'
 	| 'adapter-databuddy'
 	| 'adapter-default-com'
+	| 'adapter-dynamic-yield'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
 	| 'adapter-gorgias'
@@ -41,6 +42,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-cloudflare-zaraz': '__inthAdapterCloudflareZarazSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-default-com': '__inthAdapterDefaultComSrc',
+	'adapter-dynamic-yield': '__inthAdapterDynamicYieldSrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
 	'adapter-gorgias': '__inthAdapterGorgiasSrc',

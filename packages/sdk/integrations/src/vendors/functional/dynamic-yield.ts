@@ -1,8 +1,12 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { dynamicYieldScript } from '@inth/sdk/manifest-runtime/adapters/dynamic-yield';
+import type { DynamicYieldAdapterOptions } from '@inth/sdk/manifest-runtime/adapters/dynamic-yield';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,
@@ -29,22 +33,11 @@ declare global {
 	}
 }
 
-interface DynamicYieldStaticLoader {
-	consentOwners: Set<symbol>;
-	element?: HTMLScriptElement;
-	owners: Set<symbol>;
-}
-
-// Active Cookie Consent is page-global across section and region resources.
-const consentOwners = new WeakMap<Document, Set<symbol>>();
-
-// Core can share one dynamic loader across independent registrations.
-const staticLoaders = new WeakMap<
-	HTMLScriptElement,
-	DynamicYieldStaticLoader
->();
-
-/** Dynamic Yield setup and Active Cookie Consent signals. */
+/**
+ * Dynamic Yield setup and Active Cookie Consent signals, on the US data
+ * center. The Dynamic Yield adapter in `@inth/sdk` loads `api_static.js`
+ * and shares the consent signal across owners.
+ */
 export const dynamicYieldManifest = {
 	...vendorManifestContract,
 	category: 'experience',
@@ -55,8 +48,11 @@ export const dynamicYieldManifest = {
 			type: 'setGlobalPath',
 			value: { accepted: true },
 		},
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-		{ async: false, src: '{{scriptSrc}}', type: 'loadScript' },
+		{
+			async: false,
+			src: 'https://cdn.dynamicyield.com/api/{{sectionPath}}/api_dynamic.js',
+			type: 'loadScript',
+		},
 	],
 	onConsentDenied: [
 		{
@@ -72,6 +68,7 @@ export const dynamicYieldManifest = {
 			value: { accepted: true },
 		},
 	],
+	resourceKey: 'dynamic-yield:https://cdn.dynamicyield.com/api/{{sectionPath}}',
 	vendor: 'dynamic-yield',
 	vendorDetails: {
 		homepageUrl: 'https://www.dynamicyield.com/',
@@ -79,6 +76,26 @@ export const dynamicYieldManifest = {
 		name: 'Dynamic Yield',
 		privacyPolicyUrl: 'https://www.dynamicyield.com/privacy-policy/',
 	},
+} as const satisfies VendorManifest;
+
+/** The same manifest on the EU data center. */
+export const dynamicYieldEuManifest = {
+	...dynamicYieldManifest,
+	install: [
+		{ name: 'DY', type: 'setGlobal', value: {} },
+		{
+			path: ['DY', 'userActiveConsent'],
+			type: 'setGlobalPath',
+			value: { accepted: true },
+		},
+		{
+			async: false,
+			src: 'https://cdn-eu.dynamicyield.com/api/{{sectionPath}}/api_dynamic.js',
+			type: 'loadScript',
+		},
+	],
+	resourceKey:
+		'dynamic-yield:https://cdn-eu.dynamicyield.com/api/{{sectionPath}}',
 } as const satisfies VendorManifest;
 
 export interface DynamicYieldOptions {
@@ -94,116 +111,86 @@ export interface DynamicYieldOptions {
 	nonce?: string;
 }
 
-const createDynamicYieldScript = (options: DynamicYieldOptions): Script => {
-	const { category = 'experience', nonce, sectionId } = options;
-	const hostname =
-		options.region === 'eu'
-			? 'cdn-eu.dynamicyield.com'
-			: 'cdn.dynamicyield.com';
-	const base = `https://${hostname}/api/${encodeURIComponent(sectionId)}`;
-	const manifest: VendorManifest = options.recommendationContext
-		? {
-				...dynamicYieldManifest,
-				install: [
-					...dynamicYieldManifest.install,
-					{
-						path: ['DY', 'recommendationContext'],
-						type: 'setGlobalPath',
-						value: options.recommendationContext,
-					},
-				],
-			}
-		: dynamicYieldManifest;
-	const resolved = resolveManifest(manifest, {
-		scriptSrc: `${base}/api_dynamic.js`,
-	});
-	// Equal configurations share a lifecycle; any granted registration retains it.
-	const owner = Symbol('dynamic-yield');
-	let shared: DynamicYieldStaticLoader | undefined;
-	const retainStatic = (info: ScriptCallbackInfo) => {
-		if (!info.element) {
-			return;
-		}
-		shared = staticLoaders.get(info.element);
-		if (!shared) {
-			const { ownerDocument } = info.element;
-			const grantedOwners =
-				consentOwners.get(ownerDocument) ?? new Set<symbol>();
-			consentOwners.set(ownerDocument, grantedOwners);
-			shared = { consentOwners: grantedOwners, owners: new Set() };
-			staticLoaders.set(info.element, shared);
-		}
-		shared.owners.add(owner);
-		shared.consentOwners.add(owner);
-		return shared;
-	};
-	const removeStatic = () => {
-		const removed = shared?.owners.delete(owner) ?? false;
-		if (removed && shared) {
-			shared.consentOwners.delete(owner);
-			if (shared.owners.size === 0) {
-				shared.element?.remove();
-			}
-		}
-		return removed;
-	};
-	const grantedRegistration = (info: ScriptCallbackInfo) =>
-		getScriptRegistrations(info).find((state) => state.hasConsent);
-	const updateConsent = (info: ScriptCallbackInfo) => {
-		const granted = grantedRegistration(info);
-		if (granted) {
-			retainStatic(granted);
-		} else if (!removeStatic() && shared) {
-			// A revoked lifecycle must not change a later loader's consent.
-			return;
-		}
-		resolved.onConsentChange?.({
-			...info,
-			hasConsent: !!granted || !!shared?.consentOwners.size,
-		});
+/**
+ * The manifest for Dynamic Yield: `api_dynamic.js` for the section and data
+ * center, and the Dynamic Yield adapter, which loads `api_static.js`. The
+ * section ID must already be trimmed and non-empty. The npm helper and the
+ * Inth server both build it here.
+ */
+export const resolveDynamicYieldManifest =
+	function resolveDynamicYieldManifest({
+		category = 'experience',
+		recommendationContext,
+		region = 'us',
+		sectionId,
+	}: Omit<DynamicYieldOptions, 'nonce'>): ResolvedManifest {
+		const manifest: VendorManifest =
+			region === 'eu' ? dynamicYieldEuManifest : dynamicYieldManifest;
+		const settings: DynamicYieldAdapterOptions = { region, sectionId };
+		return {
+			...getCompiledManifest(
+				// The page context is page data only a site's code has: npm-only.
+				recommendationContext
+					? {
+							...manifest,
+							install: [
+								...manifest.install,
+								{
+									path: ['DY', 'recommendationContext'],
+									type: 'setGlobalPath',
+									value: recommendationContext,
+								},
+							],
+						}
+					: manifest,
+				{ sectionPath: encodeURIComponent(sectionId) }
+			),
+			adapter: { id: 'dynamic-yield', options: { ...settings } },
+			category,
+			requires: 4,
+		};
 	};
 
+/**
+ * What the Inth server may set for Dynamic Yield: the section ID and the
+ * data center. The page context and a CSP nonce stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'dynamicYield',
+		{
+			region: {
+				default: 'us',
+				kind: 'enum',
+				label: 'Data center',
+				values: ['us', 'eu'],
+			},
+			sectionId: {
+				example: '8765432',
+				kind: 'id',
+				label: 'Section ID',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+		},
+		resolveDynamicYieldManifest
+	);
+
+const createDynamicYieldScript = ({
+	nonce,
+	...options
+}: DynamicYieldOptions): Script => {
+	const { adapter, ...manifest } = resolveDynamicYieldManifest(options);
 	return {
-		...resolved,
-		category,
+		...dynamicYieldScript(
+			resolvedManifestToScript(manifest),
+			adapter?.options as unknown as DynamicYieldAdapterOptions,
+			{ nonce, registrations: getScriptRegistrations }
+		),
+		// A site's CSP nonce for both loaders: npm-only.
 		nonce,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			const granted = grantedRegistration(info);
-			if (granted) {
-				retainStatic(granted);
-				resolved.onBeforeLoad?.({ ...info, hasConsent: true });
-			}
-		},
-		onConsentChange: updateConsent,
-		onDispose(info) {
-			if (removeStatic() && shared) {
-				resolved.onConsentChange?.({
-					...info,
-					hasConsent: shared.consentOwners.size > 0,
-				});
-			}
-		},
-		onLoad(info) {
-			const granted = grantedRegistration(info);
-			if (!granted?.element?.isConnected) {
-				return;
-			}
-			const staticLoader = retainStatic(granted);
-			if (!staticLoader || staticLoader.element?.isConnected) {
-				return;
-			}
-			const element = document.createElement('script');
-			element.async = false;
-			element.src = `${base}/api_static.js`;
-			const loaderNonce = granted.element.nonce || nonce;
-			if (loaderNonce) {
-				element.nonce = loaderNonce;
-			}
-			staticLoader.element = element;
-			document.head.appendChild(element);
-		},
-		resourceKey: `${resolved.id}:${base}`,
 	};
 };
 

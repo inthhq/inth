@@ -244,6 +244,7 @@ export const ADAPTER_LEVELS = {
 	'cloudflare-zaraz': 4,
 	databuddy: 4,
 	'default-com': 4,
+	'dynamic-yield': 4,
 	fullstory: 4,
 	'gainsight-px': 4,
 	gorgias: 4,

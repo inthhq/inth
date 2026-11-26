@@ -44,6 +44,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	'cloudflare-zaraz': '__inthAdapterCloudflareZaraz',
 	databuddy: '__inthAdapterDatabuddy',
 	'default-com': '__inthAdapterDefaultCom',
+	'dynamic-yield': '__inthAdapterDynamicYield',
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
 	gorgias: '__inthAdapterGorgias',
