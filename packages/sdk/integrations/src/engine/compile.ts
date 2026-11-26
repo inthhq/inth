@@ -1,4 +1,4 @@
-import { manifestRoots } from '@inth/sdk/manifest-runtime';
+import { manifestFeatureLevel, manifestRoots } from '@inth/sdk/manifest-runtime';
 
 import type {
 	LoadScriptStep,
@@ -255,8 +255,12 @@ export const compileManifest = function compileManifest(
 		// Level 2 fields stay out of a manifest that does not set them.
 		...level2Fields(manifest, config),
 	};
-	return {
+	const withGlobals: ResolvedManifest = {
 		...compiled,
 		globals: manifestRoots(compiled) as string[],
 	};
+	// The level the Inth server lists the manifest under, and the SDK
+	// checks before it runs it. `globals` is level 2, so every compiled
+	// manifest needs level 2 at least and carries `requires`.
+	return { ...withGlobals, requires: manifestFeatureLevel(withGlobals) };
 };

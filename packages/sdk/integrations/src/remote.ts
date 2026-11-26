@@ -71,8 +71,8 @@ export interface RemoteIntegration {
 	/**
 	 * Builds the manifest for options that pass
 	 * {@link validateRemoteOptions}, with `requires` set to its
-	 * {@link manifestLevel} when that is above 1. Returns a new object on
-	 * every call.
+	 * {@link manifestLevel}, which `compileManifest` stamps. Returns a new
+	 * object on every call.
 	 *
 	 * @throws {Error} When the options do not pass validation.
 	 */
@@ -99,14 +99,9 @@ const toIntegration = function toIntegration(
 			// The options passed this definition's own specs, so they have the
 			// shape its resolver declares. Helpers share a cached manifest;
 			// callers get their own copy.
-			const manifest = structuredClone(
-				definition.resolve(result.options as never)
-			);
-			const level = manifestLevel(manifest);
-			// A level 1 manifest carries no `requires`, which a parser from
-			// before levels refuses. Every compiled manifest carries
-			// `globals`, so in practice the level is 2 or above.
-			return level > 1 ? { ...manifest, requires: level } : manifest;
+			// compileManifest stamps `requires`, so the npm helper and the
+			// server path carry the same level.
+			return structuredClone(definition.resolve(result.options as never));
 		},
 		vendor,
 	});

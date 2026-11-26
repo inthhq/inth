@@ -316,6 +316,7 @@ describe('scripts engine', () => {
 			],
 			onLoadDeniedSteps: [],
 			onLoadGrantedSteps: [],
+			requires: 2,
 			schemaVersion: 1,
 			setupSteps: [],
 			vendor: 'serializable',
@@ -1330,6 +1331,31 @@ describe('scripts engine', () => {
 		// No level 3 step lands anywhere the manifest did not put one.
 		expect(compiled.setupSteps).toEqual([]);
 		expect(compiled.onConsentChangeSteps).toEqual([]);
+	});
+
+	it('stamps requires with the level a manifest needs, 2 at least for its globals', () => {
+		const base = {
+			...vendorManifestContract,
+			category: 'measurement',
+			install: [],
+			vendor: 'levels',
+		} as const;
+
+		expect(compileManifest(base).requires).toBe(2);
+		expect(compileManifest({ ...base, target: 'body' }).requires).toBe(2);
+		expect(
+			compileManifest({
+				...base,
+				onLoadGranted: [
+					{
+						then: [{ name: 'ready', type: 'setFlag', value: true }],
+						type: 'if',
+						when: { documentReady: true },
+					},
+				],
+				target: 'body',
+			}).requires
+		).toBe(3);
 	});
 
 	it('rejects manifests with an unsupported contract', () => {
