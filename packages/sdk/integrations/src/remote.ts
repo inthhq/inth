@@ -17,6 +17,8 @@
  *
  * @packageDocumentation
  */
+import { manifestFeatureLevel } from '@inth/sdk/manifest-runtime';
+
 import { getBuiltInScriptIntegration } from './registry';
 import { remoteDefinitions } from './remote-catalogue';
 import type { RemoteDefinition, RemoteOptionSpec } from './remote-define';
@@ -44,7 +46,7 @@ export type { RemoteOptionsValidation } from './remote-validate';
 /**
  * The manifest runtime level `manifest` needs: the highest level of any
  * step, field or runtime value it uses, and at least its own `requires`.
- * Every manifest feature today is level 1.
+ * The manifest runtime's level table says which feature is which level.
  *
  * The Inth server sets `requires` to this level when it is above 1, and
  * lists the entry only for a request whose `manifestLevel` is at least this
@@ -54,7 +56,7 @@ export type { RemoteOptionsValidation } from './remote-validate';
 export const manifestLevel = function manifestLevel(
 	manifest: ResolvedManifest
 ): number {
-	return Math.max(1, manifest.requires ?? 1);
+	return Math.max(manifestFeatureLevel(manifest), manifest.requires ?? 1);
 };
 
 export interface RemoteIntegration {

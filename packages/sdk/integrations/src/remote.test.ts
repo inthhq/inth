@@ -300,6 +300,21 @@ describe('remoteIntegrations', () => {
 		expect(manifestLevel({ ...manifest, requires: 1 } as never)).toBe(1);
 	});
 
+	it('reads a manifest that uses a level 2 feature as level 2', () => {
+		const manifest = remoteIntegrations.metaPixel?.resolveRemote({
+			pixelId: '123',
+		}) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+
+		expect(manifestLevel({ ...manifest, target: 'body' })).toBe(2);
+		expect(
+			manifestLevel({
+				...manifest,
+				onDisposeSteps: [{ id: 'addon', type: 'removeScript' }],
+			})
+		).toBe(2);
+		expect(manifestLevel({ ...manifest, requires: 3, target: 'body' })).toBe(3);
+	});
+
 	it.each(cases)(
 		'%s %s builds the same script as the npm helper',
 		(key, _label, options) => {
