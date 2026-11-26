@@ -448,7 +448,19 @@ describe('remoteScripts', () => {
 		runtime.start();
 		await vi.waitFor(() => expect(tags()).toHaveLength(1));
 
-		answer.resolve({ scriptRegistry: { load: load(levelThree('ACME-3')) } });
+		// A new entry: a changed manifest for the running entry would keep its
+		// setup until the next page.
+		answer.resolve({
+			scriptRegistry: {
+				load: [
+					{
+						id: 'acme-3',
+						integration: 'acmeThree',
+						manifest: { ...levelThree('ACME-3'), vendor: 'acme-3' },
+					},
+				],
+			},
+		});
 
 		await vi.waitFor(() =>
 			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toContainEqual([
