@@ -317,52 +317,59 @@ describe('loadManifestsFile', () => {
 		});
 
 		test.each([
+			['ada', '__inthAdapterAda'],
+			['dynamic-yield', '__inthAdapterDynamicYield'],
 			['gainsight-px', '__inthAdapterGainsightPx'],
+			['gorgias', '__inthAdapterGorgias'],
 			['lucky-orange', '__inthAdapterLuckyOrange'],
 			['oracle-eloqua', '__inthAdapterOracleEloqua'],
 			['salesforce-pardot', '__inthAdapterSalesforcePardot'],
-		])(
-			'loads the %s adapter from its own file, attribute and backend global',
+			['zendesk', '__inthAdapterZendesk'],
+		] as const)(
+			'loads inth.adapter-%s.js with the nonce, from its data attribute, then the backend global',
 			async (id, key) => {
 				const named = { ...manifest, adapter: { id, options: {} } };
 				const adapter = { ...sentryAdapter, id };
-				initTag();
+				const backend = `${key}Src`;
 				loadPartFile.mockImplementation(
-					(fileKey: string) =>
+					(file: string) =>
 						Promise.resolve(
-							fileKey === key ? { adapter, key: fileKey } : runtimeFile(fileKey)
+							file === key ? { adapter, key: file } : runtimeFile(file)
 						) as never
 				);
-
-				await (await loadManifestsFile([named])).prepare?.([named]);
-				expect(loadPartFile).toHaveBeenLastCalledWith(
-					key,
-					expect.stringMatching(
-						new RegExp(String.raw`/sdk/inth\.adapter-${id}\.js\?v=`, 'u')
-					),
-					undefined
-				);
-
-				initTag({ [`data-adapter-${id}-src`]: `/files/${id}.js` });
-				await (await loadManifestsFile([named])).prepare?.([named]);
-				expect(loadPartFile).toHaveBeenLastCalledWith(
-					key,
-					`/files/${id}.js`,
-					undefined
-				);
-
-				const global = `${key}Src`;
-				(window as unknown as Record<string, string>)[global] =
-					`https://backend.example/${id}.js`;
 				try {
+					initTag({ 'data-nonce': 'abc123' });
 					await (await loadManifestsFile([named])).prepare?.([named]);
+					expect(loadPartFile).toHaveBeenLastCalledWith(
+						key,
+						expect.stringMatching(
+							new RegExp(`/sdk/inth\\.adapter-${id}\\.js\\?v=`, 'u')
+						),
+						'abc123'
+					);
+
+					initTag({ [`data-adapter-${id}-src`]: `/files/${id}.js` });
+					await (await loadManifestsFile([named])).prepare?.([named]);
+					expect(loadPartFile).toHaveBeenLastCalledWith(
+						key,
+						`/files/${id}.js`,
+						undefined
+					);
+
+					(window as unknown as Record<string, string>)[backend] =
+						`https://backend.example/${id}.js`;
+					const runtime = await loadManifestsFile([named]);
+					await runtime.prepare?.([named]);
 					expect(loadPartFile).toHaveBeenLastCalledWith(
 						key,
 						`https://backend.example/${id}.js`,
 						undefined
 					);
+					expect(
+						runtime.resolvedManifestToScript(named as never)
+					).toMatchObject({ adapted: true });
 				} finally {
-					Reflect.deleteProperty(window, global);
+					Reflect.deleteProperty(window, backend);
 				}
 			}
 		);

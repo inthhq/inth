@@ -127,12 +127,16 @@ it('keeps adapter code out of the runtime files and the Sentry gate in its own',
 
 it.each([
 	['inth.adapter-activecampaign.js', 'an unmanaged tracker exists'],
+	['inth.adapter-ada.js', 'createAdaEmbedInterface'],
 	['inth.adapter-adobe-target.js', 'Web SDK'],
 	['inth.adapter-amazon-ads.js', 'amzn-consent.js'],
 	['inth.adapter-cloudflare-zaraz.js', 'zarazConsentAPIReady'],
 	['inth.adapter-default-com.js', 'application/x-inth-default-conflict'],
+	['inth.adapter-dynamic-yield.js', 'api_static.js'],
+	['inth.adapter-gorgias.js', 'gorgias-widget-loaded'],
 	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
 	['inth.adapter-oracle-eloqua.js', 'consent dispatch failed'],
+	['inth.adapter-zendesk.js', 'messenger:set'],
 ])('keeps the code of %s in its own file', (file, message) => {
 	const read = (name: string) =>
 		readFileSync(
