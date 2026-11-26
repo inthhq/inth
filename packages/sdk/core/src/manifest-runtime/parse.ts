@@ -206,6 +206,8 @@ let stepCount = 0;
 
 /** The `globals` of the manifest being parsed. */
 let declaredGlobals: readonly unknown[] = [];
+/** The level the manifest being parsed requires. */
+let required = 1;
 
 /** Why a step in `list` cannot run, as a parser reason, or `undefined`. */
 // oxlint-disable-next-line complexity -- One check per rule, in order.
@@ -269,7 +271,11 @@ const stepProblem: StepCheck = (step, list, depth) => {
 		part &&
 		Object.keys(step).some((field) => (fields[field] as number) > 2)
 	) {
-		return part.problem(step, list, depth, stepProblem);
+		// A runtime without the part refuses the step too, so the manifest
+		// fails on every path.
+		return required < 3
+			? `${list} has a ${type} step that needs manifest runtime level 3, and the manifest requires level ${String(required)}`
+			: part.problem(step, list, depth, stepProblem);
 	}
 	return undefined;
 };
@@ -342,6 +348,7 @@ const manifestProblem = (
 	) {
 		return 'its requires is not a whole number from 1';
 	}
+	required = (requires as number | undefined) ?? 1;
 	// A level this SDK does not run uses steps or fields it would skip.
 	if (typeof requires === 'number' && requires > MANIFEST_RUNTIME_LEVEL) {
 		return `it needs manifest runtime level ${String(requires)}, and this SDK runs level ${MANIFEST_RUNTIME_LEVEL}`;

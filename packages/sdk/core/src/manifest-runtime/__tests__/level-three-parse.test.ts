@@ -297,6 +297,21 @@ describe('level 3', () => {
 		).toBe(true);
 	});
 
+	it.each([undefined, 1, 2])(
+		'refuses level 3 steps in a manifest that requires %s, as a runtime without the part does',
+		(requires) => {
+			expect(
+				parseResolvedManifest({
+					...withSetup(ifStep({ flag: 'started' }, [call])),
+					requires,
+				})
+			).toEqual({
+				ok: false,
+				reason: `setupSteps has a if step that needs manifest runtime level 3, and the manifest requires level ${String(requires ?? 1)}`,
+			});
+		}
+	);
+
 	it('says how deep steps may nest', () => {
 		expect(parseResolvedManifest(withSetup(nested(5, call)))).toEqual({
 			ok: false,
