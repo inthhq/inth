@@ -80,6 +80,10 @@ it('loads every integration the Inth server lists after an accept, through creat
 	const read = async (): Promise<PageState> => {
 		thirdParty.push(...(await commands.takeRequests()).thirdParty);
 		return {
+			adaStarts: [
+				...((window as { __adaStarts?: PageState['adaStarts'] }).__adaStarts ??
+					[]),
+			],
 			debug: [...debug],
 			distFiles: undefined,
 			scriptSrcs: [...document.querySelectorAll('script')].map(

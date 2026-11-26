@@ -30,6 +30,7 @@ import type {
 } from './fixtures/remote-integrations-report';
 
 type PageWindow = Window & {
+	__adaStarts?: PageState['adaStarts'];
 	__debug: DebugEvent[];
 	__zaraz: ZarazCalls;
 	inth: { getSnapshot: () => { explicitChoice: unknown } };
@@ -89,6 +90,7 @@ const readPage = async function readPage(
 	distFiles.push(...requests.dist);
 	thirdParty.push(...requests.thirdParty);
 	return {
+		adaStarts: [...(win.__adaStarts ?? [])],
 		debug: [...win.__debug],
 		distFiles,
 		scriptSrcs: scriptSrcs(win),

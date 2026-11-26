@@ -44,16 +44,26 @@ export type ZarazCalls = Record<string, boolean>[];
 
 /**
  * Integrations that load no vendor tag, and how a test sees that their
- * adapter ran. Ada's adapter imports Ada's module; Zaraz's sets purposes on
- * the page's Zaraz consent API.
+ * adapter ran. Ada's adapter imports Ada's module and starts it with the
+ * entry's handle; Zaraz's sets purposes on the page's Zaraz consent API.
  */
 const noTagChecks: Record<
 	string,
-	{ what: string; ran: (page: PageState) => boolean }
+	{
+		what: string;
+		ran: (page: PageState, entry: ListedIntegration) => boolean;
+	}
 > = {
 	ada: {
-		ran: (page) => page.thirdParty.includes(ADA_MESSAGING_SDK_URL),
-		what: `imported ${ADA_MESSAGING_SDK_URL}`,
+		ran: (page, entry) =>
+			page.thirdParty.includes(ADA_MESSAGING_SDK_URL) &&
+			page.adaStarts.some(
+				(settings) =>
+					settings.handle ===
+					(entry.manifest as { adapter?: { options?: { handle?: unknown } } })
+						.adapter?.options?.handle
+			),
+		what: `imported ${ADA_MESSAGING_SDK_URL} and started it with the entry's handle`,
 	},
 	cloudflareZaraz: {
 		ran: (page) => page.zarazCalls.length > 0,
@@ -63,6 +73,8 @@ const noTagChecks: Record<
 
 /** What a test read from the page once the list had time to load. */
 export interface PageState {
+	/** The settings each `start` of the Ada stand-in got. */
+	adaStarts: { handle?: unknown }[];
 	debug: DebugEvent[];
 	/** `dist/` files the page fetched; `undefined` for the npm runtime. */
 	distFiles: string[] | undefined;
@@ -209,7 +221,7 @@ export const acceptedRows = function acceptedRows(
 				problems.push(
 					'it loads no tag, and this test has no check that its adapter ran; add one to noTagChecks'
 				);
-			} else if (check.ran(page)) {
+			} else if (check.ran(page, entry)) {
 				loaded = `adapter ${check.what}`;
 			} else {
 				loaded = 'adapter did not run';
@@ -259,7 +271,7 @@ export const deniedRows = function deniedRows(
 		const src = vendorSrc(entry);
 		let loaded: string;
 		if (src === undefined) {
-			const ran = noTagChecks[entry.integration]?.ran(page) ?? false;
+			const ran = noTagChecks[entry.integration]?.ran(page, entry) ?? false;
 			loaded = ran ? 'adapter ran' : 'adapter did not run';
 			if (ran !== may) {
 				problems.push(

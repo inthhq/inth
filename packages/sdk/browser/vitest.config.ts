@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { ADA_MESSAGING_SDK_URL } from '@inth/sdk-core/manifest-runtime/adapters/ada';
 import { baseConfig } from '@inth/vitest-config/base';
 import type { Page, Route } from 'playwright';
 import { defineConfig, mergeConfig } from 'vite-plus';
@@ -18,6 +19,21 @@ const WEBVIEW_KEY = '0badc0de0badc0de0badc0de0badc0de';
 
 /** Hosts the dev server answers on; every other host is a third party. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/**
+ * Stand-ins for the vendor files a test needs to do something, by URL.
+ * Every other vendor host gets empty JavaScript. Ada's adapter imports
+ * Ada's module and starts it, so its stand-in records each `start` on
+ * `window.__adaStarts`.
+ */
+const STAND_INS: Readonly<Record<string, string>> = {
+	[ADA_MESSAGING_SDK_URL]: [
+		'export const createAdaEmbedInterface = () => ({',
+		'\tstart: async (settings) => { (window.__adaStarts ??= []).push(settings); },',
+		'\tstop: async () => {},',
+		'});',
+	].join('\n'),
+};
 /** What `watchRequests` saw since the last `takeRequests`. */
 interface WatchedRequests {
 	/** The `dist/` files requested through `/__inth-dist__/`. */
@@ -318,7 +334,8 @@ export default mergeConfig(
 								/**
 								 * From now on, in every frame of this session's page,
 								 * answers each request to a host other than the dev
-								 * server with empty JavaScript, so vendor files load
+								 * server with its `STAND_INS` body or empty
+								 * JavaScript, so vendor files load
 								 * without the test reaching the vendor, and records it
 								 * and each `/__inth-dist__/` file requested.
 								 */
@@ -332,9 +349,10 @@ export default mergeConfig(
 									await page.route(
 										(url) => !LOCAL_HOSTS.has(url.hostname),
 										(route: Route) => {
-											watched.thirdParty.push(route.request().url());
+											const url = route.request().url();
+											watched.thirdParty.push(url);
 											return route.fulfill({
-												body: '',
+												body: STAND_INS[url] ?? '',
 												contentType: 'text/javascript',
 												headers: { 'access-control-allow-origin': '*' },
 											});
