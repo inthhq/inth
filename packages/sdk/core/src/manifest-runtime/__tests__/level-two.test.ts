@@ -590,6 +590,20 @@ describe('loadScriptStep and removeScript', () => {
 		expect(existing.isConnected).toBe(true);
 	});
 
+	test('inserts its tag when a page element that is not a script has its id', () => {
+		const block = document.createElement('div');
+		block.id = 'vendor-addon';
+		document.body.append(block);
+		mount([
+			resolvedManifestToScript(
+				fromJSON({ alwaysLoad: true, setupSteps: [addon()] })
+			),
+		]);
+
+		expect(document.querySelector('script#vendor-addon')).not.toBeNull();
+		expect(block.isConnected).toBe(true);
+	});
+
 	test('removes its tag when consent is withdrawn, and inserts it again on a grant', () => {
 		const { kernel } = mount([
 			resolvedManifestToScript(

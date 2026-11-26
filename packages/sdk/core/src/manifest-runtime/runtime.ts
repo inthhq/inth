@@ -776,7 +776,9 @@ const executeStep = function executeStep(
 		case 'loadScriptStep': {
 			if (
 				!values.state ||
-				document.getElementById(step.id) ||
+				// Only a script counts: a page element under the same id would
+				// otherwise stop the vendor's file from loading.
+				document.getElementById(step.id) instanceof HTMLScriptElement ||
 				(step.unlessGlobal &&
 					readPath(win, step.unlessGlobal)?.value !== undefined)
 			) {
