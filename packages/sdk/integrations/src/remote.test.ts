@@ -50,12 +50,15 @@ const npmHelper = function npmHelper(
 };
 
 /**
- * Options the npm helper's type requires but the remote form defaults, so a
- * site always passes one. The npm call takes the remote default for these;
- * every other option is passed as the sample has it.
+ * Options the remote form defaults that a site passes to the npm helper to
+ * get the same script: the helper's type requires them, or its own default
+ * differs. The npm call takes the remote default for these; every other
+ * option is passed as the sample has it.
  */
 const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
 	gtag: ['category'],
+	// The helper defaults to consent mode, which the server does not send.
+	pardotTracking: ['mode'],
 };
 
 /**
@@ -117,6 +120,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	oneDollarStats: ['assets.onedollarstats.com'],
 	openaiPixel: ['bzrcdn.openai.com'],
 	optimizelyWeb: ['cdn.optimizely.com'],
+	pardotTracking: ['pi.pardot.com'],
 	pinterestTag: ['s.pinimg.com'],
 	plausibleAnalytics: ['plausible.io'],
 	posthog: ['eu-assets.i.posthog.com', 'us-assets.i.posthog.com'],

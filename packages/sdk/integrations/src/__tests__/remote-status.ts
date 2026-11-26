@@ -38,8 +38,6 @@ export const remoteStatus = {
 	gorgiasChat: level3,
 	hubspot: adapter,
 	luckyOrange: adapter,
-	// Classic mode converts with level 2; consent mode needs an adapter (13).
-	pardotTracking: level2,
 	pendo: level3,
 	pirsch: level3,
 	sentry: adapterSentry,
@@ -47,3 +45,18 @@ export const remoteStatus = {
 	wisepops: level2,
 	zendeskWidget: level3,
 } as const satisfies Partial<Record<BuiltInScriptIntegrationKey, RemoteStatus>>;
+
+/**
+ * Modes of a remote vendor that its remote definition leaves out, by
+ * registry key, then by the value of its `mode` option, and why. The remote
+ * definition's `mode` enum must not offer them.
+ */
+export const remoteModeStatus = {
+	pardotTracking: {
+		// Consent mode grants once per consent cycle after its SDK loads, and
+		// replays saved configuration when a disposed download runs late.
+		consent: adapter,
+	},
+} as const satisfies Partial<
+	Record<BuiltInScriptIntegrationKey, Record<string, RemoteStatus>>
+>;

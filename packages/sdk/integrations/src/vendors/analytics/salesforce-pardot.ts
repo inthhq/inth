@@ -1,12 +1,14 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest, resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { isHostname } from '../_shared/hostname';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { resolveScriptUrl, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -54,7 +56,7 @@ export const pardotTrackingManifest = {
 		},
 		{ args: ['hideConsentBanner', null], global: 'pdt', type: 'callGlobal' },
 		{ args: ['setOptIn', false], global: 'pdt', type: 'callGlobal' },
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
+		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: consent mode needs an adapter; its tracker host is the site's own domain
 		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
 	],
 	onConsentDenied: [
@@ -74,6 +76,38 @@ export const pardotTrackingManifest = {
 	},
 } as const satisfies VendorManifest;
 
+/**
+ * Account Engagement's classic tracking snippet: the account globals, then
+ * pd.js from Pardot's own host, with no consent API.
+ */
+export const pardotClassicManifest = {
+	...vendorManifestContract,
+	category: '{{category}}',
+	install: [
+		{
+			ifUndefined: false,
+			name: 'piAId',
+			type: 'setGlobal',
+			value: '{{piAId}}',
+		},
+		{
+			ifUndefined: false,
+			name: 'piCId',
+			type: 'setGlobal',
+			value: '{{piCId}}',
+		},
+		{
+			ifUndefined: false,
+			name: 'piHostname',
+			type: 'setGlobal',
+			value: '{{piHostname}}',
+		},
+		{ async: true, src: 'https://pi.pardot.com/pd.js', type: 'loadScript' },
+	],
+	vendor: pardotTrackingManifest.vendor,
+	vendorDetails: pardotTrackingManifest.vendorDetails,
+} as const satisfies VendorManifest;
+
 export interface PardotTrackingOptions {
 	/** Account ID from the tracking snippet. */
 	piAId: string | number;
@@ -90,6 +124,72 @@ export interface PardotTrackingOptions {
 	/** Custom or proxied loader URL. */
 	scriptUrl?: string;
 }
+
+/**
+ * Builds the serializable manifest for {@link pardotTracking} in classic
+ * mode. The IDs must already be positive integers and `piHostname` a
+ * lowercase hostname.
+ */
+export const resolvePardotClassicManifest =
+	function resolvePardotClassicManifest({
+		piAId,
+		piCId,
+		piHostname = 'pi.pardot.com',
+		category = 'marketing',
+	}: Pick<
+		PardotTrackingOptions,
+		'piAId' | 'piCId' | 'piHostname' | 'category'
+	>): ResolvedManifest {
+		return getCompiledManifest(pardotClassicManifest, {
+			category,
+			piAId: Number(piAId),
+			piCId: Number(piCId),
+			piHostname,
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor: classic mode only. Consent
+ * mode, the helper's default, grants once per consent cycle after its SDK
+ * loads and replays saved configuration for a late download, which needs
+ * an adapter, so `mode` offers `classic` alone. `category` and `scriptUrl`
+ * stay npm-only. Marked pure so a bundler drops it from an npm bundle that
+ * never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'pardotTracking',
+		{
+			mode: {
+				default: 'classic',
+				kind: 'enum',
+				label: 'Tracking mode',
+				values: ['classic'],
+			},
+			piAId: {
+				example: '123456',
+				kind: 'id',
+				label: 'Account ID',
+				pattern: '^[1-9][0-9]{0,14}$',
+				required: true,
+			},
+			piCId: {
+				example: '654321',
+				kind: 'id',
+				label: 'Campaign ID',
+				pattern: '^[1-9][0-9]{0,14}$',
+				required: true,
+			},
+			piHostname: {
+				example: 'pi.pardot.com',
+				kind: 'hostname',
+				label: 'Tracker hostname',
+				required: false,
+			},
+		},
+		resolvePardotClassicManifest
+	);
 
 const reusePardotTracking = createScriptReuse<PardotTrackingOptions>();
 
@@ -153,53 +253,30 @@ export const pardotTracking = function pardotTracking(
 			skipped
 		);
 	}
+	if (mode === 'classic') {
+		return withScriptUrl(
+			resolvedManifestToScript(
+				resolvePardotClassicManifest({
+					category,
+					piAId,
+					piCId,
+					piHostname: domain,
+				})
+			),
+			options.scriptUrl
+		);
+	}
 	const scriptUrl = resolveScriptUrl(
 		options.scriptUrl,
-		mode === 'classic'
-			? 'https://pi.pardot.com/pd.js'
-			: `https://${domain}/pdt.js?aid=${Number(piAId)}`
+		`https://${domain}/pdt.js?aid=${Number(piAId)}`
 	);
 	const create = (config: PardotTrackingOptions): Script => {
-		const manifest: VendorManifest =
-			mode === 'classic'
-				? {
-						...pardotTrackingManifest,
-						install: [
-							{
-								ifUndefined: false,
-								name: 'piAId',
-								type: 'setGlobal',
-								value: '{{piAId}}',
-							},
-							{
-								ifUndefined: false,
-								name: 'piCId',
-								type: 'setGlobal',
-								value: '{{piCId}}',
-							},
-							{
-								ifUndefined: false,
-								name: 'piHostname',
-								type: 'setGlobal',
-								value: '{{piDomain}}',
-							},
-							// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-							{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
-						],
-						onConsentDenied: [],
-						onLoadGranted: [],
-						persistAfterConsentRevoked: undefined,
-					}
-				: pardotTrackingManifest;
-		const script = resolveManifest(manifest, {
+		const script = resolveManifest(pardotTrackingManifest, {
 			piAId: Number(piAId),
 			piCId: Number(piCId),
 			piDomain: domain,
 			scriptUrl,
 		});
-		if (mode === 'classic') {
-			return { ...script, category: config.category ?? 'marketing' };
-		}
 		let hasConsent = false;
 		let loaded = false;
 		let started = false;
@@ -218,7 +295,7 @@ export const pardotTracking = function pardotTracking(
 		return {
 			...script,
 			category: config.category ?? 'marketing',
-			// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
+			// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion: consent mode needs an adapter
 			onBeforeLoad(info) {
 				({ hasConsent } = info);
 				if (hasConsent) {
@@ -270,16 +347,14 @@ export const pardotTracking = function pardotTracking(
 			},
 		};
 	};
-	return mode === 'classic'
-		? create(options)
-		: reusePardotTracking(
-				{
-					category,
-					piAId: Number(piAId),
-					piCId: Number(piCId),
-					piDomain: domain,
-					scriptUrl,
-				},
-				create
-			);
+	return reusePardotTracking(
+		{
+			category,
+			piAId: Number(piAId),
+			piCId: Number(piCId),
+			piDomain: domain,
+			scriptUrl,
+		},
+		create
+	);
 };

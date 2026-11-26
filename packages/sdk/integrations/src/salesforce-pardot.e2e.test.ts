@@ -10,12 +10,14 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { pardotTracking } from './vendors/analytics/salesforce-pardot';
@@ -404,3 +406,38 @@ describe('Pardot consent API contract', () => {
 		expect(window.pdt).toBeUndefined();
 	});
 });
+
+describe.each(npmAndRemote('pardotTracking', pardotTracking))(
+	'Salesforce Account Engagement classic dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			for (const name of GLOBALS) {
+				Reflect.deleteProperty(window, name);
+			}
+		});
+
+		it('sets the account globals and loads pd.js only after marketing consent', async () => {
+			const scripts = [
+				build({
+					mode: 'classic',
+					piAId: '123456',
+					piCId: '654321',
+					piHostname: 'go.example.com',
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, unrelated);
+			expect(document.querySelector('script[src]')).toBeNull();
+			expect(window.piAId).toBeUndefined();
+
+			updateScripts(scripts, granted);
+			expect(getLoader().src).toBe('https://pi.pardot.com/pd.js');
+			expect(window.piAId).toBe(123_456);
+			expect(window.piCId).toBe(654_321);
+			expect(window.piHostname).toBe('go.example.com');
+			expect(window.pdt).toBeUndefined();
+		});
+	}
+);
