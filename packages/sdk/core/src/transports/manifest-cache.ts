@@ -24,6 +24,8 @@ import type {
 } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
+import { MANIFEST_RUNTIME_LEVEL } from '../manifest-runtime/level';
+
 /** Request headers accepted by {@link resolveManifestInit}. */
 export type ManifestRequestHeaders =
 	| Headers
@@ -101,7 +103,16 @@ export const resolveManifestInit = function resolveManifestInit(
 	const inputs =
 		options.inputs ?? getResolverInputsFromHeaders(options.headers);
 	return {
-		...resolveInitFromManifest(options.manifest, inputs, { baseTranslations }),
+		// The answer goes to this SDK unless the caller names another level,
+		// as the consent route does for the browser it answers.
+		...resolveInitFromManifest(
+			options.manifest,
+			{
+				...inputs,
+				manifestLevel: inputs.manifestLevel ?? MANIFEST_RUNTIME_LEVEL,
+			},
+			{ baseTranslations }
+		),
 		// Resolver inputs use `null` for absent; the overrides record wants
 		// the fields dropped instead.
 		resolvedOverrides: consentInputsToOverrides({

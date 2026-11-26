@@ -548,6 +548,57 @@ describe('resolveManifestInit', () => {
 		expect(init).not.toHaveProperty('resolvedOverrides.country');
 	});
 
+	test("lists the remote scripts this SDK's runtime level runs, unless the inputs name a level", async () => {
+		// Level 1 is the only level today, so run this under a later one to
+		// see which level a list is resolved for.
+		vi.resetModules();
+		vi.doMock('../manifest-runtime/level', async (importOriginal) => ({
+			...(await importOriginal<object>()),
+			MANIFEST_RUNTIME_LEVEL: 2,
+		}));
+		try {
+			const { resolveManifestInit: resolveAtLevelTwo } =
+				await import('../transports/manifest-cache');
+			const entry = (id: string, requires?: number) => ({
+				id,
+				integration: id,
+				manifest: {
+					category: 'measurement',
+					vendor: id,
+					...(requires !== undefined && { requires }),
+				},
+			});
+			const manifest = {
+				...createManifestFixture(),
+				scriptRegistry: { load: [entry('level-one'), entry('needs-two', 2)] },
+			} as ConsentManifest;
+			const listed = (init: { scriptRegistry?: { load?: { id: string }[] } }) =>
+				init.scriptRegistry?.load?.map(({ id }) => id);
+
+			expect(listed(resolveAtLevelTwo({ headers: {}, manifest }))).toEqual([
+				'level-one',
+				'needs-two',
+			]);
+			expect(
+				listed(
+					resolveAtLevelTwo({
+						inputs: {
+							country: null,
+							gpc: false,
+							language: 'en',
+							manifestLevel: 1,
+							region: null,
+						},
+						manifest,
+					})
+				)
+			).toEqual(['level-one']);
+		} finally {
+			vi.doUnmock('../manifest-runtime/level');
+			vi.resetModules();
+		}
+	});
+
 	test('maps Sec-GPC and geo headers to resolver inputs with an English fallback', () => {
 		expect(
 			getResolverInputsFromHeaders({
