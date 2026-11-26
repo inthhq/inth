@@ -184,7 +184,8 @@ export const prototypeName = function prototypeName(
 };
 
 /**
- * The global a step calls or constructs, as a path under window.
+ * The global a step calls or constructs, as a path under window. A stub
+ * with a `dispatchProperty` calls that property of its global.
  *
  * @internal
  */
@@ -193,6 +194,11 @@ export const calledPath = function calledPath(
 ): readonly unknown[] {
 	if (step.type === 'constructGlobal') {
 		return [step.constructor];
+	}
+	if (step.type === 'defineStubFunction') {
+		return step.dispatchProperty === undefined
+			? []
+			: [step.name, step.dispatchProperty];
 	}
 	if (step.type !== 'callGlobal') {
 		return [];

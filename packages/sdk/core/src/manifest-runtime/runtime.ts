@@ -239,7 +239,7 @@ const holdsPlatformObject = (value: unknown, depth = 0): boolean =>
 const ARRAY_METHODS: ReadonlySet<unknown> = new Set(['push', 'unshift']);
 
 /**
- * Whether a call step may call `fn` on `holder` with `args`: a vendor's
+ * Whether a manifest may call `fn` on `holder` with `args`: a vendor's
  * function, or `push` or `unshift` of an array (a vendor's queue) given no
  * browser object. Every other native function is refused, so a declared
  * root that turns out to reach a browser API cannot call it.
@@ -254,6 +254,22 @@ const mayCall = (
 	(Array.isArray(holder) &&
 		ARRAY_METHODS.has(method) &&
 		!holdsPlatformObject(args()));
+
+/**
+ * Reports a call that a function the manifest defined refused when it was
+ * called, after its step ran.
+ */
+const reportRefusedCall = (step: ManifestStep, values: StepValues): void => {
+	emitScriptDebugEvent({
+		action: 'skipped',
+		elementId: values.info?.elementId,
+		message: `Refused a ${step.type} call to a browser object or native function`,
+		scope: 'step',
+		scriptId: values.info?.id ?? '',
+		source: 'manifest-runtime',
+		stepType: step.type,
+	});
+};
 
 /**
  * The object at `path` under `root`, and the one holding it, or `undefined`
@@ -397,7 +413,13 @@ const executeStep = function executeStep(
 
 			// oxlint-disable-next-line func-name-matching -- Preserve declaration order, interface shape, and public compatibility.
 			const stub = function stubFunction(this: unknown) {
-				const self = win[step.name] as Record<string, unknown> | undefined;
+				// A later step may have set the global to a browser object,
+				// such as the script element; then the stub neither calls nor
+				// queues on it.
+				const current = win[step.name];
+				const self = isPlatformObject(current)
+					? undefined
+					: (current as Record<string, unknown> | undefined);
 				const dispatcher =
 					self && step.dispatchProperty
 						? self[step.dispatchProperty]
@@ -405,9 +427,15 @@ const executeStep = function executeStep(
 				// oxlint-disable-next-line prefer-rest-params -- Preserve sequential execution and callback compatibility.
 				const runtimeArgs = Array.from(arguments);
 
-				if (typeof dispatcher === 'function') {
+				if (
+					typeof dispatcher === 'function' &&
+					mayCall(dispatcher, self, step.dispatchProperty, () => runtimeArgs)
+				) {
 					dispatcher.apply(self, runtimeArgs);
 					return;
+				}
+				if (self !== current || typeof dispatcher === 'function') {
+					reportRefusedCall(step, values);
 				}
 
 				const queueTarget = resolveQueueTarget(win, step.queue, self);
@@ -602,6 +630,12 @@ const executeStep = function executeStep(
 								) {
 									return;
 								}
+								// A later step may have set the target to a browser
+								// object, such as the script element.
+								if (isPlatformObject(latestTarget)) {
+									reportRefusedCall(step, values);
+									return;
+								}
 
 								const method = (
 									latestTarget as Record<
@@ -609,8 +643,13 @@ const executeStep = function executeStep(
 										(...methodArgs: unknown[]) => unknown
 									>
 								)[methodName];
-								if (typeof method === 'function') {
+								if (typeof method !== 'function') {
+									return;
+								}
+								if (mayCall(method, latestTarget, methodName, () => args)) {
 									method.apply(latestTarget, args);
+								} else {
+									reportRefusedCall(step, values);
 								}
 							},
 							name: methodName,

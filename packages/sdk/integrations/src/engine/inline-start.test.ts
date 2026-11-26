@@ -993,6 +993,86 @@ describe('inlineStepsStart', () => {
 			]);
 		});
 
+		it('calls nothing on a browser object or a native function that a stub or a queued callback finds when called, from the HTML as in the browser', () => {
+			const page = getTestGlobal() as unknown as Record<string, unknown>;
+			const script = level2({
+				setupSteps: [
+					{
+						aliases: ['vendorAlias'],
+						dispatchProperty: 'callMethod',
+						name: 'vendorStub',
+						queue: { property: 'queue' },
+						type: 'defineStubFunction',
+					},
+					{ name: 'vendorApi', type: 'setGlobal', value: {} },
+					{ name: 'vendorQueue', type: 'setGlobal', value: [] },
+					{
+						methods: ['shim'],
+						queue: { global: 'vendorQueue' },
+						queueFormat: 'callback',
+						target: 'vendorApi',
+						type: 'defineQueueMethods',
+					},
+					{ global: 'vendorApi', method: 'shim', type: 'callGlobal' },
+				],
+			});
+			const names = ['vendorStub', 'vendorAlias', 'vendorApi', 'vendorQueue'];
+			const pages = [];
+			for (const run of ['callback', 'inline']) {
+				for (const name of names) {
+					Reflect.deleteProperty(page, name);
+				}
+				if (run === 'callback') {
+					script.onBeforeLoad?.(createCallbackInfo(info));
+				} else {
+					const start = script.serverStart?.(info, script);
+					assert(start);
+					// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+					new Function(`${start.prelude ?? ''};${start.code}`)();
+				}
+				const shim = vi.fn();
+				const held = ['kept'];
+				// Tagged as the browser tags an element, with a vendor's own
+				// function on it.
+				const element = {
+					[Symbol.toStringTag]: 'HTMLDivElement',
+					callMethod: shim,
+					shim,
+				};
+				const stub = page.vendorStub as ((...args: unknown[]) => void) & {
+					callMethod?: unknown;
+					queue: unknown[];
+				};
+				const queued = (page.vendorQueue as { fn: () => void }[]).slice();
+
+				// A native function, bound as a vendor might hold one.
+				stub.callMethod = Array.prototype.pop.bind(held);
+				(page.vendorAlias as (...args: unknown[]) => void)('native');
+				page.vendorStub = element;
+				stub('element');
+				(page.vendorApi as Record<string, unknown>).shim =
+					Array.prototype.pop.bind(held);
+				queued[0]?.fn();
+				page.vendorApi = element;
+				queued[0]?.fn();
+
+				pages.push({
+					held,
+					queued: stub.queue.length,
+					shim: shim.mock.calls.length,
+				});
+			}
+
+			for (const name of names) {
+				Reflect.deleteProperty(page, name);
+			}
+
+			expect(pages).toEqual([
+				{ held: ['kept'], queued: 1, shim: 0 },
+				{ held: ['kept'], queued: 1, shim: 0 },
+			]);
+		});
+
 		it('starts the rest from the HTML and hands over the consent gate on hydration', () => {
 			const script = level2({
 				setupSteps: [

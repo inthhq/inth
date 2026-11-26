@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
+import { subscribeToScriptDebugEvents } from '../../libs/script-loader/debug';
 import { createScriptLoader } from '../../modules/script-loader';
 import { isDeclarableGlobal, manifestRoots } from '../globals';
 import { parseResolvedManifest } from '../parse';
@@ -602,6 +603,173 @@ describe('native calls', () => {
 		document.body.append(element);
 		win.vendor = { remove: element.remove.bind(element) };
 		mountSteps([{ global: 'vendor', method: 'remove', type: 'callGlobal' }]);
+
+		expect(element.isConnected).toBe(true);
+	});
+});
+
+/**
+ * Calls a manifest's functions make after its steps ran: a stub forwarding
+ * to its dispatcher, and a queued callback running a method. Each reads its
+ * global again when called, so a later step may have swapped it.
+ */
+describe('calls made after the steps ran', () => {
+	const tagSrc = 'https://cdn.example/vendor.js';
+
+	/**
+	 * Mounts a parsed manifest whose steps run once its script element is
+	 * in the page and has loaded, and returns that element.
+	 */
+	const mountParsed = (steps: Record<string, unknown>[]) => {
+		const parsed = parse(
+			withRoots({ alwaysLoad: true, onLoadGrantedSteps: steps })
+		);
+		if (!parsed.ok) {
+			throw new Error(parsed.reason);
+		}
+		const kernel = createConsentKernel({
+			initialRecords: choiceRecords({ measurement: true }),
+			now: NOW,
+		});
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [resolvedManifestToScript(parsed.manifest)],
+		});
+		disposers.push(kernel.dispose, loader.dispose);
+		const element = document.querySelector(
+			`script[src="${tagSrc}"]`
+		) as HTMLElement;
+		element.dispatchEvent(new Event('load'));
+		return element;
+	};
+
+	const stub = (dispatchProperty: string) => ({
+		aliases: ['vendorAlias'],
+		dispatchProperty,
+		name: 'vendor',
+		queue: { property: 'queue' },
+		type: 'defineStubFunction',
+	});
+
+	/** Replaces `window.vendor` with the manifest's script element. */
+	const swapForElement = {
+		ifUndefined: false,
+		name: 'vendor',
+		type: 'setGlobal',
+		value: scriptElement,
+	};
+
+	afterEach(() => {
+		for (const name of ['vendorAlias', 'vendorQueue']) {
+			Reflect.deleteProperty(win, name);
+		}
+	});
+
+	it('the parser refuses a stub that dispatches to a browser name', () => {
+		expect(
+			parse(withRoots({ setupSteps: [stub('insertAdjacentHTML')] }))
+		).toEqual({
+			ok: false,
+			reason: expect.stringContaining('calls vendor.insertAdjacentHTML'),
+		});
+	});
+
+	it("a stub whose global became the script element calls none of the element's methods", () => {
+		const events: unknown[] = [];
+		disposers.push(
+			subscribeToScriptDebugEvents((event) => {
+				events.push(event);
+			})
+		);
+		const element = mountParsed([
+			stub('remove'),
+			swapForElement,
+			{ global: 'vendorAlias', type: 'callGlobal' },
+		]);
+
+		expect(element.isConnected).toBe(true);
+		expect(events).toContainEqual(
+			expect.objectContaining({
+				action: 'skipped',
+				stepType: 'defineStubFunction',
+			})
+		);
+	});
+
+	it('a stub calls no native function as its dispatcher, and queues the call', () => {
+		const element = document.createElement('div');
+		document.body.append(element);
+		mountParsed([stub('callMethod')]);
+		const vendor = win.vendor as ((...args: unknown[]) => void) & {
+			callMethod?: unknown;
+			queue: unknown[];
+		};
+		vendor.callMethod = element.remove.bind(element);
+
+		vendor('track');
+
+		expect(element.isConnected).toBe(true);
+		expect(vendor.queue).toHaveLength(1);
+	});
+
+	it("a stub still forwards to the vendor's own dispatcher", () => {
+		mountParsed([stub('callMethod')]);
+		const vendor = win.vendor as ((...args: unknown[]) => void) & {
+			callMethod?: unknown;
+		};
+		const callMethod = vi.fn();
+		vendor.callMethod = callMethod;
+
+		(win.vendorAlias as (...args: unknown[]) => void)('track', 'Lead');
+
+		expect(callMethod).toHaveBeenCalledWith('track', 'Lead');
+		expect(callMethod.mock.contexts[0]).toBe(vendor);
+	});
+
+	it("a queued callback whose target became the script element calls none of the element's methods", () => {
+		const element = mountParsed([
+			{ name: 'vendor', type: 'setGlobal', value: {} },
+			{ name: 'vendorQueue', type: 'setGlobal', value: [] },
+			{
+				methods: ['remove'],
+				queue: { global: 'vendorQueue' },
+				queueFormat: 'callback',
+				target: 'vendor',
+				type: 'defineQueueMethods',
+			},
+			{ global: 'vendor', method: 'remove', type: 'callGlobal' },
+			swapForElement,
+		]);
+
+		// The vendor's file runs what was queued once it loads.
+		for (const { fn } of win.vendorQueue as { fn: () => void }[]) {
+			fn();
+		}
+
+		expect(element.isConnected).toBe(true);
+	});
+
+	it('a queued callback calls no native function the target holds', () => {
+		const element = document.createElement('div');
+		document.body.append(element);
+		mountParsed([
+			{ name: 'vendor', type: 'setGlobal', value: {} },
+			{ name: 'vendorQueue', type: 'setGlobal', value: [] },
+			{
+				methods: ['track'],
+				queue: { global: 'vendorQueue' },
+				queueFormat: 'callback',
+				target: 'vendor',
+				type: 'defineQueueMethods',
+			},
+			{ global: 'vendor', method: 'track', type: 'callGlobal' },
+		]);
+		(win.vendor as Record<string, unknown>).track =
+			element.remove.bind(element);
+
+		for (const { fn } of win.vendorQueue as { fn: () => void }[]) {
+			fn();
+		}
 
 		expect(element.isConnected).toBe(true);
 	});
