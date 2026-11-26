@@ -34,9 +34,10 @@ import { expect, it } from 'vite-plus/test';
  * loads, checks and runs adapters (`withAdapters`), so neither runtime file
  * has adapter code. `inth.manifests3.js` reads a manifest's level from the
  * adapter ID table, about 10 bytes per ID: 12,007 with the FullStory,
- * Gainsight PX, Lucky Orange and Databuddy IDs. `inth.adapter-sentry.js`, the
- * Sentry consent gate: 6,215, then 6,268 with a type check on every option
- * and the sentry.io DSN pattern.
+ * Gainsight PX, Lucky Orange and Databuddy IDs, 12,051 with the
+ * ActiveCampaign, HubSpot, Oracle Eloqua and Salesforce Pardot ones.
+ * `inth.adapter-sentry.js`, the Sentry consent gate: 6,215, then 6,268
+ * with a type check on every option and the sentry.io DSN pattern.
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 443.
  * `inth.adapter-gainsight-px.js`, the Gainsight PX installation checks: 1,479.
  * `inth.adapter-fullstory.js`, the FullStory stub and recorder gate: 2,098.
