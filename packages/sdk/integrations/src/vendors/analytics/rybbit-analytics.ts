@@ -142,28 +142,17 @@ export const remote =
 	/* @__PURE__ */
 	defineRemote(
 		'rybbitAnalytics',
+		// Session replay, error tracking and Web Vitals are left to the site
+		// settings in Rybbit's own dashboard, which its script fetches: the
+		// npm helper writes no attribute for them unless a site sets one, and
+		// a remote default would override those settings on every page.
 		{
-			sessionReplay: {
-				default: false,
-				kind: 'boolean',
-				label: 'Session replay',
-			},
 			siteId: {
 				example: '123',
 				kind: 'id',
 				label: 'Site ID',
 				pattern: '^[A-Za-z0-9-]+$',
 				required: true,
-			},
-			trackErrors: {
-				default: false,
-				kind: 'boolean',
-				label: 'Track errors',
-			},
-			webVitals: {
-				default: false,
-				kind: 'boolean',
-				label: 'Web Vitals',
 			},
 		},
 		resolveRybbitAnalyticsManifest

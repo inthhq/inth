@@ -77,12 +77,14 @@ const buildPlausibleInitOptions = function buildPlausibleInitOptions(
 		initOptions.fileDownloads = options.fileDownloads;
 	}
 
-	if (options.hashBasedRouting !== undefined) {
-		initOptions.hashBasedRouting = options.hashBasedRouting;
+	// Plausible's defaults (no hash routing, automatic pageviews) are left
+	// out, so passing one builds the same call as leaving it unset.
+	if (options.hashBasedRouting === true) {
+		initOptions.hashBasedRouting = true;
 	}
 
-	if (options.autoCapturePageviews !== undefined) {
-		initOptions.autoCapturePageviews = options.autoCapturePageviews;
+	if (options.autoCapturePageviews === false) {
+		initOptions.autoCapturePageviews = false;
 	}
 
 	if (options.captureOnLocalhost !== undefined) {

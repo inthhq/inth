@@ -124,7 +124,7 @@ describe('analytics loader contracts', () => {
 					{
 						...build({
 							auto: false,
-							canonical: true,
+							canonical: false,
 							honorDnt: true,
 							site: 'FATHOMCONTRACT',
 							spa: 'history',
@@ -137,7 +137,7 @@ describe('analytics loader contracts', () => {
 
 			expect(attributes).toEqual({
 				dataAuto: 'false',
-				dataCanonical: 'true',
+				dataCanonical: 'false',
 				dataHonorDnt: 'true',
 				dataSite: 'FATHOMCONTRACT',
 				dataSpa: 'history',

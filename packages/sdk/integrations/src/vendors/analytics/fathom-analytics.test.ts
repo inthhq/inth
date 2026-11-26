@@ -29,7 +29,7 @@ describe('fathomAnalytics', () => {
 	it('serializes boolean options as "true" / "false" strings', () => {
 		const script = fathomAnalytics({
 			auto: false,
-			canonical: true,
+			canonical: false,
 			honorDnt: true,
 			site: 'SITE123',
 			spa: 'history',
@@ -37,11 +37,26 @@ describe('fathomAnalytics', () => {
 
 		expect(script.attributes).toEqual({
 			'data-auto': 'false',
-			'data-canonical': 'true',
+			'data-canonical': 'false',
 			'data-honor-dnt': 'true',
 			'data-site': 'SITE123',
 			'data-spa': 'history',
 		});
+	});
+
+	it("leaves out Fathom's own defaults, so passing one matches leaving it unset", () => {
+		const script = fathomAnalytics({
+			auto: true,
+			canonical: true,
+			honorDnt: false,
+			site: 'SITE123',
+			spa: 'off',
+		});
+
+		expect(script.attributes).toEqual({ 'data-site': 'SITE123' });
+		expect(script.attributes).toEqual(
+			fathomAnalytics({ site: 'SITE123' }).attributes
+		);
 	});
 
 	it('honors a custom loader URL', () => {

@@ -40,7 +40,7 @@ export const scripts = [plausibleAnalytics({ scriptId: 'YOUR_SCRIPT_ID' })];
 | `captureOnLocalhost` | None | `true` records visits on `localhost`. |
 | `scriptUrl` | `https://plausible.io/js/pa-<scriptId>.js`, or `https://plausible.io/js/script.js` with `domain` | Loader URL override. |
 
-The helper writes `customProperties`, `endpoint`, `fileDownloads`, `hashBasedRouting`, `autoCapturePageviews`, and `captureOnLocalhost` to `window.plausible.o`, which the `scriptId` loader reads. With the legacy loader, select features through `extension`.
+The helper writes `customProperties`, `endpoint`, `fileDownloads`, `hashBasedRouting`, `autoCapturePageviews`, and `captureOnLocalhost` to `window.plausible.o`, which the `scriptId` loader reads. It leaves out `hashBasedRouting: false` and `autoCapturePageviews: true`, Plausible's defaults. With the legacy loader, select features through `extension`.
 
 ## Loading and revocation
 

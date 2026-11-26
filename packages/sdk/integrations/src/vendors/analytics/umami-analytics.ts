@@ -113,7 +113,7 @@ export const resolveUmamiAnalyticsManifest =
 		beforeSend,
 	}: Omit<UmamiAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
 		return getCompiledManifest(umamiAnalyticsManifest, {
-			autoTrackAttribute: booleanDataAttribute(autoTrack),
+			autoTrackAttribute: booleanDataAttribute(autoTrack, true),
 			beforeSend,
 			domains: listDataAttribute(domains),
 			hostUrl,

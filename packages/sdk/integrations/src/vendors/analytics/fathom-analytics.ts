@@ -68,23 +68,26 @@ export interface FathomAnalyticsOptions {
 	site: string;
 
 	/**
-	 * The SPA tracking mode. When undefined, SPA auto-routing is disabled and
-	 * the `data-spa` attribute is omitted.
+	 * The SPA tracking mode. When undefined or `'off'`, SPA auto-routing is
+	 * disabled and the `data-spa` attribute is omitted.
 	 */
-	spa?: 'auto' | 'history' | 'hash';
+	spa?: 'off' | 'auto' | 'history' | 'hash';
 
 	/**
-	 * Automatically track page views.
+	 * Automatically track page views. Fathom's default, `true`, leaves the
+	 * attribute out.
 	 */
 	auto?: boolean;
 
 	/**
-	 * Enable canonical URL tracking.
+	 * Enable canonical URL tracking. Fathom's default, `true`, leaves the
+	 * attribute out.
 	 */
 	canonical?: boolean;
 
 	/**
-	 * Honor Do Not Track requests.
+	 * Honor Do Not Track requests. Fathom's default, `false`, leaves the
+	 * attribute out.
 	 */
 	honorDnt?: boolean;
 
@@ -107,11 +110,11 @@ export const resolveFathomAnalyticsManifest =
 		honorDnt,
 	}: Omit<FathomAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
 		return getCompiledManifest(fathomAnalyticsManifest, {
-			autoAttribute: booleanDataAttribute(auto),
-			canonicalAttribute: booleanDataAttribute(canonical),
-			honorDntAttribute: booleanDataAttribute(honorDnt),
+			autoAttribute: booleanDataAttribute(auto, true),
+			canonicalAttribute: booleanDataAttribute(canonical, true),
+			honorDntAttribute: booleanDataAttribute(honorDnt, false),
 			site,
-			spa,
+			spa: spa === 'off' ? undefined : spa,
 		});
 	};
 
@@ -143,11 +146,13 @@ export const remote =
 				pattern: '^[A-Z0-9]+$',
 				required: true,
 			},
+			// Off, as in the npm helper: Fathom tracks route changes only when
+			// data-spa is set.
 			spa: {
-				default: 'auto',
+				default: 'off',
 				kind: 'enum',
 				label: 'Single-page app mode',
-				values: ['auto', 'history', 'hash'],
+				values: ['off', 'auto', 'history', 'hash'],
 			},
 		},
 		resolveFathomAnalyticsManifest

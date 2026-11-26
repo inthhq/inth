@@ -3,11 +3,15 @@ import { trimToUndefined } from './script-url';
 /**
  * Converts an optional boolean into a script `data-*` attribute value.
  * `undefined` stays `undefined` so the manifest compiler omits the attribute.
+ * So does `vendorDefault`, the value the vendor's script assumes when the
+ * attribute is missing: a site that passes it and one that leaves it out,
+ * and the remote form that always fills it, then build the same tag.
  */
 export const booleanDataAttribute = function booleanDataAttribute(
-	value: boolean | undefined
+	value: boolean | undefined,
+	vendorDefault?: boolean
 ): string | undefined {
-	if (value === undefined) {
+	if (value === undefined || value === vendorDefault) {
 		return undefined;
 	}
 

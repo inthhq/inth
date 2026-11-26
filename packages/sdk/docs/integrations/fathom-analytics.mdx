@@ -30,10 +30,10 @@ export const scripts = [fathomAnalytics({ site: 'YOUR_SITE_ID', spa: 'auto' })];
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `site` | Required | Site ID written to `data-site`. Trimmed automatically; blank values log an error and skip loading. |
-| `spa` | None | `'auto'`, `'history'`, or `'hash'`, written to `data-spa`. Omit to leave SPA route tracking off. |
-| `auto` | None | Sets `data-auto` to `'true'` or `'false'` for automatic page views. Omit to use Fathom's default. |
-| `canonical` | None | Sets `data-canonical` for canonical URL tracking. Omit to use Fathom's default. |
-| `honorDnt` | None | Sets `data-honor-dnt` to honor Do Not Track. Omit to use Fathom's default. |
+| `spa` | None | `'auto'`, `'history'`, or `'hash'`, written to `data-spa`. Omit it, or pass `'off'`, to leave SPA route tracking off. |
+| `auto` | None | `false` sets `data-auto="false"` and stops automatic page views. `true` is Fathom's default and writes nothing. |
+| `canonical` | None | `false` sets `data-canonical="false"` and tracks the page URL instead of the canonical URL. `true` is Fathom's default and writes nothing. |
+| `honorDnt` | None | `true` sets `data-honor-dnt="true"` to honor Do Not Track. `false` is Fathom's default and writes nothing. |
 | `scriptUrl` | `https://cdn.usefathom.com/script.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation

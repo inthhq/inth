@@ -93,8 +93,9 @@ export const resolveTheTradeDeskPixelManifest =
 	}: Omit<TheTradeDeskPixelOptions, 'scriptUrl'>): ResolvedManifest {
 		const initOptions: Record<string, unknown> = { advertiserId, pixelIds };
 		const eventOptions: Record<string, unknown> = { advertiserId, pixelIds };
-		if (enableCookieSyncing !== undefined) {
-			initOptions.enableCookieSyncing = enableCookieSyncing;
+		// Cookie syncing is on unless init turns it off, so only false is sent.
+		if (enableCookieSyncing === false) {
+			initOptions.enableCookieSyncing = false;
 		}
 		if (dataProcessingOption !== undefined) {
 			initOptions.dataProcessingOption = dataProcessingOption;

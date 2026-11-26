@@ -268,7 +268,13 @@ const getRedditPixelInitOptions = function getRedditPixelInitOptions({
 	initOptions?: RedditPixelInitOptions;
 	disableFirstPartyCookies?: boolean;
 }): RedditPixelInitOptions | undefined {
-	if (disableFirstPartyCookies === undefined) {
+	// Reddit keeps first-party cookies on by default, so false changes
+	// nothing unless it overrides a true in initOptions.
+	if (
+		disableFirstPartyCookies === undefined ||
+		(disableFirstPartyCookies === false &&
+			initOptions?.disableFirstPartyCookies === undefined)
+	) {
 		return initOptions;
 	}
 

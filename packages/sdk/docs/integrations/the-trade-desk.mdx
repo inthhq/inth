@@ -25,7 +25,7 @@ Copy the advertiser ID and Universal Pixel IDs from your account snippet. This h
 | --- | --- | --- |
 | `advertiserId` | Required | Public advertiser ID, trimmed. Missing or blank values log an error and skip loading. |
 | `pixelIds` | Required | Non-empty array of public Universal Pixel IDs, each trimmed. An empty array or any blank entry logs an error and skips the helper. |
-| `enableCookieSyncing` | Vendor default | Passed to `init` when set. Setting `false` disables cookie syncing but does not stop all cookies or allow loading before consent. |
+| `enableCookieSyncing` | Vendor default (on) | Passed to `init` only when `false`. Setting `false` disables cookie syncing but does not stop all cookies or allow loading before consent. |
 | `dataProcessingOption` | None | Limited data use setting, such as `{ policies: ['LDU'], region: 'US-CO' }`. Does not replace consent. |
 | `scriptUrl` | `https://js.adsrvr.org/up_loader.3.0.0.js` | Loader URL override. Blank values use the default. Walmart DSP accounts use `https://azjs.adsrvr.org/thetradedesk-ads/up_loader.3.0.0.js`. |
 

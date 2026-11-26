@@ -12,6 +12,13 @@ describe('vendor attribute helpers', () => {
 			expect(booleanDataAttribute(true)).toBe('true');
 			expect(booleanDataAttribute(false)).toBe('false');
 		});
+
+		it("omits the vendor's default and keeps the other value", () => {
+			expect(booleanDataAttribute(true, true)).toBeUndefined();
+			expect(booleanDataAttribute(false, true)).toBe('false');
+			expect(booleanDataAttribute(false, false)).toBeUndefined();
+			expect(booleanDataAttribute(true, false)).toBe('true');
+		});
 	});
 
 	describe('listDataAttribute', () => {
