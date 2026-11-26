@@ -48,7 +48,11 @@ export const zendeskScript = function zendeskScript(
 	let installed = false;
 
 	const grantedRegistrations = (info: ScriptCallbackInfo) =>
-		(extras.registrations?.(info) ?? [info]).filter(
+		(
+			extras.registrations?.(info) ??
+			// The registrations a shared remote script's info carries.
+			info.registrations ?? [info]
+		).filter(
 			// Configuration removal reports hasConsent: false even while granted.
 			(state) =>
 				state.vendor?.granted !== false && has(category, state.consents)
