@@ -21,14 +21,16 @@ import { expect, it } from 'vite-plus/test';
  * dispose, and tying a promise to its load brought it to 6,793, and
  * `globals` to 9,267: about 1,400 for the list of platform globals no
  * manifest may declare, the rest for the root, native call and browser
- * object checks. `inth.manifests3.js`, the same runtime with level 3:
- * 8,986, then 9,126 with those and level 3's `requires` check, flag names
- * and `lost` outside a callback, 11,592 with `globals`, and 11,630 with
- * the `defer` step.
+ * object checks. Checking what a stub or a queued callback calls when
+ * called, and which push an array call may use, brought it to 9,487.
+ * `inth.manifests3.js`, the same runtime with level 3: 8,986, then 9,126
+ * with those and level 3's `requires` check, flag names and `lost` outside
+ * a callback, 11,592 with `globals`, 11,630 with the `defer` step, and
+ * 11,817 with the call-time checks.
  */
 const BUDGETS = {
-	'inth.manifests.js': 9300,
-	'inth.manifests3.js': 11660,
+	'inth.manifests.js': 9520,
+	'inth.manifests3.js': 11850,
 };
 
 it.each(Object.entries(BUDGETS))(
