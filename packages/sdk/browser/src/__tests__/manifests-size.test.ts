@@ -23,11 +23,12 @@ import { expect, it } from 'vite-plus/test';
  * manifest may declare, the rest for the root, native call and browser
  * object checks. `inth.manifests3.js`, the same runtime with level 3:
  * 8,986, then 9,126 with those and level 3's `requires` check, flag names
- * and `lost` outside a callback, and 11,592 with `globals`.
+ * and `lost` outside a callback, 11,592 with `globals`, and 11,630 with
+ * the `defer` step.
  */
 const BUDGETS = {
 	'inth.manifests.js': 9300,
-	'inth.manifests3.js': 11630,
+	'inth.manifests3.js': 11660,
 };
 
 it.each(Object.entries(BUDGETS))(
