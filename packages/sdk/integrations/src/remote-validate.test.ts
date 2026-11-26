@@ -334,6 +334,19 @@ describe('validateOptionValues', () => {
 			});
 		});
 
+		it('reads a proxied list without running its get trap', () => {
+			const ids = new Proxy(['A1'], {
+				get: () => {
+					throw new Error('get trap ran');
+				},
+			});
+
+			expect(validate({ ids })).toMatchObject({
+				ok: true,
+				options: { ids: ['A1'] },
+			});
+		});
+
 		it('accepts objects with a null prototype', () => {
 			const input = Object.assign(Object.create(null) as object, {
 				consent: Object.assign(Object.create(null) as object, {

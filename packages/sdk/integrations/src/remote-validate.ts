@@ -54,10 +54,12 @@ const toPlain = function toPlain(value: unknown): unknown {
 			return NOT_PLAIN;
 		}
 		const entries: [string, unknown][] = [];
+		let length: unknown;
 		for (const [name, descriptor] of Object.entries(
 			Object.getOwnPropertyDescriptors(value)
 		)) {
 			if (list && name === 'length') {
+				length = descriptor.value;
 				continue;
 			}
 			if (!('value' in descriptor) || descriptor.enumerable !== true) {
@@ -71,7 +73,7 @@ const toPlain = function toPlain(value: unknown): unknown {
 		}
 		// Integer keys come first and in order: a hole or an extra key fails.
 		return entries.every(([name], index) => name === String(index)) &&
-			entries.length === (value as unknown[]).length
+			entries.length === length
 			? entries.map(([, item]) => item)
 			: NOT_PLAIN;
 	} catch {
