@@ -234,6 +234,14 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			timestamp: Date.now(),
 		});
 	};
+	/** Reports that a remote script's `validate` refused it. */
+	const reportRefused = (id: string, error: unknown): void => {
+		reportRemote(
+			'error',
+			id,
+			`Remote script ${id} does not load: ${(error instanceof Error ? error.message : String(error)).replace(/[.]$/u, '')}.`
+		);
+	};
 	/** Read the snapshot's `load` list; `true` when it changed. */
 	const readLoad = (snapshot: ConsentSnapshot): boolean => {
 		const load = snapshot.scriptRegistry?.load;
@@ -352,11 +360,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				script.validate?.(script);
 				return true;
 			} catch (error) {
-				reportRemote(
-					'error',
-					script.id,
-					`Remote script ${script.id} does not load: ${(error instanceof Error ? error.message : String(error)).replace(/[.]$/u, '')}.`
-				);
+				reportRefused(script.id, error);
 				refusedRemote.add(script.id);
 				return false;
 			}
@@ -1058,7 +1062,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	 * earlier script has started, it keeps running with its own setup and
 	 * callbacks until the next page, as a rerendered npm helper does, and
 	 * takes only the new category, so consent stays current. Before that,
-	 * the new script.
+	 * the new script. A new script whose check refuses it is reported, as an
+	 * npm helper's would be, so the site learns the change needs a reload.
 	 */
 	const keepStarted = (
 		earlier: Script | null | undefined,
@@ -1074,6 +1079,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			!(loadedElements.has(earlier.id) || retainedElements.has(earlier.id))
 		) {
 			return fresh;
+		}
+		try {
+			fresh.validate?.(fresh);
+		} catch (error) {
+			reportRefused(id, error);
 		}
 		if (JSON.stringify(earlier.category) === JSON.stringify(fresh.category)) {
 			return earlier;
