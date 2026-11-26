@@ -3,12 +3,14 @@ import { describe, expect, it } from 'vite-plus/test';
 import { isHostname } from './hostname';
 
 describe('isHostname', () => {
-	it.each(['go.example.com', 'pi.pardot.com', 'a-1.b2.co', 'xn--bcher-kva.example'])(
-		'accepts %s',
-		(value) => {
-			expect(isHostname(value)).toBe(true);
-		}
-	);
+	it.each([
+		'go.example.com',
+		'pi.pardot.com',
+		'a-1.b2.co',
+		'xn--bcher-kva.example',
+	])('accepts %s', (value) => {
+		expect(isHostname(value)).toBe(true);
+	});
 
 	it.each([
 		['a scheme', 'https://go.example.com'],
