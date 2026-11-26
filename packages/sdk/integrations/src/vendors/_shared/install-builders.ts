@@ -1,4 +1,4 @@
-import type { VendorManifest } from '../../types';
+import type { LoadScriptStep, VendorManifest } from '../../types';
 
 /**
  * Optional tracking call inserted between the vendor init call and script load.
@@ -15,8 +15,11 @@ export interface BuildQueuePixelInstallOptions {
 	initArgs: unknown[];
 	/** Optional tracking command queued immediately after initialization. */
 	trackStep?: QueuePixelInstallStep;
-	/** Manifest interpolation token used for the final loader script URL. */
-	scriptPlaceholder?: string;
+	/**
+	 * The step that loads the vendor's script. Callers write it out so the
+	 * script host stays a literal in the vendor file.
+	 */
+	loadScript: LoadScriptStep;
 }
 
 /**
@@ -26,7 +29,7 @@ export const buildQueuePixelInstall = function buildQueuePixelInstall({
 	global,
 	initArgs,
 	trackStep,
-	scriptPlaceholder = '{{scriptUrl}}',
+	loadScript,
 }: BuildQueuePixelInstallOptions): VendorManifest['install'] {
 	const install: VendorManifest['install'] = [
 		{
@@ -44,12 +47,7 @@ export const buildQueuePixelInstall = function buildQueuePixelInstall({
 		});
 	}
 
-	install.push({
-		async: true,
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: callers pass a placeholder for the whole URL
-		src: scriptPlaceholder,
-		type: 'loadScript',
-	});
+	install.push(loadScript);
 
 	return install;
 };

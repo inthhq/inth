@@ -351,7 +351,12 @@ const buildMetaPixelInstall = function buildMetaPixelInstall({
 	const install = buildQueuePixelInstall({
 		global: 'fbq',
 		initArgs,
-		scriptPlaceholder: '{{scriptSrc}}',
+		loadScript: {
+			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
+			src: '{{scriptSrc}}',
+			type: 'loadScript',
+		},
 		trackStep: getMetaPixelPageViewStep(trackPageView),
 	});
 

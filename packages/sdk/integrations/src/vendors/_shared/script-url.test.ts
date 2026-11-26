@@ -6,6 +6,7 @@ import {
 	stripLeadingSlashes,
 	stripTrailingSlashes,
 	trimToUndefined,
+	withScriptUrl,
 } from './script-url';
 
 describe('vendor script URL helpers', () => {
@@ -47,6 +48,27 @@ describe('vendor script URL helpers', () => {
 				resolveScriptUrl('   ', 'https://cdn.example.com/default.js')
 			).toBe('https://cdn.example.com/default.js');
 		});
+	});
+
+	describe('withScriptUrl', () => {
+		const script = {
+			category: 'measurement',
+			id: 'vendor',
+			src: 'https://cdn.vendor.example/sdk.js',
+		} as const;
+
+		it('replaces src with the trimmed override and keeps the rest', () => {
+			expect(
+				withScriptUrl(script, ' https://cdn.example.com/custom.js ')
+			).toEqual({ ...script, src: 'https://cdn.example.com/custom.js' });
+		});
+
+		it.each([undefined, '', '   '])(
+			'returns the script unchanged for %j',
+			(override) => {
+				expect(withScriptUrl(script, override)).toBe(script);
+			}
+		);
 	});
 
 	describe('joinUrlPath', () => {

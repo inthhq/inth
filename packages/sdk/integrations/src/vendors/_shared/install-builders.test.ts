@@ -2,12 +2,19 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { buildQueuePixelInstall } from './install-builders';
 
+const loadScript = {
+	async: true,
+	src: 'https://pixel.example/loader.js',
+	type: 'loadScript',
+} as const;
+
 describe('vendor install builders', () => {
 	it('builds an init call followed by a script load', () => {
 		expect(
 			buildQueuePixelInstall({
 				global: 'rdt',
 				initArgs: ['init', '{{pixelId}}'],
+				loadScript,
 			})
 		).toEqual([
 			{
@@ -15,11 +22,7 @@ describe('vendor install builders', () => {
 				global: 'rdt',
 				type: 'callGlobal',
 			},
-			{
-				async: true,
-				src: '{{scriptUrl}}',
-				type: 'loadScript',
-			},
+			loadScript,
 		]);
 	});
 
@@ -28,6 +31,7 @@ describe('vendor install builders', () => {
 			buildQueuePixelInstall({
 				global: 'snaptr',
 				initArgs: ['init', '{{pixelId}}'],
+				loadScript,
 				trackStep: {
 					args: ['track', 'PAGE_VIEW'],
 				},
@@ -43,25 +47,7 @@ describe('vendor install builders', () => {
 				global: 'snaptr',
 				type: 'callGlobal',
 			},
-			{
-				async: true,
-				src: '{{scriptUrl}}',
-				type: 'loadScript',
-			},
+			loadScript,
 		]);
-	});
-
-	it('supports a custom script placeholder', () => {
-		expect(
-			buildQueuePixelInstall({
-				global: 'pixel',
-				initArgs: ['init'],
-				scriptPlaceholder: '{{loaderUrl}}',
-			})
-		).toContainEqual({
-			async: true,
-			src: '{{loaderUrl}}',
-			type: 'loadScript',
-		});
 	});
 });

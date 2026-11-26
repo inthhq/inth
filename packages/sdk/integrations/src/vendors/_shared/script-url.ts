@@ -1,3 +1,5 @@
+import type { Script } from '@inth/sdk/engine';
+
 /**
  * Trims an optional string and treats empty or whitespace-only values as
  * missing.
@@ -52,6 +54,22 @@ export const resolveScriptUrl = function resolveScriptUrl(
 	fallback: string
 ): string {
 	return trimToUndefined(override) ?? fallback;
+};
+
+/**
+ * The script with the site's own `src`, or the script unchanged when
+ * `override` is unset or blank.
+ *
+ * An npm-only extra: a vendor's manifest always loads from the vendor's host,
+ * so the manifest the Inth server sends cannot point elsewhere. The npm
+ * helper applies the site's URL to the built script instead.
+ */
+export const withScriptUrl = function withScriptUrl(
+	script: Script,
+	override: string | undefined
+): Script {
+	const src = trimToUndefined(override);
+	return src === undefined ? script : { ...script, src };
 };
 
 /**
