@@ -78,6 +78,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	adrollPixel: ['s.adroll.com'],
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
 	amplitude: ['cdn.amplitude.com'],
+	appcues: ['fast.appcues.com', 'fast.eu.appcues.com'],
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],

@@ -10,11 +10,13 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { appcues } from './vendors/functional/appcues';
 
@@ -262,3 +264,41 @@ describe('Appcues consent lifecycle through core', () => {
 		}
 	});
 });
+
+describe.each(npmAndRemote('appcues', appcues))(
+	'Appcues dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.Appcues;
+			delete window.AppcuesSettings;
+		});
+
+		it('loads the EU account loader with its settings after experience consent, and resets on revoke', async () => {
+			const scripts = [
+				build({
+					accountId: '12345',
+					region: 'eu',
+					settings: { enableURLDetection: false },
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.AppcuesSettings).toBeUndefined();
+
+			updateScripts(scripts, granted);
+			const element = document.querySelector('script');
+			expect(element?.src).toBe('https://fast.eu.appcues.com/12345.js');
+			expect(window.AppcuesSettings).toEqual(
+				expect.objectContaining({ enableURLDetection: false })
+			);
+			window.Appcues = { reset: vi.fn() };
+			element?.dispatchEvent(new Event('load'));
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(window.Appcues.reset).toHaveBeenCalledOnce();
+			expect(element?.isConnected).toBe(false);
+		});
+	}
+);

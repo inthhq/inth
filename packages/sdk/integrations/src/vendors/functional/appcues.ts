@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -30,8 +32,11 @@ export const appcuesManifest = {
 			type: 'setGlobal',
 			value: '{{settings}}',
 		},
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
+		{
+			async: true,
+			src: 'https://fast.appcues.com/{{accountPath}}.js',
+			type: 'loadScript',
+		},
 	],
 	onConsentDenied: [{ global: 'Appcues', method: 'reset', type: 'callGlobal' }],
 	vendor: 'appcues',
@@ -41,6 +46,19 @@ export const appcuesManifest = {
 		name: 'Appcues',
 		privacyPolicyUrl: 'https://www.appcues.com/privacy',
 	},
+} as const satisfies VendorManifest;
+
+/** {@link appcuesManifest} for an account in the EU data region. */
+export const appcuesEuManifest = {
+	...appcuesManifest,
+	install: [
+		appcuesManifest.install[0],
+		{
+			async: true,
+			src: 'https://fast.eu.appcues.com/{{accountPath}}.js',
+			type: 'loadScript',
+		},
+	],
 } as const satisfies VendorManifest;
 
 export interface AppcuesOptions {
@@ -61,6 +79,71 @@ export interface AppcuesOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link appcues}. `accountId` must
+ * already be trimmed and non-empty.
+ */
+export const resolveAppcuesManifest = function resolveAppcuesManifest({
+	accountId,
+	region,
+	settings,
+}: Pick<
+	AppcuesOptions,
+	'accountId' | 'region' | 'settings'
+>): ResolvedManifest {
+	return getCompiledManifest(
+		region === 'eu' ? appcuesEuManifest : appcuesManifest,
+		{
+			accountPath: encodeURIComponent(accountId),
+			settings: { enableURLDetection: true, ...settings },
+		}
+	);
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `scriptUrl` and `onReady` stay npm-only. Marked pure so a bundler
+ * drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'appcues',
+		{
+			accountId: {
+				example: '12345',
+				kind: 'id',
+				label: 'Account ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+			region: {
+				default: 'us',
+				kind: 'enum',
+				label: 'Data region',
+				values: ['us', 'eu'],
+			},
+			settings: {
+				fields: {
+					enableURLDetection: {
+						default: true,
+						kind: 'boolean',
+						label: 'Detect page changes from the URL',
+					},
+					skipAMD: {
+						default: false,
+						kind: 'boolean',
+						label: 'Skip the AMD loader check',
+					},
+				},
+				kind: 'object',
+				label: 'Settings',
+				required: false,
+			},
+		},
+		resolveAppcuesManifest
+	);
+
+/**
  * Loads Appcues after experience consent and resets its user on revocation.
  *
  * Keep `reloadOnConsentRevoked` enabled. Reset clears user state but does not
@@ -79,15 +162,16 @@ export const appcues = function appcues(options: AppcuesOptions): Script {
 			manifest: appcuesManifest,
 		});
 	}
-	const domain =
-		options.region === 'eu' ? 'fast.eu.appcues.com' : 'fast.appcues.com';
-	const script = resolveManifest(appcuesManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://${domain}/${encodeURIComponent(accountId)}.js`
+	const script = withScriptUrl(
+		resolvedManifestToScript(
+			resolveAppcuesManifest({
+				accountId,
+				region: options.region,
+				settings: options.settings,
+			})
 		),
-		settings: { enableURLDetection: true, ...options.settings },
-	});
+		options.scriptUrl
+	);
 	const { onReady } = options;
 	if (onReady) {
 		const { onLoad } = script;
