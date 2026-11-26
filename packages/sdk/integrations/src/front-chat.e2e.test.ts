@@ -4,10 +4,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { frontChat } from './vendors/functional/front-chat';
@@ -81,3 +83,34 @@ describe('Front Chat loader contract', () => {
 		});
 	});
 });
+
+describe.each(npmAndRemote('frontChat', frontChat))(
+	'Front Chat dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.FrontChat;
+		});
+
+		it('initialises with the launcher setting and the provider nonce once it loads with consent', async () => {
+			window.FrontChat = vi.fn();
+			const scripts = [
+				build({ chatId: 'channel-id', useDefaultLauncher: false }),
+			];
+			loadScripts(scripts, ALL_DENIED, { nonce: 'provider-nonce' });
+			await settleScripts();
+			expect(document.body.querySelector('script')).toBeNull();
+
+			updateScripts(scripts, grantedConsents);
+			const element = getLoader();
+			expect(element.nonce).toBe('provider-nonce');
+			expect(window.FrontChat).not.toHaveBeenCalled();
+			element.dispatchEvent(new Event('load'));
+			expect(window.FrontChat).toHaveBeenCalledExactlyOnceWith('init', {
+				chatId: 'channel-id',
+				nonce: 'provider-nonce',
+				useDefaultLauncher: false,
+			});
+		});
+	}
+);

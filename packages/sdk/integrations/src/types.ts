@@ -17,7 +17,11 @@ export {
 	RUNTIME_VALUE_KIND,
 	VENDOR_MANIFEST_KIND,
 	VENDOR_MANIFEST_SCHEMA_VERSION,
+	runtimeConsentGateValue,
 	runtimeDateValue,
+	runtimeHasConsentValue,
+	runtimeScriptElementValue,
+	runtimeScriptNonceValue,
 	runtimeTimestampValue,
 	vendorManifestContract,
 } from '@inth/sdk/manifest-runtime';

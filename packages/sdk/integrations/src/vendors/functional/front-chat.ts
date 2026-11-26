@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
+import { runtimeScriptNonceValue, vendorManifestContract } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -12,28 +14,36 @@ declare global {
 	}
 }
 
-const FRONT_CHAT_SCRIPT_SRC =
-	'https://chat-assets.frontapp.com/v1/chat.bundle.js';
-
-/** Front Chat loader and consent-gated widget initialisation. */
+/**
+ * Front Chat loader at the end of body, and the widget's initialisation once
+ * it loads with consent. Front needs the loader's CSP nonce in `init` for
+ * the scripts it generates; a loader without one sends none.
+ */
 export const frontChatManifest = {
 	...vendorManifestContract,
 	category: 'functionality',
 	install: [
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://chat-assets.frontapp.com/v1/chat.bundle.js',
 			type: 'loadScript',
 		},
 	],
 	onLoadGranted: [
 		{
-			args: ['init', '{{initOptions}}'],
+			args: [
+				'init',
+				{
+					chatId: '{{chatId}}',
+					nonce: runtimeScriptNonceValue,
+					useDefaultLauncher: '{{useDefaultLauncher}}',
+				},
+			],
 			global: 'FrontChat',
 			type: 'callGlobal',
 		},
 	],
+	target: 'body',
 	vendor: 'front-chat',
 	vendorDetails: {
 		homepageUrl: 'https://front.com/',
@@ -54,6 +64,43 @@ export interface FrontChatOptions {
 	/** CSP nonce forwarded to the loader and Front's generated scripts. */
 	nonce?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link frontChat}. `chatId` must
+ * already be trimmed and non-empty.
+ */
+export const resolveFrontChatManifest = function resolveFrontChatManifest({
+	chatId,
+	useDefaultLauncher = true,
+}: Pick<FrontChatOptions, 'chatId' | 'useDefaultLauncher'>): ResolvedManifest {
+	return getCompiledManifest(frontChatManifest, { chatId, useDefaultLauncher });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `scriptSrc` and `nonce` stay npm-only. Marked pure so a bundler
+ * drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'frontChat',
+		{
+			chatId: {
+				example: '0123456789abcdef0123456789abcdef',
+				kind: 'id',
+				label: 'Chat ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+			useDefaultLauncher: {
+				default: true,
+				kind: 'boolean',
+				label: "Show Front's default launcher",
+			},
+		},
+		resolveFrontChatManifest
+	);
 
 /**
  * Creates a Front Chat script gated on functionality consent.
@@ -78,42 +125,18 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 		});
 	}
 
-	const scriptSrc = resolveScriptUrl(options.scriptSrc, FRONT_CHAT_SCRIPT_SRC);
-	const nonce = trimToUndefined(options.nonce);
-	const initOptions: Record<string, unknown> = {
-		chatId,
-		useDefaultLauncher: options.useDefaultLauncher ?? true,
-	};
-	if (nonce) {
-		initOptions.nonce = nonce;
-	}
-	const script = resolveManifest(frontChatManifest, {
-		initOptions,
-		scriptSrc,
-	});
-
 	return {
-		...script,
-		nonce,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onLoad(info) {
-			// Consent is captured when core inserts the loader.
-			if (!info.hasConsent) {
-				return;
-			}
-
-			// Core can also supply the nonce from provider configuration. Front
-			// needs the same nonce in init for its dynamically generated scripts.
-			const loadedNonce = info.element?.nonce;
-			const resolved = loadedNonce
-				? resolveManifest(frontChatManifest, {
-						initOptions: { ...initOptions, nonce: loadedNonce },
-						scriptSrc,
-					})
-				: script;
-			resolved.onLoad?.(info);
-		},
-		target: 'body',
+		...withScriptUrl(
+			resolvedManifestToScript(
+				resolveFrontChatManifest({
+					chatId,
+					useDefaultLauncher: options.useDefaultLauncher,
+				})
+			),
+			options.scriptSrc
+		),
+		// The loader puts it on its element, where init reads it.
+		nonce: trimToUndefined(options.nonce),
 	};
 };
 

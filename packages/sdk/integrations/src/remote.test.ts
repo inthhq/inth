@@ -96,6 +96,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],
 	fathomAnalytics: ['cdn.usefathom.com'],
+	frontChat: ['chat-assets.frontapp.com'],
 	googleTagManager: ['www.googletagmanager.com'],
 	gtag: ['www.googletagmanager.com'],
 	heap: ['cdn.us.heap-api.com'],
@@ -143,6 +144,7 @@ const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	adrollPixel: 2,
 	attentiveTag: 2,
 	clay: 2,
+	frontChat: 2,
 };
 
 /**

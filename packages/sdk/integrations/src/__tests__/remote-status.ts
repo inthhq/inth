@@ -33,7 +33,6 @@ export const remoteStatus = {
 	defaultComPixel: adapter,
 	dynamicYield: level2Lifecycle,
 	eloquaTracking: adapter,
-	frontChat: level2,
 	fullStory: adapter,
 	gainsightPx: level3,
 	gorgiasChat: level3,
