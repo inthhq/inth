@@ -16,7 +16,11 @@ export {
 	STEP_FIELD_LEVELS,
 	STEP_VALUE_LEVELS,
 } from './features';
-export { MANIFEST_RUNTIME_LEVEL } from './level';
+export {
+	MANIFEST_RUNTIME_LEVEL,
+	requiresLevelThree,
+	withLevelThreePart,
+} from './level';
 export { parseResolvedManifest } from './parse';
 export { installLevelThree } from './part';
 export type { LevelThreePart } from './part';

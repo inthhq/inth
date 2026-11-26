@@ -375,8 +375,10 @@ describe('on-demand chunks', () => {
 	// provider runtime's update or streamed-prefetch code.
 	test('the on-demand entry reaches only the chunks its modules load', () => {
 		expect(dynamicImports('runtime/on-demand.ts')).toEqual([
-			// Only a page with `remoteScripts` on loads the manifest runtime.
+			// Only a page with `remoteScripts` on loads the manifest runtime,
+			// and only one with a level 3 manifest its level 3 part.
 			'manifest-runtime/index',
+			'manifest-runtime/level-three',
 			'modules/clear-on-revocation/clear',
 			'modules/loader-and-blocker',
 			'runtime/controls',

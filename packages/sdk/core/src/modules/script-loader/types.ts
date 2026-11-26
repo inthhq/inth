@@ -117,6 +117,16 @@ export interface ScriptLoaderDebugEvent extends ScriptDebugEvent {
 export interface RemoteManifestRuntime {
 	parseResolvedManifest: (value: unknown) => ParsedManifest;
 	resolvedManifestToScript: (manifest: ResolvedManifest) => Script;
+	/**
+	 * Loads what `manifests` need that this runtime lacks, such as the
+	 * level 3 part, or `undefined` when it lacks nothing. It settles with
+	 * the runtime to use from then on, or nothing to keep this one. The
+	 * loader builds the manifests once it settles; the parser refuses a
+	 * manifest that needs what failed to load.
+	 */
+	prepare?: (
+		manifests: readonly unknown[]
+	) => Promise<RemoteManifestRuntime | undefined> | undefined;
 }
 
 export interface ScriptLoaderOptions {
@@ -172,8 +182,13 @@ export interface ScriptLoaderOptions {
 	 * cache, is used as it is.
 	 */
 	remote?: {
-		/** Loads the manifest runtime; called once, for the first entry. */
-		loadRuntime: () => Promise<RemoteManifestRuntime>;
+		/**
+		 * Loads the manifest runtime; called once, with the manifests of the
+		 * first list that has entries.
+		 */
+		loadRuntime: (
+			manifests: readonly unknown[]
+		) => Promise<RemoteManifestRuntime>;
 		/**
 		 * The manifest runtime level `loadRuntime` loads
 		 * (`MANIFEST_RUNTIME_LEVEL`). An entry whose manifest requires a

@@ -495,7 +495,14 @@ const reactRuntimeModules = function reactRuntimeModules(
 		createPersistence,
 		createScriptLoader: lazyRuntimeModule(loadScriptLoader),
 		createWindowDebug,
-		loadManifestRuntime: () => import('@inth/sdk/manifest-runtime'),
+		loadManifestRuntime: async () => {
+			const runtime = await import('@inth/sdk/manifest-runtime');
+			// The level 3 part is a chunk of its own, for a manifest that needs it.
+			return runtime.withLevelThreePart(
+				runtime,
+				() => import('@inth/sdk/manifest-runtime/level-three')
+			);
+		},
 		preloadScriptLoader: options.__preloadScriptLoader?.(loadScriptLoader),
 		streamPrefetch: resolveStreamedInit
 			? streamPrefetchWith(resolveStreamedInit)

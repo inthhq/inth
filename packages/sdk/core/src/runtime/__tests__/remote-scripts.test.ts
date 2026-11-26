@@ -4,6 +4,7 @@
  * `remoteScripts` loads the integrations a project added on the Inth
  * server, which arrive as manifests on `scriptRegistry.load`.
  */
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
 import {
 	afterEach,
 	beforeAll,
@@ -389,6 +390,150 @@ describe('remoteScripts', () => {
 			)
 		);
 		expect(document.head.querySelectorAll('script')).toHaveLength(0);
+		runtime.dispose();
+	});
+
+	/** A level 3 manifest whose setup pushes only when its `if` holds. */
+	const levelThree = (account: string) =>
+		acmeManifest({
+			alwaysLoad: true,
+			requires: 3,
+			setupSteps: [
+				{
+					then: [
+						{
+							queue: 'acmeQueue',
+							type: 'pushToQueue',
+							value: ['init', account],
+						},
+					],
+					type: 'if',
+					when: { global: ['acmeQueue'], is: 'array' },
+				},
+			],
+		});
+
+	test('loads the level 3 part, then runs a manifest that requires it', async () => {
+		const runtime = startOff({
+			prefetch: { initialScriptRegistry: { load: load(levelThree('ACME-3')) } },
+			remoteScripts: true,
+		});
+
+		await vi.waitFor(() =>
+			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toEqual([
+				['init', 'ACME-3'],
+			])
+		);
+		expect(tags()).toHaveLength(1);
+		runtime.dispose();
+	});
+
+	test('loads the level 3 part for a later list before it builds that list', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
+				initialScriptRegistry: {
+					load: load(acmeManifest({ alwaysLoad: true })),
+				},
+			},
+			remoteScripts: true,
+		});
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+
+		answer.resolve({ scriptRegistry: { load: load(levelThree('ACME-3')) } });
+
+		await vi.waitFor(() =>
+			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toContainEqual([
+				'init',
+				'ACME-3',
+			])
+		);
+		runtime.dispose();
+	});
+
+	test("hands the first list's manifests to the runtime loader, and builds with the runtime prepare gives", async () => {
+		const loadManifestRuntime = vi.fn(async () => {
+			const base = await import('../../manifest-runtime/index');
+			const upgraded = {
+				...base,
+				resolvedManifestToScript: vi.fn(base.resolvedManifestToScript),
+			};
+			return {
+				...base,
+				prepare: vi.fn(() => Promise.resolve(upgraded)),
+				upgraded,
+			};
+		});
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: false as const,
+				mode: quietMode,
+				persistence: false,
+				prefetch: { initialScriptRegistry: { load: load() } },
+				remoteScripts: true,
+			},
+			{ ...defaultRuntimeModules, loadManifestRuntime }
+		);
+		runtime.start();
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(loadManifestRuntime).toHaveBeenCalledExactlyOnceWith([
+			acmeManifest(),
+		]);
+		const loaded = await loadManifestRuntime.mock.results[0]?.value;
+		expect(loaded.prepare).toHaveBeenCalledWith([acmeManifest()]);
+		expect(loaded.upgraded.resolvedManifestToScript).toHaveBeenCalledOnce();
+		runtime.dispose();
+	});
+
+	test('builds the rest of a list when what prepare loads fails', async () => {
+		// A fresh manifest runtime: an earlier test installed the level 3 part.
+		vi.resetModules();
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: false as const,
+				mode: quietMode,
+				persistence: false,
+				prefetch: {
+					initialScriptRegistry: {
+						load: [
+							...load(),
+							{
+								id: 'other',
+								integration: 'other',
+								manifest: { ...levelThree('ACME-3'), vendor: 'other' },
+							},
+						],
+					},
+				},
+				remoteScripts: true,
+				scriptLoader: { onDebug },
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: async () => ({
+					...(await import('../../manifest-runtime/index')),
+					prepare: () => Promise.reject(new Error('offline')),
+				}),
+			}
+		);
+		runtime.start();
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(onDebug).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: 'error',
+				message: expect.stringContaining('unknown type "if"'),
+				scriptId: 'other',
+			})
+		);
 		runtime.dispose();
 	});
 

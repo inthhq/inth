@@ -343,9 +343,12 @@ export interface ConsentRuntimeModules {
 	 * Loads the manifest runtime that runs the scripts `remoteScripts` turns
 	 * on. Pass `loadManifestRuntime` from `@inth/sdk/runtime`, which imports
 	 * it on demand (`defaultRuntimeModules` does). Without it,
-	 * `remoteScripts` loads nothing.
+	 * `remoteScripts` loads nothing. It gets the manifests of the first
+	 * list, so it can load a runtime that runs them all.
 	 */
-	loadManifestRuntime?: () => Promise<RemoteManifestRuntime>;
+	loadManifestRuntime?: (
+		manifests: readonly unknown[]
+	) => Promise<RemoteManifestRuntime>;
 	/**
 	 * The last script registry the browser kept, for an init answer that
 	 * says the registry is unavailable while the runtime holds none yet. The

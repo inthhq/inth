@@ -1125,13 +1125,40 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			});
 		}
 	};
+	/**
+	 * Build `entries` with `loaded`, once what it lacks for them has loaded
+	 * (`prepare`), unless a later list replaced them.
+	 */
+	const buildWith = async (
+		loaded: RemoteManifestRuntime,
+		entries: RemoteEntry[],
+		pending = loaded.prepare?.(entries.map(({ manifest }) => manifest))
+	): Promise<void> => {
+		let use = loaded;
+		try {
+			const next = await pending;
+			if (next) {
+				use = next;
+				runtimeLoad = Promise.resolve(next);
+			}
+		} catch {
+			// The parser refuses, and reports, each entry that needed it.
+		}
+		runtime = use;
+		if (!disposed && remoteEntries === entries) {
+			setRemoteScripts(buildRemote(use));
+		}
+	};
 	const loadRemote = async (
 		remote: NonNullable<ScriptLoaderOptions['remote']>,
 		entries: RemoteEntry[]
 	): Promise<void> => {
+		let loaded: RemoteManifestRuntime;
 		try {
-			runtimeLoad ??= remote.loadRuntime();
-			runtime = await runtimeLoad;
+			runtimeLoad ??= remote.loadRuntime(
+				entries.map(({ manifest }) => manifest)
+			);
+			loaded = await runtimeLoad;
 		} catch (error) {
 			runtimeLoad = undefined;
 			reportRemote(
@@ -1141,10 +1168,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			);
 			return;
 		}
-		// A later list builds itself once the runtime is in.
-		if (!disposed && remoteEntries === entries) {
-			setRemoteScripts(buildRemote(runtime));
-		}
+		await buildWith(loaded, entries);
 	};
 	/** Build the current entries, loading the runtime for the first one. */
 	const applyRemote = (): void => {
@@ -1154,11 +1178,18 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			setRemoteScripts([]);
 			return;
 		}
-		if (runtime) {
-			setRemoteScripts(buildRemote(runtime));
+		if (!runtime) {
+			void loadRemote(options.remote, remoteEntries);
 			return;
 		}
-		void loadRemote(options.remote, remoteEntries);
+		const pending = runtime.prepare?.(
+			remoteEntries.map(({ manifest }) => manifest)
+		);
+		if (pending) {
+			void buildWith(runtime, remoteEntries, pending);
+		} else {
+			setRemoteScripts(buildRemote(runtime));
+		}
 	};
 	syncRemote = (snapshot) => {
 		if (!readLoad(snapshot)) {

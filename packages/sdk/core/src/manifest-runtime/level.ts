@@ -1,5 +1,8 @@
 import { appendInitParams } from '@inth/sdk-schema/types';
 
+import type { RemoteManifestRuntime } from '../modules/script-loader/types';
+import type { LevelThreePart } from './part';
+
 /**
  * The highest manifest runtime level this SDK runs.
  *
@@ -27,3 +30,37 @@ export const MANIFEST_RUNTIME_LEVEL = 3;
 export const withManifestLevel = (url: string): string =>
 	appendInitParams(url, { manifestLevel: MANIFEST_RUNTIME_LEVEL });
 
+/** Whether one of `manifests` requires level 3 or later. */
+export const requiresLevelThree = (manifests: readonly unknown[]): boolean =>
+	manifests.some(
+		(manifest) =>
+			((manifest as { requires?: unknown } | null)?.requires as number) >= 3
+	);
+
+/**
+ * `runtime` with a `prepare` that loads the level 3 part with `load` and
+ * installs it, the first time a manifest requires level 3.
+ */
+export const withLevelThreePart = function withLevelThreePart(
+	runtime: RemoteManifestRuntime & {
+		installLevelThree: (part: LevelThreePart) => void;
+	},
+	load: () => Promise<{ levelThreePart: LevelThreePart }>
+): RemoteManifestRuntime {
+	let installed = false;
+	return {
+		...runtime,
+		prepare: (manifests) => {
+			if (installed || !requiresLevelThree(manifests)) {
+				return undefined;
+			}
+			const install = async () => {
+				const { levelThreePart } = await load();
+				runtime.installLevelThree(levelThreePart);
+				installed = true;
+				return undefined;
+			};
+			return install();
+		},
+	};
+};
