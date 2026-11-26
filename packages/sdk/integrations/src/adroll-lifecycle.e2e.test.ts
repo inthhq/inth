@@ -4,6 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -12,6 +13,7 @@ import {
 	isArgumentsPayload,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	toArgs,
 	updateScripts,
 } from './e2e-test-utils';
@@ -189,3 +191,44 @@ describe('AdRoll production core loader contract', () => {
 		expect(runtime.get_cookie).not.toHaveBeenCalled();
 	});
 });
+
+describe.each(npmAndRemote('adrollPixel', adrollPixel))(
+	'AdRoll dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			for (const key of vendorGlobals) {
+				Reflect.deleteProperty(window, key);
+			}
+		});
+
+		it('waits for marketing consent, then queues the official Arguments tuple before insertion', async () => {
+			let atAppend: unknown[][] | undefined;
+			installHeadProbe((node) => {
+				atAppend = queuedCalls();
+				expect(window.adroll_adv_id).toBe('ADV123');
+				expect(window.adroll_pix_id).toBe('PIX456');
+				expect(window.adroll_version).toBe('2.0');
+				expect(window.__adroll_loaded).toBe(true);
+				expect(window.adroll?.f).toEqual([
+					'setProperties',
+					'identify',
+					'track',
+				]);
+				expect(node.src).toBe('https://s.adroll.com/j/ADV123/roundtrip.js');
+			});
+			const scripts = [build({ advertiserId: 'ADV123', pixelId: 'PIX456' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			for (const key of vendorGlobals) {
+				expect(key in window).toBe(false);
+			}
+
+			expect(updateScripts(scripts, grantedMarketingConsents).loaded).toEqual([
+				'adroll',
+			]);
+			expect(atAppend).toEqual([['track', ['pageView']]]);
+		});
+	}
+);

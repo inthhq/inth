@@ -75,6 +75,7 @@ const npmInput = function npmInput(key: string, options: Options): Options {
 /** Hosts each integration may load its script from. */
 const vendorHosts: Record<string, readonly string[]> = {
 	adobeAnalytics: ['assets.adobedtm.com'],
+	adrollPixel: ['s.adroll.com'],
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
 	amplitude: ['cdn.amplitude.com'],
 	clearbit: ['tag.clearbitscripts.com'],
@@ -117,6 +118,15 @@ const vendorHosts: Record<string, readonly string[]> = {
 	vector: ['cdn.vector.co'],
 	vercelAnalytics: ['va.vercel-scripts.com'],
 	xPixel: ['static.ads-twitter.com'],
+};
+
+/**
+ * The manifest runtime level of each integration above level 1: the lowest
+ * level that runs the features its manifest uses. Every other integration
+ * is level 1.
+ */
+const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
+	adrollPixel: 2,
 };
 
 /**
@@ -293,6 +303,16 @@ describe('remoteIntegrations', () => {
 			expect(manifest.requires).toBe(level > 1 ? level : undefined);
 		}
 	);
+
+	it.each(cases)('%s %s needs its listed level', (key, _label, options) => {
+		const manifest = remoteIntegrations[key]?.resolveRemote(
+			options
+		) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+
+		expect(manifestLevel(manifest)).toBe(
+			vendorLevels[key as BuiltInScriptIntegrationKey] ?? 1
+		);
+	});
 
 	it('reads a manifest stamped for a later level as that level', () => {
 		const manifest = remoteIntegrations.metaPixel?.resolveRemote({

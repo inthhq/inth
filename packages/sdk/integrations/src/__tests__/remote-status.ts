@@ -26,7 +26,6 @@ export const remoteStatus = {
 	ada: adapter,
 	// The Web SDK mode needs an adapter; at.js loads from a fixed Adobe host.
 	adobeTarget: adapter,
-	adrollPixel: level2,
 	amazonAdsTag: adapter,
 	appcues: level2,
 	// The helper loads Attentive in the body; a manifest sets `target` from

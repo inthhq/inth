@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 type AdrollMethod = 'setProperties' | 'identify' | 'track';
 type AdrollQueue = unknown[] &
@@ -21,12 +23,66 @@ declare global {
 	}
 }
 
-/** AdRoll v2 account-specific loader. */
+const ADROLL_METHODS = ['setProperties', 'identify', 'track'];
+
+/**
+ * AdRoll v2 account-specific loader, with the official snippet's account
+ * globals and call queue set up before it loads.
+ */
 export const adrollPixelManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			ifUndefined: false,
+			name: 'adroll_adv_id',
+			type: 'setGlobal',
+			value: '{{advertiserId}}',
+		},
+		{
+			ifUndefined: false,
+			name: 'adroll_pix_id',
+			type: 'setGlobal',
+			value: '{{pixelId}}',
+		},
+		{
+			ifUndefined: false,
+			name: 'adroll_version',
+			type: 'setGlobal',
+			value: '2.0',
+		},
+		{
+			ifUndefined: false,
+			name: '__adroll_loaded',
+			type: 'setGlobal',
+			value: true,
+		},
+		{ name: 'adroll', type: 'setGlobal', value: [] },
+		{
+			path: ['adroll', 'f'],
+			type: 'setGlobalPath',
+			value: ADROLL_METHODS,
+		},
+		{
+			methods: ADROLL_METHODS,
+			preserveExisting: true,
+			// AdRoll replays the second tuple member with Function.apply.
+			queueFormat: 'nameAndArguments',
+			target: 'adroll',
+			type: 'defineQueueMethods',
+		},
+		{
+			args: ['pageView'],
+			global: 'adroll',
+			method: 'track',
+			type: 'callGlobal',
+		},
+		{
+			async: true,
+			src: 'https://s.adroll.com/j/{{advertiserPath}}/roundtrip.js',
+			type: 'loadScript',
+		},
+	],
 	persistAfterConsentRevoked: true,
 	vendor: 'adroll',
 	vendorDetails: {
@@ -46,6 +102,49 @@ export interface AdrollPixelOptions {
 	/** Override URL for the account-specific v2 loader. */
 	scriptUrl?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link adrollPixel}. Both IDs
+ * must already be trimmed and non-empty.
+ */
+export const resolveAdrollPixelManifest = function resolveAdrollPixelManifest({
+	advertiserId,
+	pixelId,
+}: Omit<AdrollPixelOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(adrollPixelManifest, {
+		advertiserId,
+		advertiserPath: encodeURIComponent(advertiserId),
+		pixelId,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `scriptUrl` stays npm-only. Marked pure so a bundler drops it
+ * from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'adrollPixel',
+		{
+			advertiserId: {
+				example: 'ABCDEFGHIJ1234567890KL',
+				kind: 'id',
+				label: 'Advertiser ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+			pixelId: {
+				example: 'MNOPQRSTUV0987654321WX',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveAdrollPixelManifest
+	);
 
 /**
  * Loads AdRoll v2 only after marketing consent and queues the initial page view.
@@ -71,33 +170,10 @@ export const adrollPixel = function adrollPixel(
 			manifest: adrollPixelManifest,
 		});
 	}
-	const script = resolveManifest(adrollPixelManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://s.adroll.com/j/${encodeURIComponent(advertiserId)}/roundtrip.js`
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveAdrollPixelManifest({ advertiserId, pixelId })
 		),
-	});
-	return {
-		...script,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			window.adroll_adv_id = advertiserId;
-			window.adroll_pix_id = pixelId;
-			window.adroll_version = '2.0';
-			window.__adroll_loaded = true;
-			const client = window.adroll ?? [];
-			window.adroll = client;
-			const methods: AdrollMethod[] = ['setProperties', 'identify', 'track'];
-			client.f = methods;
-			for (const method of methods) {
-				client[method] ??= function queueAdrollCall() {
-					// AdRoll replays the second tuple member with Function.apply.
-					// oxlint-disable-next-line prefer-rest-params -- Match the official arguments queue.
-					client.push([method, arguments]);
-				};
-			}
-			client.track?.('pageView');
-			script.onBeforeLoad?.(info);
-		},
-	};
+		options.scriptUrl
+	);
 };

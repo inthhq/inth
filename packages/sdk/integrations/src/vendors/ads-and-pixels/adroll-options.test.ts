@@ -4,12 +4,16 @@ import { grantedServerStart } from '../../__tests__/helpers';
 import { adrollPixel } from './adroll';
 
 describe('AdRoll account configuration', () => {
-	it('uses the browser lifecycle for the official bootstrap', () => {
+	// inline-start.test.ts checks the HTML start against the browser one.
+	it('starts the official bootstrap from the HTML for a granted visitor', () => {
 		expect(
 			grantedServerStart(
 				adrollPixel({ advertiserId: 'advertiser', pixelId: 'pixel' })
 			)
-		).toBeUndefined();
+		).toEqual({
+			code: expect.stringContaining('adroll'),
+			prelude: expect.any(String),
+		});
 	});
 	it('encodes the trimmed advertiser as one URL segment', () => {
 		expect(
