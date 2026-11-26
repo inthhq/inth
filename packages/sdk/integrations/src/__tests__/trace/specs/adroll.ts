@@ -18,6 +18,20 @@ export const adrollTrace: TraceSpec = {
 			})
 		);
 	},
+	scenarios: [
+		{
+			name: 'adroll set to null before the grant, grant, load',
+			start: 'denied',
+			steps: [
+				{
+					label: 'page sets window.adroll to null',
+					run: (page) => page.stubs.install('adroll', null),
+				},
+				'grant',
+				'load',
+			],
+		},
+	],
 	script: () => adrollPixel({ advertiserId: 'advertiser', pixelId: 'pixel' }),
 };
 

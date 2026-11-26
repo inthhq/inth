@@ -57,7 +57,8 @@ export const adrollPixelManifest = {
 			type: 'setGlobal',
 			value: true,
 		},
-		{ name: 'adroll', type: 'setGlobal', value: [] },
+		// The snippet's `window.adroll ?? []` also replaces null.
+		{ ifNullish: true, name: 'adroll', type: 'setGlobal', value: [] },
 		{
 			path: ['adroll', 'f'],
 			type: 'setGlobalPath',

@@ -259,6 +259,46 @@
 			{
 				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
 			}
+		],
+		"adroll set to null before the grant, grant, load": [
+			{ "step": "start denied" },
+			{ "step": "page sets window.adroll to null" },
+			{ "global": "adroll", "value": null },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			}
 		]
 	}
 }
