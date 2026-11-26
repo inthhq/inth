@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { adrollPixel } from '../../vendors/ads-and-pixels/adroll';
 import {
@@ -86,6 +86,29 @@ describe('fixture scenario names', () => {
 		expect(scenarioNameMismatch(adrollTrace, undefined)).toContain(
 			'No fixture at fixtures/adroll.json'
 		);
+	});
+});
+
+describe('idle callbacks', () => {
+	it('runs them on fake timers when the page brings its own', async () => {
+		// As a jsdom that implements them would: never driven by fake timers.
+		const page = window as unknown as Record<string, unknown>;
+		page.requestIdleCallback = () => 0;
+		page.cancelIdleCallback = () => undefined;
+		try {
+			vi.resetModules();
+			const { sentryCdnTrace } = await import('./specs/sentry');
+			const [scenario] = scenariosOf(sentryCdnTrace);
+			if (!scenario) {
+				throw new Error('Sentry has no scenarios');
+			}
+			expect(await runTraceScenario(sentryCdnTrace, scenario)).toEqual(
+				readGoldenTrace('sentry.cdn')?.scenarios[scenario.name]
+			);
+		} finally {
+			Reflect.deleteProperty(page, 'requestIdleCallback');
+			Reflect.deleteProperty(page, 'cancelIdleCallback');
+		}
 	});
 });
 

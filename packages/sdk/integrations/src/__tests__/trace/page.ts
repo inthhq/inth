@@ -222,8 +222,27 @@ const recordCookies = (push: TraceRecorder['push']) => {
 };
 
 /**
- * Fixes time and randomness, so queued timestamps and IDs repeat, and
- * records console output and cookie writes. Returns what undoes it.
+ * Idle callbacks on fake timers, run as soon as the page's other zero-delay
+ * work has. jsdom has none today; a page without them takes a vendor's
+ * `setTimeout` fallback, and a real one would never run under fake timers.
+ */
+const fakeIdleCallbacks = () => {
+	vi.stubGlobal(
+		'requestIdleCallback',
+		(callback: IdleRequestCallback): number =>
+			setTimeout(() => {
+				callback({ didTimeout: false, timeRemaining: () => 50 });
+			}, 0) as unknown as number
+	);
+	vi.stubGlobal('cancelIdleCallback', (handle: number) => {
+		clearTimeout(handle);
+	});
+};
+
+/**
+ * Fixes time, randomness and idle callbacks, so queued timestamps and IDs
+ * repeat, and records console output and cookie writes. Returns what
+ * undoes it.
  */
 export const installPageFakes = function installPageFakes(
 	push: TraceRecorder['push']
@@ -242,6 +261,7 @@ export const installPageFakes = function installPageFakes(
 			'cancelAnimationFrame',
 		],
 	});
+	fakeIdleCallbacks();
 	const restoreRandomness = fakeRandomness();
 	const restoreConsole = recordConsole(push);
 	// Node's storage globals can shadow jsdom's.

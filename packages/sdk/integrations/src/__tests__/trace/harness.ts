@@ -13,7 +13,7 @@
  * - `warn` / `consoleError` / `callbackError`: diagnostics.
  *
  * Loader element IDs are random, so they read `inth-#1`, `inth-#2` in order
- * of first appearance. Timers, `Date`, `Math.random` and
+ * of first appearance. Timers, idle callbacks, `Date`, `Math.random` and
  * `crypto.randomUUID` are fixed for each run.
  */
 import { createConsentKernel } from '@inth/sdk/engine';
