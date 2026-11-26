@@ -1,6 +1,7 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
@@ -402,6 +403,24 @@ export const resolveMetaPixelManifest = function resolveMetaPixelManifest({
 		),
 	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'metaPixel',
+	{
+		pixelId: {
+			example: '123456789012345',
+			kind: 'id',
+			label: 'Pixel ID',
+			pattern: '^[0-9]+$',
+			required: true,
+		},
+	},
+	resolveMetaPixelManifest
+);
 
 /**
  * Creates a Meta Pixel script.

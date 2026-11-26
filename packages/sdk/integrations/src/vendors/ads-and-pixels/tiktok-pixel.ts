@@ -1,6 +1,7 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
@@ -202,6 +203,24 @@ export const resolveTiktokPixelManifest = function resolveTiktokPixelManifest({
 		),
 	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'tiktokPixel',
+	{
+		pixelId: {
+			example: 'C4ABCDEF1234567890',
+			kind: 'id',
+			label: 'Pixel ID',
+			pattern: '^[A-Z0-9]+$',
+			required: true,
+		},
+	},
+	resolveTiktokPixelManifest
+);
 
 /**
  * Creates a Tiktok Pixel script.

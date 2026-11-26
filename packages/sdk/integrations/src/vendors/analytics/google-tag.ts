@@ -1,6 +1,7 @@
 import type { AllConsentNames, Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { runtimeDateValue, vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
@@ -9,6 +10,7 @@ import {
 	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
+import { loadModeOption } from '../_shared/remote-options';
 import { readId, skipMissingId } from '../_shared/required-id';
 
 declare global {
@@ -180,6 +182,31 @@ export const resolveGtagManifest = function resolveGtagManifest({
 		id,
 	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'gtag',
+	{
+		category: {
+			default: 'measurement',
+			kind: 'enum',
+			label: 'Consent category',
+			values: ['measurement', 'marketing'],
+		},
+		id: {
+			example: 'G-ABC123XYZ',
+			kind: 'id',
+			label: 'Tag ID',
+			pattern: '^(?:G|GT|AW|DC)-[A-Z0-9]+$',
+			required: true,
+		},
+		loadMode: loadModeOption,
+	},
+	resolveGtagManifest
+);
 
 /**
  * Creates a Google Tag (gtag.js) script.

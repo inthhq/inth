@@ -1,6 +1,7 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
@@ -230,6 +231,24 @@ export const resolveClarityManifest = function resolveClarityManifest({
 		scriptUrl: resolveScriptUrl(scriptUrl, `https://www.clarity.ms/tag/${id}`),
 	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'microsoft-clarity',
+	{
+		id: {
+			example: 'abcdef1234',
+			kind: 'id',
+			label: 'Project ID',
+			pattern: '^[A-Za-z0-9]+$',
+			required: true,
+		},
+	},
+	resolveClarityManifest
+);
 
 /**
  * Creates a Microsoft Clarity script.

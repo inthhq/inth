@@ -1,9 +1,11 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
+import { loadModeOption } from '../_shared/remote-options';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { stripTrailingSlashes, trimToUndefined } from '../_shared/script-url';
 
@@ -465,6 +467,31 @@ export const resolvePosthogManifest = function resolvePosthogManifest(
 		uiHost,
 	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'posthog',
+	{
+		id: {
+			example: 'phc_abc123XYZ',
+			kind: 'id',
+			label: 'Project API key',
+			pattern: '^phc_[A-Za-z0-9]+$',
+			required: true,
+		},
+		loadMode: loadModeOption,
+		region: {
+			default: 'eu',
+			kind: 'enum',
+			label: 'Region',
+			values: ['eu', 'us'],
+		},
+	},
+	resolvePosthogManifest
+);
 
 /**
  * Creates an Inth PostHog script helper.

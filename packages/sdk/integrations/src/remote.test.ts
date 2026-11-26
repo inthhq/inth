@@ -1,44 +1,49 @@
 // @vitest-environment node
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
-import { parseResolvedManifest } from '@inth/sdk/manifest-runtime';
+import {
+	MANIFEST_RUNTIME_LEVEL,
+	parseResolvedManifest,
+} from '@inth/sdk/manifest-runtime';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
 import { resolvedManifestToScript } from './engine/runtime';
+import type { BuiltInScriptIntegrationKey } from './registry';
 import {
 	manifestLevel,
 	remoteIntegrations,
 	validateRemoteOptions,
 } from './remote';
-import type { RemoteIntegration } from './remote';
-import { linkedinInsights } from './vendors/ads-and-pixels/linkedin-insights';
-import { metaPixel } from './vendors/ads-and-pixels/meta-pixel';
-import { tiktokPixel } from './vendors/ads-and-pixels/tiktok-pixel';
-import { gtag } from './vendors/analytics/google-tag';
-import { clarity } from './vendors/analytics/microsoft-clarity';
-import { posthog } from './vendors/analytics/posthog';
-import { googleTagManager } from './vendors/tag-managers/google-tag-manager';
+import type {
+	RemoteIntegration,
+	RemoteOptionSpec,
+	RemoteOptionValue,
+} from './remote';
+import { vendorModules } from './remote-catalogue';
 
-type Options = Record<string, string>;
+type Options = Record<string, RemoteOptionValue>;
+
+/** npm helpers not named after their registry key. */
+const helperNames: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
+	'microsoft-clarity': 'clarity',
+};
 
 /**
- * The npm helper for each remote integration, called with the same option
- * names. Kept here, apart from the remote module, so a helper that stops
- * matching its remote resolver fails this test.
+ * The npm helper exported beside a remote definition. The test calls it with
+ * the same options, so a helper that stops matching its resolver fails.
  */
-const npmHelpers: Record<string, (options: Options) => Script> = {
-	googleTagManager: (options) =>
-		googleTagManager(options as Parameters<typeof googleTagManager>[0]),
-	gtag: (options) => gtag(options as unknown as Parameters<typeof gtag>[0]),
-	linkedinInsights: (options) =>
-		linkedinInsights(options as Parameters<typeof linkedinInsights>[0]),
-	metaPixel: (options) => metaPixel(options as Parameters<typeof metaPixel>[0]),
-	'microsoft-clarity': (options) =>
-		clarity(options as Parameters<typeof clarity>[0]),
-	posthog: (options) => posthog(options as Parameters<typeof posthog>[0]),
-	tiktokPixel: (options) =>
-		tiktokPixel(options as Parameters<typeof tiktokPixel>[0]),
+const npmHelper = function npmHelper(
+	key: string
+): (options: Options) => Script {
+	const typedKey = key as BuiltInScriptIntegrationKey;
+	const module: Record<string, unknown> = vendorModules[typedKey];
+	const name = helperNames[typedKey] ?? key;
+	const helper = module[name];
+	if (typeof helper !== 'function') {
+		throw new TypeError(`${key} has no npm helper named ${name}`);
+	}
+	return helper as (options: Options) => Script;
 };
 
 /** Hosts each integration may load its script from. */
@@ -52,35 +57,91 @@ const vendorHosts: Record<string, readonly string[]> = {
 	tiktokPixel: ['analytics.tiktok.com'],
 };
 
-const exampleId = function exampleId(
-	integration: RemoteIntegration,
-	name: string
-): string {
-	const spec = integration.options[name];
-	if (spec?.kind !== 'id' || spec.example === undefined) {
-		throw new Error(`${integration.key}.${name} has no example`);
+/**
+ * Values that cover an option: each enum value, both booleans, the example
+ * ID or number, and an object with every field set.
+ */
+const sampleValues = function sampleValues(
+	spec: Exclude<RemoteOptionSpec, { kind: 'object' }>
+): RemoteOptionValue[] {
+	switch (spec.kind) {
+		case 'id':
+		case 'hostname':
+		case 'number': {
+			return [spec.example];
+		}
+		case 'enum': {
+			return [...spec.values];
+		}
+		case 'boolean': {
+			return [true, false];
+		}
+		case 'idList': {
+			return [[spec.example]];
+		}
+		case 'map': {
+			return spec.values.map((value) => ({ [spec.keyExample]: value }));
+		}
+		default: {
+			throw new Error('unknown option kind');
+		}
 	}
-	return spec.example;
 };
 
-/** Every combination of enum values, with each ID set to its example. */
+/**
+ * Every combination of each option's sample values. An object option's
+ * samples are the combinations of its fields.
+ */
+const sampleObjects = function sampleObjects(
+	specs: Readonly<Record<string, RemoteOptionSpec>>
+): Options[] {
+	let samples: Options[] = [{}];
+	for (const [name, spec] of Object.entries(specs)) {
+		const values =
+			spec.kind === 'object' ? sampleObjects(spec.fields) : sampleValues(spec);
+		samples = samples.flatMap((sample) =>
+			values.map((value) => ({ ...sample, [name]: value }))
+		);
+	}
+	return samples;
+};
+
+/** Options with only the required values set. */
+const requiredOnly = function requiredOnly(
+	specs: Readonly<Record<string, RemoteOptionSpec>>
+): Options {
+	return Object.fromEntries(
+		Object.entries(specs).flatMap(([name, spec]) => {
+			const value = sampleObjects({ [name]: spec })[0]?.[name];
+			return 'required' in spec && spec.required && value !== undefined
+				? [[name, value]]
+				: [];
+		})
+	);
+};
+
 const sampleOptions = function sampleOptions(
 	integration: RemoteIntegration
 ): Options[] {
-	let samples: Options[] = [{}];
-	for (const [name, spec] of Object.entries(integration.options)) {
-		if (spec.kind === 'id') {
-			samples = samples.map((sample) => ({
-				...sample,
-				[name]: exampleId(integration, name),
-			}));
-		} else {
-			samples = samples.flatMap((sample) =>
-				spec.values.map((value) => ({ ...sample, [name]: value }))
-			);
-		}
-	}
-	return samples;
+	return [
+		...sampleObjects(integration.options),
+		requiredOnly(integration.options),
+	];
+};
+
+/** `options` with each missing enum and boolean set to its default. */
+const withDefaults = function withDefaults(
+	integration: RemoteIntegration,
+	options: Options
+): Options {
+	const defaults = Object.fromEntries(
+		Object.entries(integration.options).flatMap(([name, spec]) =>
+			spec.kind === 'enum' || spec.kind === 'boolean'
+				? [[name, spec.default]]
+				: []
+		)
+	);
+	return { ...defaults, ...options };
 };
 
 const cases = Object.values(remoteIntegrations).flatMap((integration) =>
@@ -105,10 +166,7 @@ const functionNames = function functionNames(script: Script): string[] {
 };
 
 describe('remoteIntegrations', () => {
-	it('lists the allowlisted integrations under their registry keys', () => {
-		expect(Object.keys(remoteIntegrations).sort()).toEqual(
-			Object.keys(npmHelpers).sort()
-		);
+	it('lists each integration under its registry key', () => {
 		for (const [key, integration] of Object.entries(remoteIntegrations)) {
 			expect(integration.key).toBe(key);
 		}
@@ -136,12 +194,18 @@ describe('remoteIntegrations', () => {
 	});
 
 	it.each(cases)(
-		'%s %s needs runtime level 1 and carries no requires',
+		'%s %s carries requires only above level 1',
 		(key, _label, options) => {
-			const manifest = remoteIntegrations[key]?.resolveRemote(options);
+			const manifest = remoteIntegrations[key]?.resolveRemote(
+				options
+			) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+			const level = manifestLevel(manifest);
 
-			expect(manifest && manifestLevel(manifest)).toBe(1);
-			expect(manifest).not.toHaveProperty('requires');
+			expect(level).toBeGreaterThanOrEqual(1);
+			expect(level).toBeLessThanOrEqual(MANIFEST_RUNTIME_LEVEL);
+			// A level 1 manifest must parse in an SDK from before levels.
+			expect(Object.hasOwn(manifest, 'requires')).toBe(level > 1);
+			expect(manifest.requires).toBe(level > 1 ? level : undefined);
 		}
 	);
 
@@ -157,8 +221,10 @@ describe('remoteIntegrations', () => {
 	it.each(cases)(
 		'%s %s builds the same script as the npm helper',
 		(key, _label, options) => {
-			const helper = npmHelpers[key] as (options: Options) => Script;
-			const fromNpm = helper(options);
+			// The server resolves validated options, with defaults filled in.
+			const fromNpm = npmHelper(key)(
+				withDefaults(remoteIntegrations[key] as RemoteIntegration, options)
+			);
 			const fromRemote = resolvedManifestToScript(
 				remoteIntegrations[key]?.resolveRemote(options) as never
 			);
@@ -215,9 +281,11 @@ describe('validateRemoteOptions', () => {
 
 	it('accepts every sample option set', () => {
 		for (const [key, , options] of cases) {
+			const integration = remoteIntegrations[key] as RemoteIntegration;
+
 			expect(validateRemoteOptions(key, options), key).toEqual({
 				ok: true,
-				options,
+				options: withDefaults(integration, options),
 			});
 		}
 	});
@@ -263,11 +331,11 @@ describe('validateRemoteOptions', () => {
 		}
 	});
 
-	it('rejects a missing required ID', () => {
+	it('rejects a missing required value', () => {
 		for (const integration of Object.values(remoteIntegrations)) {
 			const [sample] = sampleOptions(integration);
 			for (const [name, spec] of Object.entries(integration.options)) {
-				if (spec.kind !== 'id' || !spec.required) {
+				if (!('required' in spec) || !spec.required) {
 					continue;
 				}
 				const { [name]: _removed, ...rest } = sample as Options;
@@ -301,7 +369,7 @@ describe('validateRemoteOptions', () => {
 					continue;
 				}
 				const [sample] = sampleOptions(integration);
-				const example = exampleId(integration, name);
+				const { example } = spec;
 				for (const suffix of ['/', '.', '&', '#', '?', ':', '%2F', '\n']) {
 					expect(
 						validateRemoteOptions(integration.key, {
@@ -350,7 +418,7 @@ describe('validateRemoteOptions', () => {
 		expect(result.ok).toBe(false);
 	});
 
-	it('rejects values that are not strings', () => {
+	it('rejects an ID that is not a string', () => {
 		expect(validateRemoteOptions('metaPixel', { pixelId: 123_456 }).ok).toBe(
 			false
 		);

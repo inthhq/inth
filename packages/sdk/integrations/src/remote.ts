@@ -3,29 +3,43 @@
  *
  * The Inth server stores an integration key and a few options for a project,
  * checks them with {@link validateRemoteOptions}, and sends the SDK the
- * `ResolvedManifest` from `resolveRemote`. The manifest is plain JSON. Options
- * are IDs that must match a pattern, or a choice from a closed list. No option
- * can set a host, a URL, an object or a function, so a manifest only loads the
- * vendor's own script.
+ * `ResolvedManifest` from `resolveRemote`. The manifest is plain JSON, and so
+ * are the options: IDs that match a pattern, choices from a closed list,
+ * booleans, numbers, lists of IDs, small objects of declared fields, and maps
+ * from patterned keys to a closed list. No option takes a URL or a function,
+ * so a manifest loads the vendor's script from the vendor's own host, or for
+ * a `hostname` option, from a DNS name on the customer's domain.
  *
- * Each entry resolves through the same function as its npm helper, so a
- * remote entry builds the same script as the helper called with the same
- * options.
+ * Each vendor file exports its entry as `remote`, built with `defineRemote`
+ * from the same resolver its npm helper calls, so a remote entry builds the
+ * same script as the helper called with the same options. The catalogue
+ * walks the integrations registry to find them.
  *
  * @packageDocumentation
  */
 import { getBuiltInScriptIntegration } from './registry';
-import type { BuiltInScriptIntegrationKey } from './registry';
+import { remoteDefinitions } from './remote-catalogue';
+import type { RemoteDefinition, RemoteOptionSpec } from './remote-define';
+import { validateOptionValues } from './remote-validate';
+import type { RemoteOptionsValidation } from './remote-validate';
 import type { ResolvedManifest } from './types';
-import { resolveLinkedinInsightsManifest } from './vendors/ads-and-pixels/linkedin-insights';
-import { resolveMetaPixelManifest } from './vendors/ads-and-pixels/meta-pixel';
-import { resolveTiktokPixelManifest } from './vendors/ads-and-pixels/tiktok-pixel';
-import { resolveGtagManifest } from './vendors/analytics/google-tag';
-import { resolveClarityManifest } from './vendors/analytics/microsoft-clarity';
-import { resolvePosthogManifest } from './vendors/analytics/posthog';
-import { resolveGoogleTagManagerManifest } from './vendors/tag-managers/google-tag-manager';
 
 export type { ManifestStep, ResolvedManifest } from './types';
+export type {
+	RemoteBooleanOption,
+	RemoteEnumOption,
+	RemoteHostnameOption,
+	RemoteIdListOption,
+	RemoteIdOption,
+	RemoteMapOption,
+	RemoteNestedObjectOption,
+	RemoteNumberOption,
+	RemoteObjectOption,
+	RemoteOptionSpec,
+	RemoteOptionValue,
+	RemoteScalarOption,
+} from './remote-define';
+export type { RemoteOptionsValidation } from './remote-validate';
 
 /**
  * The manifest runtime level `manifest` needs: the highest level of any
@@ -43,28 +57,6 @@ export const manifestLevel = function manifestLevel(
 	return Math.max(1, manifest.requires ?? 1);
 };
 
-/**
- * One option of a remote integration. A dashboard form renders from it.
- *
- * - `id`: free text that must match `pattern`, a regular expression with
- *   the `u` flag, anchored at both ends.
- * - `enum`: one of `values`. A missing value takes `default`.
- */
-export type RemoteOptionSpec =
-	| {
-			kind: 'id';
-			label: string;
-			pattern: string;
-			required: boolean;
-			example?: string;
-	  }
-	| {
-			kind: 'enum';
-			label: string;
-			values: readonly string[];
-			default: string;
-	  };
-
 export interface RemoteIntegration {
 	/** Registry key, such as `metaPixel`. */
 	key: string;
@@ -74,245 +66,60 @@ export interface RemoteIntegration {
 	label: string;
 	options: Readonly<Record<string, RemoteOptionSpec>>;
 	/**
-	 * Builds the manifest for options that passed
+	 * Builds the manifest for options that pass
 	 * {@link validateRemoteOptions}. Returns a new object on every call.
 	 *
 	 * @throws {Error} When the options do not pass validation.
 	 */
-	resolveRemote: (options: Record<string, string>) => ResolvedManifest;
+	resolveRemote: (
+		options: Readonly<Record<string, unknown>>
+	) => ResolvedManifest;
 }
 
-export type RemoteOptionsValidation =
-	| { ok: true; options: Record<string, string> }
-	| { ok: false; issues: string[] };
-
-type RemoteOptionValues<TSpecs extends Record<string, RemoteOptionSpec>> = {
-	[TName in keyof TSpecs]: TSpecs[TName] extends {
-		kind: 'enum';
-		values: readonly (infer TValue)[];
-	}
-		? TValue
-		: TSpecs[TName] extends { required: true }
-			? string
-			: string | undefined;
-};
-
-/** A scheme such as `https:` or `javascript:`, or a `//host` reference. */
-const URL_VALUE_PATTERN = /^[a-z][a-z\d+.-]*:|\/\//iu;
-const MAX_VALUE_LENGTH = 200;
-
-const loadModeOption = {
-	default: 'always',
-	kind: 'enum',
-	label: 'Load mode',
-	values: ['always', 'after-consent'],
-} as const satisfies RemoteOptionSpec;
-
-const validateOptions = function validateOptions(
-	key: string,
-	specs: Readonly<Record<string, RemoteOptionSpec>>,
-	input: unknown
-): RemoteOptionsValidation {
-	if (input === null || typeof input !== 'object' || Array.isArray(input)) {
-		return { issues: [`${key}: options must be an object`], ok: false };
-	}
-
-	const record = input as Record<string, unknown>;
-	const issues: string[] = [];
-	for (const name of Object.keys(record)) {
-		if (!Object.hasOwn(specs, name)) {
-			issues.push(`${key}: unknown option '${name}'`);
-		}
-	}
-
-	const options: Record<string, string> = {};
-	for (const [name, spec] of Object.entries(specs)) {
-		const value = Object.hasOwn(record, name) ? record[name] : undefined;
-		if (value === undefined) {
-			if (spec.kind === 'enum') {
-				options[name] = spec.default;
-			} else if (spec.required) {
-				issues.push(`${key}: '${name}' is required`);
-			}
-			continue;
-		}
-
-		if (typeof value !== 'string') {
-			issues.push(`${key}: '${name}' must be a string`);
-		} else if (URL_VALUE_PATTERN.test(value)) {
-			issues.push(`${key}: '${name}' must not be a URL`);
-		} else if (spec.kind === 'enum') {
-			if (spec.values.includes(value)) {
-				options[name] = value;
-			} else {
-				issues.push(
-					`${key}: '${name}' must be one of ${spec.values.join(', ')}`
-				);
-			}
-		} else if (
-			value.length > MAX_VALUE_LENGTH ||
-			!new RegExp(spec.pattern, 'u').test(value)
-		) {
-			issues.push(`${key}: '${name}' must match ${spec.pattern}`);
-		} else {
-			options[name] = value;
-		}
-	}
-
-	return issues.length > 0 ? { issues, ok: false } : { ok: true, options };
-};
-
-const defineRemoteIntegration = function defineRemoteIntegration<
-	const TSpecs extends Record<string, RemoteOptionSpec>,
->(
-	key: BuiltInScriptIntegrationKey,
-	options: TSpecs,
-	resolve: (options: RemoteOptionValues<TSpecs>) => ResolvedManifest
+const toIntegration = function toIntegration(
+	definition: RemoteDefinition
 ): RemoteIntegration {
+	const { key, options } = definition;
 	const { label, vendor } = getBuiltInScriptIntegration(key);
 
 	return Object.freeze({
 		key,
 		label,
-		options: Object.freeze(options),
-		resolveRemote(input: Record<string, string>): ResolvedManifest {
-			const result = validateOptions(key, options, input);
+		options,
+		resolveRemote(input: Readonly<Record<string, unknown>>): ResolvedManifest {
+			const result = validateOptionValues(key, options, input);
 			if (!result.ok) {
 				throw new Error(result.issues.join('; '));
 			}
-			// Helpers share a cached manifest; callers get their own copy.
-			return structuredClone(
-				resolve(result.options as RemoteOptionValues<TSpecs>)
-			);
+			// The options passed this definition's own specs, so they have the
+			// shape its resolver declares. Helpers share a cached manifest;
+			// callers get their own copy.
+			return structuredClone(definition.resolve(result.options as never));
 		},
 		vendor,
 	});
 };
 
-const remoteIntegrationList = [
-	defineRemoteIntegration(
-		'googleTagManager',
-		{
-			id: {
-				example: 'GTM-ABC1234',
-				kind: 'id',
-				label: 'Container ID',
-				pattern: '^GTM-[A-Z0-9]+$',
-				required: true,
-			},
-			loadMode: loadModeOption,
-		},
-		(options) => resolveGoogleTagManagerManifest(options)
-	),
-	defineRemoteIntegration(
-		'gtag',
-		{
-			category: {
-				default: 'measurement',
-				kind: 'enum',
-				label: 'Consent category',
-				values: ['measurement', 'marketing'],
-			},
-			id: {
-				example: 'G-ABC123XYZ',
-				kind: 'id',
-				label: 'Tag ID',
-				pattern: '^(?:G|GT|AW|DC)-[A-Z0-9]+$',
-				required: true,
-			},
-			loadMode: loadModeOption,
-		},
-		(options) => resolveGtagManifest(options)
-	),
-	defineRemoteIntegration(
-		'metaPixel',
-		{
-			pixelId: {
-				example: '123456789012345',
-				kind: 'id',
-				label: 'Pixel ID',
-				pattern: '^[0-9]+$',
-				required: true,
-			},
-		},
-		(options) => resolveMetaPixelManifest(options)
-	),
-	defineRemoteIntegration(
-		'posthog',
-		{
-			id: {
-				example: 'phc_abc123XYZ',
-				kind: 'id',
-				label: 'Project API key',
-				pattern: '^phc_[A-Za-z0-9]+$',
-				required: true,
-			},
-			loadMode: loadModeOption,
-			region: {
-				default: 'eu',
-				kind: 'enum',
-				label: 'Region',
-				values: ['eu', 'us'],
-			},
-		},
-		(options) => resolvePosthogManifest(options)
-	),
-	defineRemoteIntegration(
-		'microsoft-clarity',
-		{
-			id: {
-				example: 'abcdef1234',
-				kind: 'id',
-				label: 'Project ID',
-				pattern: '^[A-Za-z0-9]+$',
-				required: true,
-			},
-		},
-		(options) => resolveClarityManifest(options)
-	),
-	defineRemoteIntegration(
-		'tiktokPixel',
-		{
-			pixelId: {
-				example: 'C4ABCDEF1234567890',
-				kind: 'id',
-				label: 'Pixel ID',
-				pattern: '^[A-Z0-9]+$',
-				required: true,
-			},
-		},
-		(options) => resolveTiktokPixelManifest(options)
-	),
-	defineRemoteIntegration(
-		'linkedinInsights',
-		{
-			id: {
-				example: '1234567',
-				kind: 'id',
-				label: 'Partner ID',
-				pattern: '^[0-9]+$',
-				required: true,
-			},
-		},
-		(options) => resolveLinkedinInsightsManifest(options)
-	),
-];
-
 /**
- * Integrations the Inth server may send to the SDK, by registry key.
- * Integrations that run their own lifecycle code stay npm-only.
+ * Integrations the Inth server may send to the SDK, by registry key: every
+ * vendor in the registry whose file exports `remote`. Integrations that run
+ * their own lifecycle code stay npm-only.
  */
 export const remoteIntegrations: Readonly<Record<string, RemoteIntegration>> =
 	Object.freeze(
 		Object.fromEntries(
-			remoteIntegrationList.map((integration) => [integration.key, integration])
+			remoteDefinitions.map((definition) => [
+				definition.key,
+				toIntegration(definition),
+			])
 		)
 	);
 
 /**
- * Checks options for a remote integration. Unknown keys, missing IDs, values
- * that miss their pattern, URLs and values outside an option's list fail.
- * On success, options holds every value, with list defaults filled in.
+ * Checks options for a remote integration. Unknown keys, missing required
+ * values, wrong types, values that miss their pattern, range or list, and
+ * URL-shaped strings fail, each with its own issue. On success, options holds
+ * every value, with enum and boolean defaults filled in.
  */
 export const validateRemoteOptions = function validateRemoteOptions(
 	key: string,
@@ -325,5 +132,5 @@ export const validateRemoteOptions = function validateRemoteOptions(
 		return { issues: [`Unknown remote integration '${key}'`], ok: false };
 	}
 
-	return validateOptions(key, integration.options, input);
+	return validateOptionValues(key, integration.options, input);
 };

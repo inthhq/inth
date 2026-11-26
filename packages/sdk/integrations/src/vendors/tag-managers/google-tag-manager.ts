@@ -1,6 +1,7 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { getCompiledManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { ResolvedManifest, VendorManifest } from '../../types';
@@ -9,6 +10,7 @@ import {
 	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
+import { loadModeOption } from '../_shared/remote-options';
 import { readId, skipMissingId } from '../_shared/required-id';
 
 /**
@@ -199,6 +201,25 @@ export const resolveGoogleTagManagerManifest =
 			}
 		);
 	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only.
+ */
+export const remote = defineRemote(
+	'googleTagManager',
+	{
+		id: {
+			example: 'GTM-ABC1234',
+			kind: 'id',
+			label: 'Container ID',
+			pattern: '^GTM-[A-Z0-9]+$',
+			required: true,
+		},
+		loadMode: loadModeOption,
+	},
+	resolveGoogleTagManagerManifest
+);
 
 /**
  * Creates a Google Tag Manager script.
