@@ -7,6 +7,7 @@
  */
 export { callReachesCode, stepReachesCode } from './call-path';
 export { mapConsentState } from './consent-mapping';
+export { isDeclarableGlobal, manifestRoots } from './globals';
 export {
 	manifestFeatureLevel,
 	MANIFEST_FIELD_LEVELS,

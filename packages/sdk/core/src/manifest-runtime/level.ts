@@ -8,9 +8,11 @@ import { appendInitParams } from '@inth/sdk-schema/types';
  * `onDisposeSteps`, `callGlobal.path`, owned second script tags, the
  * `nameAndArguments` queue format, a script tag `id`, and the `target`,
  * `observeConsentBeforeLoad`, `persistAfterDispose` and `resourceKey`
- * fields. `features.ts` lists the level of each. A manifest that needs a
- * later level's steps or fields says so in `requires`; one without
- * `requires` needs level 1. The SDK sends this level as
+ * fields, and `globals`, the window roots a manifest's steps may use,
+ * which every manifest the SDK runs now carries, so none is level 1.
+ * `features.ts` lists the level of each. A manifest that needs a later
+ * level's steps or fields says so in `requires`; one without `requires`
+ * needs level 1. The SDK sends this level as
  * `manifestLevel` when it asks for a script registry, and drops any entry
  * above it from a list no server filtered for it.
  */

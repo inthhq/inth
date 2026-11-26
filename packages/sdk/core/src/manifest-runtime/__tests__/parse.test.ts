@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
+import { manifestRoots } from '../globals';
 import { MANIFEST_RUNTIME_LEVEL } from '../level';
 import { parseResolvedManifest } from '../parse';
 import { resolvedManifestToScript } from '../runtime';
@@ -13,6 +14,7 @@ const manifest = () => ({
 	category: { or: ['measurement', 'marketing'] },
 	consentMapping: { measurement: ['analytics_storage'] },
 	consentSignal: 'gtag',
+	globals: ['dataLayer', 'gtag'],
 	kind: 'inth.vendor-manifest',
 	loadScript: {
 		async: true,
@@ -208,6 +210,7 @@ describe('parseResolvedManifest', () => {
 	it('accepts runtime values it knows, and those names inside plain data', () => {
 		const input = {
 			...manifest(),
+			globals: ['dataLayer', 'gtag', 'started'],
 			setupSteps: [
 				{
 					name: 'started',
@@ -260,11 +263,10 @@ describe('parseResolvedManifest', () => {
 			value,
 			...fields,
 		});
-		const withSetup = (...steps: unknown[]) => ({
-			...manifest(),
-			requires: 2,
-			setupSteps: steps,
-		});
+		const withSetup = (...steps: unknown[]) => {
+			const input = { ...manifest(), requires: 2, setupSteps: steps };
+			return { ...input, globals: manifestRoots(input as never) };
+		};
 		const addon = (fields: Record<string, unknown> = {}) => ({
 			id: 'vendor-addon',
 			src: 'https://cdn.example/addon.js',
@@ -482,25 +484,34 @@ describe('parseResolvedManifest', () => {
 			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
 		});
 
-		it('accepts calls on vendor objects and document methods', () => {
+		it('accepts calls on vendor objects', () => {
 			expect(
 				parseResolvedManifest(
 					withSetup(
 						{ path: ['vendor', 'queue', 'push'], type: 'callGlobal' },
-						{ global: 'vendor', method: 'track', type: 'callGlobal' },
-						{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' },
-						{ path: ['document', 'dispatchEvent'], type: 'callGlobal' }
+						{ global: 'vendor', method: 'track', type: 'callGlobal' }
 					)
 				).ok
 			).toBe(true);
 		});
+
+		// `document` is a platform global, which no manifest may declare.
+		it.each([
+			{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' },
+			{ path: ['document', 'dispatchEvent'], type: 'callGlobal' },
+		])('refuses a document method: %j', (step) => {
+			expect(parseResolvedManifest(withSetup(step))).toEqual({
+				ok: false,
+				reason: expect.stringContaining('names document'),
+			});
+		});
 	});
 
 	describe('writes', () => {
-		const withBootstrap = (...steps: unknown[]) => ({
-			...manifest(),
-			bootstrapSteps: steps,
-		});
+		const withBootstrap = (...steps: unknown[]) => {
+			const input = { ...manifest(), bootstrapSteps: steps };
+			return { ...input, globals: manifestRoots(input as never) };
+		};
 		const parse = (step: unknown) =>
 			parseResolvedManifest(JSON.parse(JSON.stringify(withBootstrap(step))));
 		const refusal = {

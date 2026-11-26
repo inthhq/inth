@@ -430,6 +430,15 @@ export interface ResolvedManifest extends ManifestContract {
 	requires?: number;
 	vendor: string;
 	vendorDetails?: VendorDetails;
+	/**
+	 * Every window property the steps read, write or call through, as the
+	 * first name of each path (level 2). The parser refuses a step whose
+	 * root is not listed, and a platform or built-in global such as
+	 * `document`, `location` or `Object`. A vendor's own data layer, such
+	 * as `dataLayer`, may be listed. `compileManifest` fills it in from the
+	 * steps.
+	 */
+	globals: string[];
 	category: HasCondition<AllConsentNames>;
 	alwaysLoad?: boolean;
 	persistAfterConsentRevoked?: boolean | 'loaded';

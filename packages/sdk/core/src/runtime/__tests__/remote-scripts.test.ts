@@ -44,6 +44,7 @@ const acmeManifest = (overrides: Record<string, unknown> = {}) => ({
 		{ ifUndefined: true, name: 'acmeQueue', type: 'setGlobal', value: [] },
 	],
 	category: 'marketing',
+	globals: ['acmeQueue'],
 	kind: 'inth.vendor-manifest',
 	loadScript: { async: true, src: ACME_SRC, type: 'loadScript' },
 	onBeforeLoadDeniedSteps: [],
@@ -53,6 +54,7 @@ const acmeManifest = (overrides: Record<string, unknown> = {}) => ({
 	onConsentGrantedSteps: [],
 	onLoadDeniedSteps: [],
 	onLoadGrantedSteps: [],
+	requires: 2,
 	schemaVersion: 1,
 	setupSteps: [
 		{ args: ['init', 'ACME-1'], global: 'acmeQueue', type: 'callGlobal' },
@@ -1159,6 +1161,7 @@ describe('remoteScripts', () => {
 				initialScriptRegistry: {
 					load: load(
 						acmeManifest({
+							globals: ['acmeQueue', '__gate'],
 							requires: 2,
 							setupSteps: [
 								{

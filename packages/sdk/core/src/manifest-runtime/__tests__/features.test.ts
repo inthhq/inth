@@ -1,47 +1,54 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { manifestFeatureLevel } from '../features';
+import { manifestRoots } from '../globals';
 import { MANIFEST_RUNTIME_LEVEL } from '../level';
 import { parseResolvedManifest } from '../parse';
 import type { ResolvedManifest } from '../types';
 
-const levelOne = (): ResolvedManifest => ({
-	afterLoadSteps: [],
-	bootstrapSteps: [
-		{ name: 'dataLayer', type: 'setGlobal', value: [] },
-		{
-			args: [{ at: { kind: 'inth.runtime-value', value: 'timestamp' } }],
-			global: 'gtag',
-			method: 'push',
-			type: 'callGlobal',
+/**
+ * A manifest of level 1 features only. It carries no `globals`, which is
+ * level 2, so no manifest the SDK runs is level 1 any more; the table
+ * still reads the other fields' levels.
+ */
+const levelOne = (): ResolvedManifest =>
+	({
+		afterLoadSteps: [],
+		bootstrapSteps: [
+			{ name: 'dataLayer', type: 'setGlobal', value: [] },
+			{
+				args: [{ at: { kind: 'inth.runtime-value', value: 'timestamp' } }],
+				global: 'gtag',
+				method: 'push',
+				type: 'callGlobal',
+			},
+		],
+		category: 'measurement',
+		kind: 'inth.vendor-manifest',
+		loadScript: {
+			attributes: { 'data-layer': 'dataLayer' },
+			src: 'https://cdn.example/vendor.js',
+			type: 'loadScript',
 		},
-	],
-	category: 'measurement',
-	kind: 'inth.vendor-manifest',
-	loadScript: {
-		attributes: { 'data-layer': 'dataLayer' },
-		src: 'https://cdn.example/vendor.js',
-		type: 'loadScript',
-	},
-	onBeforeLoadDeniedSteps: [],
-	onBeforeLoadGrantedSteps: [],
-	onConsentChangeSteps: [],
-	onConsentDeniedSteps: [],
-	onConsentGrantedSteps: [],
-	onLoadDeniedSteps: [],
-	onLoadGrantedSteps: [],
-	persistAfterConsentRevoked: undefined,
-	schemaVersion: 1,
-	setupSteps: [
-		{
-			methods: ['track'],
-			queueFormat: 'nameAndArgs',
-			target: 'vendor',
-			type: 'defineQueueMethods',
-		},
-	],
-	vendor: 'vendor',
-});
+		onBeforeLoadDeniedSteps: [],
+		onBeforeLoadGrantedSteps: [],
+		onConsentChangeSteps: [],
+		onConsentDeniedSteps: [],
+		onConsentGrantedSteps: [],
+		onLoadDeniedSteps: [],
+		onLoadGrantedSteps: [],
+		persistAfterConsentRevoked: undefined,
+		schemaVersion: 1,
+		setupSteps: [
+			{
+				methods: ['track'],
+				queueFormat: 'nameAndArgs',
+				target: 'vendor',
+				type: 'defineQueueMethods',
+			},
+		],
+		vendor: 'vendor',
+	}) as Omit<ResolvedManifest, 'globals'> as ResolvedManifest;
 
 const value = (name: string, fields = {}) => ({
 	kind: 'inth.runtime-value' as const,
@@ -56,6 +63,10 @@ const withSetup = (step: unknown): ResolvedManifest => ({
 describe('manifestFeatureLevel', () => {
 	it('reads a level 1 manifest as level 1', () => {
 		expect(manifestFeatureLevel(levelOne())).toBe(1);
+	});
+
+	it('reads a manifest carrying globals as level 2', () => {
+		expect(manifestFeatureLevel({ ...levelOne(), globals: [] })).toBe(2);
 	});
 
 	it('ignores requires and fields set to undefined', () => {
@@ -136,9 +147,13 @@ describe('manifestFeatureLevel', () => {
 		],
 	])('reads %s as level 2, which this SDK parses', (_label, manifest) => {
 		expect(manifestFeatureLevel(manifest)).toBe(2);
-		expect(parseResolvedManifest({ ...manifest, requires: 2 })).toMatchObject({
-			ok: true,
-		});
+		expect(
+			parseResolvedManifest({
+				...manifest,
+				globals: manifestRoots(manifest) as string[],
+				requires: 2,
+			})
+		).toMatchObject({ ok: true });
 	});
 
 	it.each<[string, ResolvedManifest]>([

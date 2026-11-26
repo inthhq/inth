@@ -9,6 +9,7 @@ import type { ConsentState } from '../types';
 import { stepReachesCode } from './call-path';
 import { mapConsentState } from './consent-mapping';
 import { levelOf, RUNTIME_VALUE_LEVELS } from './features';
+import { isNativeFunction, undeclaredRoot } from './globals';
 import { RUNTIME_VALUE_KIND } from './types';
 import type { ManifestStep, ResolvedManifest, RuntimeValue } from './types';
 import { ALL_DENIED, signalConsents } from './vendor-consent';
@@ -44,6 +45,8 @@ interface StepValues {
 	/** The callback info the steps run for. */
 	info?: ScriptCallbackInfo;
 	state?: ScriptState;
+	/** The manifest's `globals`: the only roots a step may use. */
+	globals?: readonly string[];
 }
 
 interface StepExecutionContext {
@@ -192,9 +195,70 @@ export const isRecord = function isRecord(
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
 };
 
+const objectTag = Object.prototype.toString;
+
+/** Tags of the objects a vendor's own data is made of. */
+const DATA_TAGS: ReadonlySet<string> = new Set([
+	'[object Object]',
+	'[object Array]',
+	'[object Arguments]',
+	'[object Date]',
+]);
+
+/**
+ * Whether `value` is an object the browser made, such as an element, a
+ * window, a document, a location or an attribute, rather than a vendor's
+ * plain object or array. A global may be one without the manifest knowing:
+ * an element's id or an iframe's name puts it on window.
+ */
+const isPlatformObject = (value: unknown): boolean => {
+	if (typeof value !== 'object' || value === null) {
+		return false;
+	}
+	try {
+		return !DATA_TAGS.has(objectTag.call(value));
+	} catch {
+		// A cross-origin window throws.
+		return true;
+	}
+};
+
+const MAX_ARG_DEPTH = 32;
+
+/** Whether `value` holds a browser object, such as `scriptElement`. */
+const holdsPlatformObject = (value: unknown, depth = 0): boolean =>
+	isPlatformObject(value) ||
+	(depth < MAX_ARG_DEPTH &&
+		typeof value === 'object' &&
+		value !== null &&
+		Object.values(value).some((entry) =>
+			holdsPlatformObject(entry, depth + 1)
+		));
+
+/** The native methods a manifest may call, on an array only. */
+const ARRAY_METHODS: ReadonlySet<unknown> = new Set(['push', 'unshift']);
+
+/**
+ * Whether a call step may call `fn` on `holder` with `args`: a vendor's
+ * function, or `push` or `unshift` of an array (a vendor's queue) given no
+ * browser object. Every other native function is refused, so a declared
+ * root that turns out to reach a browser API cannot call it.
+ */
+const mayCall = (
+	fn: unknown,
+	holder: unknown,
+	method: unknown,
+	args: () => unknown[]
+): boolean =>
+	!isNativeFunction(fn) ||
+	(Array.isArray(holder) &&
+		ARRAY_METHODS.has(method) &&
+		!holdsPlatformObject(args()));
+
 /**
  * The object at `path` under `root`, and the one holding it, or `undefined`
- * when a segment before the last is not an object or function.
+ * when a segment before the last is not an object or function, or is a
+ * browser object.
  */
 const readPath = function readPath(
 	root: Record<string, unknown>,
@@ -205,13 +269,27 @@ const readPath = function readPath(
 		const next = holder[segment];
 		if (
 			next === null ||
-			(typeof next !== 'object' && typeof next !== 'function')
+			(typeof next !== 'object' && typeof next !== 'function') ||
+			isPlatformObject(next)
 		) {
 			return undefined;
 		}
 		holder = next as Record<string, unknown>;
 	}
 	return { holder, value: holder[path.at(-1) as string] };
+};
+
+/** `window[name]` when it is an object or function a step may write on. */
+const writableTarget = (
+	win: Record<string, unknown>,
+	name: string
+): Record<string, unknown> | undefined => {
+	const target = win[name];
+	return target === null ||
+		(typeof target !== 'object' && typeof target !== 'function') ||
+		isPlatformObject(target)
+		? undefined
+		: (target as Record<string, unknown>);
 };
 
 const getPathTarget = function getPathTarget(
@@ -225,7 +303,7 @@ const getPathTarget = function getPathTarget(
 	let target = root;
 	for (const segment of path.slice(0, -1)) {
 		const next = target[segment];
-		if (next === null || typeof next !== 'object') {
+		if (next === null || typeof next !== 'object' || isPlatformObject(next)) {
 			return undefined;
 		}
 
@@ -268,7 +346,7 @@ const executeStep = function executeStep(
 
 	// The parser refuses these; a manifest built without it must not run
 	// them either.
-	if (stepReachesCode(step)) {
+	if (stepReachesCode(step) || undeclaredRoot(step, values.globals)) {
 		return;
 	}
 
@@ -378,23 +456,30 @@ const executeStep = function executeStep(
 					? (JSON.parse(JSON.stringify(step.args ?? [])) as unknown[])
 					: (step.args ?? []).map((arg) => cloneStepValue(arg, values));
 
+			let args: unknown[] | undefined;
+			const argsOnce = () => {
+				args ??= readArgs();
+				return args;
+			};
+
 			if (step.path) {
 				const found = readPath(win, step.path);
-				if (typeof found?.value === 'function') {
+				if (
+					typeof found?.value === 'function' &&
+					mayCall(found.value, found.holder, step.path.at(-1), argsOnce)
+				) {
 					(found.value as (...args: unknown[]) => unknown).apply(
 						found.holder,
-						readArgs()
+						argsOnce()
 					);
 				}
 				break;
 			}
 
 			const target = win[step.global];
-			if (!target) {
+			if (!target || isPlatformObject(target)) {
 				break;
 			}
-
-			const args = readArgs();
 
 			if (step.method) {
 				const objectTarget = target as Record<
@@ -402,11 +487,17 @@ const executeStep = function executeStep(
 					(...args: unknown[]) => unknown
 				>;
 				const method = objectTarget[step.method];
-				if (typeof method === 'function') {
-					method.apply(objectTarget, args);
+				if (
+					typeof method === 'function' &&
+					mayCall(method, objectTarget, step.method, argsOnce)
+				) {
+					method.apply(objectTarget, argsOnce());
 				}
-			} else if (typeof target === 'function') {
-				(target as (...args: unknown[]) => unknown)(...args);
+			} else if (
+				typeof target === 'function' &&
+				mayCall(target, undefined, undefined, argsOnce)
+			) {
+				(target as (...args: unknown[]) => unknown)(...argsOnce());
 			}
 			break;
 		}
@@ -441,11 +532,8 @@ const executeStep = function executeStep(
 		}
 
 		case 'defineQueueMethods': {
-			const target = win[step.target];
-			if (
-				target === null ||
-				(typeof target !== 'object' && typeof target !== 'function')
-			) {
+			const target = writableTarget(win, step.target);
+			if (!target) {
 				break;
 			}
 
@@ -546,11 +634,8 @@ const executeStep = function executeStep(
 		}
 
 		case 'defineQueueClass': {
-			const target = win[step.target];
-			if (
-				target === null ||
-				(typeof target !== 'object' && typeof target !== 'function')
-			) {
+			const target = writableTarget(win, step.target);
+			if (!target) {
 				break;
 			}
 
@@ -585,11 +670,8 @@ const executeStep = function executeStep(
 		}
 
 		case 'defineGlobalMethods': {
-			const target = win[step.target];
-			if (
-				target === null ||
-				(typeof target !== 'object' && typeof target !== 'function')
-			) {
+			const target = writableTarget(win, step.target);
+			if (!target) {
 				break;
 			}
 			if (step.ifGlobalIsQueue && !Array.isArray(target)) {
@@ -670,7 +752,7 @@ const executeStep = function executeStep(
 
 		case 'constructGlobal': {
 			const Constructor = win[step.constructor];
-			if (typeof Constructor !== 'function') {
+			if (typeof Constructor !== 'function' || isNativeFunction(Constructor)) {
 				break;
 			}
 
@@ -930,14 +1012,19 @@ const manifestServerStart = function manifestServerStart(
 	if (!(resolvedManifest.loadScript && inlineStepsStart)) {
 		return;
 	}
-	return (info, started) =>
-		started.onBeforeLoad === manifestOnBeforeLoad
-			? inlineStepsStart(
-					preLoadSteps(resolvedManifest, info).filter(
-						(step) => !isHydrationOnly(step)
-					)
-				)
-			: undefined;
+	return (info, started) => {
+		if (started.onBeforeLoad !== manifestOnBeforeLoad) {
+			return;
+		}
+		const steps = preLoadSteps(resolvedManifest, info);
+		// The browser skips a step whose root `globals` does not declare;
+		// the inline runner does not know `globals`, so the browser starts
+		// such a manifest.
+		if (steps.some((step) => undeclaredRoot(step, resolvedManifest.globals))) {
+			return;
+		}
+		return inlineStepsStart(steps.filter((step) => !isHydrationOnly(step)));
+	};
 };
 
 /**
@@ -1057,7 +1144,7 @@ const manifestToScript = function manifestToScript(
 			elementId: info.elementId,
 			hasConsent: info.hasConsent,
 			scriptId: resolvedManifest.vendor,
-			values: { info, state: own },
+			values: { globals: resolvedManifest.globals, info, state: own },
 		};
 	};
 

@@ -1,3 +1,5 @@
+import { manifestRoots } from '@inth/sdk/manifest-runtime';
+
 import type {
 	LoadScriptStep,
 	ManifestStep,
@@ -183,6 +185,11 @@ const level2Fields = function level2Fields(
 	return fields;
 };
 
+/**
+ * Compiles a `VendorManifest` and its options into the manifest the SDK
+ * runs. `globals` lists every window root the compiled steps and consent
+ * signal use, so no vendor file lists them by hand.
+ */
 export const compileManifest = function compileManifest(
 	manifest: VendorManifest,
 	config: Record<string, unknown> = {}
@@ -193,7 +200,7 @@ export const compileManifest = function compileManifest(
 	const install = interpolateSteps(manifest.install, config);
 	const { loadScript, setupSteps } = extractInstallArtifacts(install);
 
-	return {
+	const compiled: Omit<ResolvedManifest, 'globals'> = {
 		afterLoadSteps: interpolateSteps(manifest.afterLoad, config),
 		alwaysLoad:
 			manifest.alwaysLoad === undefined
@@ -245,8 +252,11 @@ export const compileManifest = function compileManifest(
 		setupSteps,
 		vendor: manifest.vendor,
 		vendorDetails: manifest.vendorDetails,
-		// Level 2 fields stay out of a manifest that does not set them, so a
-		// level 1 manifest parses in an SDK from before level 2.
+		// Level 2 fields stay out of a manifest that does not set them.
 		...level2Fields(manifest, config),
+	};
+	return {
+		...compiled,
+		globals: manifestRoots(compiled) as string[],
 	};
 };

@@ -3,6 +3,7 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
+import { manifestRoots } from '@inth/sdk/manifest-runtime';
 import {
 	afterEach,
 	assert,
@@ -753,8 +754,8 @@ describe('inlineStepsStart', () => {
 			value,
 			...fields,
 		});
-		const level2 = (fields: Partial<ResolvedManifest>): Script =>
-			resolvedManifestToScript({
+		const level2 = (fields: Partial<ResolvedManifest>): Script => {
+			const manifest: Omit<ResolvedManifest, 'globals'> = {
 				...vendorManifestContract,
 				afterLoadSteps: [],
 				bootstrapSteps: [],
@@ -774,7 +775,12 @@ describe('inlineStepsStart', () => {
 				setupSteps: [],
 				vendor: 'level-two',
 				...fields,
+			};
+			return resolvedManifestToScript({
+				...manifest,
+				globals: manifestRoots(manifest) as string[],
 			});
+		};
 		const info = {
 			consents: granted,
 			hasConsent: true,
@@ -915,6 +921,76 @@ describe('inlineStepsStart', () => {
 			Reflect.deleteProperty(page, 'vendorApi');
 
 			expect(totals).toEqual([3, 3]);
+		});
+
+		it('calls no native function but an array push, and passes no browser object, from the HTML as in the browser', () => {
+			const page = getTestGlobal() as unknown as Record<string, unknown>;
+			const script = level2({
+				setupSteps: [
+					{
+						args: ['a'],
+						path: ['vendorApi', 'list', 'push'],
+						type: 'callGlobal',
+					},
+					{
+						args: ['x'],
+						path: ['vendorApi', 'list', 'fill'],
+						type: 'callGlobal',
+					},
+					{ global: 'vendorApi', method: 'remove', type: 'callGlobal' },
+					{
+						args: ['x'],
+						path: ['vendorApi', 'element', 'shim'],
+						type: 'callGlobal',
+					},
+					{
+						path: ['vendorApi', 'element', 'title'],
+						type: 'setGlobalPath',
+						value: 'x',
+					},
+					{ global: 'vendorElement', method: 'shim', type: 'callGlobal' },
+				],
+			});
+			const pages = [];
+			for (const run of ['callback', 'inline']) {
+				const shim = vi.fn();
+				// Tagged as the browser tags an element, with a vendor's own
+				// function on it.
+				const element = {
+					[Symbol.toStringTag]: 'HTMLDivElement',
+					shim,
+					title: '',
+				};
+				const held = ['kept'];
+				page.vendorApi = {
+					element,
+					list: [],
+					// A native function, bound as a vendor might hold one.
+					remove: Array.prototype.pop.bind(held),
+				};
+				page.vendorElement = element;
+				if (run === 'callback') {
+					script.onBeforeLoad?.(createCallbackInfo(info));
+				} else {
+					const start = script.serverStart?.(info, script);
+					assert(start);
+					// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+					new Function(`${start.prelude ?? ''};${start.code}`)();
+				}
+				pages.push({
+					held,
+					list: (page.vendorApi as { list: unknown[] }).list,
+					shim: shim.mock.calls.length,
+					title: element.title,
+				});
+			}
+			Reflect.deleteProperty(page, 'vendorApi');
+			Reflect.deleteProperty(page, 'vendorElement');
+
+			expect(pages).toEqual([
+				{ held: ['kept'], list: ['a'], shim: 0, title: '' },
+				{ held: ['kept'], list: ['a'], shim: 0, title: '' },
+			]);
 		});
 
 		it('starts the rest from the HTML and hands over the consent gate on hydration', () => {

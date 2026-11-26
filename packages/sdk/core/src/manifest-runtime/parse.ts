@@ -17,6 +17,12 @@ import {
 	SCRIPT_ATTRIBUTE_LEVELS,
 	STEP_FIELD_LEVELS,
 } from './features';
+import {
+	isDeclarableGlobal,
+	MANIFEST_STEP_LISTS,
+	manifestRoots,
+	stepRoots,
+} from './globals';
 import { MANIFEST_RUNTIME_LEVEL } from './level';
 import {
 	RUNTIME_VALUE_KIND,
@@ -33,19 +39,7 @@ export type ParsedManifest =
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const STEP_LISTS = [
-	'bootstrapSteps',
-	'setupSteps',
-	'afterLoadSteps',
-	'onBeforeLoadGrantedSteps',
-	'onBeforeLoadDeniedSteps',
-	'onLoadGrantedSteps',
-	'onLoadDeniedSteps',
-	'onConsentChangeSteps',
-	'onConsentGrantedSteps',
-	'onConsentDeniedSteps',
-	'onDisposeSteps',
-] as const satisfies readonly (keyof ResolvedManifest)[];
+const STEP_LISTS = MANIFEST_STEP_LISTS;
 
 /** Step lists a level 1 manifest leaves out. */
 const OPTIONAL_STEP_LISTS: ReadonlySet<string> = new Set(['onDisposeSteps']);
@@ -231,6 +225,49 @@ const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	return undefined;
 };
 
+/** The ids of the tags `manifest` inserts. */
+const tagIds = (manifest: Record<string, unknown>): unknown[] => [
+	...(isRecord(manifest.loadScript) && isRecord(manifest.loadScript.attributes)
+		? [manifest.loadScript.attributes.id]
+		: []),
+	...STEP_LISTS.flatMap((list) =>
+		Array.isArray(manifest[list])
+			? (manifest[list] as unknown[]).flatMap((step) =>
+					isRecord(step) && step.type === 'loadScriptStep' ? [step.id] : []
+				)
+			: []
+	),
+];
+
+/**
+ * Why `globals` is wrong, or `undefined`. It lists the window roots the
+ * steps may use: names no platform or built-in global has, and not
+ * the id of a tag the manifest inserts, which the browser puts on window
+ * as that element. The consent signal's global counts as a root.
+ */
+const globalsProblem = (
+	manifest: Record<string, unknown>
+): string | undefined => {
+	const globals = manifest.globals as unknown[];
+	const refused = globals.find((name) => !isDeclarableGlobal(name));
+	if (refused !== undefined) {
+		return `its globals names ${String(refused)}, which a manifest may not use`;
+	}
+	const tag = tagIds(manifest).find((id) => globals.includes(id));
+	if (tag !== undefined) {
+		return `its globals names ${String(tag)}, the id of a tag it inserts`;
+	}
+	const signal = manifestRoots({
+		consentMapping: manifest.consentMapping as never,
+		consentSignal: manifest.consentSignal as never,
+		consentSignalTarget: manifest.consentSignalTarget as never,
+	}).find((root) => !globals.includes(root));
+	if (signal !== undefined) {
+		return `its consent signal calls ${String(signal)}, which globals does not declare`;
+	}
+	return undefined;
+};
+
 /** Why `manifest` cannot run, or `undefined` when it can. */
 // oxlint-disable-next-line complexity -- One check per manifest field.
 const manifestProblem = (
@@ -265,6 +302,14 @@ const manifestProblem = (
 	if (!isCategoryCondition(manifest.category)) {
 		return 'its category is not a condition over known categories';
 	}
+	const globals: unknown = manifest.globals;
+	if (
+		!Array.isArray(globals) ||
+		!globals.every((name) => typeof name === 'string')
+	) {
+		return 'its globals is not a list of names';
+	}
+	const declared: readonly unknown[] = globals;
 	for (const list of STEP_LISTS) {
 		const steps = manifest[list];
 		if (steps === undefined && OPTIONAL_STEP_LISTS.has(list)) {
@@ -294,11 +339,21 @@ const manifestProblem = (
 			if (list === 'onDisposeSteps' && step.type === 'loadScriptStep') {
 				return `${list} has a loadScriptStep step`;
 			}
-			const problem = stepProblem(step);
-			if (problem !== undefined) {
-				return `${list} ${problem}`;
+			const stepIssue = stepProblem(step);
+			if (stepIssue !== undefined) {
+				return `${list} ${stepIssue}`;
+			}
+			const roots = stepRoots(step);
+			const undeclared = roots.findIndex((root) => !declared.includes(root));
+			if (undeclared !== -1) {
+				return `${list} has a ${String(step.type)} step that uses the global ${String(roots[undeclared])}, which globals does not declare`;
 			}
 		}
+	}
+	// After the steps, so a step a block list refuses says why.
+	const problem = globalsProblem(manifest);
+	if (problem !== undefined) {
+		return problem;
 	}
 	const { loadScript } = manifest;
 	if (

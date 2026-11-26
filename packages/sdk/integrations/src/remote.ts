@@ -48,10 +48,11 @@ export type { RemoteOptionsValidation } from './remote-validate';
  * step, field or runtime value it uses, and at least its own `requires`.
  * The manifest runtime's level table says which feature is which level.
  *
- * The Inth server sets `requires` to this level when it is above 1, and
- * lists the entry only for a request whose `manifestLevel` is at least this
- * level. An SDK sends `manifestLevel` with its own runtime level, and reads
- * a request without it as level 1.
+ * `resolveRemote` sets `requires` to this level when it is above 1, which
+ * every manifest carrying `globals` is. The Inth server lists the entry
+ * only for a request whose `manifestLevel` is at least this level. An SDK
+ * sends `manifestLevel` with its own runtime level, and reads a request
+ * without it as level 1.
  */
 export const manifestLevel = function manifestLevel(
 	manifest: ResolvedManifest
@@ -96,7 +97,14 @@ const toIntegration = function toIntegration(
 			// The options passed this definition's own specs, so they have the
 			// shape its resolver declares. Helpers share a cached manifest;
 			// callers get their own copy.
-			return structuredClone(definition.resolve(result.options as never));
+			const manifest = structuredClone(
+				definition.resolve(result.options as never)
+			);
+			const level = manifestLevel(manifest);
+			// A level 1 manifest carries no `requires`, which a parser from
+			// before levels refuses. Every compiled manifest carries
+			// `globals`, so in practice the level is 2 or above.
+			return level > 1 ? { ...manifest, requires: level } : manifest;
 		},
 		vendor,
 	});

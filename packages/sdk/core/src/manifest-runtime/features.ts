@@ -21,6 +21,7 @@ export const MANIFEST_FIELD_LEVELS: Readonly<
 	consentSignal: 1,
 	consentSignalDefaults: 1,
 	consentSignalTarget: 1,
+	globals: 2,
 	kind: 1,
 	loadScript: 1,
 	observeConsentBeforeLoad: 2,

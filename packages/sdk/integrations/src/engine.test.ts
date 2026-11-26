@@ -295,6 +295,7 @@ describe('scripts engine', () => {
 			afterLoadSteps: [],
 			bootstrapSteps: [],
 			category: 'measurement',
+			globals: ['recorder'],
 			kind: 'inth.vendor-manifest',
 			loadScript: {
 				src: 'https://cdn.example.com/vendor-id.js',

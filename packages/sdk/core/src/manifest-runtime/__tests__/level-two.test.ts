@@ -17,6 +17,7 @@ import { createConsentKernel } from '../../kernel';
 import { createScriptLoader } from '../../modules/script-loader';
 import type { Script } from '../../modules/script-loader';
 import type { HydrationRecords } from '../../types';
+import { manifestRoots } from '../globals';
 import { parseResolvedManifest } from '../parse';
 import { resolvedManifestToScript } from '../runtime';
 import type { ResolvedManifest } from '../types';
@@ -60,25 +61,30 @@ const recordStep = (...args: unknown[]) => ({
  * runs as one the Inth server sent would.
  */
 const fromJSON = (fields: Record<string, unknown>): ResolvedManifest => {
+	const manifest = {
+		afterLoadSteps: [],
+		bootstrapSteps: [],
+		category: 'measurement',
+		kind: 'inth.vendor-manifest',
+		onBeforeLoadDeniedSteps: [],
+		onBeforeLoadGrantedSteps: [],
+		onConsentChangeSteps: [],
+		onConsentDeniedSteps: [],
+		onConsentGrantedSteps: [],
+		onLoadDeniedSteps: [],
+		onLoadGrantedSteps: [],
+		requires: 2,
+		schemaVersion: 1,
+		setupSteps: [],
+		vendor: 'level-two',
+		...fields,
+	};
 	const parsed = parseResolvedManifest(
 		JSON.parse(
 			JSON.stringify({
-				afterLoadSteps: [],
-				bootstrapSteps: [],
-				category: 'measurement',
-				kind: 'inth.vendor-manifest',
-				onBeforeLoadDeniedSteps: [],
-				onBeforeLoadGrantedSteps: [],
-				onConsentChangeSteps: [],
-				onConsentDeniedSteps: [],
-				onConsentGrantedSteps: [],
-				onLoadDeniedSteps: [],
-				onLoadGrantedSteps: [],
-				requires: 2,
-				schemaVersion: 1,
-				setupSteps: [],
-				vendor: 'level-two',
-				...fields,
+				// Every root the steps use, as `compileManifest` lists them.
+				globals: manifestRoots(manifest as never),
+				...manifest,
 			})
 		)
 	);
@@ -86,6 +92,18 @@ const fromJSON = (fields: Record<string, unknown>): ResolvedManifest => {
 		throw new Error(parsed.reason);
 	}
 	return parsed.manifest;
+};
+
+/**
+ * A manifest built in code, as the npm path builds one without the parser,
+ * with `globals` naming every root its steps use.
+ */
+const builtInCode = (fields: Record<string, unknown>): ResolvedManifest => {
+	const manifest = { ...fromJSON({ alwaysLoad: true }), ...fields };
+	return {
+		...manifest,
+		globals: manifestRoots(manifest) as string[],
+	} as ResolvedManifest;
 };
 
 const mount = (
@@ -190,10 +208,11 @@ test('passes a runtime value it does not know through as data', () => {
 	// The npm path builds scripts without the parser.
 	const unknown = value('callback');
 	mount([
-		resolvedManifestToScript({
-			...fromJSON({ alwaysLoad: true }),
-			setupSteps: [recordStep(unknown) as never],
-		}),
+		resolvedManifestToScript(
+			builtInCode({
+				setupSteps: [recordStep(unknown) as never],
+			})
+		),
 	]);
 
 	expect(record).toHaveBeenCalledWith(unknown);
@@ -356,38 +375,39 @@ describe('callGlobal.path', () => {
 	test('refuses a path through browser objects that the parser would refuse', () => {
 		// Built without the parser, as a manifest that slipped past it would be.
 		mount([
-			resolvedManifestToScript({
-				...fromJSON({ alwaysLoad: true }),
-				setupSteps: [
-					{
-						args: ['beforeend', '<i id="injected"></i>'],
-						path: ['document', 'body', 'insertAdjacentHTML'],
-						type: 'callGlobal',
-					},
-					{
-						args: ['via-view'],
-						path: ['document', 'defaultView', '__record'],
-						type: 'callGlobal',
-					},
-					{
-						args: ['via-window'],
-						path: ['window', '__record'],
-						type: 'callGlobal',
-					},
-					{
-						args: ['via-self'],
-						global: 'self',
-						method: '__record',
-						type: 'callGlobal',
-					},
-					{
-						assignTo: '__api',
-						constructor: 'Function',
-						type: 'constructGlobal',
-					},
-					recordStep('after') as never,
-				],
-			}),
+			resolvedManifestToScript(
+				builtInCode({
+					setupSteps: [
+						{
+							args: ['beforeend', '<i id="injected"></i>'],
+							path: ['document', 'body', 'insertAdjacentHTML'],
+							type: 'callGlobal',
+						},
+						{
+							args: ['via-view'],
+							path: ['document', 'defaultView', '__record'],
+							type: 'callGlobal',
+						},
+						{
+							args: ['via-window'],
+							path: ['window', '__record'],
+							type: 'callGlobal',
+						},
+						{
+							args: ['via-self'],
+							global: 'self',
+							method: '__record',
+							type: 'callGlobal',
+						},
+						{
+							assignTo: '__api',
+							constructor: 'Function',
+							type: 'constructGlobal',
+						},
+						recordStep('after') as never,
+					],
+				})
+			),
 		]);
 
 		expect(document.getElementById('injected')).toBeNull();
@@ -401,23 +421,24 @@ test('skips a step that names a prototype name the parser would refuse', () => {
 	win.__api = { constructor: { constructor: reached } };
 	// Built without the parser, as a manifest that slipped past it would be.
 	mount([
-		resolvedManifestToScript({
-			...fromJSON({ alwaysLoad: true }),
-			setupSteps: [
-				{
-					args: ['x'],
-					path: ['__api', 'constructor', 'constructor'],
-					type: 'callGlobal',
-				},
-				{
-					args: ['x'],
-					global: '__api',
-					method: 'constructor',
-					type: 'callGlobal',
-				},
-				recordStep('after') as never,
-			],
-		}),
+		resolvedManifestToScript(
+			builtInCode({
+				setupSteps: [
+					{
+						args: ['x'],
+						path: ['__api', 'constructor', 'constructor'],
+						type: 'callGlobal',
+					},
+					{
+						args: ['x'],
+						global: '__api',
+						method: 'constructor',
+						type: 'callGlobal',
+					},
+					recordStep('after') as never,
+				],
+			})
+		),
 	]);
 
 	expect(reached).not.toHaveBeenCalled();
@@ -428,39 +449,48 @@ test('skips a write to the page that the parser would refuse', () => {
 	win.__api = {};
 	// Built without the parser, as a manifest that slipped past it would be.
 	mount([
-		resolvedManifestToScript({
-			...fromJSON({ alwaysLoad: true }),
-			setupSteps: [
-				{
-					path: ['document', 'body', 'innerHTML'],
-					type: 'setGlobalPath',
-					value: '<i id="injected"></i>',
-				},
-				{ path: ['__api', 'href'], type: 'setGlobalPath', value: 'x' },
-				{ name: ['__api'], type: 'setGlobal', value: 'x' } as never,
-				{
-					aliases: ['onload'],
-					name: '__queue',
-					queue: { global: 'q' },
-					type: 'defineStubFunction',
-				},
-				{ methods: ['innerHTML'], target: '__api', type: 'defineQueueMethods' },
-				{
-					methods: [{ behavior: 'noop', name: 'src' }],
-					target: '__api',
-					type: 'defineGlobalMethods',
-				},
-				{
-					methods: ['track'],
-					name: 'outerHTML',
-					target: '__api',
-					type: 'defineQueueClass',
-				},
-				{ name: '__present', queue: 'location', type: 'defineQueueProxy' },
-				{ assignTo: 'parent', constructor: 'Object', type: 'constructGlobal' },
-				recordStep('after') as never,
-			],
-		}),
+		resolvedManifestToScript(
+			builtInCode({
+				setupSteps: [
+					{
+						path: ['document', 'body', 'innerHTML'],
+						type: 'setGlobalPath',
+						value: '<i id="injected"></i>',
+					},
+					{ path: ['__api', 'href'], type: 'setGlobalPath', value: 'x' },
+					{ name: ['__api'], type: 'setGlobal', value: 'x' } as never,
+					{
+						aliases: ['onload'],
+						name: '__queue',
+						queue: { global: 'q' },
+						type: 'defineStubFunction',
+					},
+					{
+						methods: ['innerHTML'],
+						target: '__api',
+						type: 'defineQueueMethods',
+					},
+					{
+						methods: [{ behavior: 'noop', name: 'src' }],
+						target: '__api',
+						type: 'defineGlobalMethods',
+					},
+					{
+						methods: ['track'],
+						name: 'outerHTML',
+						target: '__api',
+						type: 'defineQueueClass',
+					},
+					{ name: '__present', queue: 'location', type: 'defineQueueProxy' },
+					{
+						assignTo: 'parent',
+						constructor: 'Object',
+						type: 'constructGlobal',
+					},
+					recordStep('after') as never,
+				],
+			})
+		),
 	]);
 
 	expect(document.getElementById('injected')).toBeNull();
@@ -474,24 +504,25 @@ test('skips a write to the page that the parser would refuse', () => {
 test('reads call arguments only when there is something to call', () => {
 	// A payload JSON cannot carry would throw and stop the later steps.
 	mount([
-		resolvedManifestToScript({
-			...fromJSON({ alwaysLoad: true }),
-			setupSteps: [
-				{
-					args: [10n],
-					global: '__missing',
-					literalArgs: true,
-					type: 'callGlobal',
-				},
-				{
-					args: [10n],
-					literalArgs: true,
-					path: ['__missing', 'call'],
-					type: 'callGlobal',
-				},
-				recordStep('after') as never,
-			],
-		}),
+		resolvedManifestToScript(
+			builtInCode({
+				setupSteps: [
+					{
+						args: [10n],
+						global: '__missing',
+						literalArgs: true,
+						type: 'callGlobal',
+					},
+					{
+						args: [10n],
+						literalArgs: true,
+						path: ['__missing', 'call'],
+						type: 'callGlobal',
+					},
+					recordStep('after') as never,
+				],
+			})
+		),
 	]);
 
 	expect(record).toHaveBeenCalledWith('after');

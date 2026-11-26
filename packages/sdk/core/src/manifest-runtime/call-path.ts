@@ -17,14 +17,24 @@ const WINDOW_NAMES = [
 	'ownerDocument',
 	'location',
 	'navigation',
+	'contentDocument',
+	'contentWindow',
 ];
 
 /**
+ * Names that lead from an element to another element or to its attribute
+ * nodes, whose `value` a write turns into markup or a URL.
+ */
+const ELEMENT_NAMES = ['parentElement', 'parentNode', 'attributes'];
+
+/**
  * Names a manifest call may not pass through: those, and each function
- * that runs a string as code, writes markup or opens a window.
+ * that runs a string as code, writes markup or an attribute, or opens a
+ * window.
  */
 const BROWSER_NAMES: ReadonlySet<unknown> = new Set([
 	...WINDOW_NAMES,
+	...ELEMENT_NAMES,
 	'eval',
 	'Function',
 	'setTimeout',
@@ -33,6 +43,9 @@ const BROWSER_NAMES: ReadonlySet<unknown> = new Set([
 	'write',
 	'writeln',
 	'insertAdjacentHTML',
+	'setHTMLUnsafe',
+	'setAttribute',
+	'setAttributeNS',
 ]);
 
 /**
@@ -43,6 +56,7 @@ const BROWSER_NAMES: ReadonlySet<unknown> = new Set([
  */
 const WRITE_NAMES: ReadonlySet<unknown> = new Set([
 	...WINDOW_NAMES,
+	...ELEMENT_NAMES,
 	'document',
 	'innerHTML',
 	'outerHTML',

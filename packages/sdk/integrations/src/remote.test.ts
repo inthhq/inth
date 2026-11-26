@@ -2,7 +2,9 @@
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
 import {
+	isDeclarableGlobal,
 	MANIFEST_RUNTIME_LEVEL,
+	manifestRoots,
 	parseResolvedManifest,
 } from '@inth/sdk/manifest-runtime';
 import { describe, expect, it } from 'vite-plus/test';
@@ -296,9 +298,25 @@ describe('remoteIntegrations', () => {
 			pixelId: '123',
 		});
 
-		expect(manifestLevel({ ...manifest, requires: 2 } as never)).toBe(2);
-		expect(manifestLevel({ ...manifest, requires: 1 } as never)).toBe(1);
+		expect(manifestLevel({ ...manifest, requires: 3 } as never)).toBe(3);
+		// `globals` is level 2, so a manifest that carries it never reads lower.
+		expect(manifestLevel({ ...manifest, requires: 1 } as never)).toBe(2);
 	});
+
+	it.each(cases)(
+		'%s %s declares every root it uses and no platform global',
+		(key, _label, options) => {
+			const manifest = remoteIntegrations[key]?.resolveRemote(
+				options
+			) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+
+			expect(manifest.requires).toBe(2);
+			expect(manifest.globals).toEqual(manifestRoots(manifest));
+			expect(
+				manifest.globals.filter((name) => !isDeclarableGlobal(name))
+			).toEqual([]);
+		}
+	);
 
 	it('reads a manifest that uses a level 2 feature as level 2', () => {
 		const manifest = remoteIntegrations.metaPixel?.resolveRemote({
