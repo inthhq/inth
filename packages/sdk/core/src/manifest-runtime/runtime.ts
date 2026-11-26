@@ -879,6 +879,9 @@ const executePhaseSteps = function executePhaseSteps(
 
 	phaseEvent('phase_start');
 	for (const [stepIndex, step] of steps.entries()) {
+		if (context.values?.live?.() === false) {
+			return;
+		}
 		const stepEvent = {
 			scope: 'step',
 			stepIndex,

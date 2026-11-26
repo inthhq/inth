@@ -160,7 +160,8 @@ const runLater = (
 	runtime: RuntimeAccess,
 	globals: StepValues['globals']
 ): void => {
-	if (!load.live || state.disposed) {
+	const live = () => load.live && !state.disposed;
+	if (!live()) {
 		return;
 	}
 	let info: ScriptCallbackInfo | undefined;
@@ -180,7 +181,7 @@ const runLater = (
 			hasConsent: info.hasConsent,
 			phase,
 			scriptId: info.id,
-			values: { globals, info, state },
+			values: { globals, info, live, state },
 		});
 	} catch {
 		// `phase` reported the failed step; nothing called this to tell.
@@ -199,6 +200,9 @@ const run: LevelThreePart['run'] = (step, values, runtime) => {
 			for (const inner of holds(step.when, values)
 				? step.then
 				: (step.else ?? [])) {
+				if (values.live?.() === false) {
+					break;
+				}
 				runtime.step(inner, values);
 			}
 			break;

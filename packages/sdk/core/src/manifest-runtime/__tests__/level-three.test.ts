@@ -719,6 +719,21 @@ describe('listen', () => {
 		expect(remove).toHaveBeenCalledWith('vendor:ready', expect.any(Function));
 	});
 
+	test('stops its steps once one of them disposes the script', () => {
+		const { loader } = mount([
+			listening({
+				steps: [
+					{ global: '__api', method: 'dispose', type: 'callGlobal' },
+					recordStep('after'),
+				],
+			}),
+		]);
+		win.__api = { dispose: () => loader.updateScripts([]) };
+		window.dispatchEvent(new Event('vendor:ready'));
+
+		expect(record).not.toHaveBeenCalled();
+	});
+
 	test('listens again when the script is registered again after disposal', () => {
 		// Dispose steps give each registration its own state.
 		const script = build({
@@ -1016,6 +1031,36 @@ describe('defer', () => {
 
 		expect(element()).not.toBe(first);
 		expect(record.mock.calls).toEqual([['now'], ['now'], ['deferred']]);
+	});
+
+	describe('stops its steps once a step disposes the script', () => {
+		const extra = {
+			id: 'extra',
+			src: 'https://cdn.example/extra.js',
+			type: 'loadScriptStep',
+		};
+		const dispose = { global: '__api', method: 'dispose', type: 'callGlobal' };
+
+		test.each([
+			['listed in it', [dispose, extra, recordStep('after')]],
+			[
+				'nested in an if',
+				[
+					ifStep({ documentReady: true }, [
+						dispose,
+						extra,
+						recordStep('after'),
+					]),
+				],
+			],
+		])('with the steps %s', async (_name, steps) => {
+			const { loader } = mount([deferring(steps)]);
+			win.__api = { dispose: () => loader.updateScripts([]) };
+			await settle();
+
+			expect(document.querySelector('#extra')).toBeNull();
+			expect(record.mock.calls).toEqual([['now']]);
+		});
 	});
 
 	test('runs nested level 3 steps, which read flags set before it ran', async () => {

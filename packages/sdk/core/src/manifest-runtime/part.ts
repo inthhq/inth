@@ -39,6 +39,12 @@ export interface StepValues {
 	state?: ScriptState;
 	/** The manifest's `globals`: the only roots a step may use. */
 	globals?: readonly string[];
+	/**
+	 * For steps run after their callback returned: whether their load is
+	 * still current. A step can dispose the script, and the steps after it
+	 * then run nothing.
+	 */
+	live?: () => boolean;
 }
 
 /** A run of steps, as `executePhaseSteps` reports it in debug events. */
