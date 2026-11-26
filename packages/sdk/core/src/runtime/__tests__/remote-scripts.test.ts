@@ -347,6 +347,52 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('keeps the running script when a later init changes only its category', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				// Opt-out allows every category, so both lists' categories hold.
+				initialPolicyResolution: matchedResolution(
+					optOutRule({ id: 'opt-out' })
+				),
+				initialScriptRegistry: {
+					load: load(acmeManifest({ category: 'measurement' })),
+				},
+			},
+			remoteScripts: true,
+		});
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		const [tag] = tags();
+
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: { load: load(acmeManifest({ category: 'marketing' })) },
+		});
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(tags()).toHaveLength(1);
+		expect(tags()[0]).toBe(tag);
+		expect(
+			(window as { acmeQueue?: unknown[] }).acmeQueue?.filter(
+				(item) => JSON.stringify(item) === JSON.stringify(['init', 'ACME-1'])
+			)
+		).toHaveLength(1);
+		runtime.dispose();
+	});
+
 	test('keeps the list it had when init says the registry is unavailable', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({
