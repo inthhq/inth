@@ -175,6 +175,22 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	 */
 	const copiedFrom = new WeakMap<Script, Script>();
 	const copyRoot = (script: Script): Script => copiedFrom.get(script) ?? script;
+	/**
+	 * Whether `replacement` keeps `script`'s registration: it is a category
+	 * copy of the same started remote script, or both come from the same
+	 * origin (code or the server) with the same disposer and resource.
+	 */
+	const keepsRegistration = (
+		script: Script,
+		replacement: Script,
+		mountedCallbackOnly: boolean,
+		sameOrigin: boolean
+	): boolean =>
+		copyRoot(script) === copyRoot(replacement) ||
+		(sameOrigin &&
+			script.onDispose === replacement.onDispose &&
+			(!script.onDispose || !mountedCallbackOnly) &&
+			hasSameResource(script, replacement));
 	const claimedByCode = (): Set<string> =>
 		new Set(
 			codeScripts.flatMap((script) => [codeScriptKey(script), script.id])
@@ -844,11 +860,12 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			// category applies now, and the rest of its setup on the next page.
 			if (
 				replacement &&
-				(copyRoot(script) === copyRoot(replacement) ||
-					(activeRemote.has(script.id) === nextRemote.has(script.id) &&
-						script.onDispose === replacement.onDispose &&
-						(!script.onDispose || !mountedCallbackOnly) &&
-						hasSameResource(script, replacement)))
+				keepsRegistration(
+					script,
+					replacement,
+					mountedCallbackOnly,
+					activeRemote.has(script.id) === nextRemote.has(script.id)
+				)
 			) {
 				freezeConsentReader(script);
 				consentReaders.delete(script);
