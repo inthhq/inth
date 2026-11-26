@@ -16,6 +16,40 @@ const statusOf = function statusOf(key: string): RemoteStatus | undefined {
 		: undefined;
 };
 
+/**
+ * Whether `pattern` matches only whole strings: it starts with `^`, ends
+ * with an unescaped `$`, and has no `|` outside a group or class, which
+ * would let one alternative go unanchored (`^abc|.*$`).
+ */
+const isAnchored = function isAnchored(pattern: string): boolean {
+	if (!pattern.startsWith('^') || !pattern.endsWith('$')) {
+		return false;
+	}
+	let depth = 0;
+	let inClass = false;
+	for (let index = 0; index < pattern.length; index += 1) {
+		const char = pattern[index];
+		if (char === '\\') {
+			if (index === pattern.length - 2) {
+				// The final `$` is escaped, so it matches a literal dollar.
+				return false;
+			}
+			index += 1;
+		} else if (inClass) {
+			inClass = char !== ']';
+		} else if (char === '[') {
+			inClass = true;
+		} else if (char === '(') {
+			depth += 1;
+		} else if (char === ')') {
+			depth -= 1;
+		} else if (char === '|' && depth === 0) {
+			return false;
+		}
+	}
+	return true;
+};
+
 /** Problems with one option spec, which a form and the validator rely on. */
 const specProblems = function specProblems(
 	path: string,
@@ -24,7 +58,7 @@ const specProblems = function specProblems(
 ): string[] {
 	const problems: string[] = [];
 	const anchored = (pattern: string, field: string) => {
-		if (!pattern.startsWith('^') || !pattern.endsWith('$')) {
+		if (!isAnchored(pattern)) {
 			problems.push(`${path}.${field} is not anchored at both ends`);
 		}
 	};
@@ -184,5 +218,37 @@ describe('remote catalogue', () => {
 				'x.id.example does not match its pattern',
 			]);
 		});
+
+		it.each(['^abc|.*$', '^a$|^b$', '^abc\\$'])(
+			'reports %s as not anchored',
+			(pattern) => {
+				expect(
+					specProblems(
+						'x.id',
+						{
+							example: 'abc',
+							kind: 'id',
+							label: 'ID',
+							pattern,
+							required: true,
+						},
+						1
+					)
+				).toContain('x.id.pattern is not anchored at both ends');
+			}
+		);
+
+		it.each(['^(?:a|b)$', '^[|a]+$', '^a\\|b$'])(
+			'accepts %s as anchored',
+			(pattern) => {
+				expect(
+					specProblems(
+						'x.id',
+						{ example: 'a', kind: 'id', label: 'ID', pattern, required: true },
+						1
+					)
+				).not.toContain('x.id.pattern is not anchored at both ends');
+			}
+		);
 	});
 });
