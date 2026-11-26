@@ -93,10 +93,15 @@ export interface LevelThreePart {
 		values: StepValues,
 		runtime: RuntimeAccess
 	) => void;
-	/** Adds the bookkeeping level 3 steps read to the script built from `manifest`. */
+	/**
+	 * Adds the bookkeeping level 3 steps read to the script built from
+	 * `manifest`. `liveState` returns the state of the registration a
+	 * callback belongs to, which is new each time the script is mounted
+	 * again after disposal.
+	 */
 	script: (
 		script: Script,
-		state: ScriptState,
+		liveState: () => ScriptState,
 		manifest: ResolvedManifest
 	) => void;
 }

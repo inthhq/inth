@@ -263,11 +263,10 @@ const keepsState = (steps: unknown): boolean =>
 			keepsState(step.steps)
 	);
 
-const script: LevelThreePart['script'] = (built, state, manifest) => {
+const script: LevelThreePart['script'] = (built, liveState, manifest) => {
 	if (manifestFeatureLevel(manifest) < 3) {
 		return;
 	}
-	const own = stateOf(state);
 	const keeps = Object.values(manifest).some(keepsState);
 	for (const name of LIFECYCLE) {
 		const original = built[name];
@@ -278,6 +277,8 @@ const script: LevelThreePart['script'] = (built, state, manifest) => {
 			continue;
 		}
 		built[name] = (info: ScriptCallbackInfo) => {
+			const state = liveState();
+			const own = stateOf(state);
 			if (name === 'onBeforeLoad') {
 				endLoad(own.load);
 				own.load = {

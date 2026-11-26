@@ -505,6 +505,29 @@ describe('listen', () => {
 		expect(remove).toHaveBeenCalledWith('vendor:ready', expect.any(Function));
 	});
 
+	test('listens again when the script is registered again after disposal', () => {
+		// Dispose steps give each registration its own state.
+		const script = build({
+			alwaysLoad: true,
+			onDisposeSteps: [recordStep('disposed')],
+			setupSteps: [
+				{
+					event: 'vendor:ready',
+					steps: [recordStep('ready')],
+					target: 'window',
+					type: 'listen',
+				},
+			],
+		});
+		const { loader } = mount([script]);
+
+		loader.updateScripts([]);
+		loader.updateScripts([script]);
+		window.dispatchEvent(new Event('vendor:ready'));
+
+		expect(record.mock.calls).toEqual([['disposed'], ['ready']]);
+	});
+
 	test('stops when a later load starts, which listens again', () => {
 		const { kernel } = mount([
 			build({

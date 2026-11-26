@@ -1139,6 +1139,14 @@ const manifestToScript = function manifestToScript(
 	// registration gets its own state, so a disposed one's gate stays closed
 	// and the new one's opens.
 	let state = createScriptState();
+	/** The state of the registration running now, new once one is disposed. */
+	const liveState = (): ScriptState => {
+		if (state.disposed) {
+			state = createScriptState();
+		}
+		return state;
+	};
+
 	/**
 	 * Records a callback's info, and returns what runs a list of steps as
 	 * one of its phases. `current` is the state of the registration the
@@ -1150,10 +1158,7 @@ const manifestToScript = function manifestToScript(
 		info: ScriptCallbackInfo,
 		current?: ScriptState
 	) => {
-		if (!current && state.disposed) {
-			state = createScriptState();
-		}
-		const own = current ?? state;
+		const own = current ?? liveState();
 		if (!own.disposed) {
 			own.latest = info;
 		}
@@ -1292,7 +1297,7 @@ const manifestToScript = function manifestToScript(
 		};
 	}
 
-	levelThree()?.script(script, state, resolvedManifest);
+	levelThree()?.script(script, liveState, resolvedManifest);
 	// After the level 3 part wrapped `onBeforeLoad`: `serverStart` runs
 	// only for the script's own.
 	script.serverStart = manifestServerStart(
