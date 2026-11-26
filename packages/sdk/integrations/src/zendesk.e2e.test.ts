@@ -13,7 +13,12 @@ import {
 	vi,
 } from 'vite-plus/test';
 
-import { npmAndRemote } from './__tests__/remote-path';
+import {
+	fromRemote,
+	npmAndRemote,
+	remoteLoaderOption,
+	splitRemote,
+} from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	installHeadProbe,
@@ -428,3 +433,53 @@ describe.each(npmAndRemote('zendeskWidget', zendeskWidget))(
 		});
 	}
 );
+
+describe('Zendesk Messaging from one server entry in two loaders', () => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		delete window.zE;
+		delete window.zEmbed;
+	});
+
+	it('keeps the cookie range functional while one loader denies measurement', async () => {
+		const { load } = splitRemote([
+			fromRemote('zendeskWidget', { key: 'widget-key' }),
+		]);
+		const firstKernel = createConsentKernel({ initialScriptRegistry: { load } });
+		const secondKernel = createConsentKernel({
+			initialScriptRegistry: { load },
+		});
+		const first = createScriptLoader({
+			kernel: firstKernel,
+			remote: remoteLoaderOption,
+			scripts: [],
+		});
+		const second = createScriptLoader({
+			kernel: secondKernel,
+			remote: remoteLoaderOption,
+			scripts: [],
+		});
+		try {
+			await secondKernel.commands.save(functionalityConsents);
+			await vi.waitFor(() => expect(getLoader()).toBeDefined());
+			const api = vi.fn();
+			window.zE = api;
+			getLoader().dispatchEvent(new Event('load'));
+
+			await firstKernel.commands.save(allWidgetConsents);
+			await vi.waitFor(() => expect(api).toHaveBeenCalled());
+
+			expect(api).not.toHaveBeenCalledWith('messenger:set', 'cookies', 'all');
+			expect(api).toHaveBeenLastCalledWith(
+				'messenger:set',
+				'cookies',
+				'functional'
+			);
+		} finally {
+			first.dispose();
+			second.dispose();
+			firstKernel.dispose();
+			secondKernel.dispose();
+		}
+	});
+});
