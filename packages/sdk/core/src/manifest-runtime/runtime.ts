@@ -31,7 +31,10 @@ interface ScriptState {
 	/** The last callback info it got before disposal. */
 	latest?: ScriptCallbackInfo;
 	disposed: boolean;
-	/** The `consentGate` value: one function for the script's lifetime. */
+	/**
+	 * The `consentGate` value: one function per registration. Once the
+	 * registration is disposed it returns `null` for ever.
+	 */
 	gate: (value: unknown) => unknown;
 }
 
@@ -1018,23 +1021,36 @@ const manifestToScript = function manifestToScript(
 	// onConsentDenied run on transitions only. Recorded in onBeforeLoad,
 	// which is installed whenever the manifest has consent lifecycle steps.
 	let lastHasConsent: boolean | undefined;
-	const state = createScriptState();
+	// The loader can mount this script object again after disposing it, as
+	// when a remote registration comes back once a code script leaves. Each
+	// registration gets its own state, so a disposed one's gate stays closed
+	// and the new one's opens.
+	let state = createScriptState();
 
-	/** The context a callback runs its phases in, after recording its info. */
+	/**
+	 * The context a callback runs its phases in, after recording its info.
+	 * `current` is the state of the registration the callback belongs to;
+	 * without it, a callback after disposal starts a new registration.
+	 */
 	const contextFor = (
 		callback: ManifestLifecycleCallback,
-		info: ScriptCallbackInfo
+		info: ScriptCallbackInfo,
+		current?: ScriptState
 	) => {
-		if (!state.disposed) {
-			state.latest = info;
+		if (!current && state.disposed) {
+			state = createScriptState();
 		}
-		state.element = info.element ?? state.element;
+		const own = current ?? state;
+		if (!own.disposed) {
+			own.latest = info;
+		}
+		own.element = info.element ?? own.element;
 		return {
 			callback,
 			elementId: info.elementId,
 			hasConsent: info.hasConsent,
 			scriptId: resolvedManifest.vendor,
-			values: { info, state },
+			values: { info, state: own },
 		};
 	};
 
@@ -1184,20 +1200,23 @@ const manifestToScript = function manifestToScript(
 
 	if (needsDispose(resolvedManifest)) {
 		script.onDispose = (info: ScriptCallbackInfo) => {
-			state.disposed = true;
+			// Deferred steps below still belong to this registration, even
+			// when the same script has mounted again by the time they run.
+			const disposed = state;
+			disposed.disposed = true;
 			// Before any deferred step: an incoming registration may insert a
 			// tag under the same id as soon as this one is gone.
-			for (const tag of state.tags.values()) {
+			for (const tag of disposed.tags.values()) {
 				tag.remove();
 			}
-			state.tags.clear();
+			disposed.tags.clear();
 			const steps = resolvedManifest.onDisposeSteps ?? [];
 			if (steps.length === 0) {
 				return;
 			}
 			const run = (current: ScriptCallbackInfo) =>
 				executePhaseSteps(steps, {
-					...contextFor('onDispose', current),
+					...contextFor('onDispose', current, disposed),
 					phase: 'onDispose',
 				});
 			// A replacement can be a withdrawal the incoming registration saves

@@ -1146,6 +1146,63 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('gives the restored remote copy an open consent gate, and keeps the old one closed', async () => {
+		const gates: ((value: unknown) => unknown)[] = [];
+		(window as { __gate?: unknown }).__gate = (gate: never) => {
+			gates.push(gate);
+		};
+		const options = {
+			enabled: false,
+			mode: quietMode,
+			persistence: false,
+			prefetch: {
+				initialScriptRegistry: {
+					load: load(
+						acmeManifest({
+							requires: 2,
+							setupSteps: [
+								{
+									args: [{ kind: 'inth.runtime-value', value: 'consentGate' }],
+									global: '__gate',
+									type: 'callGlobal',
+								},
+							],
+						})
+					),
+				},
+			},
+			remoteScripts: true,
+		} satisfies Parameters<typeof createConsentProviderRuntime>[0];
+		const runtime = createConsentProviderRuntime(
+			options,
+			defaultRuntimeModules
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(gates).toHaveLength(1));
+		expect(gates[0]?.('event')).toBe('event');
+
+		await runtime.update({
+			...options,
+			scripts: [
+				{
+					async: true,
+					category: 'marketing',
+					id: 'acme-pixel',
+					src: ACME_SRC,
+					vendor: 'acme-pixel',
+				},
+			],
+		});
+		await vi.waitFor(() => expect(gates[0]?.('event')).toBeNull());
+
+		await runtime.update({ ...options, scripts: [] });
+		await vi.waitFor(() => expect(gates).toHaveLength(2));
+		expect(gates[1]?.('event')).toBe('event');
+		expect(gates[0]?.('event')).toBeNull();
+		runtime.dispose();
+		delete (window as { __gate?: unknown }).__gate;
+	});
+
 	test('forgets a code update that failed validation, so a later list still applies', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const options = {
