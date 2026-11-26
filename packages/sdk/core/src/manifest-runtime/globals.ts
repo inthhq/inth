@@ -5,6 +5,11 @@
  * write or call through. The parser refuses a step whose root is not
  * listed, and a list that names a platform or built-in global. The block
  * lists in `call-path.ts` stay as a second layer.
+ *
+ * The boundary: a declared root's own non-native functions stay callable
+ * by design. The Inth server is trusted to send only manifests built from
+ * this repo's vendor files; the allowlist keeps each manifest to its
+ * vendor's globals and away from browser objects and native functions.
  */
 import { PLATFORM_GLOBALS } from './platform-globals';
 import type { ManifestStep, ResolvedManifest } from './types';
