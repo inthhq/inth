@@ -465,15 +465,44 @@ describe('inlineStepsStart', () => {
 		).toBeUndefined();
 	});
 
+	it.each(
+		[
+			['document', 'body', 'insertAdjacentHTML'],
+			['document', 'defaultView', 'eval'],
+			['navigation', 'navigate'],
+			['window', 'vendor', 'track'],
+		].map((path) => [path])
+	)(
+		'has no inline form for a call path through browser objects: %j',
+		(path) => {
+			expect(
+				inlineStepsStart([{ args: ['x'], path, type: 'callGlobal' }])
+			).toBeUndefined();
+		}
+	);
+
 	it.each([
-		['document', 'body', 'insertAdjacentHTML'],
-		['document', 'defaultView', 'eval'],
-		['navigation', 'navigate'],
-		['window', 'vendor', 'track'],
-	].map((path) => [path]))('has no inline form for a call path through browser objects: %j', (path) => {
-		expect(
-			inlineStepsStart([{ args: ['x'], path, type: 'callGlobal' }])
-		).toBeUndefined();
+		{
+			path: ['document', 'body', 'innerHTML'],
+			type: 'setGlobalPath',
+			value: '<i>',
+		},
+		{
+			path: ['location', 'href'],
+			type: 'setGlobalPath',
+			value: 'https://example.test/',
+		},
+		{ ifUndefined: false, name: 'location', type: 'setGlobal', value: 'x' },
+		{
+			aliases: ['onload'],
+			name: 'v',
+			queue: { global: 'q' },
+			type: 'defineStubFunction',
+		},
+		{ methods: ['src'], target: 'v', type: 'defineQueueMethods' },
+		{ name: 'v', queue: 'top', type: 'defineQueueProxy' },
+	])('has no inline form for a write to the page: %j', (step) => {
+		expect(inlineStepsStart([step as never])).toBeUndefined();
 	});
 
 	it('has no inline form for a value JSON would change', () => {

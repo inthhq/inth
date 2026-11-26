@@ -364,10 +364,27 @@ describe('callGlobal.path', () => {
 						path: ['document', 'body', 'insertAdjacentHTML'],
 						type: 'callGlobal',
 					},
-					{ args: ['via-view'], path: ['document', 'defaultView', '__record'], type: 'callGlobal' },
-					{ args: ['via-window'], path: ['window', '__record'], type: 'callGlobal' },
-					{ args: ['via-self'], global: 'self', method: '__record', type: 'callGlobal' },
-					{ assignTo: '__api', constructor: 'Function', type: 'constructGlobal' },
+					{
+						args: ['via-view'],
+						path: ['document', 'defaultView', '__record'],
+						type: 'callGlobal',
+					},
+					{
+						args: ['via-window'],
+						path: ['window', '__record'],
+						type: 'callGlobal',
+					},
+					{
+						args: ['via-self'],
+						global: 'self',
+						method: '__record',
+						type: 'callGlobal',
+					},
+					{
+						assignTo: '__api',
+						constructor: 'Function',
+						type: 'constructGlobal',
+					},
 					recordStep('after') as never,
 				],
 			}),
@@ -377,6 +394,53 @@ describe('callGlobal.path', () => {
 		expect(win.__api).toBeUndefined();
 		expect(record).toHaveBeenCalledExactlyOnceWith('after');
 	});
+});
+
+test('skips a write to the page that the parser would refuse', () => {
+	win.__api = {};
+	// Built without the parser, as a manifest that slipped past it would be.
+	mount([
+		resolvedManifestToScript({
+			...fromJSON({ alwaysLoad: true }),
+			setupSteps: [
+				{
+					path: ['document', 'body', 'innerHTML'],
+					type: 'setGlobalPath',
+					value: '<i id="injected"></i>',
+				},
+				{ path: ['__api', 'href'], type: 'setGlobalPath', value: 'x' },
+				{ name: ['__api'], type: 'setGlobal', value: 'x' } as never,
+				{
+					aliases: ['onload'],
+					name: '__queue',
+					queue: { global: 'q' },
+					type: 'defineStubFunction',
+				},
+				{ methods: ['innerHTML'], target: '__api', type: 'defineQueueMethods' },
+				{
+					methods: [{ behavior: 'noop', name: 'src' }],
+					target: '__api',
+					type: 'defineGlobalMethods',
+				},
+				{
+					methods: ['track'],
+					name: 'outerHTML',
+					target: '__api',
+					type: 'defineQueueClass',
+				},
+				{ name: '__present', queue: 'location', type: 'defineQueueProxy' },
+				{ assignTo: 'parent', constructor: 'Object', type: 'constructGlobal' },
+				recordStep('after') as never,
+			],
+		}),
+	]);
+
+	expect(document.getElementById('injected')).toBeNull();
+	expect(win.__api).toEqual({});
+	expect(win.__queue).toBeUndefined();
+	expect(win.__present).toBeUndefined();
+	expect(win.parent).toBe(window);
+	expect(record).toHaveBeenCalledExactlyOnceWith('after');
 });
 
 test('reads call arguments only when there is something to call', () => {

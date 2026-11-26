@@ -11,8 +11,11 @@ import { gzipSync } from 'node:zlib';
 
 import { expect, it } from 'vite-plus/test';
 
-/** Gzipped bytes. Level 1 was 4,690; level 2 brought it to 6,264. */
-const BUDGET = 6400;
+/**
+ * Gzipped bytes. Level 1 was 4,690; level 2 brought it to 6,264, and the
+ * checks on what a step calls and writes to 6,594.
+ */
+const BUDGET = 6650;
 
 it('keeps inth.manifests.js within its gzip budget', () => {
 	const file = resolve(

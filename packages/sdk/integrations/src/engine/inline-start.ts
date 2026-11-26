@@ -14,10 +14,10 @@
  */
 import type { ScriptServerStart } from '@inth/sdk/engine';
 import {
-	callReachesCode,
 	RUNTIME_VALUE_LEVELS,
 	STEP_FIELD_LEVELS,
 	STEP_VALUE_LEVELS,
+	stepReachesCode,
 } from '@inth/sdk/manifest-runtime';
 
 import { RUNTIME_VALUE_KIND } from '../types';
@@ -96,14 +96,9 @@ const runsInline = function runsInline(step: ManifestStep): boolean {
 	if (step.type === 'constructGlobal') {
 		return false;
 	}
-	// The runtime skips these calls, so the inline code must not make them.
-	if (
-		step.type === 'callGlobal' &&
-		callReachesCode(
-			step.path ??
-				(step.method === undefined ? [step.global] : [step.global, step.method])
-		)
-	) {
+	// The runtime skips these calls and writes, so the inline code must
+	// not make them.
+	if (stepReachesCode(step)) {
 		return false;
 	}
 	const fields = ownLevel(STEP_FIELD_LEVELS, step.type) as

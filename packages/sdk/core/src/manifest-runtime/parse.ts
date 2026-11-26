@@ -1,8 +1,13 @@
-import { callReachesCode } from './call-path';
 import {
 	isCategoryCondition,
 	isCategoryName,
 } from '../modules/script-loader/category-condition';
+import {
+	calledPath,
+	callReachesCode,
+	writeReachesCode,
+	writtenNames,
+} from './call-path';
 import {
 	levelOf,
 	MANIFEST_FIELD_LEVELS,
@@ -235,20 +240,6 @@ const fieldProblem = (step: Record<string, unknown>): string | undefined => {
 	}
 };
 
-/** The global a step calls or constructs, as a path under window. */
-const calledPath = (step: Record<string, unknown>): unknown[] => {
-	if (step.type === 'constructGlobal') {
-		return [step.constructor];
-	}
-	if (step.type !== 'callGlobal') {
-		return [];
-	}
-	if (Array.isArray(step.path)) {
-		return step.path;
-	}
-	return step.method === undefined ? [step.global] : [step.global, step.method];
-};
-
 /** Why a step of a known type cannot run, or `undefined`. */
 const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	const known = new Set<string>(
@@ -271,6 +262,9 @@ const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	}
 	if (callReachesCode(calledPath(step))) {
 		return `has a ${String(step.type)} step that calls ${calledPath(step).join('.')}`;
+	}
+	if (writeReachesCode(writtenNames(step))) {
+		return `has a ${String(step.type)} step that writes ${writtenNames(step).join(', ')}`;
 	}
 	return undefined;
 };

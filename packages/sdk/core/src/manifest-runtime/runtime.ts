@@ -1,4 +1,3 @@
-import { callReachesCode } from './call-path';
 import { emitScriptDebugEvent } from '../libs/script-loader/debug';
 import type {
 	Script,
@@ -7,6 +6,7 @@ import type {
 	ScriptServerStart,
 } from '../libs/script-loader/types';
 import type { ConsentState } from '../types';
+import { stepReachesCode } from './call-path';
 import { mapConsentState } from './consent-mapping';
 import { levelOf, RUNTIME_VALUE_LEVELS } from './features';
 import { RUNTIME_VALUE_KIND } from './types';
@@ -266,6 +266,12 @@ const executeStep = function executeStep(
 ): void {
 	const win = window as unknown as Record<string, unknown>;
 
+	// The parser refuses these; a manifest built without it must not run
+	// them either.
+	if (stepReachesCode(step)) {
+		return;
+	}
+
 	// oxlint-disable-next-line default-case -- Preserve established branch order and control flow.
 	switch (step.type) {
 		case 'setGlobal': {
@@ -371,19 +377,6 @@ const executeStep = function executeStep(
 				step.literalArgs
 					? (JSON.parse(JSON.stringify(step.args ?? [])) as unknown[])
 					: (step.args ?? []).map((arg) => cloneStepValue(arg, values));
-
-			// The parser refuses these; a manifest built without it must not
-			// run them either.
-			if (
-				callReachesCode(
-					step.path ??
-						(step.method === undefined
-							? [step.global]
-							: [step.global, step.method])
-				)
-			) {
-				break;
-			}
 
 			if (step.path) {
 				const found = readPath(win, step.path);
@@ -676,9 +669,6 @@ const executeStep = function executeStep(
 		}
 
 		case 'constructGlobal': {
-			if (callReachesCode([step.constructor])) {
-				break;
-			}
 			const Constructor = win[step.constructor];
 			if (typeof Constructor !== 'function') {
 				break;

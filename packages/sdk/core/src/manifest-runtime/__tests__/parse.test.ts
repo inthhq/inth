@@ -454,17 +454,19 @@ describe('parseResolvedManifest', () => {
 			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
 		});
 
-		it.each([
-			['document', 'location', 'assign'],
-			['document', 'defaultView', 'eval'],
-			['document', 'defaultView', 'setTimeout'],
-			['document', 'body', 'insertAdjacentHTML'],
-			['navigation', 'navigate'],
-			['open'],
-			['window', 'vendor', 'track'],
-			['vendor', 'frame', 'opener', 'focus'],
-			['vendor', 'ownerDocument', 'createElement'],
-		].map((path) => [path]))('refuses a call path through browser objects: %j', (path) => {
+		it.each(
+			[
+				['document', 'location', 'assign'],
+				['document', 'defaultView', 'eval'],
+				['document', 'defaultView', 'setTimeout'],
+				['document', 'body', 'insertAdjacentHTML'],
+				['navigation', 'navigate'],
+				['open'],
+				['window', 'vendor', 'track'],
+				['vendor', 'frame', 'opener', 'focus'],
+				['vendor', 'ownerDocument', 'createElement'],
+			].map((path) => [path])
+		)('refuses a call path through browser objects: %j', (path) => {
 			expect(
 				parseResolvedManifest(withSetup({ path, type: 'callGlobal' }))
 			).toEqual({ ok: false, reason: expect.stringContaining('calls') });
@@ -488,6 +490,199 @@ describe('parseResolvedManifest', () => {
 						{ global: 'vendor', method: 'track', type: 'callGlobal' },
 						{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' },
 						{ path: ['document', 'dispatchEvent'], type: 'callGlobal' }
+					)
+				).ok
+			).toBe(true);
+		});
+	});
+
+	describe('writes', () => {
+		const withBootstrap = (...steps: unknown[]) => ({
+			...manifest(),
+			bootstrapSteps: steps,
+		});
+		const parse = (step: unknown) =>
+			parseResolvedManifest(JSON.parse(JSON.stringify(withBootstrap(step))));
+		const refusal = {
+			ok: false,
+			reason: expect.stringMatching(/writes|names/u),
+		};
+		// Built so the linter does not take it for a script URL in this file.
+		const scriptUrl = ['javascript', 'alert(1)'].join(':');
+
+		it.each([
+			{
+				ifUndefined: false,
+				name: 'location',
+				type: 'setGlobal',
+				value: scriptUrl,
+			},
+			{
+				path: ['document', 'body', 'innerHTML'],
+				type: 'setGlobalPath',
+				value: '<img src=x onerror=alert(1)>',
+			},
+			{
+				path: ['location', 'href'],
+				type: 'setGlobalPath',
+				value: scriptUrl,
+			},
+		])('refuses a write to the page: %j', (step) => {
+			expect(parse(step)).toEqual(refusal);
+		});
+
+		it.each([
+			'location',
+			'defaultView',
+			'ownerDocument',
+			'opener',
+			'parent',
+			'top',
+			'frames',
+			'self',
+			'window',
+			'globalThis',
+			'navigation',
+			'document',
+			'innerHTML',
+			'outerHTML',
+			'srcdoc',
+			'href',
+			'src',
+			'action',
+			'formAction',
+			'textContent',
+			'onload',
+			'onerror',
+			'__proto__',
+			'prototype',
+			'constructor',
+		])('refuses %s in any name a step writes', (name) => {
+			const steps: unknown[] = [
+				{ name, type: 'setGlobal', value: 'x' },
+				{ path: ['vendor', name], type: 'setGlobalPath', value: 'x' },
+				{ assignTo: name, constructor: 'Vendor', type: 'constructGlobal' },
+				{
+					assignTo: 'vendor',
+					constructor: 'Vendor',
+					copyAssignedValueToArgProperty: name,
+					type: 'constructGlobal',
+				},
+				{ name, queue: 'q', type: 'defineQueueFunction' },
+				{ name, queue: { global: 'q' }, type: 'defineStubFunction' },
+				{
+					aliases: [name],
+					name: 'vendor',
+					queue: { global: 'q' },
+					type: 'defineStubFunction',
+				},
+				{
+					name: 'vendor',
+					queue: { property: name },
+					type: 'defineStubFunction',
+				},
+				{
+					name: 'vendor',
+					queue: { global: 'q' },
+					selfReferences: [name],
+					type: 'defineStubFunction',
+				},
+				{
+					name: 'vendor',
+					properties: { [name]: 'x' },
+					queue: { global: 'q' },
+					type: 'defineStubFunction',
+				},
+				{ name, queue: 'q', type: 'defineQueueProxy' },
+				{ name: 'vendor', queue: name, type: 'defineQueueProxy' },
+				{ methods: ['track'], target: name, type: 'defineQueueMethods' },
+				{ methods: [name], target: 'vendor', type: 'defineQueueMethods' },
+				{
+					methods: ['track'],
+					name: 'Q',
+					target: name,
+					type: 'defineQueueClass',
+				},
+				{
+					methods: ['track'],
+					name,
+					target: 'vendor',
+					type: 'defineQueueClass',
+				},
+				{
+					methods: [name],
+					name: 'Q',
+					target: 'vendor',
+					type: 'defineQueueClass',
+				},
+				{
+					methods: ['track'],
+					name: 'Q',
+					queueProperty: name,
+					target: 'vendor',
+					type: 'defineQueueClass',
+				},
+				{
+					methods: [{ behavior: 'noop', name: 'track' }],
+					target: name,
+					type: 'defineGlobalMethods',
+				},
+				{
+					methods: [{ behavior: 'noop', name }],
+					target: 'vendor',
+					type: 'defineGlobalMethods',
+				},
+			];
+
+			expect(steps.map(parse)).toEqual(steps.map(() => refusal));
+		});
+
+		// A runtime looks a name up as a property key, so a list of one name
+		// reaches the same property as the name.
+		it('refuses a name wrapped in a list', () => {
+			expect(
+				parse({ name: ['location'], type: 'setGlobal', value: 'x' })
+			).toEqual(refusal);
+			expect(
+				parse({
+					path: [['location'], 'href'],
+					type: 'setGlobalPath',
+					value: 'x',
+				})
+			).toEqual(refusal);
+			expect(
+				parseResolvedManifest(
+					withBootstrap({
+						global: ['location'],
+						method: 'assign',
+						type: 'callGlobal',
+					})
+				).ok
+			).toBe(false);
+			expect(
+				parseResolvedManifest(
+					withBootstrap({
+						path: [['document'], 'body', 'setHTMLUnsafe'],
+						type: 'callGlobal',
+					})
+				).ok
+			).toBe(false);
+		});
+
+		it('accepts the emitter methods vendors queue, which are not handlers', () => {
+			expect(
+				parseResolvedManifest(
+					withBootstrap(
+						{
+							methods: ['on', 'once', 'off', 'onReady'],
+							target: 'vendor',
+							type: 'defineQueueMethods',
+						},
+						{
+							path: ['vendor', 'config', 'debug'],
+							type: 'setGlobalPath',
+							value: true,
+						}
 					)
 				).ok
 			).toBe(true);
