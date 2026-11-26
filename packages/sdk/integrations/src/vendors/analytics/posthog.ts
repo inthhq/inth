@@ -470,28 +470,31 @@ export const resolvePosthogManifest = function resolvePosthogManifest(
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'posthog',
-	{
-		id: {
-			example: 'phc_abc123XYZ',
-			kind: 'id',
-			label: 'Project API key',
-			pattern: '^phc_[A-Za-z0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'posthog',
+		{
+			id: {
+				example: 'phc_abc123XYZ',
+				kind: 'id',
+				label: 'Project API key',
+				pattern: '^phc_[A-Za-z0-9]+$',
+				required: true,
+			},
+			loadMode: loadModeOption,
+			region: {
+				default: 'eu',
+				kind: 'enum',
+				label: 'Region',
+				values: ['eu', 'us'],
+			},
 		},
-		loadMode: loadModeOption,
-		region: {
-			default: 'eu',
-			kind: 'enum',
-			label: 'Region',
-			values: ['eu', 'us'],
-		},
-	},
-	resolvePosthogManifest
-);
+		resolvePosthogManifest
+	);
 
 /**
  * Creates an Inth PostHog script helper.

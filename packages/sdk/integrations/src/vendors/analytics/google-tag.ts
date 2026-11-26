@@ -185,28 +185,31 @@ export const resolveGtagManifest = function resolveGtagManifest({
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'gtag',
-	{
-		category: {
-			default: 'measurement',
-			kind: 'enum',
-			label: 'Consent category',
-			values: ['measurement', 'marketing'],
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'gtag',
+		{
+			category: {
+				default: 'measurement',
+				kind: 'enum',
+				label: 'Consent category',
+				values: ['measurement', 'marketing'],
+			},
+			id: {
+				example: 'G-ABC123XYZ',
+				kind: 'id',
+				label: 'Tag ID',
+				pattern: '^(?:G|GT|AW|DC)-[A-Z0-9]+$',
+				required: true,
+			},
+			loadMode: loadModeOption,
 		},
-		id: {
-			example: 'G-ABC123XYZ',
-			kind: 'id',
-			label: 'Tag ID',
-			pattern: '^(?:G|GT|AW|DC)-[A-Z0-9]+$',
-			required: true,
-		},
-		loadMode: loadModeOption,
-	},
-	resolveGtagManifest
-);
+		resolveGtagManifest
+	);
 
 /**
  * Creates a Google Tag (gtag.js) script.

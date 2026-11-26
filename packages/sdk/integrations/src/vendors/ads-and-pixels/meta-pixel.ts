@@ -406,21 +406,24 @@ export const resolveMetaPixelManifest = function resolveMetaPixelManifest({
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'metaPixel',
-	{
-		pixelId: {
-			example: '123456789012345',
-			kind: 'id',
-			label: 'Pixel ID',
-			pattern: '^[0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'metaPixel',
+		{
+			pixelId: {
+				example: '123456789012345',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
 		},
-	},
-	resolveMetaPixelManifest
-);
+		resolveMetaPixelManifest
+	);
 
 /**
  * Creates a Meta Pixel script.

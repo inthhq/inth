@@ -204,22 +204,25 @@ export const resolveGoogleTagManagerManifest =
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'googleTagManager',
-	{
-		id: {
-			example: 'GTM-ABC1234',
-			kind: 'id',
-			label: 'Container ID',
-			pattern: '^GTM-[A-Z0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'googleTagManager',
+		{
+			id: {
+				example: 'GTM-ABC1234',
+				kind: 'id',
+				label: 'Container ID',
+				pattern: '^GTM-[A-Z0-9]+$',
+				required: true,
+			},
+			loadMode: loadModeOption,
 		},
-		loadMode: loadModeOption,
-	},
-	resolveGoogleTagManagerManifest
-);
+		resolveGoogleTagManagerManifest
+	);
 
 /**
  * Creates a Google Tag Manager script.

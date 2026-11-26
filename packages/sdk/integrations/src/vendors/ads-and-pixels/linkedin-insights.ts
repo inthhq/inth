@@ -118,21 +118,24 @@ export const resolveLinkedinInsightsManifest =
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'linkedinInsights',
-	{
-		id: {
-			example: '1234567',
-			kind: 'id',
-			label: 'Partner ID',
-			pattern: '^[0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'linkedinInsights',
+		{
+			id: {
+				example: '1234567',
+				kind: 'id',
+				label: 'Partner ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
 		},
-	},
-	resolveLinkedinInsightsManifest
-);
+		resolveLinkedinInsightsManifest
+	);
 
 /**
  * LinkedIn Insight Tag script.

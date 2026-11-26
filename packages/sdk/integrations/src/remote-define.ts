@@ -204,6 +204,10 @@ const deepFreeze = function deepFreeze<T>(value: T): T {
  * as `remote`, beside the resolver its npm helper calls; the catalogue in
  * `@inth/integrations/remote` finds it through the registry.
  *
+ * Put a `@__PURE__` annotation on the call so a bundler drops it from npm
+ * bundles that never read `remote`. The build keeps call-site annotations,
+ * not ones on this function.
+ *
  * @example
  * ```ts
  * export const remote = defineRemote(
@@ -213,10 +217,7 @@ const deepFreeze = function deepFreeze<T>(value: T): T {
  * );
  * ```
  */
-// A vendor file calls this at load. The annotation lets a bundler drop the
-// call from an npm bundle that never reads `remote`.
-// oxlint-disable-next-line no-inline-comments -- Bundlers require this annotation at the function.
-export const defineRemote = /* #__NO_SIDE_EFFECTS__ */ function defineRemote<
+export const defineRemote = function defineRemote<
 	const TSpecs extends Readonly<Record<string, RemoteOptionSpec>>,
 >(
 	key: BuiltInScriptIntegrationKey,

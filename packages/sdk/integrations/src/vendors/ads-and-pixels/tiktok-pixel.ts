@@ -206,21 +206,24 @@ export const resolveTiktokPixelManifest = function resolveTiktokPixelManifest({
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'tiktokPixel',
-	{
-		pixelId: {
-			example: 'C4ABCDEF1234567890',
-			kind: 'id',
-			label: 'Pixel ID',
-			pattern: '^[A-Z0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'tiktokPixel',
+		{
+			pixelId: {
+				example: 'C4ABCDEF1234567890',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Z0-9]+$',
+				required: true,
+			},
 		},
-	},
-	resolveTiktokPixelManifest
-);
+		resolveTiktokPixelManifest
+	);
 
 /**
  * Creates a Tiktok Pixel script.

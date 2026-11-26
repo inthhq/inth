@@ -234,21 +234,24 @@ export const resolveClarityManifest = function resolveClarityManifest({
 
 /**
  * What the Inth server may set for this vendor. The npm helper calls the same
- * resolver; its other options stay npm-only.
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
  */
-export const remote = defineRemote(
-	'microsoft-clarity',
-	{
-		id: {
-			example: 'abcdef1234',
-			kind: 'id',
-			label: 'Project ID',
-			pattern: '^[A-Za-z0-9]+$',
-			required: true,
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'microsoft-clarity',
+		{
+			id: {
+				example: 'abcdef1234',
+				kind: 'id',
+				label: 'Project ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
 		},
-	},
-	resolveClarityManifest
-);
+		resolveClarityManifest
+	);
 
 /**
  * Creates a Microsoft Clarity script.
