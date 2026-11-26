@@ -35,9 +35,9 @@ import { expect, it } from 'vite-plus/test';
  * has adapter code. `inth.manifests3.js` reads a manifest's level from the
  * adapter ID table, about 10 bytes per ID: 12,007 with the FullStory,
  * Gainsight PX, Lucky Orange and Databuddy IDs, 12,051 with the
- * ActiveCampaign, HubSpot, Oracle Eloqua and Salesforce Pardot ones, and
+ * ActiveCampaign, HubSpot, Oracle Eloqua and Salesforce Pardot ones,
  * 12,090 with the Adobe Target, Amazon Ads, Cloudflare Zaraz and Default
- * ones.
+ * ones, and 12,122 with the Ada, Dynamic Yield, Gorgias and Zendesk ones.
  * `inth.adapter-sentry.js`, the Sentry consent gate: 6,215, then 6,268
  * with a type check on every option and the sentry.io DSN pattern.
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 443.
@@ -56,29 +56,30 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
- * `inth.adapter-ada.js`, Ada's start and stop chain: 932.
- * `inth.adapter-dynamic-yield.js`, api_static.js and the shared consent signal: 879.
- * `inth.adapter-gorgias.js`, Gorgias's wait for init() and Segment switch: 665.
- * `inth.adapter-zendesk.js`, Zendesk's loader reference and cookie range: 741.
+ * `inth.adapter-ada.js`, Ada's start and stop chain: 915.
+ * `inth.adapter-dynamic-yield.js`, api_static.js and the shared consent
+ * signal: 850.
+ * `inth.adapter-gorgias.js`, Gorgias's wait for init() and Segment switch: 642.
+ * `inth.adapter-zendesk.js`, Zendesk's loader reference and cookie range: 721.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
-	'inth.adapter-ada.js': 960,
+	'inth.adapter-ada.js': 945,
 	'inth.adapter-adobe-target.js': 870,
 	'inth.adapter-amazon-ads.js': 1550,
 	'inth.adapter-cloudflare-zaraz.js': 1270,
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-default-com.js': 2280,
-	'inth.adapter-dynamic-yield.js': 910,
+	'inth.adapter-dynamic-yield.js': 880,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
-	'inth.adapter-gorgias.js': 690,
+	'inth.adapter-gorgias.js': 670,
 	'inth.adapter-hubspot.js': 2830,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-oracle-eloqua.js': 2110,
 	'inth.adapter-salesforce-pardot.js': 600,
 	'inth.adapter-sentry.js': 6280,
-	'inth.adapter-zendesk.js': 770,
+	'inth.adapter-zendesk.js': 750,
 	'inth.manifests.js': 9590,
 	'inth.manifests3.js': 12140,
 };
