@@ -37,7 +37,12 @@ export const remoteStatus = {
 	dynamicYield: adapter,
 	eloquaTracking: adapter,
 	fullStory: adapter,
-	gainsightPx: level3,
+	// Before it inserts its loader, the helper throws when another PX
+	// installation or another product key already started, and checks a
+	// server start against the client options (validate); once PX's bundle
+	// started it skips the loader through a callbackOnly function. A manifest
+	// can neither refuse a load nor make loading depend on page state.
+	gainsightPx: adapter,
 	gorgiasChat: level3,
 	hubspot: adapter,
 	luckyOrange: adapter,
