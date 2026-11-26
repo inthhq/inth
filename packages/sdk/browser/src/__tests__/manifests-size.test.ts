@@ -40,10 +40,12 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 443.
  * `inth.adapter-gainsight-px.js`, the Gainsight PX installation checks: 1,479.
  * `inth.adapter-fullstory.js`, the FullStory stub and recorder gate: 2,098.
- * `inth.adapter-databuddy.js`, Databuddy's session replay recorder: 1,195.
+ * `inth.adapter-databuddy.js`, Databuddy's session replay recorder: 1,195,
+ * then 1,229 with the recorder claimed from `onBeforeLoad`, its release on
+ * a failed load, and the option patterns the dashboard shares.
  */
 const BUDGETS = {
-	'inth.adapter-databuddy.js': 1220,
+	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
