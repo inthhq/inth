@@ -16,6 +16,16 @@ describe('rb2b', () => {
 			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz',
 		});
 	});
+	it.each(['.', '..', ' . '])(
+		'skips the key %j, which URL parsing collapses out of the loader path',
+		(accountKey) => {
+			expectSkippedScript(
+				() => rb2b({ accountKey }),
+				{ category: 'marketing', id: 'rb2b' },
+				'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path'
+			);
+		}
+	);
 	it('skips invalid required IDs', () => {
 		for (const id of ['', ' ', undefined, null, {}, 42]) {
 			expectSkippedScript(

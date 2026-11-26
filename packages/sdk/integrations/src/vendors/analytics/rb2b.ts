@@ -130,15 +130,15 @@ export const rb2b = function rb2b(options: Rb2bOptions): Script {
 		});
 	}
 	const scriptUrl = trimToUndefined(options.scriptUrl);
-	if (scriptUrl !== undefined && !isSupportedScriptUrl(scriptUrl, accountKey)) {
+	const script = resolvedManifestToScript(resolveRb2bManifest({ accountKey }));
+	// The default URL is checked too: URL parsing drops a key of `.` or `..`
+	// out of the path, leaving a loader for no account.
+	if (!isSupportedScriptUrl(scriptUrl ?? script.src ?? '', accountKey)) {
 		return skipScript(
 			'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path',
 			{ category: 'marketing', manifest: rb2bManifest }
 		);
 	}
 
-	return withScriptUrl(
-		resolvedManifestToScript(resolveRb2bManifest({ accountKey })),
-		scriptUrl
-	);
+	return withScriptUrl(script, scriptUrl);
 };
