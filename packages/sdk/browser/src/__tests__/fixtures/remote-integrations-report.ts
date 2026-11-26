@@ -256,9 +256,25 @@ export const acceptedRows = function acceptedRows(
 };
 
 /**
- * Each integration's state before a choice or after a reject: only a
- * manifest with `alwaysLoad` may insert its tag or run its adapter, and
- * every third-party request is one of theirs.
+ * The integrations whose sampled manifest may load before a choice: each
+ * sends only what its consent mode or consent API allows. Kept here, not
+ * read from the manifests, so a manifest wrongly marked `alwaysLoad` fails.
+ */
+const EARLY_LOAD = new Set([
+	'cloudflareZaraz',
+	'googleTagManager',
+	'gtag',
+	'microsoftUet',
+	'mixpanelAnalytics',
+	'posthog',
+	'sentry',
+]);
+
+/**
+ * Each integration's state before a choice or after a reject: only an
+ * integration in `EARLY_LOAD`, whose manifest has `alwaysLoad`, may insert
+ * its tag or run its adapter, and every third-party request is one of
+ * theirs.
  */
 export const deniedRows = function deniedRows(
 	list: RemoteIntegrationList,
@@ -268,6 +284,13 @@ export const deniedRows = function deniedRows(
 		const events = loaderEvents(page.debug, entry);
 		const { problems } = events;
 		const may = alwaysLoads(entry);
+		if (may !== EARLY_LOAD.has(entry.integration)) {
+			problems.push(
+				may
+					? 'its manifest loads before a choice, and it is not in EARLY_LOAD'
+					: 'it is in EARLY_LOAD, and its manifest waits for consent'
+			);
+		}
 		const src = vendorSrc(entry);
 		let loaded: string;
 		if (src === undefined) {
