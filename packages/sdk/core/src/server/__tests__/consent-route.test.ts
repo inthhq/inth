@@ -738,7 +738,7 @@ describe('init route', () => {
 
 		expect(await listed('')).toEqual(['level-one']);
 		expect(await listed('?manifestLevel=1')).toEqual(['level-one']);
-		expect(await listed('?manifestLevel=3')).toEqual([
+		expect(await listed('?manifestLevel=4')).toEqual([
 			'level-one',
 			'needs-two',
 		]);
@@ -1362,11 +1362,11 @@ describe('init fallback for a backend without /v1/consent/manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const handle = route({ projectUrl: '/api/self-host' });
-		await handle(request('/api/inth/v1/consent/init?manifestLevel=3'), {
+		await handle(request('/api/inth/v1/consent/init?manifestLevel=4'), {
 			localFetch,
 		});
 		expect(localFetch).toHaveBeenLastCalledWith(
-			'/api/self-host/v1/consent/init?manifestLevel=3',
+			'/api/self-host/v1/consent/init?manifestLevel=4',
 			expect.anything()
 		);
 		await handle(request('/api/inth/v1/consent/init'), { localFetch });

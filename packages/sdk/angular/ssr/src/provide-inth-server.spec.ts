@@ -227,7 +227,7 @@ describe('provideInthServer', () => {
 		const html = await render({ projectUrl: '/api/inth' }, { route }, request);
 
 		expect(String(upstream.mock.calls[0]?.[0])).toBe(
-			`${SITE}/api/inth-upstream/v1/consent/manifest?manifestLevel=3`
+			`${SITE}/api/inth-upstream/v1/consent/manifest?manifestLevel=4`
 		);
 		expect(transferred(html)?.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -265,7 +265,7 @@ describe('provideInthServer', () => {
 		);
 
 		expect(String(upstream.mock.calls[0]?.[0])).toBe(
-			`${SITE}/api/inth-upstream/v1/consent/manifest?manifestLevel=3`
+			`${SITE}/api/inth-upstream/v1/consent/manifest?manifestLevel=4`
 		);
 		expect(transferred(html)?.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',

@@ -667,6 +667,122 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	const SENTRY_SRC = 'https://browser.sentry-cdn.com/11.4.0/bundle.min.js';
+
+	/** A manifest that names the Sentry adapter, as the Inth server sends it. */
+	const sentryEntry = (adapter: Record<string, unknown> = {}) => ({
+		id: 'sentry',
+		integration: 'sentry',
+		manifest: acmeManifest({
+			adapter: {
+				id: 'sentry',
+				options: {
+					dsn: 'https://public@o0.ingest.sentry.io/0',
+					initOptions: {},
+					loadMode: 'always',
+					piiCategory: 'measurement',
+					replay: { category: 'measurement', load: false },
+					tracing: false,
+					version: '11.4.0',
+				},
+				...adapter,
+			},
+			alwaysLoad: true,
+			bootstrapSteps: [],
+			category: { or: ['necessary', 'measurement'] },
+			loadScript: { async: true, src: SENTRY_SRC, type: 'loadScript' },
+			requires: 4,
+			setupSteps: [],
+			vendor: 'sentry',
+		}),
+	});
+
+	test('loads the adapter a manifest names, then runs the manifest with it', async () => {
+		vi.resetModules();
+		const runtime = startOff({
+			prefetch: { initialScriptRegistry: { load: [sentryEntry()] } },
+			remoteScripts: true,
+		});
+
+		await vi.waitFor(() => expect(tags(SENTRY_SRC)).toHaveLength(1));
+		// The adapter initializes Sentry once its bundle has run.
+		const init = vi.fn();
+		(window as { Sentry?: unknown }).Sentry = {
+			getClient: () => undefined,
+			init,
+			setUser: vi.fn(),
+		};
+		tags(SENTRY_SRC)[0]?.dispatchEvent(new Event('load'));
+		expect(init).toHaveBeenCalledExactlyOnceWith(
+			expect.objectContaining({ dsn: 'https://public@o0.ingest.sentry.io/0' })
+		);
+		runtime.dispose();
+		delete (window as { Sentry?: unknown }).Sentry;
+	});
+
+	test('reports an adapter that fails to load, and does not run its entry', async () => {
+		vi.resetModules();
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: false as const,
+				mode: quietMode,
+				persistence: false,
+				prefetch: {
+					initialScriptRegistry: { load: [...load(), sentryEntry()] },
+				},
+				remoteScripts: true,
+				scriptLoader: { onDebug },
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: async () => {
+					const manifests = await import('../../manifest-runtime/index');
+					return manifests.withAdapters(manifests, () =>
+						Promise.reject(new Error('offline'))
+					);
+				},
+			}
+		);
+		runtime.start();
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(onDebug).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: 'error',
+				message:
+					'Remote script sentry (sentry) does not load: its sentry adapter did not load: offline.',
+				scriptId: 'sentry',
+			})
+		);
+		expect(tags(SENTRY_SRC)).toHaveLength(0);
+		runtime.dispose();
+	});
+
+	test('refuses an entry that names an adapter this SDK does not ship', async () => {
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const runtime = startOff({
+			prefetch: {
+				initialScriptRegistry: {
+					load: [...load(), sentryEntry({ id: 'acme', options: {} })],
+				},
+			},
+			remoteScripts: true,
+			scriptLoader: { onDebug },
+		});
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(onDebug).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: 'error',
+				message:
+					'Remote script sentry (sentry) does not load: it names the adapter "acme", which this SDK does not have.',
+			})
+		);
+		expect(tags(SENTRY_SRC)).toHaveLength(0);
+		runtime.dispose();
+	});
+
 	test('waits for consent like a script in code', async () => {
 		const runtime = createConsentRuntime({
 			mode: initMode(() =>

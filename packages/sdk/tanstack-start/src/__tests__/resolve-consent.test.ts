@@ -75,7 +75,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=3'
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=4'
 		);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -162,7 +162,7 @@ describe('resolveConsent wiring', () => {
 			snapshot: undefined,
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://app.example.com/api/backend/v1/consent/manifest?manifestLevel=3'
+			'https://app.example.com/api/backend/v1/consent/manifest?manifestLevel=4'
 		);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',

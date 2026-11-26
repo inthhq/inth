@@ -201,6 +201,16 @@
 			"import": "./lib/core/dist/manifest-runtime/level-three.js",
 			"default": "./lib/core/dist/manifest-runtime/level-three.js"
 		},
+		"./manifest-runtime/adapters": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/index.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/index.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/index.js"
+		},
+		"./manifest-runtime/adapters/sentry": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/sentry.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
 			"import": "./lib/core/dist/transports/manifest-browser.js",

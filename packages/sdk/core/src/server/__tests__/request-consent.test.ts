@@ -1046,7 +1046,7 @@ describe('consent journey', () => {
 		expect(Object.fromEntries(sent.searchParams)).toEqual({
 			journey: state.journey?.id,
 			journeyScope: 'page',
-			manifestLevel: '3',
+			manifestLevel: '4',
 			stored: '1',
 		});
 	});

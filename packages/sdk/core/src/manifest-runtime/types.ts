@@ -505,6 +505,24 @@ export type ManifestStep =
  */
 export type ConsentSignalType = 'gtag' | 'rudderstack' | 'clarity';
 
+/** A JSON value, as adapter options carry them. */
+export type AdapterOptionValue =
+	| string
+	| number
+	| boolean
+	| null
+	| AdapterOptionValue[]
+	| { [name: string]: AdapterOptionValue };
+
+/**
+ * A manifest's `adapter`: the ID of an adapter this SDK ships, and the
+ * options that adapter checks.
+ */
+export interface ManifestAdapterField {
+	id: string;
+	options: { [name: string]: AdapterOptionValue };
+}
+
 /**
  * Transport-ready manifest shape produced by the compile phase.
  *
@@ -557,6 +575,12 @@ export interface ResolvedManifest extends ManifestContract {
 	persistAfterDispose?: boolean;
 	/** `Script.resourceKey` (level 2). */
 	resourceKey?: string;
+	/**
+	 * Code that adds lifecycle hooks to the script built from the rest of
+	 * the manifest (level 4). The SDK ships each adapter; a manifest names
+	 * one and passes it options.
+	 */
+	adapter?: ManifestAdapterField;
 	consentMapping?: Record<string, string[]>;
 	consentSignal?: ConsentSignalType;
 	consentSignalTarget?: string;

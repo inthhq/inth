@@ -29,11 +29,12 @@ import { expect, it } from 'vite-plus/test';
  * with those and level 3's `requires` check, flag names and `lost` outside
  * a callback, 11,592 with `globals`, 11,630 with the `defer` step, 11,817
  * with the call-time checks, and 11,936 with the later-run, refusal and
- * `ifNullish` changes.
+ * `ifNullish` changes. The adapter check and hand-off of level 4 bring
+ * them to 9,768 and 12,097.
  */
 const BUDGETS = {
-	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 11945,
+	'inth.manifests.js': 9800,
+	'inth.manifests3.js': 12130,
 };
 
 it.each(Object.entries(BUDGETS))(

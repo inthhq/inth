@@ -521,7 +521,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 				.map(([url]) => url)
 				.filter((url) => !String(url).endsWith('/sessions'))
 		).toEqual([
-			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=3',
+			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=4',
 		]);
 		expect(sink.res.statusCode).toBe(200);
 		expect(config.initialPolicyResolution?.policy?.id).toBe('eu-opt-in');

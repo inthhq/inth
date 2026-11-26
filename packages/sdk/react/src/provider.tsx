@@ -497,10 +497,17 @@ const reactRuntimeModules = function reactRuntimeModules(
 		createWindowDebug,
 		loadManifestRuntime: async () => {
 			const runtime = await import('@inth/sdk/manifest-runtime');
-			// The level 3 part is a chunk of its own, for a manifest that needs it.
-			return runtime.withLevelThreePart(
-				runtime,
-				() => import('@inth/sdk/manifest-runtime/level-three')
+			// The level 3 part and each adapter are chunks of their own, for a
+			// manifest that needs them.
+			return runtime.withAdapters(
+				runtime.withLevelThreePart(
+					runtime,
+					() => import('@inth/sdk/manifest-runtime/level-three')
+				),
+				async (id) =>
+					(await import('@inth/sdk/manifest-runtime/adapters')).importAdapter(
+						id
+					)
 			);
 		},
 		preloadScriptLoader: options.__preloadScriptLoader?.(loadScriptLoader),

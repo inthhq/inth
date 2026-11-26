@@ -577,7 +577,7 @@ describe('manifest()', () => {
 		]);
 		// The Inth server lists only the remote scripts this level runs.
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://example.test/api/v1/consent/manifest?manifestLevel=3'
+			'https://example.test/api/v1/consent/manifest?manifestLevel=4'
 		);
 	});
 

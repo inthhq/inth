@@ -1,6 +1,6 @@
 /**
- * The manifest runtime level of every manifest field, step field, step type
- * and runtime value. The parser knows exactly these names, and
+ * The manifest runtime level of every manifest field, step field, step type,
+ * runtime value and adapter. The parser knows exactly these names, and
  * `manifestFeatureLevel` reads a manifest's level from them, so a feature
  * cannot be runnable without a level.
  */
@@ -12,12 +12,13 @@ import type {
 	RuntimeValue,
 } from './types';
 
-type Level = 1 | 2 | 3;
+type Level = 1 | 2 | 3 | 4;
 
 /** Each manifest field's level. */
 export const MANIFEST_FIELD_LEVELS: Readonly<
 	Record<keyof ResolvedManifest, Level>
 > = {
+	adapter: 4,
 	afterLoadSteps: 1,
 	alwaysLoad: 1,
 	bootstrapSteps: 1,
@@ -228,6 +229,14 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
 };
 
 /**
+ * Each adapter this SDK ships, by `adapter.id`, and its level. An ID not
+ * listed here is one the parser refuses.
+ */
+export const ADAPTER_LEVELS: Readonly<Record<string, Level>> = {
+	sentry: 4,
+};
+
+/**
  * The script attributes `loadScript` may set besides `data-*` ones and the
  * few that only shape the fetch, by level. `id` is for vendors whose file
  * finds its own tag by id.
@@ -356,7 +365,7 @@ const stepLevel = (step: ManifestStep, depth = 0): number => {
 
 /**
  * The manifest runtime level of the newest feature `manifest` uses, from
- * its fields, steps and runtime values. `requires` does not count. A name
+ * its fields, steps, runtime values and adapter. `requires` does not count. A name
  * this table does not list counts as `Infinity`.
  */
 export const manifestFeatureLevel = function manifestFeatureLevel(
@@ -370,6 +379,11 @@ export const manifestFeatureLevel = function manifestFeatureLevel(
 		level = Math.max(level, levelOf(MANIFEST_FIELD_LEVELS, field) ?? Infinity);
 		if (field === 'loadScript') {
 			level = Math.max(level, stepLevel(value as ManifestStep));
+		} else if (field === 'adapter') {
+			level = Math.max(
+				level,
+				levelOf(ADAPTER_LEVELS, (value as { id?: unknown }).id) ?? Infinity
+			);
 		} else if (field.endsWith('Steps') && Array.isArray(value)) {
 			for (const step of value as ManifestStep[]) {
 				level = Math.max(level, stepLevel(step));

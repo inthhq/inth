@@ -7,6 +7,7 @@ import type {
 	ScriptServerStart,
 } from '../libs/script-loader/types';
 import type { ConsentState } from '../types';
+import { installedAdapter, isLoaded } from './adapter';
 import { stepReachesCode } from './call-path';
 import { mapConsentState } from './consent-mapping';
 import { levelOf, RUNTIME_VALUE_LEVELS, someStep } from './features';
@@ -1307,6 +1308,21 @@ const manifestToScript = function manifestToScript(
 	}
 
 	levelThree()?.script(script, liveState, resolvedManifest);
+	const { adapter } = resolvedManifest;
+	if (adapter) {
+		const loaded = installedAdapter(adapter.id);
+		if (!isLoaded(loaded)) {
+			throw new Error(
+				`Load the ${adapter.id} adapter before building a manifest that names it.`
+			);
+		}
+		// No `serverStart`: an adapter's hooks run in the browser, so a server
+		// render leaves the script to it.
+		return (loaded.script as (base: Script, options: unknown) => Script)(
+			script,
+			adapter.options
+		);
+	}
 	// After the level 3 part wrapped `onBeforeLoad`: `serverStart` runs
 	// only for the script's own.
 	script.serverStart = manifestServerStart(

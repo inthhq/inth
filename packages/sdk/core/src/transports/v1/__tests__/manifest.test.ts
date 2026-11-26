@@ -65,7 +65,7 @@ describe('GET /v1/consent/manifest', () => {
 
 		expect(calls).toHaveLength(1);
 		expect(calls[0]?.url).toBe(
-			`${PROJECT_URL}/v1/consent/manifest?manifestLevel=3`
+			`${PROJECT_URL}/v1/consent/manifest?manifestLevel=4`
 		);
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
