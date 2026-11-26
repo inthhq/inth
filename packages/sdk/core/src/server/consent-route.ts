@@ -37,6 +37,7 @@ import {
 	readJourneyParams,
 	readManifestLevelParam,
 	readPolicyResolutionWire,
+	registryForManifestLevel,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import type {
@@ -66,7 +67,6 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { inthProtocolHeaders } from '../libs/version-header';
-import { withManifestLevel } from '../manifest-runtime/level';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
@@ -577,6 +577,24 @@ const notFound = () => Response.json({ error: 'Not found' }, { status: 404 });
 const READ_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD']);
 
 /**
+ * `manifest` as a browser of `level` gets it from the manifest route: a
+ * static manifest or a site's `manifestUrl` was filtered for no level, and
+ * an SDK from before manifest levels refuses `requires` of any value.
+ */
+const manifestForLevel = function manifestForLevel(
+	manifest: ConsentManifest,
+	level: number
+): ConsentManifest {
+	const scriptRegistry = registryForManifestLevel(
+		manifest.scriptRegistry,
+		level
+	);
+	return scriptRegistry === manifest.scriptRegistry
+		? manifest
+		: { ...manifest, scriptRegistry };
+};
+
+/**
  * The country, region and GPC overrides a browser's `/v1/consent/init` carries as
  * query parameters, leaving out any it did not send.
  */
@@ -677,9 +695,15 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		return backend;
 	};
 
+	/**
+	 * Where the manifest comes from. The backend's manifest is asked for at
+	 * the browser's `level`, since the browser runs the scripts it lists; a
+	 * site's own `manifestUrl` is fetched as given.
+	 */
 	const resolveManifestSource = function resolveManifestSource(
 		request: Request,
-		context: ConsentRouteRequestContext
+		context: ConsentRouteRequestContext,
+		level: number
 	): ResolvedTarget {
 		if (options.manifestUrl) {
 			const source = resolveTarget(options.manifestUrl, request, context);
@@ -694,7 +718,9 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		const backend = resolveBackend(request, context, options.projectUrl);
 		return {
 			...backend,
-			url: withManifestLevel(`${backend.url}${V1_ROUTES.manifest}`),
+			url: appendInitParams(`${backend.url}${V1_ROUTES.manifest}`, {
+				manifestLevel: level,
+			}),
 		};
 	};
 
@@ -764,16 +790,19 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		url: URL,
 		context: ConsentRouteRequestContext
 	): Promise<Response> {
+		// A browser that sends no level runs level 1.
+		const level = readManifestLevelParam(url) ?? 1;
 		if (options.manifest) {
-			return Response.json(options.manifest);
+			return Response.json(manifestForLevel(options.manifest, level));
 		}
 		const { cached, credentials } = await readManifest(
 			request,
 			context,
-			resolveManifestSource(request, context),
+			resolveManifestSource(request, context, level),
 			undefined,
 			readLanguageQuery(url)
 		);
+		const manifest = manifestForLevel(cached.manifest, level);
 		const headers = new Headers({ 'content-type': 'application/json' });
 		for (const name of MANIFEST_PASSTHROUGH_HEADERS) {
 			const value = cached.headers[name];
@@ -786,7 +815,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			// cache in front of this route is keyed by URL only, so it must not
 			// reuse a credentialed manifest for the next visitor.
 			markResponsePrivate(headers);
-			return new Response(JSON.stringify(cached.manifest), { headers });
+			return new Response(JSON.stringify(manifest), { headers });
 		}
 		// Downstream caches count the remaining lifetime, not a fresh TTL.
 		headers.set('age', String(getManifestAge(cached)));
@@ -794,7 +823,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		if (etag && request.headers.get('if-none-match') === etag) {
 			return new Response(null, { headers, status: 304 });
 		}
-		return new Response(JSON.stringify(cached.manifest), { headers });
+		return new Response(JSON.stringify(manifest), { headers });
 	};
 
 	const createGvlLoader = function createGvlLoader(
@@ -882,7 +911,8 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		context: ConsentRouteRequestContext,
 		budget: Budget,
 		cause: unknown,
-		manifestUrl: string
+		manifestUrl: string,
+		level: number | undefined
 	): Promise<Response> {
 		// A timeout means the budget ran out: there is no time left to ask.
 		if (!options.projectUrl || options.manifest || isBudgetTimeout(cause)) {
@@ -926,7 +956,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				// The browser's level, not this route's: the browser runs the
 				// scripts the answer lists.
 				const plain = appendInitParams(`${backend.url}${V1_ROUTES.init}`, {
-					manifestLevel: readManifestLevelParam(request.url),
+					manifestLevel: level,
 				});
 				const upstream = await fetchImpl(
 					journey ? appendJourneyParams(plain, journey) : plain,
@@ -991,13 +1021,17 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		const budget = createBudget(
 			readTimeoutMs(request.headers.get(CONSENT_ROUTE_TIMEOUT_HEADER))
 		);
+		// The browser's level, not this route's: the browser runs the scripts
+		// the answer lists. One that sends none runs level 1.
+		const sentLevel = readManifestLevelParam(url);
+		const level = sentLevel ?? 1;
 		let manifest: ConsentManifest;
 		if (options.manifest) {
 			({ manifest } = options);
 		} else {
 			// Outside the fallback: a misconfigured source is an error, not a
 			// reason to ask the backend's `/v1/consent/init` instead.
-			const source = resolveManifestSource(request, context);
+			const source = resolveManifestSource(request, context, level);
 			try {
 				({
 					cached: { manifest },
@@ -1008,7 +1042,8 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 					context,
 					budget,
 					cause,
-					source.url
+					source.url,
+					sentLevel
 				);
 			}
 		}
@@ -1028,9 +1063,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 						language: context.inputs.language ?? 'en',
 					}
 				: getResolverInputsFromHeaders(request.headers)),
-			// The answer lists only the remote scripts the browser's level runs;
-			// a browser that sends none runs level 1.
-			manifestLevel: readManifestLevelParam(url) ?? 1,
+			manifestLevel: level,
 		};
 		const payload = await resolveConsentInit({
 			inputs,

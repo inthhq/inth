@@ -572,11 +572,13 @@ export const clientMode = function clientMode(
 		return Object.assign(
 			lazyBrowserManifest({
 				...browser,
+				// The route asks its upstream for the level the browser sends.
+				// A site's own `manifestUrl` is fetched as given.
 				manifestUrl:
 					mode.manifestUrl ??
 					(routePrefix === undefined
 						? undefined
-						: `${routePrefix}${V1_ROUTES.manifest}`),
+						: withManifestLevel(`${routePrefix}${V1_ROUTES.manifest}`)),
 				projectUrl,
 			} as LazyBrowserManifestOptions),
 			mode

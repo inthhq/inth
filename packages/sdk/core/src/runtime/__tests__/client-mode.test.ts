@@ -139,6 +139,27 @@ describe('clientMode()', () => {
 		);
 	});
 
+	test("manifest({ resolve: 'browser' }) asks the route prefix for its level's manifest, and leaves a site's manifestUrl as it is", async () => {
+		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
+		const asked = async (mode: Parameters<typeof manifest>[0]) => {
+			fetchSpy.mockClear();
+			await clientMode(manifest(mode), {
+				projectUrl: 'https://backend.example',
+				routePrefix: '/api/inth',
+			})(context)
+				.init?.(initContext())
+				.catch(() => undefined);
+			return String(fetchSpy.mock.calls[0]?.[0]);
+		};
+
+		expect(await asked({ resolve: 'browser' })).toBe(
+			'/api/inth/v1/consent/manifest?manifestLevel=1'
+		);
+		expect(
+			await asked({ manifestUrl: '/policy.json', resolve: 'browser' })
+		).toBe('/policy.json');
+	});
+
 	test('manifest() without a route prefix inits against the backend, unasserted', async () => {
 		const transport = clientMode(manifest(), {
 			projectUrl: 'https://backend.example',

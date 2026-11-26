@@ -113,6 +113,36 @@ const json = function json(
 	});
 };
 
+/**
+ * `manifest` as the Inth server serves it to a request for `url`: only the
+ * remote scripts at or below the `manifestLevel` it asks for, level 1 when
+ * it asks for none, and level 1 entries without `requires`.
+ */
+const forLevel = function forLevel(
+	manifest: ConsentManifest,
+	url: string
+): ConsentManifest {
+	const load = manifest.scriptRegistry?.load;
+	if (!load) {
+		return manifest;
+	}
+	const level = Number(
+		new URL(url, APP).searchParams.get('manifestLevel') ?? '1'
+	);
+	return {
+		...manifest,
+		scriptRegistry: {
+			...manifest.scriptRegistry,
+			load: load
+				.filter(({ manifest: entry }) => Number(entry.requires ?? 1) <= level)
+				.map((entry) => {
+					const { requires, ...rest } = entry.manifest;
+					return requires === 1 ? { ...entry, manifest: rest } : entry;
+				}),
+		},
+	};
+};
+
 /** A fetch that serves the manifest, the vendor list and session reports. */
 const upstream = function upstream(
 	manifest: ConsentManifest = MANIFEST,
@@ -132,7 +162,7 @@ const upstream = function upstream(
 		if (url.endsWith('/sessions')) {
 			return Promise.resolve(new Response(null, { status: 202 }));
 		}
-		return Promise.resolve(json(manifest, manifestHeaders));
+		return Promise.resolve(json(forLevel(manifest, url), manifestHeaders));
 	});
 };
 
@@ -488,6 +518,74 @@ describe('manifest route', () => {
 		});
 		expect(calledURLs(fetch).every((url) => url.endsWith('/sessions'))).toBe(
 			true
+		);
+	});
+
+	describe('remote scripts by the browser level', () => {
+		const entry = (id: string, requires?: number) => ({
+			id,
+			integration: id,
+			manifest: {
+				category: 'measurement',
+				vendor: id,
+				...(requires !== undefined && { requires }),
+			},
+		});
+		const listing = {
+			...MANIFEST,
+			scriptRegistry: {
+				load: [
+					entry('level-one'),
+					entry('needs-one', 1),
+					entry('needs-two', 2),
+				],
+			},
+		} as unknown as ConsentManifest;
+		const served = async (
+			options: Partial<ConsentRouteHandlerOptions>,
+			query: string
+		) => {
+			const response = await route(options)(
+				request(`/api/inth/v1/consent/manifest${query}`)
+			);
+			return ((await response.json()) as ConsentManifest).scriptRegistry?.load;
+		};
+
+		test('asks its upstream for the level the browser sent, level 1 when it sent none', async () => {
+			const fetch = upstream(listing);
+			expect((await served({ fetch }, '?manifestLevel=2'))?.length).toBe(3);
+			expect(await served({ fetch }, '')).toEqual([
+				entry('level-one'),
+				entry('needs-one'),
+			]);
+			expect(calledURLs(fetch)).toEqual([
+				`${BACKEND}/v1/consent/manifest?manifestLevel=2`,
+				`${BACKEND}/v1/consent/manifest?manifestLevel=1`,
+			]);
+		});
+
+		test.each([
+			['an inline manifest', { manifest: listing }],
+			[
+				'a manifestUrl no server filters',
+				{
+					fetch: vi.fn<ManifestFetch>(() => Promise.resolve(json(listing))),
+					manifestUrl: 'https://cdn.example.com/m.json',
+				},
+			],
+		])(
+			'serves only the level the browser runs from %s, without requires: 1',
+			async (_case, options) => {
+				expect(await served(options, '')).toEqual([
+					entry('level-one'),
+					entry('needs-one'),
+				]);
+				expect(await served(options, '?manifestLevel=2')).toEqual([
+					entry('level-one'),
+					entry('needs-one'),
+					entry('needs-two', 2),
+				]);
+			}
 		);
 	});
 });
