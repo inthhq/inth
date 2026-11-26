@@ -38,6 +38,7 @@ export interface ManifestsFile extends PartFile, RemoteManifestRuntime {}
  */
 export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	activecampaign: '__inthAdapterActivecampaign',
+	ada: '__inthAdapterAda',
 	'adobe-target': '__inthAdapterAdobeTarget',
 	'amazon-ads': '__inthAdapterAmazonAds',
 	'cloudflare-zaraz': '__inthAdapterCloudflareZaraz',

@@ -11,6 +11,7 @@ const ADAPTER_MODULES: Record<
 > = {
 	activecampaign: async () =>
 		(await import('./activecampaign')).activeCampaignAdapter,
+	ada: async () => (await import('./ada')).adaAdapter,
 	'adobe-target': async () =>
 		(await import('./adobe-target')).adobeTargetAdapter,
 	'amazon-ads': async () => (await import('./amazon-ads')).amazonAdsAdapter,

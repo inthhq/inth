@@ -238,6 +238,7 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
  */
 export const ADAPTER_LEVELS = {
 	activecampaign: 4,
+	ada: 4,
 	'adobe-target': 4,
 	'amazon-ads': 4,
 	'cloudflare-zaraz': 4,

@@ -18,7 +18,6 @@ const adapter = { pr: 13, status: 'pending' } as const;
 
 /** Every registry key without a `remote` export, and why. */
 export const remoteStatus = {
-	ada: adapter,
 	// A level 2 manifest cannot express two behaviours its golden trace
 	// records. The helper inserts api_static.js without an id, and
 	// loadScriptStep always sets one. And when a registration replaces

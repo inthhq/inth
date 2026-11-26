@@ -246,6 +246,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/default-com.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/default-com.js"
 		},
+		"./manifest-runtime/adapters/ada": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/ada.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/ada.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/ada.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

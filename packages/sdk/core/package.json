@@ -200,6 +200,11 @@
 			"import": "./dist/manifest-runtime/adapters/default-com.js",
 			"default": "./dist/manifest-runtime/adapters/default-com.js"
 		},
+		"./manifest-runtime/adapters/ada": {
+			"types": "./dist-types/manifest-runtime/adapters/ada.d.ts",
+			"import": "./dist/manifest-runtime/adapters/ada.js",
+			"default": "./dist/manifest-runtime/adapters/ada.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

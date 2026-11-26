@@ -97,6 +97,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-fullstory',
 	'inth.adapter-gainsight-px',
 	'inth.adapter-lucky-orange',
+	'inth.adapter-ada',
 ]);
 
 /**
@@ -317,6 +318,7 @@ export default defineConfig({
 			'inth.adapter-lucky-orange',
 			'./src/entries/cdn-adapter-lucky-orange.ts'
 		),
+		scriptTagLib('inth.adapter-ada', './src/entries/cdn-adapter-ada.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),
@@ -332,6 +334,17 @@ export default defineConfig({
 	},
 	tools: {
 		rspack: {
+			module: {
+				rules: [
+					{
+						// The Ada adapter imports Ada's module from Ada's host when
+						// the page runs. Left unparsed, that import() stays native
+						// instead of becoming a chunk lookup that cannot find it.
+						parser: { importDynamic: false },
+						test: /manifest-runtime[\\/]adapters[\\/]ada\.js$/u,
+					},
+				],
+			},
 			plugins: [...getRsdoctorPlugins()],
 		},
 	},

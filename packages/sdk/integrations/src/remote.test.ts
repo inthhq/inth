@@ -13,6 +13,7 @@ import {
 	withLevelThreePart,
 } from '@inth/sdk/manifest-runtime';
 import { importAdapter } from '@inth/sdk/manifest-runtime/adapters';
+import { ADA_MESSAGING_SDK_URL } from '@inth/sdk/manifest-runtime/adapters/ada';
 import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
@@ -223,6 +224,7 @@ const hostOptions: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
  */
 const vendorHosts: Record<string, readonly string[]> = {
 	activeCampaignTracking: ['diffuser-cdn.app-us1.com'],
+	ada: ['messaging-assets.ada.support'],
 	adobeAnalytics: ['assets.adobedtm.com'],
 	adobeTarget: ['cdn1.adoberesources.net'],
 	adrollPixel: ['s.adroll.com'],
@@ -297,6 +299,16 @@ const vendorHosts: Record<string, readonly string[]> = {
 };
 
 /**
+ * The module an adapter imports for a manifest with no tag, by registry key:
+ * the URL is the adapter's own, so a manifest cannot change it.
+ */
+const moduleImports: Partial<
+	Record<string, (adapter: { id: string } | undefined) => string | undefined>
+> = {
+	ada: (adapter) => (adapter?.id === 'ada' ? ADA_MESSAGING_SDK_URL : undefined),
+};
+
+/**
  * The manifest runtime level of each integration above level 2: the lowest
  * level that runs the features its manifest uses, or that level for the
  * options a dashboard saved. Every other integration is level 2, since
@@ -306,6 +318,7 @@ const vendorLevels: Partial<
 	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
 > = {
 	activeCampaignTracking: 4,
+	ada: 4,
 	adobeTarget: 4,
 	amazonAdsTag: 4,
 	cloudflareZaraz: 4,
@@ -672,7 +685,8 @@ describe('remoteIntegrations', () => {
 		'%s %s loads over https from its vendor',
 		(key, _label, options) => {
 			const manifest = remoteIntegrations[key]?.resolveRemote(options);
-			const src = manifest?.loadScript?.src;
+			const src =
+				manifest?.loadScript?.src ?? moduleImports[key]?.(manifest?.adapter);
 
 			const url = src === undefined ? undefined : new URL(src);
 			const hosts = vendorHosts[key];

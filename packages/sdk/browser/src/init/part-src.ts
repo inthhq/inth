@@ -16,9 +16,10 @@ export type InitFile =
 	| 'manifests'
 	| 'manifests3'
 	| 'adapter-activecampaign'
+	| 'adapter-ada'
+	| 'adapter-adobe-target'
 	| 'adapter-amazon-ads'
 	| 'adapter-cloudflare-zaraz'
-	| 'adapter-adobe-target'
 	| 'adapter-databuddy'
 	| 'adapter-default-com'
 	| 'adapter-fullstory'
@@ -32,9 +33,10 @@ export type InitFile =
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-activecampaign': '__inthAdapterActivecampaignSrc',
+	'adapter-ada': '__inthAdapterAdaSrc',
+	'adapter-adobe-target': '__inthAdapterAdobeTargetSrc',
 	'adapter-amazon-ads': '__inthAdapterAmazonAdsSrc',
 	'adapter-cloudflare-zaraz': '__inthAdapterCloudflareZarazSrc',
-	'adapter-adobe-target': '__inthAdapterAdobeTargetSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-default-com': '__inthAdapterDefaultComSrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',

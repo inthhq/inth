@@ -56,9 +56,11 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
+ * `inth.adapter-ada.js`, Ada's start and stop chain: 932.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
+	'inth.adapter-ada.js': 960,
 	'inth.adapter-adobe-target.js': 870,
 	'inth.adapter-amazon-ads.js': 1550,
 	'inth.adapter-cloudflare-zaraz.js': 1270,

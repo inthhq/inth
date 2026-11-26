@@ -16,11 +16,13 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { fromRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { ada as createAda, AdaOptions } from './vendors/functional/ada';
@@ -445,5 +447,61 @@ describe('Ada Messaging core loader contract', () => {
 		);
 		expect(evaluateModule).not.toHaveBeenCalled();
 		expect(createAdaEmbedInterface).not.toHaveBeenCalled();
+	});
+});
+
+describe.each([
+	[
+		'npm helper',
+		async (options: AdaOptions) =>
+			(await import('./vendors/functional/ada')).ada(options),
+	],
+	[
+		'remote manifest',
+		(options: AdaOptions) => Promise.resolve(fromRemote('ada', options)),
+	],
+] as const)('Ada dashboard settings through the %s', (_label, build) => {
+	registerVendorContractCleanup();
+
+	const client = {
+		start: vi.fn<(settings: AdaOptions) => Promise<void>>(),
+		stop: vi.fn<() => Promise<void>>(),
+	};
+	const createAdaEmbedInterface = vi.fn(() => client);
+
+	beforeEach(() => {
+		// A fresh adapter module, so no interface is left from another test.
+		vi.resetModules();
+		vi.clearAllMocks();
+		client.start.mockReset().mockResolvedValue(undefined);
+		client.stop.mockReset().mockResolvedValue(undefined);
+		// oxlint-disable-next-line anti-slop/no-module-mocking -- The remote ESM URL is the vendor boundary.
+		vi.doMock(SDK_URL, () => ({ createAdaEmbedInterface }));
+	});
+
+	afterEach(async () => {
+		clearAllScripts();
+		await settle();
+		vi.doUnmock(SDK_URL);
+	});
+
+	it('starts Messaging with the saved settings on a grant, and stops it on revoke', async () => {
+		const scripts = [await build({ cluster: 'eu', handle: 'agent' })];
+		loadScripts(scripts, ALL_DENIED);
+		await settleScripts();
+		await settle();
+		expect(createAdaEmbedInterface).not.toHaveBeenCalled();
+
+		updateScripts(scripts, grantedConsents);
+		await settleScripts();
+		await vi.waitFor(() =>
+			expect(client.start).toHaveBeenCalledExactlyOnceWith({
+				cluster: 'eu',
+				handle: 'agent',
+			})
+		);
+
+		updateScripts(scripts, ALL_DENIED);
+		await vi.waitFor(() => expect(client.stop).toHaveBeenCalledOnce());
 	});
 });
