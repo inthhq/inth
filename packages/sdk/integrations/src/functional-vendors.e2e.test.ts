@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	installHeadProbe,
@@ -155,3 +156,136 @@ describe('functional vendor contracts', () => {
 		expect(queueSnapshot).toEqual([['boot', { app_id: 'INTERCOM-CONTRACT' }]]);
 	});
 });
+
+const CRISP_WEBSITE_ID = '6a3c2f1e-8b4d-4c7a-9e5f-0d1b2c3a4e5f';
+
+describe.each(npmAndRemote('crisp', crisp))(
+	'Crisp contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('boots the site settings and safe-mode queue before append', () => {
+			let crispQueue: unknown[][] | undefined;
+			let globals: Partial<TestWindow> | undefined;
+
+			installHeadProbe((node, win) => {
+				if (node.src !== 'https://client.crisp.chat/l.js') {
+					return;
+				}
+
+				crispQueue = win.$crisp?.map((entry) => [...entry]);
+				globals = {
+					CRISP_COOKIE_DOMAIN: win.CRISP_COOKIE_DOMAIN,
+					CRISP_COOKIE_EXPIRE: win.CRISP_COOKIE_EXPIRE,
+					CRISP_RUNTIME_CONFIG: win.CRISP_RUNTIME_CONFIG,
+					CRISP_TOKEN_ID: win.CRISP_TOKEN_ID,
+					CRISP_WEBSITE_ID: win.CRISP_WEBSITE_ID,
+				};
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts(
+				[
+					build({
+						cookieDomain: 'example.com',
+						cookieExpiry: 3600,
+						locale: 'en',
+						safeMode: true,
+						websiteId: CRISP_WEBSITE_ID,
+					}),
+				],
+				grantedFunctionalityConsents
+			);
+
+			expect(globals).toEqual({
+				CRISP_COOKIE_DOMAIN: 'example.com',
+				CRISP_COOKIE_EXPIRE: 3600,
+				CRISP_RUNTIME_CONFIG: { locale: 'en' },
+				CRISP_TOKEN_ID: undefined,
+				CRISP_WEBSITE_ID,
+			});
+			expect(crispQueue).toEqual([['safe', true]]);
+		});
+
+		it('sets no optional globals or queue entries for a bare website ID', () => {
+			let crispQueue: unknown[][] | undefined;
+			let runtimeConfig: unknown = 'not read';
+
+			installHeadProbe((node, win) => {
+				if (node.src === 'https://client.crisp.chat/l.js') {
+					crispQueue = win.$crisp?.map((entry) => [...entry]);
+					runtimeConfig = win.CRISP_RUNTIME_CONFIG;
+				}
+			});
+
+			loadScripts(
+				[build({ websiteId: CRISP_WEBSITE_ID })],
+				grantedFunctionalityConsents
+			);
+
+			expect(crispQueue).toEqual([]);
+			expect(runtimeConfig).toBeUndefined();
+		});
+
+		it('waits for functionality consent before append', () => {
+			let appended = false;
+			installHeadProbe((node) => {
+				if (node.src === 'https://client.crisp.chat/l.js') {
+					appended = true;
+				}
+			});
+
+			loadScripts([build({ websiteId: CRISP_WEBSITE_ID })], ALL_DENIED);
+
+			expect(appended).toBe(false);
+		});
+	}
+);
+
+describe.each(npmAndRemote('intercom', intercom))(
+	'Intercom contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('boots the regional settings and queue before append', () => {
+			let queueSnapshot: unknown[][] | undefined;
+			let settingsSnapshot: Record<string, unknown> | undefined;
+
+			installHeadProbe((node, win) => {
+				if (node.src !== 'https://widget.intercom.io/widget/abc12345') {
+					return;
+				}
+
+				win.Intercom?.('boot', { app_id: 'abc12345' });
+				queueSnapshot = cloneFrozen(win.Intercom?.q);
+				settingsSnapshot = cloneFrozen(win.intercomSettings);
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts(
+				[build({ appId: 'abc12345', region: 'eu' })],
+				grantedFunctionalityConsents
+			);
+
+			expect(settingsSnapshot).toEqual({
+				api_base: INTERCOM_API_BASES.eu,
+				app_id: 'abc12345',
+			});
+			expect(queueSnapshot).toEqual([['boot', { app_id: 'abc12345' }]]);
+		});
+
+		it('waits for functionality consent before append', () => {
+			let appended = false;
+			installHeadProbe((node) => {
+				if (node.src.startsWith('https://widget.intercom.io/')) {
+					appended = true;
+				}
+			});
+
+			loadScripts([build({ appId: 'abc12345' })], ALL_DENIED);
+
+			expect(appended).toBe(false);
+			expect(window.intercomSettings).toBeUndefined();
+		});
+	}
+);

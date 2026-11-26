@@ -6,6 +6,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
@@ -32,42 +33,131 @@ const getLoader = function getLoader(): HTMLScriptElement {
 	return element;
 };
 
-describe('Optimizely Web loader contract', () => {
+const cleanUp = function cleanUp(): void {
 	registerVendorContractCleanup();
 	afterEach(() => {
 		delete window.optimizely;
 	});
+};
 
-	it('waits for experience consent without globals or storage writes', () => {
-		const append = vi.spyOn(document.head, 'appendChild');
-		const store = vi.spyOn(Storage.prototype, 'setItem');
-		const readStore = vi.spyOn(Storage.prototype, 'getItem');
-		const removeStore = vi.spyOn(Storage.prototype, 'removeItem');
-		const cookies = document.cookie;
-		const writeCookie = vi.spyOn(document, 'cookie', 'set');
-		const scripts = [optimizelyWeb({ projectId: '12345678' })];
+describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
+	'Optimizely Web loader contract through the %s',
+	(_label, build) => {
+		cleanUp();
 
-		loadScripts(scripts, ALL_DENIED);
-		updateScripts(scripts, grantedMeasurementConsents);
+		it('waits for experience consent without globals or storage writes', () => {
+			const append = vi.spyOn(document.head, 'appendChild');
+			const store = vi.spyOn(Storage.prototype, 'setItem');
+			const readStore = vi.spyOn(Storage.prototype, 'getItem');
+			const removeStore = vi.spyOn(Storage.prototype, 'removeItem');
+			const cookies = document.cookie;
+			const writeCookie = vi.spyOn(document, 'cookie', 'set');
+			const scripts = [build({ projectId: '12345678' })];
 
-		expect(append).not.toHaveBeenCalled();
-		expect(getLoaders()).toHaveLength(0);
-		expect(window.optimizely).toBeUndefined();
-		expect(store).not.toHaveBeenCalled();
-		expect(readStore).not.toHaveBeenCalled();
-		expect(removeStore).not.toHaveBeenCalled();
-		expect(writeCookie).not.toHaveBeenCalled();
-		expect(document.cookie).toBe(cookies);
+			loadScripts(scripts, ALL_DENIED);
+			updateScripts(scripts, grantedMeasurementConsents);
 
-		expect(updateScripts(scripts, grantedExperienceConsents).loaded).toEqual([
-			'optimizely',
-		]);
-		expect(getLoaders()).toHaveLength(1);
-		expect(getLoader().async).toBe(false);
-		expect(getLoader().id).not.toBe('optimizely');
-		updateScripts(scripts, { ...grantedExperienceConsents, marketing: true });
-		expect(getLoaders()).toHaveLength(1);
-	});
+			expect(append).not.toHaveBeenCalled();
+			expect(getLoaders()).toHaveLength(0);
+			expect(window.optimizely).toBeUndefined();
+			expect(store).not.toHaveBeenCalled();
+			expect(readStore).not.toHaveBeenCalled();
+			expect(removeStore).not.toHaveBeenCalled();
+			expect(writeCookie).not.toHaveBeenCalled();
+			expect(document.cookie).toBe(cookies);
+
+			expect(updateScripts(scripts, grantedExperienceConsents).loaded).toEqual([
+				'optimizely',
+			]);
+			expect(getLoaders()).toHaveLength(1);
+			expect(getLoader().async).toBe(false);
+			expect(getLoader().id).not.toBe('optimizely');
+			updateScripts(scripts, { ...grantedExperienceConsents, marketing: true });
+			expect(getLoaders()).toHaveLength(1);
+		});
+
+		it('removes the loader without permanently opting the visitor out', () => {
+			const scripts = [build({ projectId: '12345678' })];
+			loadScripts(scripts, grantedExperienceConsents);
+			const element = getLoader();
+			const api = { push: vi.fn() };
+			window.optimizely = api;
+			element.dispatchEvent(new Event('load'));
+
+			expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual([
+				'optimizely',
+			]);
+			expect(element.isConnected).toBe(false);
+			expect(getLoaders()).toHaveLength(0);
+			expect(window.optimizely).toBe(api);
+			expect(api.push).not.toHaveBeenCalled();
+		});
+
+		it('sends no stale load commands after revocation and regrant', () => {
+			const scripts = [build({ projectId: '12345678' })];
+			loadScripts(scripts, grantedExperienceConsents);
+			const revoked = getLoader();
+			updateScripts(scripts, ALL_DENIED);
+			const api = { push: vi.fn() };
+			window.optimizely = api;
+			revoked.dispatchEvent(new Event('load'));
+			expect(getLoaders()).toHaveLength(0);
+			expect(api.push).not.toHaveBeenCalled();
+
+			updateScripts(scripts, grantedExperienceConsents);
+			const current = getLoader();
+			expect(current).not.toBe(revoked);
+			current.dispatchEvent(new Event('load'));
+			revoked.dispatchEvent(new Event('load'));
+			expect(getLoaders()).toEqual([current]);
+			expect(window.optimizely).toBe(api);
+			expect(api.push).not.toHaveBeenCalled();
+		});
+
+		it('keeps the snippet blocked when its vendor is switched off', async () => {
+			const kernel = createConsentKernel();
+			const loader = createScriptLoader({
+				kernel,
+				scripts: [build({ projectId: '12345678' })],
+			});
+			try {
+				await kernel.commands.save(
+					{ experience: true },
+					{ vendors: { optimizely: false } }
+				);
+				expect(getLoaders()).toHaveLength(0);
+				expect(window.optimizely).toBeUndefined();
+				await kernel.commands.save(
+					{ experience: true },
+					{ vendors: { optimizely: true } }
+				);
+				expect(getLoaders()).toHaveLength(1);
+				await kernel.commands.save(
+					{ experience: true },
+					{ vendors: { optimizely: false } }
+				);
+				expect(getLoaders()).toHaveLength(0);
+			} finally {
+				loader.dispose();
+				kernel.dispose();
+			}
+		});
+
+		it('forwards the provider CSP nonce to the loader', () => {
+			loadScripts(
+				[build({ projectId: '12345678' })],
+				grantedExperienceConsents,
+				{
+					nonce: 'provider-nonce',
+				}
+			);
+			expect(getLoader().nonce).toBe('provider-nonce');
+		});
+	}
+);
+
+describe('Optimizely Web loader contract with npm-only options', () => {
+	cleanUp();
 
 	it('honours an overridden consent condition', () => {
 		const scripts = [
@@ -83,71 +173,6 @@ describe('Optimizely Web loader contract', () => {
 			measurement: true,
 		});
 		expect(getLoaders()).toHaveLength(1);
-	});
-
-	it('removes the loader without permanently opting the visitor out', () => {
-		const scripts = [optimizelyWeb({ projectId: '12345678' })];
-		loadScripts(scripts, grantedExperienceConsents);
-		const element = getLoader();
-		const api = { push: vi.fn() };
-		window.optimizely = api;
-		element.dispatchEvent(new Event('load'));
-
-		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual(['optimizely']);
-		expect(element.isConnected).toBe(false);
-		expect(getLoaders()).toHaveLength(0);
-		expect(window.optimizely).toBe(api);
-		expect(api.push).not.toHaveBeenCalled();
-	});
-
-	it('sends no stale load commands after revocation and regrant', () => {
-		const scripts = [optimizelyWeb({ projectId: '12345678' })];
-		loadScripts(scripts, grantedExperienceConsents);
-		const revoked = getLoader();
-		updateScripts(scripts, ALL_DENIED);
-		const api = { push: vi.fn() };
-		window.optimizely = api;
-		revoked.dispatchEvent(new Event('load'));
-		expect(getLoaders()).toHaveLength(0);
-		expect(api.push).not.toHaveBeenCalled();
-
-		updateScripts(scripts, grantedExperienceConsents);
-		const current = getLoader();
-		expect(current).not.toBe(revoked);
-		current.dispatchEvent(new Event('load'));
-		revoked.dispatchEvent(new Event('load'));
-		expect(getLoaders()).toEqual([current]);
-		expect(window.optimizely).toBe(api);
-		expect(api.push).not.toHaveBeenCalled();
-	});
-
-	it('keeps the snippet blocked when its vendor is switched off', async () => {
-		const kernel = createConsentKernel();
-		const loader = createScriptLoader({
-			kernel,
-			scripts: [optimizelyWeb({ projectId: '12345678' })],
-		});
-		try {
-			await kernel.commands.save(
-				{ experience: true },
-				{ vendors: { optimizely: false } }
-			);
-			expect(getLoaders()).toHaveLength(0);
-			expect(window.optimizely).toBeUndefined();
-			await kernel.commands.save(
-				{ experience: true },
-				{ vendors: { optimizely: true } }
-			);
-			expect(getLoaders()).toHaveLength(1);
-			await kernel.commands.save(
-				{ experience: true },
-				{ vendors: { optimizely: false } }
-			);
-			expect(getLoaders()).toHaveLength(0);
-		} finally {
-			loader.dispose();
-			kernel.dispose();
-		}
 	});
 
 	it('uses the subscribed core loader for a custom URL, revoke and regrant', async () => {
@@ -219,16 +244,5 @@ describe('Optimizely Web loader contract', () => {
 		loadScripts([optimizelyWeb(options)], grantedExperienceConsents);
 		expect(document.head.querySelectorAll('script')).toHaveLength(0);
 		expect(window.optimizely).toBeUndefined();
-	});
-
-	it('forwards the provider CSP nonce to the loader', () => {
-		loadScripts(
-			[optimizelyWeb({ projectId: '12345678' })],
-			grantedExperienceConsents,
-			{
-				nonce: 'provider-nonce',
-			}
-		);
-		expect(getLoader().nonce).toBe('provider-nonce');
 	});
 });
