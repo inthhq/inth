@@ -39,6 +39,22 @@ const LETTER_OR_DIGIT = /^[A-Za-z0-9]$/u;
 const CHARACTER_KINDS = [/^[a-z]$/u, /^[A-Z]$/u, /^[0-9]$/u];
 const QUANTIFIER = /^(?:[?*+]|\{\d+(?:,\d*)?\})\??/u;
 
+const LABEL_CHARACTERS = [
+  ..."abcdefghijklmnopqrstuvwxyz",
+  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  ..."0123456789",
+];
+/** Labels an `id` pattern in the host must refuse. */
+const LABEL_PROBES = [
+  "",
+  "-",
+  ...LABEL_CHARACTERS.flatMap((char) => [
+    `-${char}`,
+    `${char}-`,
+    char.repeat(64),
+  ]),
+];
+
 /** A class range whose ends are both lowercase, both uppercase or both digits. */
 const isLabelRange = (from: string, to: string): boolean =>
   from <= to &&
@@ -74,7 +90,7 @@ const isLabelClass = (body: string): boolean => {
 
 /**
  * Whether an `id` pattern can only match one DNS label: letters, digits and
- * hyphens, at least one character. Reads the pattern's source and accepts a
+ * hyphens, 1 to 63 characters, no hyphen at either end. Reads the pattern's source and accepts a
  * small grammar it can prove: `^`, then literal letters, digits and `-`,
  * classes of those, non-capturing or plain groups and quantifiers, then `$`.
  * Anything else (`.`, escapes, `|`, lookarounds, negated classes) is refused,
@@ -119,12 +135,17 @@ const isDnsLabelPattern = (pattern: string): boolean => {
   if (depth !== 0) {
     return false;
   }
+  let compiled: RegExp;
   try {
-    // An empty label would leave the vendor domain as the whole host.
-    return !new RegExp(pattern, "u").test("");
+    compiled = new RegExp(pattern, "u");
   } catch {
     return false;
   }
+  // An empty label would leave the vendor domain as the whole host. The other
+  // probes refuse what DNS does not allow in a label: a hyphen at either end,
+  // or more than 63 characters. Probing cannot prove a pattern refuses every
+  // such label, but it catches the common loose forms such as `^[a-z-]+$`.
+  return !LABEL_PROBES.some((probe) => compiled.test(probe));
 };
 
 /** Text of a string or template literal, with each expression marked. */
@@ -312,7 +333,7 @@ export const fixedScriptHostRule = defineRule({
     },
     messages: {
       hostPlaceholder:
-        "`{{placeholder}}` sets the script host. Write the host literally, declare this name as an option of kind `hostname` in the options this file passes to `defineRemote`, or make it the whole first label of a literal vendor domain of two or more labels and declare it there as kind `id` with an anchored pattern of letters, digits and hyphens only.",
+        "`{{placeholder}}` sets the script host. Write the host literally, declare this name as an option of kind `hostname` in the options this file passes to `defineRemote`, or make it the whole first label of a literal vendor domain of two or more labels and declare it there as kind `id` with an anchored pattern of letters, digits and hyphens only that refuses a hyphen at either end and labels over 63 characters.",
       notFixed:
         "A manifest script `src` must be a string that starts with `https://` and a literal host, so no option can change which host's code runs.",
       unresolved:

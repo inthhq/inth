@@ -303,6 +303,26 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
       name: "an id pattern that matches an empty label",
     },
     {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z-]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that matches a lone hyphen",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^-?[a-z]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that matches a label starting with a hyphen",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z]+-?$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that matches a label ending with a hyphen",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z0-9]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that matches a label longer than 63 characters",
+    },
+    {
       code: partnerFile(LABEL_SRC, labelOption("^[a-z]{2,1}$")),
       errors: [hostPlaceholder],
       name: "an id pattern that does not compile",
@@ -416,7 +436,7 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
     },
     {
       code: `
-        const PARTNER_PATTERN = '^[A-Za-z0-9-]+$';
+        const PARTNER_PATTERN = '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$';
         const options = {
           partnerName: { example: 'acme', kind: 'id', label: 'Partner', pattern: PARTNER_PATTERN, required: true },
         } as const;
