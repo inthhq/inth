@@ -139,6 +139,29 @@ describe('Pendo event lifecycle', () => {
 		expect(runtime.clearSession).not.toHaveBeenCalled();
 		expect(getLoader()).toBe(loader);
 	});
+	it("initializes with this call's visitor metadata when an earlier call differed only by a date", async () => {
+		const visitor = (createdAt: string) => ({
+			createdAt: new Date(createdAt),
+			id: 'visitor',
+		});
+		pendo({ apiKey: 'date-key', visitor: visitor('2020-01-01') });
+		loadScripts(
+			[pendo({ apiKey: 'date-key', visitor: visitor('2024-06-30') })],
+			granted
+		);
+		const runtime = {
+			initialize: vi.fn(),
+			startSendingEvents: vi.fn(),
+			stopSendingEvents: vi.fn(),
+		};
+		window.pendo = runtime;
+		getLoader().dispatchEvent(new Event('load'));
+		await Promise.resolve();
+		expect(runtime.initialize).toHaveBeenCalledWith({
+			visitor: visitor('2024-06-30'),
+		});
+	});
+
 	it('stops sending events when the script is removed after it initialized', async () => {
 		const scripts = [pendo({ apiKey: 'removed-key' })];
 		loadScripts(scripts, granted);

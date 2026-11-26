@@ -9,9 +9,15 @@ const manifestCache = new WeakMap<
 	Map<string, ResolvedManifest>
 >();
 
+/**
+ * The cache key for `value`, or `undefined` when it holds anything but plain
+ * data: primitives, arrays and objects whose prototype is `Object.prototype`
+ * or `null`. A `Date`, a function or a class instance has no key, because
+ * two that read differently can serialize the same.
+ */
 const serializeConfigValue = function serializeConfigValue(
 	value: unknown
-): string {
+): string | undefined {
 	if (value === undefined) {
 		return 'undefined';
 	}
@@ -21,43 +27,52 @@ const serializeConfigValue = function serializeConfigValue(
 	}
 
 	if (Array.isArray(value)) {
-		return `[${value.map((item) => serializeConfigValue(item)).join(',')}]`;
+		const items = value.map((item) => serializeConfigValue(item));
+		return items.includes(undefined) ? undefined : `[${items.join(',')}]`;
 	}
 
 	if (typeof value === 'object') {
+		const prototype = Object.getPrototypeOf(value);
+		if (prototype !== Object.prototype && prototype !== null) {
+			return undefined;
+		}
 		// The key only needs a stable order. `localeCompare` would load the ICU
 		// collator on the first vendor helper call of a page.
 		const entries = Object.entries(value as Record<string, unknown>).sort(
 			([left], [right]) => (left < right ? -1 : 1)
 		);
+		const parts: string[] = [];
+		for (const [key, nestedValue] of entries) {
+			const nested = serializeConfigValue(nestedValue);
+			if (nested === undefined) {
+				return undefined;
+			}
+			parts.push(`${JSON.stringify(key)}:${nested}`);
+		}
+		return `{${parts.join(',')}}`;
+	}
 
-		return `{${entries
-			.map(
-				([key, nestedValue]) =>
-					`${JSON.stringify(key)}:${serializeConfigValue(nestedValue)}`
-			)
-			.join(',')}}`;
+	if (typeof value === 'function' || typeof value === 'symbol') {
+		return undefined;
 	}
 
 	return `${typeof value}:${String(value)}`;
 };
 
-const getManifestCacheKey = function getManifestCacheKey(
-	config: Record<string, unknown>
-): string {
-	return serializeConfigValue(config);
-};
-
 /**
  * Compiles a `VendorManifest` + config into its serializable
  * `ResolvedManifest`. Repeated calls with the same manifest object and an
- * equal config return the same cached object, so callers must not mutate it.
+ * equal config of plain data return the same cached object, so callers must
+ * not mutate it.
  */
 export const getCompiledManifest = function getCompiledManifest(
 	manifest: VendorManifest,
 	config: Record<string, unknown>
 ): ResolvedManifest {
-	const cacheKey = getManifestCacheKey(config);
+	const cacheKey = serializeConfigValue(config);
+	if (cacheKey === undefined) {
+		return compileManifest(manifest, config);
+	}
 	let configCache = manifestCache.get(manifest);
 
 	if (!configCache) {
