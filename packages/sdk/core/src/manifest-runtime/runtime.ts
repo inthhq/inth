@@ -2,6 +2,7 @@ import { emitScriptDebugEvent } from '../libs/script-loader/debug';
 import type {
 	Script,
 	ScriptCallbackInfo,
+	ScriptDebugEventInput,
 	ScriptLifecycleCallback,
 	ScriptServerStart,
 } from '../libs/script-loader/types';
@@ -10,6 +11,13 @@ import { stepReachesCode } from './call-path';
 import { mapConsentState } from './consent-mapping';
 import { levelOf, RUNTIME_VALUE_LEVELS } from './features';
 import { isNativeFunction, undeclaredRoot } from './globals';
+import { levelThree } from './part';
+import type {
+	PhaseContext,
+	RuntimeAccess,
+	ScriptState,
+	StepValues,
+} from './part';
 import { RUNTIME_VALUE_KIND } from './types';
 import type { ManifestStep, ResolvedManifest, RuntimeValue } from './types';
 import { ALL_DENIED, signalConsents } from './vendor-consent';
@@ -23,40 +31,6 @@ export type InlineStepsStart = (
 ) => ScriptServerStart | undefined;
 
 type ManifestLifecycleCallback = Exclude<ScriptLifecycleCallback, 'onError'>;
-
-/** What one manifest script keeps between its callbacks. */
-interface ScriptState {
-	/** Tags its `loadScriptStep` steps inserted, by id. */
-	tags: Map<string, HTMLScriptElement>;
-	/** Its script element, from the last callback that had one. */
-	element?: HTMLScriptElement;
-	/** The last callback info it got before disposal. */
-	latest?: ScriptCallbackInfo;
-	disposed: boolean;
-	/**
-	 * The `consentGate` value: one function per registration. Once the
-	 * registration is disposed it returns `null` for ever.
-	 */
-	gate: (value: unknown) => unknown;
-}
-
-/** What runtime values and owned tags read while steps run. */
-interface StepValues {
-	/** The callback info the steps run for. */
-	info?: ScriptCallbackInfo;
-	state?: ScriptState;
-	/** The manifest's `globals`: the only roots a step may use. */
-	globals?: readonly string[];
-}
-
-interface StepExecutionContext {
-	scriptId: string;
-	elementId: string;
-	hasConsent: boolean;
-	callback: ManifestLifecycleCallback;
-	phase: string;
-	values?: StepValues;
-}
 
 const isRuntimeValue = function isRuntimeValue(
 	value: unknown
@@ -274,10 +248,10 @@ const mayCall = (
 	fn: unknown,
 	holder: unknown,
 	method: unknown,
-	args: () => unknown[]
+	args: readonly unknown[]
 ): boolean =>
 	!isNativeFunction(fn) ||
-	(isArrayMethod(fn, holder, method) && !holdsPlatformObject(args()));
+	(isArrayMethod(fn, holder, method) && !holdsPlatformObject(args));
 
 /**
  * Reports a call that a function the manifest defined refused when it was
@@ -377,6 +351,9 @@ const resolveQueueTarget = function resolveQueueTarget(
 	return Array.isArray(queueTarget) ? queueTarget : undefined;
 };
 
+/** What the level 3 part runs steps through. */
+const access = {} as RuntimeAccess;
+
 // oxlint-disable-next-line complexity -- Preserve established branch order and control flow.
 const executeStep = function executeStep(
 	step: ManifestStep,
@@ -390,7 +367,6 @@ const executeStep = function executeStep(
 		return;
 	}
 
-	// oxlint-disable-next-line default-case -- Preserve established branch order and control flow.
 	switch (step.type) {
 		case 'setGlobal': {
 			const shouldSet = step.ifUndefined !== false;
@@ -453,7 +429,7 @@ const executeStep = function executeStep(
 
 				if (
 					typeof dispatcher === 'function' &&
-					mayCall(dispatcher, self, step.dispatchProperty, () => runtimeArgs)
+					mayCall(dispatcher, self, step.dispatchProperty, runtimeArgs)
 				) {
 					dispatcher.apply(self, runtimeArgs);
 					return;
@@ -502,54 +478,36 @@ const executeStep = function executeStep(
 		}
 
 		case 'callGlobal': {
-			// Arguments are read only once there is something to call.
-			const readArgs = () =>
-				step.literalArgs
-					? (JSON.parse(JSON.stringify(step.args ?? [])) as unknown[])
-					: (step.args ?? []).map((arg) => cloneStepValue(arg, values));
-
-			let args: unknown[] | undefined;
-			const argsOnce = () => {
-				args ??= readArgs();
-				return args;
-			};
-
+			let holder: unknown;
+			let call: unknown;
 			if (step.path) {
 				const found = readPath(win, step.path);
-				if (
-					typeof found?.value === 'function' &&
-					mayCall(found.value, found.holder, step.path.at(-1), argsOnce)
-				) {
-					(found.value as (...args: unknown[]) => unknown).apply(
-						found.holder,
-						argsOnce()
-					);
+				holder = found?.holder;
+				call = found?.value;
+			} else {
+				const target = win[step.global] as Record<string, unknown>;
+				if (!target || isPlatformObject(target)) {
+					break;
 				}
+				[holder, call] = step.method
+					? [target, target[step.method]]
+					: [undefined, target];
+			}
+			if (typeof call !== 'function') {
 				break;
 			}
-
-			const target = win[step.global];
-			if (!target || isPlatformObject(target)) {
-				break;
-			}
-
-			if (step.method) {
-				const objectTarget = target as Record<
-					string,
-					(...args: unknown[]) => unknown
-				>;
-				const method = objectTarget[step.method];
-				if (
-					typeof method === 'function' &&
-					mayCall(method, objectTarget, step.method, argsOnce)
-				) {
-					method.apply(objectTarget, argsOnce());
-				}
-			} else if (
-				typeof target === 'function' &&
-				mayCall(target, undefined, undefined, argsOnce)
+			// Arguments are read only once there is something to call.
+			const args = step.literalArgs
+				? (JSON.parse(JSON.stringify(step.args ?? [])) as unknown[])
+				: (step.args ?? []).map((arg) => cloneStepValue(arg, values));
+			if (
+				!mayCall(call, holder, step.path ? step.path.at(-1) : step.method, args)
 			) {
-				(target as (...args: unknown[]) => unknown)(...argsOnce());
+				break;
+			}
+			const result: unknown = call.apply(holder, args);
+			if (step.then) {
+				levelThree()?.settle(result, step.then, values, access);
 			}
 			break;
 		}
@@ -561,7 +519,7 @@ const executeStep = function executeStep(
 			}
 			const item = cloneStepValue(step.value, values);
 			const { push } = queueTarget;
-			if (mayCall(push, queueTarget, 'push', () => [item])) {
+			if (mayCall(push, queueTarget, 'push', [item])) {
 				push.call(queueTarget, item);
 			}
 			break;
@@ -675,7 +633,7 @@ const executeStep = function executeStep(
 								if (typeof method !== 'function') {
 									return;
 								}
-								if (mayCall(method, latestTarget, methodName, () => args)) {
+								if (mayCall(method, latestTarget, methodName, args)) {
 									method.apply(latestTarget, args);
 								} else {
 									reportRefusedCall(step, values);
@@ -881,52 +839,62 @@ const executeStep = function executeStep(
 		case 'loadScript': {
 			break;
 		}
+
+		// The parser lets a later level's step through only once its part
+		// is installed.
+		default: {
+			levelThree()?.run(step, values, access);
+		}
 	}
 };
 
 const executePhaseSteps = function executePhaseSteps(
 	steps: ManifestStep[],
-	context: StepExecutionContext
+	context: PhaseContext
 ): void {
 	if (steps.length === 0) {
 		return;
 	}
+	const { callback, elementId, hasConsent, phase, scriptId } = context;
+	const emit = (
+		event: Pick<ScriptDebugEventInput, 'action' | 'message' | 'scope'> &
+			Partial<ScriptDebugEventInput>
+	) =>
+		emitScriptDebugEvent({
+			callback,
+			elementId,
+			hasConsent,
+			phase,
+			scriptId,
+			source: 'manifest-runtime',
+			...event,
+		});
+	const phaseEvent = (action: 'phase_start' | 'phase_complete') =>
+		emit({
+			action,
+			data: { stepCount: steps.length },
+			message: `Manifest phase ${phase} ${action === 'phase_start' ? 'started' : 'completed'}`,
+			scope: 'phase',
+		});
 
-	emitScriptDebugEvent({
-		action: 'phase_start',
-		callback: context.callback,
-		data: {
-			stepCount: steps.length,
-		},
-		elementId: context.elementId,
-		hasConsent: context.hasConsent,
-		message: `Manifest phase ${context.phase} started`,
-		phase: context.phase,
-		scope: 'phase',
-		scriptId: context.scriptId,
-		source: 'manifest-runtime',
-	});
-
+	phaseEvent('phase_start');
 	for (const [stepIndex, step] of steps.entries()) {
+		const stepEvent = {
+			scope: 'step',
+			stepIndex,
+			stepType: step.type,
+		} as const;
 		try {
 			executeStep(step, context.values ?? {});
-			emitScriptDebugEvent({
+			emit({
+				...stepEvent,
 				action: 'step_executed',
-				callback: context.callback,
-				elementId: context.elementId,
-				hasConsent: context.hasConsent,
 				message: `Executed ${step.type}`,
-				phase: context.phase,
-				scope: 'step',
-				scriptId: context.scriptId,
-				source: 'manifest-runtime',
-				stepIndex,
-				stepType: step.type,
 			});
 		} catch (error) {
-			emitScriptDebugEvent({
+			emit({
+				...stepEvent,
 				action: 'step_error',
-				callback: context.callback,
 				data: {
 					error:
 						// oxlint-disable-next-line no-nested-ternary -- Preserve established branch order and control flow.
@@ -936,35 +904,16 @@ const executePhaseSteps = function executePhaseSteps(
 								? error
 								: 'Unknown error',
 				},
-				elementId: context.elementId,
-				hasConsent: context.hasConsent,
 				message: `Failed to execute ${step.type}`,
-				phase: context.phase,
-				scope: 'step',
-				scriptId: context.scriptId,
-				source: 'manifest-runtime',
-				stepIndex,
-				stepType: step.type,
 			});
 			throw error;
 		}
 	}
-
-	emitScriptDebugEvent({
-		action: 'phase_complete',
-		callback: context.callback,
-		data: {
-			stepCount: steps.length,
-		},
-		elementId: context.elementId,
-		hasConsent: context.hasConsent,
-		message: `Manifest phase ${context.phase} completed`,
-		phase: context.phase,
-		scope: 'phase',
-		scriptId: context.scriptId,
-		source: 'manifest-runtime',
-	});
+	phaseEvent('phase_complete');
 };
+
+// Filled in below, once the functions it holds are defined.
+Object.assign(access, { phase: executePhaseSteps, step: executeStep });
 
 const partitionConsentIds = function partitionConsentIds(
 	mapping: Record<string, string[]>,
@@ -1190,13 +1139,13 @@ const manifestToScript = function manifestToScript(
 	// registration gets its own state, so a disposed one's gate stays closed
 	// and the new one's opens.
 	let state = createScriptState();
-
 	/**
-	 * The context a callback runs its phases in, after recording its info.
-	 * `current` is the state of the registration the callback belongs to;
-	 * without it, a callback after disposal starts a new registration.
+	 * Records a callback's info, and returns what runs a list of steps as
+	 * one of its phases. `current` is the state of the registration the
+	 * callback belongs to; without it, a callback after disposal starts a
+	 * new registration.
 	 */
-	const contextFor = (
+	const runnerFor = (
 		callback: ManifestLifecycleCallback,
 		info: ScriptCallbackInfo,
 		current?: ScriptState
@@ -1209,13 +1158,15 @@ const manifestToScript = function manifestToScript(
 			own.latest = info;
 		}
 		own.element = info.element ?? own.element;
-		return {
-			callback,
-			elementId: info.elementId,
-			hasConsent: info.hasConsent,
-			scriptId: resolvedManifest.vendor,
-			values: { globals: resolvedManifest.globals, info, state: own },
-		};
+		return (steps: ManifestStep[], phase: string) =>
+			executePhaseSteps(steps, {
+				callback,
+				elementId: info.elementId,
+				hasConsent: info.hasConsent,
+				phase,
+				scriptId: resolvedManifest.vendor,
+				values: { globals: resolvedManifest.globals, info, state: own },
+			});
 	};
 
 	const script: Script = {
@@ -1248,72 +1199,44 @@ const manifestToScript = function manifestToScript(
 	) {
 		script.onBeforeLoad = (info: ScriptCallbackInfo) => {
 			lastHasConsent = info.hasConsent;
-			const baseContext = contextFor('onBeforeLoad', info);
+			const run = runnerFor('onBeforeLoad', info);
 			// The HTML already ran the other steps through `serverStart`.
 			if (info.startedOnServer) {
-				executePhaseSteps(
+				run(
 					preLoadSteps(resolvedManifest, info).filter(isHydrationOnly),
-					{ ...baseContext, phase: 'hydration' }
+					'hydration'
 				);
 				return;
 			}
 
-			executePhaseSteps(resolvedManifest.bootstrapSteps, {
-				...baseContext,
-				phase: 'bootstrap',
-			});
-			executePhaseSteps(
+			run(resolvedManifest.bootstrapSteps, 'bootstrap');
+			run(
 				getConsentSignalSteps(resolvedManifest, 'default', info),
-				{
-					...baseContext,
-					phase: 'consent-default',
-				}
+				'consent-default'
 			);
-			executePhaseSteps(resolvedManifest.setupSteps, {
-				...baseContext,
-				phase: 'setup',
-			});
-			executePhaseSteps(
-				info.hasConsent
-					? resolvedManifest.onBeforeLoadGrantedSteps
-					: resolvedManifest.onBeforeLoadDeniedSteps,
-				{
-					...baseContext,
-					phase: info.hasConsent ? 'onBeforeLoadGranted' : 'onBeforeLoadDenied',
-				}
-			);
+			run(resolvedManifest.setupSteps, 'setup');
+			if (info.hasConsent) {
+				run(resolvedManifest.onBeforeLoadGrantedSteps, 'onBeforeLoadGranted');
+			} else {
+				run(resolvedManifest.onBeforeLoadDeniedSteps, 'onBeforeLoadDenied');
+			}
 		};
 	}
 
-	script.serverStart = manifestServerStart(
-		resolvedManifest,
-		script.onBeforeLoad,
-		inlineStepsStart
-	);
-
 	if (resolvedManifest.afterLoadSteps.length > 0 || hasLoadConsentBranches) {
 		script.onLoad = (info: ScriptCallbackInfo) => {
-			const baseContext = contextFor('onLoad', info);
-			executePhaseSteps(resolvedManifest.afterLoadSteps, {
-				...baseContext,
-				phase: 'afterLoad',
-			});
+			const run = runnerFor('onLoad', info);
+			run(resolvedManifest.afterLoadSteps, 'afterLoad');
 
 			if (info.hasConsent && resolvedManifest.onLoadGrantedSteps.length > 0) {
 				lastHasConsent = true;
-				executePhaseSteps(resolvedManifest.onLoadGrantedSteps, {
-					...baseContext,
-					phase: 'onLoadGranted',
-				});
+				run(resolvedManifest.onLoadGrantedSteps, 'onLoadGranted');
 			} else if (
 				!info.hasConsent &&
 				resolvedManifest.onLoadDeniedSteps.length > 0
 			) {
 				lastHasConsent = false;
-				executePhaseSteps(resolvedManifest.onLoadDeniedSteps, {
-					...baseContext,
-					phase: 'onLoadDenied',
-				});
+				run(resolvedManifest.onLoadDeniedSteps, 'onLoadDenied');
 			}
 		};
 	}
@@ -1322,42 +1245,21 @@ const manifestToScript = function manifestToScript(
 		script.onConsentChange = (info: ScriptCallbackInfo) => {
 			const consentChanged = lastHasConsent !== info.hasConsent;
 			lastHasConsent = info.hasConsent;
-			const baseContext = contextFor('onConsentChange', info);
-			executePhaseSteps(
+			const run = runnerFor('onConsentChange', info);
+			run(
 				getConsentSignalSteps(resolvedManifest, 'update', info),
-				{
-					...baseContext,
-					phase: 'consent-update',
-				}
+				'consent-update'
 			);
-
-			if (resolvedManifest.onConsentChangeSteps.length > 0) {
-				executePhaseSteps(resolvedManifest.onConsentChangeSteps, {
-					...baseContext,
-					phase: 'onConsentChange',
-				});
-			}
+			run(resolvedManifest.onConsentChangeSteps, 'onConsentChange');
 
 			if (!consentChanged) {
 				return;
 			}
 
-			if (
-				info.hasConsent &&
-				resolvedManifest.onConsentGrantedSteps.length > 0
-			) {
-				executePhaseSteps(resolvedManifest.onConsentGrantedSteps, {
-					...baseContext,
-					phase: 'onConsentGranted',
-				});
-			} else if (
-				!info.hasConsent &&
-				resolvedManifest.onConsentDeniedSteps.length > 0
-			) {
-				executePhaseSteps(resolvedManifest.onConsentDeniedSteps, {
-					...baseContext,
-					phase: 'onConsentDenied',
-				});
+			if (info.hasConsent) {
+				run(resolvedManifest.onConsentGrantedSteps, 'onConsentGranted');
+			} else {
+				run(resolvedManifest.onConsentDeniedSteps, 'onConsentDenied');
 			}
 		};
 	}
@@ -1379,10 +1281,7 @@ const manifestToScript = function manifestToScript(
 				return;
 			}
 			const run = (current: ScriptCallbackInfo) =>
-				executePhaseSteps(steps, {
-					...contextFor('onDispose', current, disposed),
-					phase: 'onDispose',
-				});
+				runnerFor('onDispose', current, disposed)(steps, 'onDispose');
 			// A replacement can be a withdrawal the incoming registration saves
 			// as it starts, so wait for it and run with consent as it is then.
 			if (info.afterReplacement) {
@@ -1393,6 +1292,14 @@ const manifestToScript = function manifestToScript(
 		};
 	}
 
+	levelThree()?.script(script, state, resolvedManifest);
+	// After the level 3 part wrapped `onBeforeLoad`: `serverStart` runs
+	// only for the script's own.
+	script.serverStart = manifestServerStart(
+		resolvedManifest,
+		script.onBeforeLoad,
+		inlineStepsStart
+	);
 	return script;
 };
 

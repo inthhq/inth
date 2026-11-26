@@ -150,6 +150,11 @@
 			"import": "./dist/manifest-runtime/index.js",
 			"default": "./dist/manifest-runtime/index.js"
 		},
+		"./manifest-runtime/level-three": {
+			"types": "./dist-types/manifest-runtime/level-three.d.ts",
+			"import": "./dist/manifest-runtime/level-three.js",
+			"default": "./dist/manifest-runtime/level-three.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./dist-types/transports/manifest-browser.d.ts",
 			"import": "./dist/transports/manifest-browser.js",

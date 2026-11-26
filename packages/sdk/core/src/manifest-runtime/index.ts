@@ -9,6 +9,7 @@ export { callReachesCode, stepReachesCode } from './call-path';
 export { mapConsentState } from './consent-mapping';
 export { isDeclarableGlobal, manifestRoots } from './globals';
 export {
+	CONDITION_LEVELS,
 	manifestFeatureLevel,
 	MANIFEST_FIELD_LEVELS,
 	RUNTIME_VALUE_LEVELS,
@@ -17,6 +18,8 @@ export {
 } from './features';
 export { MANIFEST_RUNTIME_LEVEL } from './level';
 export { parseResolvedManifest } from './parse';
+export { installLevelThree } from './part';
+export type { LevelThreePart } from './part';
 export type { ParsedManifest } from './parse';
 export {
 	createManifestScriptFactory,

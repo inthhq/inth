@@ -229,14 +229,15 @@ const WRITTEN_FIELDS = [
 
 /**
  * Every name a step writes, from a step that may not have passed the
- * parser. A call's path is what it calls, which `calledPath` reads.
+ * parser. A call's path is what it calls, which `calledPath` reads, and a
+ * `listen` step's target is the window or document it listens on.
  *
  * @internal
  */
 export const writtenNames = function writtenNames(
 	step: Readonly<Record<string, unknown>>
 ): readonly unknown[] {
-	if (step.type === 'callGlobal') {
+	if (step.type === 'callGlobal' || step.type === 'listen') {
 		return [];
 	}
 	return [

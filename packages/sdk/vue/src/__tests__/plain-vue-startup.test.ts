@@ -92,7 +92,7 @@ test("manifest() without a build snapshot reads the backend's /v1/consent/manife
 	});
 	await expect.poll(() => fetch.mock.calls.length).toBeGreaterThan(0);
 	expect(String(fetch.mock.calls[0]?.[0])).toBe(
-		'https://consent.example.test/api/v1/consent/manifest?manifestLevel=2'
+		'https://consent.example.test/api/v1/consent/manifest?manifestLevel=3'
 	);
 });
 

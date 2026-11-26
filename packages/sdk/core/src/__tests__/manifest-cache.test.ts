@@ -393,7 +393,7 @@ describe('manifest source URLs', () => {
 			})
 		).toBe('https://cdn.example/manifest.json');
 		expect(resolveManifestSourceUrl({ projectUrl: '/api/inth/' })).toBe(
-			'/api/inth/v1/consent/manifest?manifestLevel=2'
+			'/api/inth/v1/consent/manifest?manifestLevel=3'
 		);
 		expect(() => resolveManifestSourceUrl({})).toThrow(
 			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'

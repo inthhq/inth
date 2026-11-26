@@ -58,7 +58,7 @@ describe('fetchSSRData', () => {
 			country: 'US',
 			gpc: false,
 			language: null,
-			manifestLevel: 2,
+			manifestLevel: 3,
 			projectUrl: 'https://example.com/api/inth',
 			region: null,
 		});
@@ -132,7 +132,7 @@ describe('fetchSSRData', () => {
 		});
 
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(
-			'https://consent.example.com/api/inth/v1/consent/init?manifestLevel=2'
+			'https://consent.example.com/api/inth/v1/consent/init?manifestLevel=3'
 		);
 		const sent = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
 		expect(sent.has('x-inth-version')).toBe(false);
@@ -214,7 +214,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/v1/consent/init?manifestLevel=2',
+			'https://example.com/api/inth/v1/consent/init?manifestLevel=3',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -238,7 +238,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/v1/consent/init?manifestLevel=2',
+			'https://example.com/api/inth/v1/consent/init?manifestLevel=3',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -309,7 +309,7 @@ describe('fetchSSRData', () => {
 				country: 'US',
 				gpc: false,
 				language: null,
-				manifestLevel: 2,
+				manifestLevel: 3,
 				projectUrl: 'https://consent.example.com/api/inth',
 				region: null,
 			},
@@ -348,7 +348,7 @@ describe('fetchSSRData', () => {
 			country: 'DE',
 			gpc: true,
 			language: 'de',
-			manifestLevel: 2,
+			manifestLevel: 3,
 			projectUrl: 'https://example.com/api/inth',
 			region: 'BE',
 		});

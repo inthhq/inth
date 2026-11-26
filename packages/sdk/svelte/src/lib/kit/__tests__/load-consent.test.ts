@@ -183,7 +183,7 @@ describe('loadConsent', () => {
 			fetch,
 		});
 		expect(fetch.mock.calls[0]?.[0]).toBe(
-			`${BACKEND}/v1/consent/manifest?manifestLevel=2`
+			`${BACKEND}/v1/consent/manifest?manifestLevel=3`
 		);
 		expect(consent.prefetch.initialPolicyResolution?.policyId).toBe(
 			'eu-opt-in'

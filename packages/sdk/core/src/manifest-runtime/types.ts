@@ -178,6 +178,13 @@ interface CallGlobalBase {
 	 * @default false
 	 */
 	literalArgs?: boolean;
+	/**
+	 * Steps to run once the call's result settles (level 3), with runtime
+	 * values read then. A rejection runs nothing and is reported as a debug
+	 * event. They belong to the load the call ran in: once the script is
+	 * disposed, that element fails, or a later load starts, they do not run.
+	 */
+	then?: ManifestStep[];
 }
 
 export type CallGlobalStep = CallGlobalBase &
@@ -385,7 +392,69 @@ export interface ConstructGlobalStep {
 	copyAssignedValueToArgProperty?: string;
 }
 
+/**
+ * A test an `if` step makes when it runs (level 3).
+ *
+ * - `consent`: the condition holds for the vendor's consent now. Every
+ *   optional category reads denied while the visitor has the vendor off.
+ * - `lost`: one of the categories was granted when this script's previous
+ *   callback ran, and is not now.
+ * - `flag`: a `setFlag` step of this script last set the flag to `true`.
+ * - `loaded`: the script's file loaded for its current element, and that
+ *   element is still in the document.
+ * - `documentReady`: the document is no longer loading.
+ * - `global`: the value at the path under window is a function, an array,
+ *   or anything but `undefined`.
+ * - `not`, `all`: the other condition fails; every condition in the list
+ *   holds.
+ */
+export type ManifestCondition =
+	| { consent: HasCondition<AllConsentNames> }
+	| { lost: AllConsentNames[] }
+	| { flag: string }
+	| { loaded: true }
+	| { documentReady: true }
+	| { global: string[]; is: 'function' | 'array' | 'defined' }
+	| { not: ManifestCondition }
+	| { all: ManifestCondition[] };
+
+/** Runs `then` when `when` holds, else `else` (level 3). */
+export interface IfStep {
+	type: 'if';
+	when: ManifestCondition;
+	then: ManifestStep[];
+	else?: ManifestStep[];
+}
+
+/**
+ * Sets one of the script's own flags, which `{ flag }` conditions read
+ * (level 3). Every flag reads `false` again once the script is disposed.
+ */
+export interface SetFlagStep {
+	type: 'setFlag';
+	name: string;
+	value: boolean;
+}
+
+/**
+ * Runs `steps` each time `event` fires on window or document (level 3),
+ * with runtime values read then. The listener belongs to the load it was
+ * added in, and goes when the script is disposed, that element fails, or a
+ * later load starts.
+ */
+export interface ListenStep {
+	type: 'listen';
+	target: 'window' | 'document';
+	event: string;
+	steps: ManifestStep[];
+	/** Run for the first event only. @default false */
+	once?: boolean;
+}
+
 export type ManifestStep =
+	| IfStep
+	| SetFlagStep
+	| ListenStep
 	| LoadScriptStep
 	| SetGlobalStep
 	| DefineQueueFunctionStep
@@ -487,11 +556,14 @@ export const MANIFEST_STEP_TYPES: Readonly<Record<ManifestStep['type'], true>> =
 		defineQueueMethods: true,
 		defineQueueProxy: true,
 		defineStubFunction: true,
+		if: true,
+		listen: true,
 		loadScript: true,
 		loadScriptStep: true,
 		pushToQueue: true,
 		removeScript: true,
 		setCookie: true,
+		setFlag: true,
 		setGlobal: true,
 		setGlobalPath: true,
 	};

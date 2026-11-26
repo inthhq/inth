@@ -184,7 +184,7 @@ describe('prefetch utilities', () => {
 		expect(findPrefetchedInitFor('/api/inth')).toBeUndefined();
 
 		// One from a release before levels sent none, which is level 1: its
-		// answer leaves out the level 2 scripts this SDK runs.
+		// answer leaves out the level 2 and 3 scripts this SDK runs.
 		if (entry) {
 			delete entry.requestContext.manifestLevel;
 		}

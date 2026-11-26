@@ -5,9 +5,14 @@
  * cannot be runnable without a level.
  */
 import { RUNTIME_VALUE_KIND } from './types';
-import type { ManifestStep, ResolvedManifest, RuntimeValue } from './types';
+import type {
+	ManifestCondition,
+	ManifestStep,
+	ResolvedManifest,
+	RuntimeValue,
+} from './types';
 
-type Level = 1 | 2;
+type Level = 1 | 2 | 3;
 
 /** Each manifest field's level. */
 export const MANIFEST_FIELD_LEVELS: Readonly<
@@ -44,14 +49,26 @@ export const MANIFEST_FIELD_LEVELS: Readonly<
 	vendorDetails: 1,
 };
 
+type StepFields<Type extends ManifestStep['type']> = Readonly<
+	Record<keyof Extract<ManifestStep, { type: Type }>, Level>
+>;
+
+/** The step types level 3 added, which its part of the runtime runs. */
+type LevelThreeStepType = 'if' | 'listen' | 'setFlag';
+
 /**
- * Each step type's fields and their levels. `type` holds the level of the
- * step type itself.
+ * The step types and fields before level 3, and their levels: what the
+ * runtime parses with no level 3 part. {@link STEP_FIELD_LEVELS} adds
+ * level 3, which the parser reads from the part once it is installed, so
+ * none of it is in `inth.manifests.js`.
+ * @internal
  */
-export const STEP_FIELD_LEVELS: {
-	readonly [Type in ManifestStep['type']]: Readonly<
-		Record<keyof Extract<ManifestStep, { type: Type }>, Level>
-	>;
+export const EARLIER_STEP_FIELD_LEVELS: {
+	readonly [
+		Type in Exclude<ManifestStep['type'], LevelThreeStepType>
+	]: Type extends 'callGlobal'
+		? Omit<StepFields<Type>, 'then'>
+		: StepFields<Type>;
 } = {
 	callGlobal: {
 		args: 1,
@@ -140,6 +157,22 @@ export const STEP_FIELD_LEVELS: {
 };
 
 /**
+ * Each step type's fields and their levels. `type` holds the level of the
+ * step type itself.
+ */
+export const STEP_FIELD_LEVELS: {
+	readonly [Type in ManifestStep['type']]: StepFields<Type>;
+} = {
+	...EARLIER_STEP_FIELD_LEVELS,
+	// oxlint-disable-next-line unicorn/no-thenable -- The step field is named then.
+	callGlobal: { ...EARLIER_STEP_FIELD_LEVELS.callGlobal, then: 3 },
+	// oxlint-disable-next-line unicorn/no-thenable -- The step field is named then.
+	if: { else: 3, then: 3, type: 3, when: 3 },
+	listen: { event: 3, once: 3, steps: 3, target: 3, type: 3 },
+	setFlag: { name: 3, type: 3, value: 3 },
+};
+
+/**
  * Values of a step field above level 1, by step type and field. A value
  * not listed here is level 1.
  */
@@ -164,6 +197,21 @@ export const QUEUE_METHOD_FORMATS: ReadonlySet<unknown> = new Set([
 	'nameAndArguments',
 ]);
 
+/** Each `if` condition's level, by its key. */
+export const CONDITION_LEVELS: Readonly<
+	Record<keyof UnionKeys<ManifestCondition>, Level>
+> = {
+	all: 3,
+	consent: 3,
+	documentReady: 3,
+	flag: 3,
+	global: 3,
+	is: 3,
+	loaded: 3,
+	lost: 3,
+	not: 3,
+};
+
 /** Each runtime value's level. */
 export const RUNTIME_VALUE_LEVELS: Readonly<
 	Record<RuntimeValue['value'], Level>
@@ -186,16 +234,23 @@ export const SCRIPT_ATTRIBUTE_LEVELS: Readonly<Record<string, Level>> = {
 	id: 2,
 };
 
+type UnionKeys<Union> = {
+	[Key in Union extends unknown ? keyof Union : never]: true;
+};
+
+/** Step fields that hold a list of nested steps. */
+const NESTED_STEP_LISTS = ['then', 'else', 'steps'] as const;
+
 const MAX_DEPTH = 32;
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null;
 
 /** `table[name]` when `table` lists `name` itself, so `constructor` is not inherited. */
-export const levelOf = (
-	table: Readonly<Record<string, Level>> | undefined,
+export const levelOf = <Entry = Level>(
+	table: Readonly<Record<string, Entry>> | undefined,
 	name: unknown
-): Level | undefined =>
+): Entry | undefined =>
 	table && typeof name === 'string' && Object.hasOwn(table, name)
 		? table[name]
 		: undefined;
@@ -215,7 +270,26 @@ const valueLevel = (value: unknown, depth = 0): number => {
 	return level;
 };
 
-const stepLevel = (step: ManifestStep): number => {
+/** The highest level of a condition and the conditions inside it. */
+const conditionLevel = (condition: unknown, depth = 0): number => {
+	if (depth > MAX_DEPTH || !isObject(condition)) {
+		return 1;
+	}
+	let level = 1;
+	for (const [key, value] of Object.entries(condition)) {
+		level = Math.max(level, levelOf(CONDITION_LEVELS, key) ?? Infinity);
+		if (key === 'not') {
+			level = Math.max(level, conditionLevel(value, depth + 1));
+		} else if (key === 'all' && Array.isArray(value)) {
+			for (const entry of value) {
+				level = Math.max(level, conditionLevel(entry, depth + 1));
+			}
+		}
+	}
+	return level;
+};
+
+const stepLevel = (step: ManifestStep, depth = 0): number => {
 	const tables = STEP_FIELD_LEVELS as Record<string, Record<string, Level>>;
 	const valueTables = STEP_VALUE_LEVELS as Record<
 		string,
@@ -243,6 +317,19 @@ const stepLevel = (step: ManifestStep): number => {
 	if (step.type === 'loadScript') {
 		for (const name of Object.keys(step.attributes ?? {})) {
 			level = Math.max(level, levelOf(SCRIPT_ATTRIBUTE_LEVELS, name) ?? 1);
+		}
+	}
+	if (step.type === 'if') {
+		level = Math.max(level, conditionLevel(step.when));
+	}
+	if (depth < MAX_DEPTH) {
+		for (const field of NESTED_STEP_LISTS) {
+			const nested = (step as unknown as Record<string, unknown>)[field];
+			if (Array.isArray(nested)) {
+				for (const inner of nested as ManifestStep[]) {
+					level = Math.max(level, stepLevel(inner, depth + 1));
+				}
+			}
 		}
 	}
 	return level;

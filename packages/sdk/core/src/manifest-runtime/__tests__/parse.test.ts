@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
 import { describe, expect, it } from 'vite-plus/test';
 
 import { manifestRoots } from '../globals';
@@ -257,6 +258,30 @@ describe('parseResolvedManifest', () => {
 			reason: 'its requires is not a whole number from 1',
 		});
 	});
+	it.each<[string, unknown, string]>([
+		[
+			'an if step',
+			{ then: [], type: 'if', when: { loaded: true } },
+			'setupSteps has a step of unknown type "if"',
+		],
+		[
+			'callGlobal.then',
+			{ global: 'vendor', then: [], type: 'callGlobal' },
+			'setupSteps has a callGlobal step with the unknown field then',
+		],
+	])(
+		'refuses %s while the level 3 part is not installed',
+		(_label, step, reason) => {
+			expect(
+				parseResolvedManifest({
+					...manifest(),
+					requires: 3,
+					setupSteps: [step],
+				})
+			).toEqual({ ok: false, reason });
+		}
+	);
+
 	it('refuses a manifest of more than 200 steps', () => {
 		const [step] = manifest().bootstrapSteps;
 		const input = {

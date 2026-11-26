@@ -196,6 +196,11 @@
 			"import": "./lib/core/dist/manifest-runtime/index.js",
 			"default": "./lib/core/dist/manifest-runtime/index.js"
 		},
+		"./manifest-runtime/level-three": {
+			"types": "./lib/core/dist-types/manifest-runtime/level-three.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/level-three.js",
+			"default": "./lib/core/dist/manifest-runtime/level-three.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
 			"import": "./lib/core/dist/transports/manifest-browser.js",

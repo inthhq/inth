@@ -104,7 +104,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=3',
 		]);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({
 			next: { revalidate: 300 },
@@ -132,7 +132,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=3',
 		]);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -165,7 +165,7 @@ describe('resolveConsent wiring', () => {
 			// The state tells InthProvider this page has no journey.
 			expect(state.journey).toBeNull();
 			expect(String(off.mock.calls[0]?.[0])).toBe(
-				'https://consent.example.com/v1/consent/init?manifestLevel=2'
+				'https://consent.example.com/v1/consent/init?manifestLevel=3'
 			);
 		}
 	});
@@ -183,7 +183,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(manifestFetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=3',
 		]);
 
 		const initFetch = backend();
@@ -298,7 +298,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=3',
 		]);
 		expect(resolved.initialPolicyResolution?.status).toBe('matched');
 	});

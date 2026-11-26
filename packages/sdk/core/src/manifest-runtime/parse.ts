@@ -14,8 +14,8 @@ import {
 	MANIFEST_FIELD_LEVELS,
 	QUEUE_METHOD_FORMATS,
 	RUNTIME_VALUE_LEVELS,
+	EARLIER_STEP_FIELD_LEVELS,
 	SCRIPT_ATTRIBUTE_LEVELS,
-	STEP_FIELD_LEVELS,
 } from './features';
 import {
 	isDeclarableGlobal,
@@ -24,12 +24,14 @@ import {
 	stepRoots,
 } from './globals';
 import { MANIFEST_RUNTIME_LEVEL } from './level';
+import { levelThree } from './part';
+import type { StepCheck } from './part';
 import {
 	RUNTIME_VALUE_KIND,
 	VENDOR_MANIFEST_KIND,
 	VENDOR_MANIFEST_SCHEMA_VERSION,
 } from './types';
-import type { ManifestStep, ResolvedManifest } from './types';
+import type { ResolvedManifest } from './types';
 
 /** A manifest that passed {@link parseResolvedManifest}, or why it failed. */
 export type ParsedManifest =
@@ -196,31 +198,78 @@ const fieldProblem = (step: Record<string, unknown>): string | undefined => {
 	}
 };
 
-/** Why a step of a known type cannot run, or `undefined`. */
-const stepProblem = (step: Record<string, unknown>): string | undefined => {
-	const known = new Set<string>(
-		Object.keys(STEP_FIELD_LEVELS[step.type as ManifestStep['type']])
-	);
-	const extra = unknownKey(step, known);
+/** The most steps a manifest may have, nested ones included. */
+const MAX_STEPS = 200;
+
+/** Steps the manifest being parsed has so far. */
+let stepCount = 0;
+
+/** The `globals` of the manifest being parsed. */
+let declaredGlobals: readonly unknown[] = [];
+
+/** Why a step in `list` cannot run, as a parser reason, or `undefined`. */
+// oxlint-disable-next-line complexity -- One check per rule, in order.
+const stepProblem: StepCheck = (step, list, depth) => {
+	const part = levelThree();
+	// With the level 3 part, its table, which has level 3 in it.
+	const fields = isRecord(step)
+		? levelOf<Readonly<Record<string, number>>>(
+				part?.steps ?? EARLIER_STEP_FIELD_LEVELS,
+				step.type
+			)
+		: undefined;
+	if (!(isRecord(step) && fields)) {
+		return `${list} has a step of unknown type ${JSON.stringify(
+			isRecord(step) ? step.type : step
+		)}`;
+	}
+	stepCount += 1;
+	if (stepCount > MAX_STEPS) {
+		return `it has more than ${MAX_STEPS} steps`;
+	}
+	const type = String(step.type);
+	// A manifest loads its file through its top-level `loadScript`; one in a
+	// step list would never run.
+	if (type === 'loadScript' && list !== 'loadScript') {
+		return `${list} has a loadScript step`;
+	}
+	// Nothing would remove a tag inserted after disposal.
+	if (list === 'onDisposeSteps' && type === 'loadScriptStep') {
+		return `${list} has a loadScriptStep step`;
+	}
+	const extra = unknownKey(step, new Set(Object.keys(fields)));
 	if (extra !== undefined) {
-		return `has a ${String(step.type)} step with the unknown field ${extra}`;
+		return `${list} has a ${type} step with the unknown field ${extra}`;
 	}
 	const name = prototypeName(step);
 	if (name !== undefined) {
-		return `has a ${String(step.type)} step that names ${name}`;
+		return `${list} has a ${type} step that names ${name}`;
 	}
 	if (hasUnknownRuntimeValue(step)) {
-		return `has a ${String(step.type)} step with a runtime value this SDK does not know`;
+		return `${list} has a ${type} step with a runtime value this SDK does not know`;
 	}
 	const problem = fieldProblem(step);
 	if (problem !== undefined) {
-		return `has a ${String(step.type)} step that ${problem}`;
+		return `${list} has a ${type} step that ${problem}`;
 	}
 	if (callReachesCode(calledPath(step))) {
-		return `has a ${String(step.type)} step that calls ${calledPath(step).join('.')}`;
+		return `${list} has a ${type} step that calls ${calledPath(step).join('.')}`;
 	}
 	if (writeReachesCode(writtenNames(step))) {
-		return `has a ${String(step.type)} step that writes ${writtenNames(step).join(', ')}`;
+		return `${list} has a ${type} step that writes ${writtenNames(step).join(', ')}`;
+	}
+	const roots = stepRoots(step);
+	const undeclared = roots.findIndex(
+		(root) => !declaredGlobals.includes(root)
+	);
+	if (undeclared !== -1) {
+		return `${list} has a ${type} step that uses the global ${String(roots[undeclared])}, which globals does not declare`;
+	}
+	if (
+		part &&
+		Object.keys(step).some((field) => (fields[field] as number) > 2)
+	) {
+		return part.problem(step, list, depth, stepProblem);
 	}
 	return undefined;
 };
@@ -267,8 +316,6 @@ const globalsProblem = (
 	}
 	return undefined;
 };
-/** The most steps a manifest may have. */
-const MAX_STEPS = 200;
 
 /** Why `manifest` cannot run, or `undefined` when it can. */
 // oxlint-disable-next-line complexity -- One check per manifest field.
@@ -281,6 +328,7 @@ const manifestProblem = (
 	) {
 		return `it is not a version ${VENDOR_MANIFEST_SCHEMA_VERSION} vendor manifest`;
 	}
+	stepCount = 0;
 	// A newer manifest's field this SDK does not know would be skipped,
 	// running the rest without it.
 	const extra = unknownKey(manifest, MANIFEST_KEYS);
@@ -311,8 +359,7 @@ const manifestProblem = (
 	) {
 		return 'its globals is not a list of names';
 	}
-	const declared: readonly unknown[] = globals;
-	let stepCount = 0;
+	declaredGlobals = globals;
 	for (const list of STEP_LISTS) {
 		const steps = manifest[list];
 		if (steps === undefined && OPTIONAL_STEP_LISTS.has(list)) {
@@ -322,45 +369,16 @@ const manifestProblem = (
 			return `${list} is not a list`;
 		}
 		for (const step of steps) {
-			stepCount += 1;
-			if (stepCount > MAX_STEPS) {
-				return `it has more than ${MAX_STEPS} steps`;
-			}
-			if (
-				!(
-					isRecord(step) &&
-					typeof step.type === 'string' &&
-					Object.hasOwn(STEP_FIELD_LEVELS, step.type)
-				)
-			) {
-				return `${list} has a step of unknown type ${JSON.stringify(
-					isRecord(step) ? step.type : step
-				)}`;
-			}
-			// A manifest loads its file through its top-level `loadScript`;
-			// one in a step list would never run.
-			if (step.type === 'loadScript') {
-				return `${list} has a loadScript step`;
-			}
-			// Nothing would remove a tag inserted after disposal.
-			if (list === 'onDisposeSteps' && step.type === 'loadScriptStep') {
-				return `${list} has a loadScriptStep step`;
-			}
-			const stepIssue = stepProblem(step);
-			if (stepIssue !== undefined) {
-				return `${list} ${stepIssue}`;
-			}
-			const roots = stepRoots(step);
-			const undeclared = roots.findIndex((root) => !declared.includes(root));
-			if (undeclared !== -1) {
-				return `${list} has a ${String(step.type)} step that uses the global ${String(roots[undeclared])}, which globals does not declare`;
+			const problem = stepProblem(step, list, 0);
+			if (problem !== undefined) {
+				return problem;
 			}
 		}
 	}
 	// After the steps, so a step a block list refuses says why.
-	const problem = globalsProblem(manifest);
-	if (problem !== undefined) {
-		return problem;
+	const globalsIssue = globalsProblem(manifest);
+	if (globalsIssue !== undefined) {
+		return globalsIssue;
 	}
 	const { loadScript } = manifest;
 	if (
@@ -368,7 +386,7 @@ const manifestProblem = (
 		!(
 			isRecord(loadScript) &&
 			loadScript.type === 'loadScript' &&
-			stepProblem(loadScript) === undefined &&
+			stepProblem(loadScript, 'loadScript', 0) === undefined &&
 			isHttpsUrl(loadScript.src) &&
 			isOptional(loadScript.attributes, isTagAttributes)
 		)

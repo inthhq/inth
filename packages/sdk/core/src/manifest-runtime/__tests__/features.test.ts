@@ -1,10 +1,17 @@
-import { describe, expect, it } from 'vite-plus/test';
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
-import { manifestFeatureLevel } from '../features';
+import { CONDITION_LEVELS, manifestFeatureLevel } from '../features';
 import { manifestRoots } from '../globals';
 import { MANIFEST_RUNTIME_LEVEL } from '../level';
+import { levelThreePart } from '../level-three';
 import { parseResolvedManifest } from '../parse';
+import { installLevelThree } from '../part';
 import type { ResolvedManifest } from '../types';
+
+beforeAll(() => {
+	installLevelThree(levelThreePart);
+});
 
 /**
  * A manifest of level 1 features only. It carries no `globals`, which is
@@ -156,8 +163,94 @@ describe('manifestFeatureLevel', () => {
 		).toMatchObject({ ok: true });
 	});
 
+	const ifStep = (when: unknown, then: unknown[] = []) => ({
+		then,
+		type: 'if',
+		when,
+	});
+
+	it.each<[string, ResolvedManifest]>([
+		['an if step', withSetup(ifStep({ documentReady: true }))],
+		[
+			'a setFlag step',
+			withSetup({ name: 'started', type: 'setFlag', value: true }),
+		],
+		[
+			'a listen step',
+			withSetup({
+				event: 'vendor:ready',
+				steps: [],
+				target: 'window',
+				type: 'listen',
+			}),
+		],
+		[
+			'callGlobal.then',
+			withSetup({ global: 'vendor', then: [], type: 'callGlobal' }),
+		],
+		[
+			'a level 3 step nested in a level 1 list',
+			{
+				...levelOne(),
+				onLoadGrantedSteps: [
+					ifStep({ flag: 'a' }, [
+						{ id: 'addon', type: 'removeScript' },
+					]) as never,
+				],
+			},
+		],
+		...[
+			{ all: [{ consent: 'measurement' }] },
+			{ consent: 'measurement' },
+			{ documentReady: true },
+			{ flag: 'started' },
+			{ global: ['vendor', 'start'], is: 'function' },
+			{ loaded: true },
+			{ lost: ['marketing'] },
+			{ not: { loaded: true } },
+		].map((condition): [string, ResolvedManifest] => [
+			`the condition ${JSON.stringify(condition)}`,
+			withSetup(ifStep(condition)),
+		]),
+	])('reads %s as level 3, which this SDK parses', (_label, manifest) => {
+		expect(manifestFeatureLevel(manifest)).toBe(3);
+	});
+
+	it('parses a condition with each key the table lists', () => {
+		const conditions = [
+			{ all: [{ consent: 'measurement' }] },
+			{ consent: 'measurement' },
+			{ documentReady: true },
+			{ flag: 'started' },
+			{ global: ['vendor', 'start'], is: 'function' },
+			{ loaded: true },
+			{ lost: ['marketing'] },
+			{ not: { loaded: true } },
+		];
+		expect(
+			[
+				...new Set(conditions.flatMap((condition) => Object.keys(condition))),
+			].toSorted()
+		).toEqual(Object.keys(CONDITION_LEVELS).toSorted());
+		for (const condition of conditions) {
+			expect(
+				parseResolvedManifest({ ...withSetup(ifStep(condition)), requires: 3 }),
+				JSON.stringify(condition)
+			).toMatchObject({ ok: true });
+		}
+	});
+
 	it.each<[string, ResolvedManifest]>([
 		['a manifest field', { ...levelOne(), adapter: {} } as never],
+		[
+			'a step type nested in an if step',
+			withSetup(ifStep({ loaded: true }, [{ type: 'runInlineCode' }])),
+		],
+		['a condition', withSetup(ifStep({ visible: true }))],
+		[
+			'a condition nested in not',
+			withSetup(ifStep({ not: { visible: true } })),
+		],
 		['a step type', withSetup({ code: 'x', type: 'runInlineCode' })],
 		[
 			'a runtime value',
