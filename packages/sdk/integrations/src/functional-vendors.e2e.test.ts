@@ -10,6 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
 import { crisp } from './vendors/functional/crisp';
@@ -164,7 +165,7 @@ describe.each(npmAndRemote('crisp', crisp))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots the site settings and safe-mode queue before append', () => {
+		it('boots the site settings and safe-mode queue before append', async () => {
 			let crispQueue: unknown[][] | undefined;
 			let globals: Partial<TestWindow> | undefined;
 
@@ -196,6 +197,7 @@ describe.each(npmAndRemote('crisp', crisp))(
 				],
 				grantedFunctionalityConsents
 			);
+			await settleScripts();
 
 			expect(globals).toEqual({
 				CRISP_COOKIE_DOMAIN: 'example.com',
@@ -207,7 +209,7 @@ describe.each(npmAndRemote('crisp', crisp))(
 			expect(crispQueue).toEqual([['safe', true]]);
 		});
 
-		it('sets no optional globals or queue entries for a bare website ID', () => {
+		it('sets no optional globals or queue entries for a bare website ID', async () => {
 			let crispQueue: unknown[][] | undefined;
 			let runtimeConfig: unknown = 'not read';
 
@@ -222,12 +224,13 @@ describe.each(npmAndRemote('crisp', crisp))(
 				[build({ websiteId: CRISP_WEBSITE_ID })],
 				grantedFunctionalityConsents
 			);
+			await settleScripts();
 
 			expect(crispQueue).toEqual([]);
 			expect(runtimeConfig).toBeUndefined();
 		});
 
-		it('waits for functionality consent before append', () => {
+		it('waits for functionality consent before append', async () => {
 			let appended = false;
 			installHeadProbe((node) => {
 				if (node.src === 'https://client.crisp.chat/l.js') {
@@ -236,6 +239,7 @@ describe.each(npmAndRemote('crisp', crisp))(
 			});
 
 			loadScripts([build({ websiteId: CRISP_WEBSITE_ID })], ALL_DENIED);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 		});
@@ -247,7 +251,7 @@ describe.each(npmAndRemote('intercom', intercom))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots the regional settings and queue before append', () => {
+		it('boots the regional settings and queue before append', async () => {
 			let queueSnapshot: unknown[][] | undefined;
 			let settingsSnapshot: Record<string, unknown> | undefined;
 
@@ -266,6 +270,7 @@ describe.each(npmAndRemote('intercom', intercom))(
 				[build({ appId: 'abc12345', region: 'eu' })],
 				grantedFunctionalityConsents
 			);
+			await settleScripts();
 
 			expect(settingsSnapshot).toEqual({
 				api_base: INTERCOM_API_BASES.eu,
@@ -274,7 +279,7 @@ describe.each(npmAndRemote('intercom', intercom))(
 			expect(queueSnapshot).toEqual([['boot', { app_id: 'abc12345' }]]);
 		});
 
-		it('waits for functionality consent before append', () => {
+		it('waits for functionality consent before append', async () => {
 			let appended = false;
 			installHeadProbe((node) => {
 				if (node.src.startsWith('https://widget.intercom.io/')) {
@@ -283,6 +288,7 @@ describe.each(npmAndRemote('intercom', intercom))(
 			});
 
 			loadScripts([build({ appId: 'abc12345' })], ALL_DENIED);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 			expect(window.intercomSettings).toBeUndefined();

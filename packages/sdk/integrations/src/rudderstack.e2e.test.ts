@@ -11,6 +11,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import {
 	RUDDERSTACK_QUEUE_METHODS,
@@ -28,7 +29,7 @@ describe.each(npmAndRemote<RudderStackOptions>('rudderstack', rudderstack))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots the rudderanalytics queue and methods before the loader appends', () => {
+		it('boots the rudderanalytics queue and methods before the loader appends', async () => {
 			let methodTypes: Record<string, string> | undefined;
 			let queueSnapshot: unknown[] | undefined;
 			let scriptSrc: string | undefined;
@@ -59,16 +60,14 @@ describe.each(npmAndRemote<RudderStackOptions>('rudderstack', rudderstack))(
 
 			loadScripts(
 				[
-					{
-						...build({
-							dataPlaneHost: 'inth-live-probe.invalid',
-							writeKey: 'RudderStackContract',
-						}),
-						id: 'rudderstack-contract',
-					},
+					build({
+						dataPlaneHost: 'inth-live-probe.invalid',
+						writeKey: 'RudderStackContract',
+					}),
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(scriptSrc).toContain('/v3/modern/rsa.min.js');
 			expect(snippetExecuted).toBe(true);
@@ -84,7 +83,7 @@ describe.each(npmAndRemote<RudderStackOptions>('rudderstack', rudderstack))(
 			]);
 		});
 
-		it('omits page when trackPageView is false', () => {
+		it('omits page when trackPageView is false', async () => {
 			let queueSnapshot: unknown[] | undefined;
 
 			installHeadProbe((node, win) => {
@@ -100,24 +99,22 @@ describe.each(npmAndRemote<RudderStackOptions>('rudderstack', rudderstack))(
 
 			loadScripts(
 				[
-					{
-						...build({
-							dataPlaneHost: 'inth-live-probe.invalid',
-							trackPageView: false,
-							writeKey: 'RudderStackContract',
-						}),
-						id: 'rudderstack-contract',
-					},
+					build({
+						dataPlaneHost: 'inth-live-probe.invalid',
+						trackPageView: false,
+						writeKey: 'RudderStackContract',
+					}),
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(queueSnapshot).toEqual([
 				['load', 'RudderStackContract', 'https://inth-live-probe.invalid', {}],
 			]);
 		});
 
-		it('waits for measurement consent before appending the loader', () => {
+		it('waits for measurement consent before appending the loader', async () => {
 			let appended = false;
 
 			installHeadProbe((node) => {
@@ -128,16 +125,14 @@ describe.each(npmAndRemote<RudderStackOptions>('rudderstack', rudderstack))(
 
 			loadScripts(
 				[
-					{
-						...build({
-							dataPlaneHost: 'inth-live-probe.invalid',
-							writeKey: 'RudderStackContract',
-						}),
-						id: 'rudderstack-contract',
-					},
+					build({
+						dataPlaneHost: 'inth-live-probe.invalid',
+						writeKey: 'RudderStackContract',
+					}),
 				],
 				ALL_DENIED
 			);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 			expect(window.rudderanalytics).toBeUndefined();

@@ -6,12 +6,18 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { npmAndRemote } from './__tests__/remote-path';
+import {
+	npmAndRemote,
+	onRemoteDebug,
+	remoteLoaderOption,
+	splitRemote,
+} from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { optimizelyWeb } from './vendors/functional/optimizely';
@@ -45,7 +51,7 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 	(_label, build) => {
 		cleanUp();
 
-		it('waits for experience consent without globals or storage writes', () => {
+		it('waits for experience consent without globals or storage writes', async () => {
 			const append = vi.spyOn(document.head, 'appendChild');
 			const store = vi.spyOn(Storage.prototype, 'setItem');
 			const readStore = vi.spyOn(Storage.prototype, 'getItem');
@@ -55,6 +61,7 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 			const scripts = [build({ projectId: '12345678' })];
 
 			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
 			updateScripts(scripts, grantedMeasurementConsents);
 
 			expect(append).not.toHaveBeenCalled();
@@ -76,9 +83,10 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 			expect(getLoaders()).toHaveLength(1);
 		});
 
-		it('removes the loader without permanently opting the visitor out', () => {
+		it('removes the loader without permanently opting the visitor out', async () => {
 			const scripts = [build({ projectId: '12345678' })];
 			loadScripts(scripts, grantedExperienceConsents);
+			await settleScripts();
 			const element = getLoader();
 			const api = { push: vi.fn() };
 			window.optimizely = api;
@@ -93,9 +101,10 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 			expect(api.push).not.toHaveBeenCalled();
 		});
 
-		it('sends no stale load commands after revocation and regrant', () => {
+		it('sends no stale load commands after revocation and regrant', async () => {
 			const scripts = [build({ projectId: '12345678' })];
 			loadScripts(scripts, grantedExperienceConsents);
+			await settleScripts();
 			const revoked = getLoader();
 			updateScripts(scripts, ALL_DENIED);
 			const api = { push: vi.fn() };
@@ -115,12 +124,18 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 		});
 
 		it('keeps the snippet blocked when its vendor is switched off', async () => {
-			const kernel = createConsentKernel();
+			const { code, load } = splitRemote([build({ projectId: '12345678' })]);
+			const kernel = createConsentKernel(
+				load.length > 0 ? { initialScriptRegistry: { load } } : undefined
+			);
 			const loader = createScriptLoader({
 				kernel,
-				scripts: [build({ projectId: '12345678' })],
+				onDebug: onRemoteDebug,
+				remote: remoteLoaderOption,
+				scripts: code,
 			});
 			try {
+				await settleScripts();
 				await kernel.commands.save(
 					{ experience: true },
 					{ vendors: { optimizely: false } }
@@ -143,7 +158,7 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 			}
 		});
 
-		it('forwards the provider CSP nonce to the loader', () => {
+		it('forwards the provider CSP nonce to the loader', async () => {
 			loadScripts(
 				[build({ projectId: '12345678' })],
 				grantedExperienceConsents,
@@ -151,6 +166,7 @@ describe.each(npmAndRemote('optimizelyWeb', optimizelyWeb))(
 					nonce: 'provider-nonce',
 				}
 			);
+			await settleScripts();
 			expect(getLoader().nonce).toBe('provider-nonce');
 		});
 	}
