@@ -1,12 +1,19 @@
+/* oxlint-disable unicorn/no-thenable -- `if` steps have a `then` field. */
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
+import { levelThreeScript } from '../_shared/level-three';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl, stripTrailingSlashes } from '../_shared/script-url';
+import {
+	stripTrailingSlashes,
+	trimToUndefined,
+	withScriptUrl,
+} from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -18,51 +25,79 @@ declare global {
 	}
 }
 
-/** Customer.io Data Pipelines bootstrap, installed only after consent. */
+const setupSteps = [
+	{ name: 'cioanalytics', type: 'setGlobal', value: [] },
+	{
+		methods: [...ANALYTICS_JS_QUEUE_METHODS],
+		preserveExisting: true,
+		returnTarget: true,
+		target: 'cioanalytics',
+		type: 'defineQueueMethods',
+	},
+	{
+		ifGlobalIsQueue: true,
+		path: ['cioanalytics', '_writeKey'],
+		type: 'setGlobalPath',
+		value: '{{writeKey}}',
+	},
+	{
+		ifGlobalIsQueue: true,
+		path: ['cioanalytics', '_cdn'],
+		type: 'setGlobalPath',
+		value: '{{cdnUrl}}',
+	},
+	{
+		ifGlobalIsQueue: true,
+		path: ['cioanalytics', '_loadOptions'],
+		type: 'setGlobalPath',
+		value: '{{loadOptions}}',
+	},
+	{
+		ifGlobalIsQueue: true,
+		path: ['cioanalytics', 'SNIPPET_VERSION'],
+		type: 'setGlobalPath',
+		value: '4.15.3',
+	},
+] as const satisfies VendorManifest['install'];
+
+/**
+ * One page call per grant: on load with consent, or on a later grant once
+ * the file loaded. A revoke clears the flag.
+ */
+const pageOnce = [
+	{
+		then: [
+			{ name: 'paged', type: 'setFlag', value: true },
+			{ global: 'cioanalytics', method: 'page', type: 'callGlobal' },
+		],
+		type: 'if',
+		when: { all: [{ loaded: true }, { not: { flag: 'paged' } }] },
+	},
+] as const satisfies VendorManifest['install'];
+
+/**
+ * Customer.io Data Pipelines, installed only after consent. analytics.js
+ * runs with `initialPageview` off, so the manifest sends one page call per
+ * grant, and resets identity on revoke.
+ */
 export const customerIoManifest = {
 	...vendorManifestContract,
-	category: 'marketing',
+	category: '{{category}}',
 	install: [
-		{ name: 'cioanalytics', type: 'setGlobal', value: [] },
-		{
-			methods: [...ANALYTICS_JS_QUEUE_METHODS],
-			preserveExisting: true,
-			returnTarget: true,
-			target: 'cioanalytics',
-			type: 'defineQueueMethods',
-		},
-		{
-			ifGlobalIsQueue: true,
-			path: ['cioanalytics', '_writeKey'],
-			type: 'setGlobalPath',
-			value: '{{writeKey}}',
-		},
-		{
-			ifGlobalIsQueue: true,
-			path: ['cioanalytics', '_cdn'],
-			type: 'setGlobalPath',
-			value: '{{cdnUrl}}',
-		},
-		{
-			ifGlobalIsQueue: true,
-			path: ['cioanalytics', '_loadOptions'],
-			type: 'setGlobalPath',
-			value: '{{loadOptions}}',
-		},
-		{
-			ifGlobalIsQueue: true,
-			path: ['cioanalytics', 'SNIPPET_VERSION'],
-			type: 'setGlobalPath',
-			value: '4.15.3',
-		},
 		{
 			async: true,
 			attributes: { 'data-global-customerio-analytics-key': 'cioanalytics' },
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdp.customer.io/v1/analytics-js/snippet/{{writeKeyPath}}/analytics.min.js',
 			type: 'loadScript',
 		},
 	],
+	onBeforeLoadGranted: setupSteps,
+	onConsentDenied: [
+		{ name: 'paged', type: 'setFlag', value: false },
+		{ global: 'cioanalytics', method: 'reset', type: 'callGlobal' },
+	],
+	onConsentGranted: pageOnce,
+	onLoadGranted: pageOnce,
 	persistAfterConsentRevoked: true,
 	vendor: 'customer-io',
 	vendorDetails: {
@@ -72,6 +107,22 @@ export const customerIoManifest = {
 		privacyPolicyUrl: 'https://customer.io/legal/privacy-policy/',
 	},
 } as const satisfies VendorManifest;
+
+/** {@link customerIoManifest} for a workspace in the EU region. */
+const customerIoEuManifest = {
+	...customerIoManifest,
+	install: [
+		{
+			...customerIoManifest.install[0],
+			src: 'https://cdp-eu.customer.io/v1/analytics-js/snippet/{{writeKeyPath}}/analytics.min.js',
+		},
+	],
+} as const satisfies VendorManifest;
+
+const regionHosts = {
+	eu: 'https://cdp-eu.customer.io',
+	us: 'https://cdp.customer.io',
+} as const;
 
 export interface CustomerIoOptions {
 	/** Public Data Pipelines source write key. */
@@ -91,28 +142,72 @@ export interface CustomerIoOptions {
 	scriptUrl?: string;
 }
 
-const createCustomerIo = function createCustomerIo(
-	options: CustomerIoOptions
-): Script {
-	const category = options?.category ?? 'marketing';
-	const writeKey = readId(options?.writeKey);
-	if (!writeKey) {
-		return skipMissingId('customerIo', 'writeKey', {
+/**
+ * Builds the serializable manifest behind {@link customerIo}. The write key
+ * must already be trimmed and non-empty; `cdnOrigin`, an origin the helper
+ * checked, sets the CDN analytics.js loads its other files from.
+ */
+export const resolveCustomerIoManifest = function resolveCustomerIoManifest({
+	category = 'marketing',
+	cdnOrigin,
+	loadOptions,
+	region = 'us',
+	writeKey,
+}: Pick<CustomerIoOptions, 'category' | 'loadOptions' | 'region'> & {
+	writeKey: string;
+	cdnOrigin?: string;
+}): ResolvedManifest {
+	return getCompiledManifest(
+		region === 'eu' ? customerIoEuManifest : customerIoManifest,
+		{
 			category,
-			manifest: customerIoManifest,
-		});
-	}
-	const region = options.region ?? 'us';
-	if (region !== 'us' && region !== 'eu') {
-		throw new Error("customerIo: region must be 'us' or 'eu'");
-	}
-	const host = region === 'eu' ? 'cdp-eu.customer.io' : 'cdp.customer.io';
-	const cdnUrl = stripTrailingSlashes(
-		resolveScriptUrl(options.cdnUrl, `https://${host}`)
+			cdnUrl: cdnOrigin ?? regionHosts[region],
+			loadOptions: { ...loadOptions, initialPageview: false },
+			writeKey,
+			writeKeyPath: encodeURIComponent(writeKey),
+		}
 	);
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `loadOptions`, a custom consent condition, `cdnUrl` and
+ * `scriptUrl` stay npm-only. Marked pure so a bundler drops it from an npm
+ * bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'customerIo',
+		{
+			region: {
+				default: 'us',
+				kind: 'enum',
+				label: 'Workspace region',
+				values: ['us', 'eu'],
+			},
+			writeKey: {
+				example: 'a1b2c3d4e5f6a7b8c9d0',
+				kind: 'id',
+				label: 'Write key',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+		},
+		resolveCustomerIoManifest
+	);
+
+/** The checked CDN origin, or `undefined` for the region's own CDN. */
+const readCdnOrigin = function readCdnOrigin(
+	cdnUrl: string | undefined
+): string | undefined {
+	const value = trimToUndefined(cdnUrl);
+	if (value === undefined) {
+		return undefined;
+	}
 	let cdn: URL;
 	try {
-		cdn = new URL(cdnUrl);
+		cdn = new URL(stripTrailingSlashes(value));
 	} catch (error) {
 		if (!(error instanceof TypeError)) {
 			throw error;
@@ -131,68 +226,34 @@ const createCustomerIo = function createCustomerIo(
 	) {
 		throw new Error('customerIo: cdnUrl must be an HTTP(S) origin');
 	}
-	const script = resolveManifest(customerIoManifest, {
-		cdnUrl: cdn.origin,
-		loadOptions: { ...options.loadOptions, initialPageview: false },
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`${cdn.origin}/v1/analytics-js/snippet/${encodeURIComponent(writeKey)}/analytics.min.js`
-		),
-		writeKey,
-	});
-	let hasConsent = false;
-	let loaded = false;
-	let generation = 0;
-	let requestedGeneration = -1;
-	const pageAfterLoad = (element: HTMLScriptElement | undefined): void => {
-		if (
-			!loaded ||
-			!hasConsent ||
-			!element?.isConnected ||
-			requestedGeneration === generation
-		) {
-			return;
-		}
-		requestedGeneration = generation;
-		window.cioanalytics?.page?.();
-	};
-	return {
-		...script,
-		category,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			if (hasConsent !== info.hasConsent) {
-				generation += 1;
-			}
-			({ hasConsent } = info);
-			if (hasConsent) {
-				script.onBeforeLoad?.(info);
-			}
-		},
-		onConsentChange(info) {
-			const changed = hasConsent !== info.hasConsent;
-			({ hasConsent } = info);
-			if (!changed) {
-				return;
-			}
-			generation += 1;
-			if (hasConsent) {
-				pageAfterLoad(info.element);
-			} else {
-				window.cioanalytics?.reset?.();
-			}
-		},
-		onDispose() {
-			hasConsent = false;
-			generation += 1;
-		},
-		onLoad(info) {
-			loaded = true;
-			if (info.hasConsent) {
-				pageAfterLoad(info.element);
-			}
-		},
-	};
+	return cdn.origin;
+};
+
+const createCustomerIo = function createCustomerIo(
+	options: CustomerIoOptions
+): Script {
+	const writeKey = readId(options.writeKey) as string;
+	const region = options.region ?? 'us';
+	if (region !== 'us' && region !== 'eu') {
+		throw new Error("customerIo: region must be 'us' or 'eu'");
+	}
+	const cdnOrigin = readCdnOrigin(options.cdnUrl);
+	const script = levelThreeScript(
+		resolveCustomerIoManifest({
+			category: options.category,
+			cdnOrigin,
+			loadOptions: options.loadOptions,
+			region,
+			writeKey,
+		})
+	);
+	// A CDN proxy serves the loader too, unless scriptUrl names another one.
+	return withScriptUrl(
+		script,
+		trimToUndefined(options.scriptUrl) ??
+			(cdnOrigin &&
+				`${cdnOrigin}/v1/analytics-js/snippet/${encodeURIComponent(writeKey)}/analytics.min.js`)
+	);
 };
 
 const reuseCustomerIo = createScriptReuse<CustomerIoOptions>();

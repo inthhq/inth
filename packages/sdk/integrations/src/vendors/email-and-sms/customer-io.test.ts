@@ -4,7 +4,8 @@ import {
 	expectScriptMatchesIntegration,
 	expectSkippedScript,
 } from '../../__tests__/helpers';
-import { customerIo } from './customer-io';
+import { manifestLevel } from '../../remote';
+import { customerIo, remote } from './customer-io';
 
 describe('customerIo', () => {
 	it('matches its public registry and export', () => {
@@ -73,4 +74,11 @@ it('uses the selected region and escapes the write key as a path segment', () =>
 	expect(() =>
 		customerIo({ region: 'invalid' as 'us', writeKey: 'test' })
 	).toThrow("customerIo: region must be 'us' or 'eu'");
+});
+
+it('needs manifest runtime level 3 for its page and reset steps', () => {
+	const manifest = remote.resolve({ region: 'us', writeKey: 'test-key' });
+
+	expect(manifestLevel(manifest)).toBe(3);
+	expect(manifest.requires).toBe(3);
 });

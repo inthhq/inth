@@ -114,6 +114,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],
+	customerIo: ['cdp.customer.io', 'cdp-eu.customer.io'],
 	databuddy: ['cdn.databuddy.cc'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
@@ -166,6 +167,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  * is level 2, since each manifest carries `globals`, which is level 2.
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
+	customerIo: 3,
 	pirsch: 3,
 };
 

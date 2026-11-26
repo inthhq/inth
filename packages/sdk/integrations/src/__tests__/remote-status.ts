@@ -26,7 +26,6 @@ export const remoteStatus = {
 	adobeTarget: adapter,
 	amazonAdsTag: adapter,
 	cloudflareZaraz: adapter,
-	customerIo: level3,
 	defaultComPixel: adapter,
 	// A level 2 manifest cannot express two behaviours its golden trace
 	// records. The helper inserts api_static.js without an id, and

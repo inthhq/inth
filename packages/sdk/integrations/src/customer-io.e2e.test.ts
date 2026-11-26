@@ -11,10 +11,12 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { ANALYTICS_JS_QUEUE_METHODS } from './vendors/_shared/analytics-js';
@@ -367,3 +369,41 @@ describe('Customer.io loading and identity', () => {
 		}
 	});
 });
+
+describe.each(npmAndRemote('customerIo', customerIo))(
+	'Customer.io consent loader through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			for (const name of GLOBALS) {
+				Reflect.deleteProperty(window, name);
+			}
+		});
+
+		it('sends one page per grant and resets identity on revoke', async () => {
+			const scripts = [build({ region: 'eu', writeKey: 'ready-key' })];
+			loadScripts(scripts, granted);
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe(
+				'https://cdp-eu.customer.io/v1/analytics-js/snippet/ready-key/analytics.min.js'
+			);
+			expect(cio()?._cdn).toBe('https://cdp-eu.customer.io');
+			expect(cio()?._loadOptions).toEqual({ initialPageview: false });
+			const runtime = { page: vi.fn(), reset: vi.fn() };
+			Reflect.set(window, 'cioanalytics', runtime);
+
+			loader.dispatchEvent(new Event('load'));
+			loader.dispatchEvent(new Event('load'));
+			expect(runtime.page).toHaveBeenCalledTimes(1);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(runtime.reset).toHaveBeenCalledTimes(1);
+			updateScripts(scripts, granted);
+			expect(getLoader()).toBe(loader);
+			expect(runtime.page).toHaveBeenCalledTimes(2);
+			updateScripts(scripts, granted);
+			expect(runtime.page).toHaveBeenCalledTimes(2);
+		});
+	}
+);
