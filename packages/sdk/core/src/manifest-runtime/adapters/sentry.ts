@@ -1123,7 +1123,10 @@ const createGate = (options: GateOptions) => {
 			return;
 		}
 		// Vendor denial overrides every feature condition, including necessary.
-		const registrations = options.registrations?.(info) ?? [info];
+		// The registrations a shared remote script's info carries, when no
+		// helper passes its own.
+		const registrations = options.registrations?.(info) ??
+			info.registrations ?? [info];
 		const every = (category: HasCondition<AllConsentNames>): boolean =>
 			registrations.every((state) => permitted(state, category));
 		const errors = !options.errorsGated || every(errorsCategory);
