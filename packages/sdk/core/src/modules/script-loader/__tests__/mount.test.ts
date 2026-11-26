@@ -504,6 +504,37 @@ describe('mountScript with a server-started element', () => {
 		expect(onLoad).toHaveBeenCalledOnce();
 	});
 
+	test('does not adopt a non-script element that holds its explicit id', () => {
+		const { deps, emitted } = makeDeps();
+		const messages: string[] = [];
+		const { emit } = deps;
+		deps.emit = (event) => {
+			messages.push(event.message);
+			emit(event);
+		};
+		const tracker = document.createElement('div');
+		tracker.id = 'tracker';
+		document.body.append(tracker);
+
+		mountScript(
+			deps,
+			{
+				attributes: { id: 'tracker' },
+				category: 'marketing',
+				id: 's',
+				src: 'https://x/s.js',
+			},
+			createConsentKernel().getSnapshot(),
+			true,
+			null
+		);
+
+		expect(deps.loadedElements.has('s')).toBe(false);
+		expect(document.querySelector('script[src="https://x/s.js"]')).toBeNull();
+		expect(emitted).toContainEqual({ action: 'error', scriptId: 's' });
+		expect(messages.some((message) => message.includes('#tracker'))).toBe(true);
+	});
+
 	test('adopts the element started for its resourceKey, not its id', () => {
 		const { deps } = makeDeps();
 		const other = startOnServer('s', 'https://x/other.js');

@@ -611,6 +611,28 @@ export const mountScript = function mountScript(
 		(typeof document.getElementById === 'function'
 			? document.getElementById(elementId)
 			: null);
+	// A manifest's explicit id can name a page element that is not a
+	// script. Adopting it would mark the script loaded without its code,
+	// and inserting a second element under that id would break load
+	// detection, so the loader leaves the script unloaded and says why. A
+	// stubbed document without element classes has nothing to check.
+	if (
+		existingElement &&
+		typeof HTMLScriptElement === 'function' &&
+		!(existingElement instanceof HTMLScriptElement)
+	) {
+		deps.emit({
+			action: 'error',
+			elementId,
+			hasConsent,
+			message: `Did not load: #${elementId} is a <${existingElement.localName}>, not a script. Give the script another id.`,
+			scope: 'step',
+			scriptId: script.id,
+			source: 'script-loader',
+			timestamp: Date.now(),
+		});
+		return;
+	}
 	if (existingElement) {
 		const element = existingElement as HTMLScriptElement;
 		if (retainedResources.has(element)) {
