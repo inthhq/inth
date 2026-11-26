@@ -43,7 +43,9 @@ const buildPlausibleScriptFile = function buildPlausibleScriptFile(
 	options: PlausibleAnalyticsOptions
 ): string {
 	if (options.scriptId) {
-		return `pa-${options.scriptId}`;
+		// The site snippet names the file pa-<id>.js, so an ID copied from
+		// it can arrive with the prefix already on.
+		return `pa-${options.scriptId.replace(/^pa-(?=.)/u, '')}`;
 	}
 
 	if (options.extension) {
@@ -144,7 +146,8 @@ export const plausibleAnalyticsManifest = {
 
 export interface PlausibleAnalyticsOptions {
 	/**
-	 * Unique Plausible script ID for the new script format.
+	 * Unique Plausible script ID for the new script format: the part after
+	 * `pa-` in the snippet's `pa-<id>.js`. A leading `pa-` is dropped.
 	 */
 	scriptId?: string;
 

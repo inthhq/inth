@@ -9,6 +9,7 @@ import {
 	setupScriptHelperTest,
 	toArgumentsArray,
 } from '../../__tests__/helpers';
+import { remoteIntegrations } from '../../remote';
 import { plausibleAnalytics } from './plausible-analytics';
 
 describe('plausibleAnalytics', () => {
@@ -48,6 +49,19 @@ describe('plausibleAnalytics', () => {
 		expect(script.src).toBe('https://plausible.io/js/pa-abc123.js');
 		expect(script.attributes?.['data-domain']).toBeUndefined();
 		expect(script.attributes?.['data-api']).toBeUndefined();
+	});
+
+	it('accepts a script ID pasted with its pa- prefix', () => {
+		const src = 'https://plausible.io/js/pa-AbC123xYz.js';
+		const fromRemote = remoteIntegrations.plausibleAnalytics?.resolveRemote({
+			autoCapturePageviews: true,
+			hashBasedRouting: false,
+			scriptId: 'pa-AbC123xYz',
+		});
+
+		expect(plausibleAnalytics({ scriptId: 'pa-AbC123xYz' }).src).toBe(src);
+		expect(plausibleAnalytics({ scriptId: ' pa-AbC123xYz ' }).src).toBe(src);
+		expect(fromRemote?.loadScript?.src).toBe(src);
 	});
 
 	it('trims identifiers before building manifest values', () => {
