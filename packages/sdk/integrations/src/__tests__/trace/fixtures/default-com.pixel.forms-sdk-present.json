@@ -1,0 +1,39 @@
+{
+	"name": "default-com.pixel.forms-sdk-present",
+	"scenarios": {
+		"granted with a Forms SDK already on the page": [
+			{ "step": "start granted" },
+			{
+				"consoleError": [
+					"defaultComPixel: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run."
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"type": "application/x-inth-default-conflict"
+				},
+				"async": true
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1]" }
+		]
+	}
+}

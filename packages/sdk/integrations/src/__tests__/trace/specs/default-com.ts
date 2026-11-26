@@ -79,4 +79,25 @@ export const defaultComFormsTrace: TraceSpec = {
 		}),
 };
 
-export const traces = [defaultComPixelTrace, defaultComFormsTrace];
+// The Pixel must not load next to a Forms SDK another installation put on the page.
+export const defaultComPixelFormsPresentTrace: TraceSpec = {
+	...defaultComPixelTrace,
+	name: 'default-com.pixel.forms-sdk-present',
+	scenarios: [
+		{
+			name: 'granted with a Forms SDK already on the page',
+			start: 'granted',
+			steps: ['load', 'dispose'],
+		},
+	],
+	setup(stubs) {
+		runForms('', stubs);
+	},
+	standardScenarios: false,
+};
+
+export const traces = [
+	defaultComPixelTrace,
+	defaultComPixelFormsPresentTrace,
+	defaultComFormsTrace,
+];
