@@ -6,10 +6,11 @@
  * consent is withdrawn or the last registration that wanted it goes.
  *
  * One recorder runs per page, and it belongs to every registration that
- * started it. When a registration replaces another, the outgoing one lets
- * go only after the incoming one has started: the incoming one finds the
- * recorder running and does not load it twice, and the outgoing one's
- * dispose leaves it running.
+ * wants it: one whose tracker is loading or loaded with consent. When a
+ * registration replaces another, the outgoing one lets go only after the
+ * incoming one has started loading, so the outgoing one's dispose leaves
+ * the recorder running even while the incoming tracker still downloads,
+ * and the incoming one finds it running and does not load it twice.
  *
  * A manifest from the Inth server names it as
  * `adapter: { id: 'databuddy', options: { clientId, replay, version } }`;
@@ -168,6 +169,14 @@ export const databuddyReplayScript = function databuddyReplayScript(
 	const { serverStart: _serverStart, ...rest } = base;
 	return {
 		...rest,
+		onBeforeLoad(info) {
+			base.onBeforeLoad?.(info);
+			// Claim the recorder now, so an outgoing registration this one
+			// replaces does not stop it while this tracker downloads.
+			if (info.hasConsent) {
+				recorder.owners.add(owner);
+			}
+		},
 		onConsentChange(info) {
 			base.onConsentChange?.(info);
 			if (info.hasConsent) {
@@ -189,6 +198,11 @@ export const databuddyReplayScript = function databuddyReplayScript(
 			} else {
 				stop();
 			}
+		},
+		onError(info) {
+			base.onError?.(info);
+			// A tracker that failed to load does not want the recorder.
+			stop();
 		},
 		onLoad(info) {
 			base.onLoad?.(info);

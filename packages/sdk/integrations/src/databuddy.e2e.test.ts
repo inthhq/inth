@@ -540,6 +540,109 @@ describe('databuddy session replay from the Inth server', () => {
 		}
 	});
 
+	it('keeps one recorder running while a replacement for another setting still downloads', async () => {
+		const loaderScripts: HTMLScriptElement[] = [];
+		const replayScripts: HTMLScriptElement[] = [];
+		const stop = vi.fn(() => {
+			delete (window as TestWindow).databuddyReplay;
+		});
+		// The test fires each databuddy.js load itself, so a replacement's
+		// file can still be downloading when the outgoing one lets go.
+		installHeadProbe((node, win) => {
+			if (isDatabuddyLoader(node)) {
+				loaderScripts.push(node);
+				win.databuddy = { options: {} };
+			}
+			if (isReplayLoader(node)) {
+				replayScripts.push(node);
+				win.databuddyReplay = { stop };
+			}
+		});
+		const options = {
+			clientId: 'db_contract',
+			replay: { maskText: true, recordIframes: false },
+		};
+		const first = await remoteTraceFactory('databuddy', options)();
+		const second = await remoteTraceFactory('databuddy', {
+			...options,
+			features: { webVitals: true },
+		})();
+		const kernel = createConsentKernel();
+		await kernel.commands.save(grantedMeasurementConsents);
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [first(undefined as never)],
+		});
+		try {
+			loaderScripts[0]?.dispatchEvent(new Event('load'));
+			expect(replayScripts).toHaveLength(1);
+
+			loader.updateScripts([second(undefined as never)]);
+
+			expect(loaderScripts).toHaveLength(2);
+			expect(replayScripts[0]?.isConnected).toBe(true);
+			expect(stop).not.toHaveBeenCalled();
+
+			loaderScripts[1]?.dispatchEvent(new Event('load'));
+
+			expect(replayScripts).toHaveLength(1);
+			expect(replayScripts[0]?.isConnected).toBe(true);
+			expect(stop).not.toHaveBeenCalled();
+
+			await kernel.commands.save(ALL_DENIED);
+			expect(stop).toHaveBeenCalledTimes(1);
+			expect(replayScripts[0]?.isConnected).toBe(false);
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
+
+	it('stops the recorder when the replacement tracker fails to load', async () => {
+		const loaderScripts: HTMLScriptElement[] = [];
+		const replayScripts: HTMLScriptElement[] = [];
+		const stop = vi.fn(() => {
+			delete (window as TestWindow).databuddyReplay;
+		});
+		installHeadProbe((node, win) => {
+			if (isDatabuddyLoader(node)) {
+				loaderScripts.push(node);
+				win.databuddy = { options: {} };
+			}
+			if (isReplayLoader(node)) {
+				replayScripts.push(node);
+				win.databuddyReplay = { stop };
+			}
+		});
+		const options = {
+			clientId: 'db_contract',
+			replay: { maskText: true, recordIframes: false },
+		};
+		const first = await remoteTraceFactory('databuddy', options)();
+		const second = await remoteTraceFactory('databuddy', {
+			...options,
+			features: { webVitals: true },
+		})();
+		const kernel = createConsentKernel();
+		await kernel.commands.save(grantedMeasurementConsents);
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [first(undefined as never)],
+		});
+		try {
+			loaderScripts[0]?.dispatchEvent(new Event('load'));
+			loader.updateScripts([second(undefined as never)]);
+
+			loaderScripts[1]?.dispatchEvent(new Event('error'));
+
+			expect(stop).toHaveBeenCalledTimes(1);
+			expect(replayScripts[0]?.isConnected).toBe(false);
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
+
 	it('stops the recorder when the replacement comes with a withdrawal', async () => {
 		const { replayScripts, stop } = probeDatabuddyScripts();
 		const build = await remoteTraceFactory('databuddy', {
