@@ -21,12 +21,14 @@ import {
 import { helperParityCases } from '../__tests__/integration-cases';
 import { resolveManifest } from '../resolve';
 import { vendorManifestContract } from '../types';
+import type { ManifestStep, ResolvedManifest } from '../types';
 import { metaPixel } from '../vendors/ads-and-pixels/meta-pixel';
 import { gainsightPx } from '../vendors/analytics/gainsight-px';
 import { gtag } from '../vendors/analytics/google-tag';
 import { vercelSpeedInsights } from '../vendors/analytics/vercel-speed-insights';
 import { klaviyo } from '../vendors/email-and-sms/klaviyo';
 import { inlineStepsStart } from './inline-start';
+import { resolvedManifestToScript } from './runtime';
 
 const granted: ConsentState = {
 	experience: true,
@@ -693,5 +695,211 @@ describe('inlineStepsStart', () => {
 		});
 
 		expect(getTestGlobal().fbq).toBeUndefined();
+	});
+	describe('level 2 manifests', () => {
+		const runtimeValue = (value: string, fields = {}) => ({
+			kind: 'inth.runtime-value' as const,
+			value,
+			...fields,
+		});
+		const level2 = (fields: Partial<ResolvedManifest>): Script =>
+			resolvedManifestToScript({
+				...vendorManifestContract,
+				afterLoadSteps: [],
+				bootstrapSteps: [],
+				category: 'measurement',
+				loadScript: {
+					src: 'https://cdn.example/vendor.js',
+					type: 'loadScript',
+				},
+				onBeforeLoadDeniedSteps: [],
+				onBeforeLoadGrantedSteps: [],
+				onConsentChangeSteps: [],
+				onConsentDeniedSteps: [],
+				onConsentGrantedSteps: [],
+				onLoadDeniedSteps: [],
+				onLoadGrantedSteps: [],
+				requires: 2,
+				setupSteps: [],
+				vendor: 'level-two',
+				...fields,
+			});
+		const info = {
+			consents: granted,
+			hasConsent: true,
+			id: 'level-two',
+			vendor: { granted: true, id: 'level-two' },
+		};
+
+		it.each<[string, ManifestStep]>([
+			...['hasConsent', 'scriptElement', 'scriptNonce'].map(
+				(name): [string, ManifestStep] => [
+					`the ${name} runtime value`,
+					{
+						args: [{ value: runtimeValue(name) }],
+						global: 'vendor',
+						type: 'callGlobal',
+					},
+				]
+			),
+			[
+				'the consents runtime value',
+				{
+					args: [
+						runtimeValue('consents', {
+							format: 'boolean',
+							mapping: { measurement: ['analytics'] },
+						}),
+					],
+					global: 'vendor',
+					type: 'callGlobal',
+				},
+			],
+			[
+				'a consent gate outside a call',
+				{ name: 'gate', type: 'setGlobal', value: runtimeValue('consentGate') },
+			],
+			[
+				'loadScriptStep',
+				{
+					id: 'vendor-addon',
+					src: 'https://cdn.example/addon.js',
+					type: 'loadScriptStep',
+				},
+			],
+			['removeScript', { id: 'vendor-addon', type: 'removeScript' }],
+		])('leaves a manifest with %s to the browser', (_label, step) => {
+			const script = level2({ setupSteps: [step] });
+
+			expect(script.serverStart?.(info, script)).toBeUndefined();
+		});
+
+		it('starts from the HTML with the level 2 fields that do not change setup', () => {
+			const script = level2({
+				loadScript: {
+					attributes: { id: 'vendor-main' },
+					src: 'https://cdn.example/vendor.js',
+					type: 'loadScript',
+				},
+				observeConsentBeforeLoad: true,
+				onDisposeSteps: [
+					{
+						args: [runtimeValue('hasConsent')],
+						global: 'vendor',
+						type: 'callGlobal',
+					},
+				],
+				persistAfterDispose: true,
+				resourceKey: 'vendor-main',
+				setupSteps: [{ name: 'vendorQueue', type: 'setGlobal', value: [] }],
+				target: 'body',
+			});
+			const [fromCallback, fromInline] = runBoth(script, info);
+
+			expect(fromInline).toStrictEqual(fromCallback);
+			expect(JSON.stringify(fromInline)).toContain('vendorQueue');
+		});
+
+		it('queues nameAndArguments calls from the HTML the way onBeforeLoad does', () => {
+			const script = level2({
+				setupSteps: [
+					{ name: 'vendorQueue', type: 'setGlobal', value: [] },
+					{
+						methods: ['record'],
+						queueFormat: 'nameAndArguments',
+						target: 'vendorQueue',
+						type: 'defineQueueMethods',
+					},
+				],
+			});
+			const [fromCallback, fromInline] = runBoth(script, info, () =>
+				(
+					getTestGlobal() as unknown as {
+						vendorQueue: { record: (...args: unknown[]) => void };
+					}
+				).vendorQueue.record('signup', { plan: 'pro' })
+			);
+
+			expect(fromInline).toStrictEqual(fromCallback);
+			expect(JSON.stringify(fromInline)).toContain('"kind":"arguments"');
+		});
+
+		it('calls a callGlobal path from the HTML on the object that holds it', () => {
+			const page = getTestGlobal() as unknown as Record<string, unknown>;
+			const script = level2({
+				setupSteps: [
+					{
+						args: [2],
+						path: ['vendorApi', 'inner', 'add'],
+						type: 'callGlobal',
+					},
+					{
+						args: [3],
+						path: ['vendorApi', 'missing', 'add'],
+						type: 'callGlobal',
+					},
+				],
+			});
+			const totals = [];
+			for (const run of ['callback', 'inline']) {
+				page.vendorApi = {
+					inner: {
+						add(this: { total: number }, amount: number) {
+							this.total += amount;
+						},
+						total: 1,
+					},
+				};
+				if (run === 'callback') {
+					script.onBeforeLoad?.(createCallbackInfo(info));
+				} else {
+					const start = script.serverStart?.(info, script);
+					// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+					new Function(`${start?.prelude ?? ''};${start?.code}`)();
+				}
+				totals.push(
+					(page.vendorApi as { inner: { total: number } }).inner.total
+				);
+			}
+			Reflect.deleteProperty(page, 'vendorApi');
+
+			expect(totals).toEqual([3, 3]);
+		});
+
+		it('starts the rest from the HTML and hands over the consent gate on hydration', () => {
+			const script = level2({
+				setupSteps: [
+					{ name: 'vendorQueue', type: 'setGlobal', value: [] },
+					{
+						args: ['beforeSend', runtimeValue('consentGate')],
+						global: 'vendorQueue',
+						method: 'push',
+						type: 'callGlobal',
+					},
+					{
+						args: ['started'],
+						global: 'vendorQueue',
+						method: 'push',
+						type: 'callGlobal',
+					},
+				],
+			});
+			const start = script.serverStart?.(info, script);
+			assert(start);
+			expect(start.code).not.toContain('consentGate');
+
+			resetPage();
+			// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+			new Function(`${start.prelude ?? ''};${start.code}`)();
+			const queue = getTestGlobal().vendorQueue as unknown[];
+			expect(queue).toEqual(['started']);
+
+			script.onBeforeLoad?.({
+				...createCallbackInfo(info),
+				startedOnServer: true,
+			} as ScriptCallbackInfo);
+			expect(queue).toEqual(['started', 'beforeSend', expect.any(Function)]);
+			expect((queue[2] as (event: unknown) => unknown)('event')).toBe('event');
+		});
 	});
 });
