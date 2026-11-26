@@ -14,6 +14,7 @@ import type { RemoteIntegrationList } from './fixtures/remote-integrations-list'
 import {
 	KNOWN_GAPS,
 	acceptedRows,
+	definedGlobals,
 	alwaysLoads,
 	deniedRows,
 	failingKeys,
@@ -80,6 +81,8 @@ const chose = (win: PageWindow): boolean =>
 const scriptSrcs = (win: PageWindow): string[] =>
 	[...win.document.querySelectorAll('script')].map((tag) => tag.src);
 
+let list: RemoteIntegrationList;
+
 /** Everything the rows read, with the files fetched since the last read. */
 const readPage = async function readPage(
 	win: PageWindow,
@@ -93,13 +96,13 @@ const readPage = async function readPage(
 		adaStarts: [...(win.__adaStarts ?? [])],
 		debug: [...win.__debug],
 		distFiles,
+		globals: definedGlobals(list, win),
 		scriptSrcs: scriptSrcs(win),
 		thirdParty,
 		zarazCalls: [...win.__zaraz],
 	};
 };
 
-let list: RemoteIntegrationList;
 
 beforeAll(async () => {
 	await commands.watchRequests();

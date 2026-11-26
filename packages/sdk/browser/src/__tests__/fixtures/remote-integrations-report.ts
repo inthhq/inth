@@ -71,8 +71,28 @@ const noTagChecks: Record<
 	},
 };
 
+/** The window properties named by each manifest's `globals`. */
+const declaredGlobals = (entry: ListedIntegration): string[] => {
+	const { globals } = entry.manifest as { globals?: unknown };
+	return Array.isArray(globals)
+		? globals.filter((name): name is string => typeof name === 'string')
+		: [];
+};
+
+/** Every global some listed manifest declares that `win` has. */
+export const definedGlobals = function definedGlobals(
+	list: RemoteIntegrationList,
+	win: Window
+): string[] {
+	return [
+		...new Set(list.integrations.flatMap((entry) => declaredGlobals(entry))),
+	].filter((name) => Object.hasOwn(win, name));
+};
+
 /** What a test read from the page once the list had time to load. */
 export interface PageState {
+	/** The declared globals the page has; see `definedGlobals`. */
+	globals: string[];
 	/** The settings each `start` of the Ada stand-in got. */
 	adaStarts: { handle?: unknown }[];
 	debug: DebugEvent[];
@@ -284,6 +304,21 @@ export const deniedRows = function deniedRows(
 		const events = loaderEvents(page.debug, entry);
 		const { problems } = events;
 		const may = alwaysLoads(entry);
+		// A global an early vendor also declares, such as `dataLayer`, is
+		// theirs to create.
+		const earlyGlobals = new Set(
+			list.integrations
+				.filter((other) => EARLY_LOAD.has(other.integration))
+				.flatMap((other) => declaredGlobals(other))
+		);
+		const created = may
+			? []
+			: declaredGlobals(entry).filter(
+					(name) => page.globals.includes(name) && !earlyGlobals.has(name)
+				);
+		if (created.length > 0) {
+			problems.push(`it created ${created.join(', ')} without consent`);
+		}
 		if (may !== EARLY_LOAD.has(entry.integration)) {
 			problems.push(
 				may

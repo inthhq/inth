@@ -15,6 +15,7 @@ import type { RemoteIntegrationList } from './fixtures/remote-integrations-list'
 import {
 	KNOWN_GAPS,
 	acceptedRows,
+	definedGlobals,
 	failingKeys,
 	fetchRemoteIntegrations,
 	formatRows,
@@ -86,6 +87,7 @@ it('loads every integration the Inth server lists after an accept, through creat
 			],
 			debug: [...debug],
 			distFiles: undefined,
+			globals: definedGlobals(list, window),
 			scriptSrcs: [...document.querySelectorAll('script')].map(
 				(tag) => tag.src
 			),
