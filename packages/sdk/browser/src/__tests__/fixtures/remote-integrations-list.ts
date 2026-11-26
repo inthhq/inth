@@ -75,7 +75,8 @@ export interface RemoteIntegrationList {
  * What a dashboard form saves when every field keeps its example or
  * default: each ID, hostname and number its example, each enum and boolean
  * its default, a list of the example ID, a map of the example key to the
- * first value, and an object with every field set.
+ * first value and a second key to the last (so Zaraz maps one purpose that
+ * a reject keeps and one it denies), and an object with every field set.
  */
 const sampleValue = function sampleValue(spec: OptionSpec): unknown {
 	switch (spec.kind) {
@@ -92,7 +93,12 @@ const sampleValue = function sampleValue(spec: OptionSpec): unknown {
 			return [spec.example];
 		}
 		case 'map': {
-			return { [spec.keyExample]: spec.values[0] };
+			return spec.values.length > 1
+				? {
+						[spec.keyExample]: spec.values[0],
+						[`${spec.keyExample}2`]: spec.values.at(-1),
+					}
+				: { [spec.keyExample]: spec.values[0] };
 		}
 		case 'object': {
 			return Object.fromEntries(

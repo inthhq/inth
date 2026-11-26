@@ -71,12 +71,57 @@ const noTagChecks: Record<
 	},
 };
 
+/**
+ * Whether each Zaraz purpose the entry maps ended with the consent of its
+ * category: `granted` says which categories the visitor allowed. The page's
+ * Zaraz stand-in starts every purpose off.
+ */
+const zarazProblems = function zarazProblems(
+	entry: ListedIntegration,
+	page: PageState,
+	granted: (category: string) => boolean
+): string[] {
+	const { adapter } = entry.manifest as {
+		adapter?: { options?: { purposes?: Record<string, string[]> } };
+	};
+	const purposes: Record<string, boolean> = Object.assign(
+		{},
+		...page.zarazCalls
+	);
+	return Object.entries(adapter?.options?.purposes ?? {}).flatMap(
+		([category, ids]) =>
+			ids
+				.filter((id) => (purposes[id] ?? false) !== granted(category))
+				.map(
+					(id) =>
+						`Zaraz purpose ${id} (${category}) is ${String(purposes[id] ?? false)}`
+				)
+	);
+};
+
 /** The window properties named by each manifest's `globals`. */
 const declaredGlobals = (entry: ListedIntegration): string[] => {
 	const { globals } = entry.manifest as { globals?: unknown };
 	return Array.isArray(globals)
 		? globals.filter((name): name is string => typeof name === 'string')
 		: [];
+};
+
+/**
+ * The cookies and storage keys `win` has that Inth itself did not write.
+ * Before a choice and after a reject, no vendor may store anything.
+ */
+export const vendorStorage = function vendorStorage(win: Window): string[] {
+	const keys = [
+		...win.document.cookie
+			.split(';')
+			.map((part) => part.split('=')[0]?.trim() ?? '')
+			.filter((name) => name !== '')
+			.map((name) => `cookie ${name}`),
+		...Object.keys(win.localStorage).map((key) => `localStorage ${key}`),
+		...Object.keys(win.sessionStorage).map((key) => `sessionStorage ${key}`),
+	];
+	return keys.filter((key) => !/ inth(?:-|$)/u.test(key));
 };
 
 /** Every global some listed manifest declares that `win` has. */
@@ -232,6 +277,9 @@ export const acceptedRows = function acceptedRows(
 				}
 			}
 		}
+		if (entry.integration === 'cloudflareZaraz') {
+			problems.push(...zarazProblems(entry, page, () => true));
+		}
 		const src = vendorSrc(entry);
 		let loaded: string;
 		if (src === undefined) {
@@ -318,6 +366,11 @@ export const deniedRows = function deniedRows(
 				);
 		if (created.length > 0) {
 			problems.push(`it created ${created.join(', ')} without consent`);
+		}
+		if (entry.integration === 'cloudflareZaraz') {
+			problems.push(
+				...zarazProblems(entry, page, (category) => category === 'necessary')
+			);
 		}
 		if (may !== EARLY_LOAD.has(entry.integration)) {
 			problems.push(

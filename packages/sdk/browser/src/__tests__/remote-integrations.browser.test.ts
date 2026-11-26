@@ -22,6 +22,7 @@ import {
 	formatRows,
 	settle,
 	unexpectedRequests,
+	vendorStorage,
 	vendorSrc,
 } from './fixtures/remote-integrations-report';
 import type {
@@ -175,6 +176,7 @@ it('loads only the integrations whose manifests may load before a choice, before
 	const beforeRows = deniedRows(list, before);
 	expect(failingKeys(beforeRows), `\n${formatRows(beforeRows)}`).toEqual([]);
 	expect(unexpectedRequests(list, before)).toEqual([]);
+	expect(vendorStorage(win)).toEqual([]);
 
 	bannerButton(win, 'reject')?.click();
 	await expect.poll(() => chose(win), { timeout: 8000 }).toBe(true);
@@ -185,6 +187,7 @@ it('loads only the integrations whose manifests may load before a choice, before
 	const afterRows = deniedRows(list, after);
 	expect(failingKeys(afterRows), `\n${formatRows(afterRows)}`).toEqual([]);
 	expect(unexpectedRequests(list, after)).toEqual([]);
+	expect(vendorStorage(win)).toEqual([]);
 	// Some manifests may load before a choice, so the test checks both sides.
 	expect(early.length).toBeGreaterThan(0);
 	expect(early.length).toBeLessThan(list.integrations.length);
