@@ -1,0 +1,34 @@
+{
+	"name": "ada.pending-import",
+	"scenarios": {
+		"revoke while the SDK import is pending": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "step": "deny" },
+			{ "step": "the SDK import resolves" },
+			{ "step": "grant" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"revoke and regrant while the SDK import is pending": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "step": "deny" },
+			{ "step": "grant" },
+			{ "step": "the SDK import resolves" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "deny" },
+			{ "call": "adaEmbed.stop", "args": [] },
+			{ "step": "dispose" }
+		]
+	}
+}

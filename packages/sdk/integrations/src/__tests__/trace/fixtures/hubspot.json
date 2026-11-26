@@ -1,0 +1,557 @@
+{
+	"name": "hubspot",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "deny" },
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "dispose" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "replace" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #hs-script-loader https://js.hs-scripts.com/53.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					],
+					["revokeCookieConsent"],
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"other categories change while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": true,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "step": "grant measurement" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": true, "functionality": false }
+					]
+				]
+			},
+			{ "step": "grant functionality" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": true, "functionality": true }
+					]
+				]
+			},
+			{ "step": "revoke measurement" },
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "step": "dispose" }
+		]
+	}
+}

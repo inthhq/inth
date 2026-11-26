@@ -1,0 +1,258 @@
+{
+	"name": "adobe-target.atjs",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{ "step": "grant" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "deny" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{ "step": "grant" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{ "step": "grant" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{
+				"global": "adobe",
+				"value": {
+					"OptInCategories": { "TARGET": "target" },
+					"optIn": {
+						"approve": "[stub adobe.optIn.approve]",
+						"deny": "[stub adobe.optIn.deny]"
+					}
+				}
+			},
+			{ "step": "grant-then-deny" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://assets.adobedtm.com/target/at.js"
+				},
+				"async": true
+			},
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"global": "targetGlobalSettings",
+				"value": {
+					"bodyHidingEnabled": false,
+					"optinEnabled": true,
+					"timeout": 3000
+				}
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://assets.adobedtm.com/target/at.js" },
+			{ "step": "grant" },
+			{ "call": "adobe.optIn.approve", "args": ["target"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adobe.optIn.deny", "args": ["target"] },
+			{
+				"remove": "[<script> #inth-#1 https://assets.adobedtm.com/target/at.js]"
+			}
+		]
+	}
+}

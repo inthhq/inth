@@ -1,0 +1,366 @@
+{
+	"name": "default-com.pixel",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "deny" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "replace" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://handshake.default.com/index.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [
+						["setConsent", { "analytics": true, "marketing": false }],
+						["setConsent", { "analytics": false, "marketing": false }]
+					],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		],
+		"marketing changes while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/index.js"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [["setConsent", { "analytics": true, "marketing": false }]],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/index.js" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": {
+					"key": "public-key",
+					"q": [],
+					"schedulerOrigins": ["https://example.com"],
+					"setConsent": "[stub __defaultPixel__.setConsent]"
+				}
+			},
+			{ "step": "grant marketing" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": true }]
+			},
+			{ "step": "revoke marketing" },
+			{
+				"call": "__defaultPixel__.setConsent",
+				"args": [{ "analytics": true, "marketing": false }]
+			},
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/index.js]" }
+		]
+	}
+}

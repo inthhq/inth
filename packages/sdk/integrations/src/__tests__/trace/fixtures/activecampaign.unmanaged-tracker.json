@@ -1,0 +1,23 @@
+{
+	"name": "activecampaign.unmanaged-tracker",
+	"scenarios": {
+		"an unmanaged tracker is already on the page": [
+			{ "step": "start denied" },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "grant" },
+			{
+				"consoleError": [
+					"activeCampaignTracking: an unmanaged tracker exists; remove the original snippet"
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": { "id": "inth-#1", "nonce": "trace-nonce" },
+				"async": true
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		]
+	}
+}

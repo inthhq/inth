@@ -1,0 +1,372 @@
+{
+	"name": "default-com.forms",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "deny" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "replace" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #inth-#1 https://handshake.default.com/sdk.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		],
+		"marketing changes while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://handshake.default.com/sdk.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://handshake.default.com/sdk.js" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{
+				"call": "DefaultPixelSDK.init",
+				"args": [
+					{
+						"autoDisplayScheduler": false,
+						"publicKey": "public-key",
+						"schedulerOrigins": "[undefined]"
+					}
+				]
+			},
+			{
+				"global": "DefaultPixelSDK",
+				"value": {
+					"init": "[stub DefaultPixelSDK.init]",
+					"on": "[stub DefaultPixelSDK.on]",
+					"recordFormInteraction": "[stub DefaultPixelSDK.recordFormInteraction]",
+					"scheduler": {
+						"display": "[stub DefaultPixelSDK.scheduler.display]"
+					},
+					"setConsent": "[stub DefaultPixelSDK.setConsent]",
+					"submitForm": "[stub DefaultPixelSDK.submitForm]"
+				}
+			},
+			{ "step": "grant marketing" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": true }]
+			},
+			{ "step": "revoke marketing" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			},
+			{ "step": "dispose" },
+			{
+				"call": "DefaultPixelSDK.setConsent",
+				"args": [{ "analytics": false, "marketing": false }]
+			}
+		]
+	}
+}

@@ -1,0 +1,992 @@
+{
+	"name": "fullstory",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "load" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"start",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "deny" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"restart",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "load" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"start",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "load" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"start",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "load" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"start",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"restart",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"start",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			}
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-fs-namespace": "FS",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1"
+				},
+				"async": true
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": [
+						[
+							"init",
+							{
+								"env": {
+									"captureOnStartup": false,
+									"host": "fullstory.com",
+									"orgId": "o-TRACE-na1",
+									"script": "edge.fullstory.com/s/fs.js"
+								}
+							},
+							"[undefined]",
+							"[undefined]",
+							"[undefined]",
+							2
+						]
+					]
+				}
+			},
+			{ "global": "_fs_capture_on_startup", "value": false },
+			{ "global": "_fs_host", "value": "fullstory.com" },
+			{ "global": "_fs_namespace", "value": "FS" },
+			{ "global": "_fs_org", "value": "o-TRACE-na1" },
+			{ "global": "_fs_script", "value": "edge.fullstory.com/s/fs.js" },
+			{ "global": "fetch", "value": "[Function]" },
+			{ "step": "load-detached" },
+			{ "load": "https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1" },
+			{
+				"call": "FS._api",
+				"args": [
+					"init",
+					{
+						"env": {
+							"captureOnStartup": false,
+							"host": "fullstory.com",
+							"orgId": "o-TRACE-na1",
+							"script": "edge.fullstory.com/s/fs.js"
+						}
+					},
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"global": "FS",
+				"value": {
+					"[Function]": true,
+					"_api": "[stub FS._api]",
+					"_v": "2.1.0",
+					"_w": {
+						"XMLHttpRequest": {
+							"[Function]": true,
+							"DONE": 4,
+							"HEADERS_RECEIVED": 2,
+							"LOADING": 3,
+							"OPENED": 1,
+							"UNSENT": 0
+						},
+						"fetch": "[Function]"
+					},
+					"q": []
+				}
+			},
+			{ "step": "grant" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": true },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"restart",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "FS._api",
+				"args": [
+					"setIdentity",
+					{ "consent": false },
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"call": "FS._api",
+				"args": [
+					"shutdown",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					"[undefined]",
+					2
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://edge.fullstory.com/s/fs.js?org=o-TRACE-na1]"
+			}
+		]
+	}
+}

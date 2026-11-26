@@ -1,0 +1,560 @@
+{
+	"name": "sentry.cdn",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "deny" },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/replay.min.js" },
+			{ "call": "Sentry.replayIntegration", "args": ["[undefined]"] },
+			{
+				"call": "client.addIntegration",
+				"args": [
+					{
+						"flush": "[Function]",
+						"getRecordingMode": "[Function]",
+						"name": "Replay",
+						"setup": "[Function]",
+						"start": "[Function]",
+						"startBuffering": "[Function]",
+						"stop": "[stub replay.stop]"
+					}
+				]
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"replayIntegration": "[stub Sentry.replayIntegration]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/replay.min.js" },
+			{ "call": "Sentry.replayIntegration", "args": ["[undefined]"] },
+			{
+				"call": "client.addIntegration",
+				"args": [
+					{
+						"flush": "[Function]",
+						"getRecordingMode": "[Function]",
+						"name": "Replay",
+						"setup": "[Function]",
+						"start": "[Function]",
+						"startBuffering": "[Function]",
+						"stop": "[stub replay.stop]"
+					}
+				]
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"replayIntegration": "[stub Sentry.replayIntegration]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/replay.min.js" },
+			{ "call": "Sentry.replayIntegration", "args": ["[undefined]"] },
+			{
+				"call": "client.addIntegration",
+				"args": [
+					{
+						"flush": "[Function]",
+						"getRecordingMode": "[Function]",
+						"name": "Replay",
+						"setup": "[Function]",
+						"start": "[Function]",
+						"startBuffering": "[Function]",
+						"stop": "[stub replay.stop]"
+					}
+				]
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"replayIntegration": "[stub Sentry.replayIntegration]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "grant-then-deny" },
+			{ "step": "load-detached" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/replay.min.js" },
+			{ "call": "Sentry.replayIntegration", "args": ["[undefined]"] },
+			{
+				"call": "client.addIntegration",
+				"args": [
+					{
+						"flush": "[Function]",
+						"getRecordingMode": "[Function]",
+						"name": "Replay",
+						"setup": "[Function]",
+						"start": "[Function]",
+						"startBuffering": "[Function]",
+						"stop": "[stub replay.stop]"
+					}
+				]
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"replayIntegration": "[stub Sentry.replayIntegration]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			}
+		],
+		"consent reaches the client": [
+			{ "step": "start denied" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"id": "inth-#1",
+					"integrity": "sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/bundle.min.js" },
+			{
+				"call": "Sentry.init",
+				"args": [
+					{
+						"dsn": "https://public@o0.ingest.sentry.io/0",
+						"integrations": "[Function]",
+						"release": "trace@1.0.0",
+						"replaysSessionSampleRate": 1
+					}
+				]
+			},
+			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
+			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
+			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "read the client options" },
+			{
+				"client": {
+					"dataCollection": { "userInfo": false },
+					"metadata": { "sdk": { "settings": { "infer_ip": "never" } } },
+					"options": { "enabled": true }
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"integrity": "sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh",
+					"nonce": "trace-nonce",
+					"src": "https://browser.sentry-cdn.com/11.4.0/replay.min.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://browser.sentry-cdn.com/11.4.0/replay.min.js" },
+			{ "call": "Sentry.replayIntegration", "args": ["[undefined]"] },
+			{
+				"call": "client.addIntegration",
+				"args": [
+					{
+						"flush": "[Function]",
+						"getRecordingMode": "[Function]",
+						"name": "Replay",
+						"setup": "[Function]",
+						"start": "[Function]",
+						"startBuffering": "[Function]",
+						"stop": "[stub replay.stop]"
+					}
+				]
+			},
+			{
+				"global": "Sentry",
+				"value": {
+					"SDK_VERSION": "11.4.0",
+					"getClient": "[Function]",
+					"init": "[stub Sentry.init]",
+					"replayIntegration": "[stub Sentry.replayIntegration]",
+					"setUser": "[stub Sentry.setUser]"
+				}
+			},
+			{ "step": "read the client options" },
+			{
+				"client": {
+					"dataCollection": { "userInfo": true },
+					"metadata": { "sdk": { "settings": { "infer_ip": "auto" } } },
+					"options": { "enabled": true }
+				}
+			},
+			{ "step": "deny" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{ "step": "read the client options" },
+			{
+				"client": {
+					"dataCollection": { "userInfo": false },
+					"metadata": { "sdk": { "settings": { "infer_ip": "never" } } },
+					"options": { "enabled": true }
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
+			},
+			{ "step": "read the client options" },
+			{
+				"client": {
+					"dataCollection": { "userInfo": false },
+					"metadata": { "sdk": { "settings": { "infer_ip": "never" } } },
+					"options": { "enabled": true }
+				}
+			}
+		]
+	}
+}

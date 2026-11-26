@@ -1,0 +1,716 @@
+{
+	"name": "hubspot.chat",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "deny" },
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{
+				"call": "HubSpotConversations.clear",
+				"args": [{ "resetWidget": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "replace" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{
+				"call": "HubSpotConversations.clear",
+				"args": [{ "resetWidget": false }]
+			},
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{
+				"call": "HubSpotConversations.clear",
+				"args": [{ "resetWidget": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #hs-script-loader https://js.hs-scripts.com/53.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					],
+					["revokeCookieConsent"],
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{
+							"advertisement": false,
+							"analytics": false,
+							"functionality": false
+						}
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{
+				"call": "HubSpotConversations.clear",
+				"args": [{ "resetWidget": false }]
+			},
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "grant" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		],
+		"other categories change while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "hs-script-loader",
+					"src": "https://js.hs-scripts.com/53.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_hsp",
+				"value": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "global": "_hsq", "value": [] },
+			{ "global": "disableHubSpotCookieBanner", "value": true },
+			{ "global": "hsConversationsOnReady", "value": ["[Function]"] },
+			{
+				"global": "hsConversationsSettings",
+				"value": { "loadImmediately": false }
+			},
+			{ "step": "load" },
+			{ "load": "https://js.hs-scripts.com/53.js" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.status", "args": [] },
+			{
+				"call": "HubSpotConversations.on",
+				"args": ["widgetLoaded", "[Function]"]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{
+				"global": "HubSpotConversations",
+				"value": {
+					"clear": "[stub HubSpotConversations.clear]",
+					"off": "[stub HubSpotConversations.off]",
+					"on": "[stub HubSpotConversations.on]",
+					"widget": {
+						"load": "[stub HubSpotConversations.widget.load]",
+						"remove": "[stub HubSpotConversations.widget.remove]",
+						"status": "[stub HubSpotConversations.widget.status]"
+					}
+				}
+			},
+			{ "global": "_hsp", "value": { "push": "[stub _hsp.push]" } },
+			{ "global": "_hsq", "value": { "push": "[stub _hsq.push]" } },
+			{ "global": "hsConversationsOnReady", "value": [] },
+			{ "step": "grant measurement" },
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": true, "functionality": false }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.remove", "args": [] },
+			{
+				"call": "HubSpotConversations.clear",
+				"args": [{ "resetWidget": false }]
+			},
+			{ "step": "grant functionality" },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": true, "functionality": true }
+					]
+				]
+			},
+			{ "call": "HubSpotConversations.widget.load", "args": [] },
+			{ "step": "revoke measurement" },
+			{ "call": "_hsp.push", "args": [["revokeCookieConsent"]] },
+			{
+				"call": "_hsp.push",
+				"args": [
+					[
+						"setHubSpotConsent",
+						{ "advertisement": true, "analytics": false, "functionality": true }
+					]
+				]
+			},
+			{ "step": "dispose" },
+			{
+				"call": "HubSpotConversations.off",
+				"args": ["widgetLoaded", "[Function]"]
+			}
+		]
+	}
+}

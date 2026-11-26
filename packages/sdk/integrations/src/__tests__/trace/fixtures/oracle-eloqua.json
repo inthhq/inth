@@ -1,0 +1,511 @@
+{
+	"name": "oracle-eloqua",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "deny" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "grant" },
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"revoke while the opt-in response is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load elqCfg" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "deny" },
+			{ "step": "load pps=41" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+			},
+			{ "step": "grant" },
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{
+				"call": "_elqQ.push",
+				"args": [["elqTrackPageView", "http://localhost:3000/"]]
+			},
+			{ "step": "dispose" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		],
+		"the opt-in response fails": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://img.en25.com/i/elqCfg.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "_elqQ",
+				"value": [
+					["elqSetSiteId", "1973398186"],
+					["elqUseFirstPartyCookie", "track.example.com"]
+				]
+			},
+			{ "step": "load elqCfg" },
+			{ "load": "https://img.en25.com/i/elqCfg.min.js" },
+			{ "call": "_elqQ.push", "args": [["elqSetSiteId", "1973398186"]] },
+			{
+				"call": "_elqQ.push",
+				"args": [["elqUseFirstPartyCookie", "track.example.com"]]
+			},
+			{ "call": "_elqQ.push", "args": [["elqOptIn"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+				}
+			},
+			{ "global": "_elqQ", "value": { "push": "[stub _elqQ.push]" } },
+			{ "step": "error pps=41" },
+			{
+				"error": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=41&siteid=1973398186"
+			},
+			{ "step": "deny" },
+			{ "call": "_elqQ.push", "args": [["elqOptOut"]] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"src": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=42&siteid=1973398186"
+			},
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://img.en25.com/i/elqCfg.min.js]" }
+		]
+	}
+}

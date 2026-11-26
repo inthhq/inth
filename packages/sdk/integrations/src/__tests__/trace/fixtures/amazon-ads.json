@@ -1,0 +1,557 @@
+{
+	"name": "amazon-ads",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "deny" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "dispose" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "grant" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"revoke before the consent helper loads": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1-consent",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn-consent.js"
+				},
+				"async": false
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": false
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "deny" },
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn-consent.js" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "global": "amznConsent", "value": "[stub amznConsent]" },
+			{ "step": "grant" },
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": true,
+						"enableUserData": true
+					}
+				]
+			},
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{
+				"call": "amzn",
+				"args": ["trackEvent", "PageView", { "page": "home" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1-consent https://c.amazon-adsystem.com/aat/amzn-consent.js]"
+			},
+			{
+				"call": "amznConsent",
+				"args": [
+					{
+						"countryCode": "DE",
+						"enableAdStorage": false,
+						"enableUserData": false
+					}
+				]
+			},
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		]
+	}
+}

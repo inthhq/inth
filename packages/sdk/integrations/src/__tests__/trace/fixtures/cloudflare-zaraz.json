@@ -1,0 +1,217 @@
+{
+	"name": "cloudflare-zaraz",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "grant" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "deny" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "load" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "load" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{ "step": "grant" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "remove-element" },
+			{ "step": "load-detached" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "grant-then-deny" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{ "step": "load-detached" },
+			{ "step": "grant" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"one mapped category changes": [
+			{ "step": "start granted" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "revoke measurement" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": false, "p-other": false }]
+			},
+			{ "step": "grant measurement" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "dispose" }
+		]
+	}
+}

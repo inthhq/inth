@@ -1,0 +1,415 @@
+{
+	"name": "adobe-target.websdk",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "load" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{
+				"call": "alloy",
+				"args": [
+					"configure",
+					{
+						"datastreamId": "datastream-id",
+						"defaultConsent": "pending",
+						"orgId": "ORG@AdobeOrg"
+					}
+				]
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "deny" },
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "load" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{
+				"call": "alloy",
+				"args": [
+					"configure",
+					{
+						"datastreamId": "datastream-id",
+						"defaultConsent": "pending",
+						"orgId": "ORG@AdobeOrg"
+					}
+				]
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "load" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{
+				"call": "alloy",
+				"args": [
+					"configure",
+					{
+						"datastreamId": "datastream-id",
+						"defaultConsent": "pending",
+						"orgId": "ORG@AdobeOrg"
+					}
+				]
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "load" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{
+				"call": "alloy",
+				"args": [
+					"configure",
+					{
+						"datastreamId": "datastream-id",
+						"defaultConsent": "pending",
+						"orgId": "ORG@AdobeOrg"
+					}
+				]
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "step": "grant" },
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js"
+				},
+				"async": true
+			},
+			{ "global": "__alloyNS", "value": ["alloy"] },
+			{ "global": "alloy", "value": { "[Function]": true, "q": [] } },
+			{ "step": "load-detached" },
+			{ "load": "https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js" },
+			{ "global": "alloy", "value": "[stub alloy]" },
+			{ "step": "grant" },
+			{
+				"call": "alloy",
+				"args": [
+					"configure",
+					{
+						"datastreamId": "datastream-id",
+						"defaultConsent": "pending",
+						"orgId": "ORG@AdobeOrg"
+					}
+				]
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "in" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn1.adoberesources.net/alloy/2.21.0/alloy.min.js]"
+			},
+			{
+				"call": "alloy",
+				"args": [
+					"setConsent",
+					{
+						"consent": [
+							{
+								"standard": "Adobe",
+								"value": { "general": "out" },
+								"version": "1.0"
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}

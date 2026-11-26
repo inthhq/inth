@@ -1,0 +1,76 @@
+{
+	"name": "cloudflare-zaraz.late-api",
+	"scenarios": {
+		"the API becomes ready while granted": [
+			{ "step": "start granted" },
+			{ "step": "the Zaraz consent API becomes ready" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "deny" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{ "step": "dispose" }
+		],
+		"the API becomes ready while denied": [
+			{ "step": "start denied" },
+			{ "step": "the Zaraz consent API becomes ready" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": false, "p-analytics": false, "p-other": false }]
+			},
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": false,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			},
+			{ "step": "grant" },
+			{
+				"call": "zaraz.consent.set",
+				"args": [{ "p-ads": true, "p-analytics": true, "p-other": false }]
+			},
+			{ "call": "zaraz.consent.sendQueuedEvents", "args": [] },
+			{ "step": "dispose" }
+		],
+		"the API becomes ready after dispose": [
+			{ "step": "start granted" },
+			{ "step": "dispose" },
+			{ "step": "the Zaraz consent API becomes ready" },
+			{
+				"global": "zaraz",
+				"value": {
+					"consent": {
+						"APIReady": true,
+						"getAll": "[Function]",
+						"modal": true,
+						"sendQueuedEvents": "[stub zaraz.consent.sendQueuedEvents]",
+						"set": "[stub zaraz.consent.set]"
+					}
+				}
+			}
+		]
+	}
+}

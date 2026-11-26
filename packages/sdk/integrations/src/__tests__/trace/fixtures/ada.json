@@ -1,0 +1,105 @@
+{
+	"name": "ada",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "deny" },
+			{ "call": "adaEmbed.stop", "args": [] },
+			{ "step": "grant" },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "replace" },
+			{ "call": "adaEmbed.stop", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "adaEmbed.stop", "args": [] },
+			{ "step": "grant" },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "remove-element" },
+			{ "step": "load-detached" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{ "step": "load-detached" },
+			{ "step": "grant" },
+			{ "import": "https://messaging-assets.ada.support/sdk.js" },
+			{ "call": "createAdaEmbedInterface", "args": [] },
+			{
+				"call": "adaEmbed.start",
+				"args": [{ "cluster": "eu", "handle": "agent" }]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "adaEmbed.stop", "args": [] }
+		]
+	}
+}
