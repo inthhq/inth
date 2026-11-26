@@ -142,16 +142,11 @@ const vendorHosts: Record<string, readonly string[]> = {
 };
 
 /**
- * The manifest runtime level of each integration above level 1: the lowest
+ * The manifest runtime level of each integration above level 2: the lowest
  * level that runs the features its manifest uses. Every other integration
- * is level 1.
+ * is level 2, since each manifest carries `globals`, which is level 2.
  */
-const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
-	adrollPixel: 2,
-	attentiveTag: 2,
-	clay: 2,
-	frontChat: 2,
-};
+const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {};
 
 /**
  * Values that cover an option: each enum value, both booleans, the example
@@ -334,7 +329,7 @@ describe('remoteIntegrations', () => {
 		) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
 
 		expect(manifestLevel(manifest)).toBe(
-			vendorLevels[key as BuiltInScriptIntegrationKey] ?? 1
+			vendorLevels[key as BuiltInScriptIntegrationKey] ?? 2
 		);
 	});
 
