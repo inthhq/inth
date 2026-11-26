@@ -4,7 +4,12 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
-import { installLevelThree, manifestRoots } from '@inth/sdk/manifest-runtime';
+import {
+	installAdapter,
+	installLevelThree,
+	manifestRoots,
+} from '@inth/sdk/manifest-runtime';
+import { sentryAdapter } from '@inth/sdk/manifest-runtime/adapters/sentry';
 import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
 import {
 	afterEach,
@@ -1342,6 +1347,67 @@ describe('inlineStepsStart', () => {
 
 			expect(fromInline).toStrictEqual(fromCallback);
 			expect(JSON.stringify(fromInline)).toContain('vendorQueue');
+		});
+	});
+	describe('manifests that name an adapter', () => {
+		beforeAll(() => {
+			installAdapter(sentryAdapter);
+		});
+
+		it('leaves the script to the browser, even with steps the HTML could run', () => {
+			const queue: ManifestStep = {
+				name: 'vendorQueue',
+				type: 'setGlobal',
+				value: [],
+			};
+			const manifest: ResolvedManifest = {
+				...vendorManifestContract,
+				afterLoadSteps: [],
+				bootstrapSteps: [queue],
+				category: 'measurement',
+				// An adapter manifest declares the roots its own steps use.
+				globals: ['vendorQueue'],
+				loadScript: {
+					src: 'https://browser.sentry-cdn.com/11.4.0/bundle.min.js',
+					type: 'loadScript',
+				},
+				onBeforeLoadDeniedSteps: [],
+				onBeforeLoadGrantedSteps: [],
+				onConsentChangeSteps: [],
+				onConsentDeniedSteps: [],
+				onConsentGrantedSteps: [],
+				onLoadDeniedSteps: [],
+				onLoadGrantedSteps: [],
+				requires: 4,
+				setupSteps: [],
+				vendor: 'sentry',
+			};
+			const info = {
+				consents: granted,
+				hasConsent: true,
+				id: 'sentry',
+				vendor: { granted: true, id: 'sentry' },
+			};
+			const adapted = resolvedManifestToScript({
+				...manifest,
+				adapter: {
+					id: 'sentry',
+					options: {
+						dsn: 'https://public@o0.ingest.sentry.io/0',
+						initOptions: {},
+						loadMode: 'always',
+						piiCategory: 'measurement',
+						replay: { category: 'measurement', load: false },
+						tracing: false,
+						version: '11.4.0',
+					},
+				},
+			});
+			const plain = resolvedManifestToScript(manifest);
+
+			expect(adapted.serverStart).toBeUndefined();
+			// The same manifest without the adapter starts from the HTML.
+			expect(plain.serverStart?.(info, plain)).toBeDefined();
 		});
 	});
 });

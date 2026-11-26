@@ -1,22 +1,25 @@
-import type {
-	AllConsentNames,
-	HasCondition,
-	Script,
-	ScriptCallbackInfo,
-} from '@inth/sdk/engine';
-import { has } from '@inth/sdk/engine';
-
-import { isRecord } from '../../engine/runtime';
-import { ALL_DENIED } from '../../engine/vendor-consent';
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { permitted } from '../_shared/permitted';
+import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 import {
-	waitForReplayIdle,
-	waitForReplayLoad,
-	waitForReplayPaint,
-} from '../_shared/replay-scheduler';
+	SENTRY_DEFAULT_VERSION,
+	sentryCdnFile,
+	sentryCdnScript,
+	sentrySdkScript,
+} from '@inth/sdk/manifest-runtime/adapters/sentry';
+import type {
+	SentryAdapterOptions,
+	SentryClient,
+	SentryInitOptions,
+	SentryLoadMode,
+	SentryReplay,
+	SentryUser,
+} from '@inth/sdk/manifest-runtime/adapters/sentry';
+
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import type { RemoteOptionValues } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
+import { vendorManifestContract } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,
@@ -24,129 +27,17 @@ import {
 } from '../_shared/reuse-script';
 import { trimToUndefined } from '../_shared/script-url';
 
-/** Recording mode that Sentry Replay reports while it records. */
-export type SentryReplayRecordingMode = 'session' | 'buffer';
-
-/**
- * The Sentry Replay methods the adapter uses. The integration returned by
- * `replayIntegration()` from `@sentry/browser` in the supported range
- * `^10.67.0 || ^11.0.0`, or from a framework SDK built on it, matches this
- * shape. These versions support stopping without flushing on withdrawal.
- */
-export interface SentryReplay {
-	name: string;
-	start: () => void;
-	startBuffering: () => void;
-	stop: (options?: { flush?: boolean }) => Promise<void>;
-	/** Sentry flush() can start a recorder that is currently stopped. */
-	flush?: (options?: { continueRecording?: boolean }) => Promise<void>;
-	getRecordingMode: () => SentryReplayRecordingMode | undefined;
-}
-
-/** The part of a Sentry event the adapter changes. */
-export interface SentryEvent {
-	user?: unknown;
-}
-
-/** The parts of a Sentry session that identify the visitor. */
-export interface SentrySession {
-	did?: unknown;
-	ipAddress?: unknown;
-	attrs?: { ip_address?: unknown };
-}
-
-/** Structural collection settings, whose value shapes differ between SDK versions. */
-type SentryDataCollectionOptions = Partial<
-	Record<
-		| 'userInfo'
-		| 'cookies'
-		| 'httpHeaders'
-		| 'httpBodies'
-		| 'urlQueryParams'
-		| 'queryParams'
-		| 'graphQL'
-		| 'genAI'
-		| 'databaseQueryData'
-		| 'queues'
-		| 'stackFrameVariables'
-		| 'frameContextLines',
-		unknown
-	>
->;
-
-/** Envelope items passed to Sentry's final send hook. */
-export type SentryEnvelope = readonly [
-	unknown,
-	(readonly [{ type: string }, unknown])[],
-];
-
-/** User data in the shape `Sentry.setUser` accepts. */
-export interface SentryUser {
-	id?: string | number;
-	email?: string;
-	username?: string;
-	[key: string]: unknown;
-}
-
-/**
- * The Sentry client methods the adapter uses. `getClient()` from any Sentry
- * browser SDK returns a matching client.
- */
-export interface SentryClient {
-	addIntegration: (integration: SentryReplay) => void;
-	addEventProcessor: (
-		processor: <EventType extends SentryEvent>(event: EventType) => EventType
-	) => void;
-	captureException: (
-		exception: unknown,
-		hint?: { captureContext?: { tags?: Record<string, string> } }
-	) => unknown;
-	/** Preserve app-initiated shutdowns separately from consent denial. */
-	close?: (timeout?: number) => PromiseLike<boolean>;
-	getDataCollectionOptions?: () => SentryDataCollectionOptions;
-	getDsn: () => unknown;
-	getIntegrationByName: (name: string) => unknown;
-	getOptions: () => { enabled?: boolean };
-	getSdkMetadata?: () =>
-		| { sdk?: { settings?: { infer_ip?: string } } }
-		| undefined;
-	/** Replay sends directly through the client transport, bypassing event hooks. */
-	getTransport?: () =>
-		| {
-				// oxlint-disable-next-line typescript/method-signature-style -- Match SDK transport methods across envelope header types.
-				send(envelope: SentryEnvelope): PromiseLike<unknown>;
-		  }
-		| undefined;
-	on: {
-		(
-			hook: 'beforeSendSession',
-			callback: (session: SentrySession) => void
-		): unknown;
-		(
-			hook: 'beforeEnvelope',
-			callback: (envelope: SentryEnvelope) => void
-		): unknown;
-	};
-}
-
-/** A Sentry integration, without a dependency on a particular SDK package. */
-interface SentryIntegration {
-	name: string;
-}
-
-/** SDK initialization options with Inth's consent integration installed first. */
-export interface SentryInitOptions extends Record<string, unknown> {
-	integrations: (defaults: SentryIntegration[]) => SentryIntegration[];
-}
-
-/**
- * When Sentry runs.
- *
- * - `always`: error monitoring runs for every visitor.
- * - `after-consent`: Sentry starts, and sends anything, only once
- *   `measurement` is allowed.
- */
-export type SentryLoadMode = 'always' | 'after-consent';
+export type {
+	SentryClient,
+	SentryEnvelope,
+	SentryEvent,
+	SentryInitOptions,
+	SentryLoadMode,
+	SentryReplay,
+	SentryReplayRecordingMode,
+	SentrySession,
+	SentryUser,
+} from '@inth/sdk/manifest-runtime/adapters/sentry';
 
 export interface SentryReplayOptions {
 	/**
@@ -265,1012 +156,13 @@ export interface SentrySdkOptions extends SentrySharedOptions {
 
 export type SentryOptions = SentryCdnOptions | SentrySdkOptions;
 
-/** The `window.Sentry` functions a Sentry CDN bundle provides. */
-interface SentryGlobal {
-	init: (options: Record<string, unknown>) => unknown;
-	getClient: () => SentryClient | undefined;
-	setUser: (user: SentryUser | null) => void;
-	replayIntegration?: (options?: Record<string, unknown>) => unknown;
-	browserTracingIntegration?: () => { name: string };
-}
-
-interface Permissions {
-	errors: boolean;
-	pii: boolean;
-	replay: boolean;
-}
-
-interface ClientGate {
-	client?: SentryClient;
-	errorsGated: boolean;
-	permissions: Permissions;
-	getClient: () => SentryClient | undefined;
-	getState: (client: SentryClient) => ClientState;
-	onChange: (client?: SentryClient, state?: ClientState) => void;
-	report: (error: unknown) => void;
-}
-
-interface ClientState {
-	/** Whether the app left the client enabled. The adapter never enables it past that. */
-	enabled: boolean;
-	/** Last enabled value written or observed by the adapter. */
-	lastEnabled: boolean;
-	/** Every active configuration targeting this client, including distinct options. */
-	gates: Set<ClientGate>;
-	/** Effective error permission, retained for the final gate's removal. */
-	errorsAllowed: boolean;
-	/** Whether events may carry user data. Read by the event processor. */
-	piiAllowed: boolean;
-	/** Whether Replay envelopes may leave the browser. */
-	replayAllowed: boolean;
-	/** Resolved SDK collection settings as the app configured them. */
-	collection?: SentryDataCollectionOptions;
-	/** The SDK `infer_ip` setting as the app configured it. */
-	inferIp?: string;
-	/** The `load()` call for this client, shared by every adapter instance. */
-	loading?: Promise<SentryReplay>;
-	/**
-	 * Sampling decision Replay made when it was added, restored on re-grant.
-	 * `null` means Replay did not sample this session.
-	 */
-	mode?: SentryReplayRecordingMode | null;
-	/** Settles once the latest `stop()` finishes. */
-	stopping?: Promise<void>;
-	stopFailed?: boolean;
-}
-
-interface ReplayHook {
-	name: string;
-	callback: unknown;
-	unsubscribe: unknown;
-}
-
-/** Replay subscribes to different public hooks across supported SDK versions. */
-type ReplayHookRegistrar = (name: string, listener: unknown) => unknown;
-
-interface ReplayState {
-	client: SentryClient;
-	state: ClientState;
-	hooks: ReplayHook[];
-}
-
-interface GateOptions {
-	getClient: () => SentryClient | undefined;
-	setUser?: (user: SentryUser | null) => void;
-	/** Whether error monitoring waits for `measurement`. */
-	errorsGated: boolean;
-	/** Whether Inth calls `Sentry.init`, so it sees the client from the start. */
-	startsSentry: boolean;
-	/** Starts Sentry the first time it may run. */
-	start?: () => Promise<void>;
-	loadReplay?: () => SentryReplay | Promise<SentryReplay>;
-	/** Prefer the initializing CDN configuration's Replay options while it is active. */
-	canLoadReplay?: (client: SentryClient) => boolean;
-	replayCategory: HasCondition<AllConsentNames>;
-	piiCategory: HasCondition<AllConsentNames>;
-	user?: () => SentryUser | null | undefined;
-	onError?: (error: unknown) => void;
-}
-
 const scriptId = 'sentry';
-const replayName = 'Replay';
-const tracingName = 'BrowserTracing';
-/** sessionStorage key where Sentry Replay keeps its session. */
-const replaySessionKey = 'sentryReplaySession';
 const defaultCategory: AllConsentNames = 'measurement';
 const errorsCategory: AllConsentNames = 'measurement';
-/** Retry until a late-initialized SDK client appears or the adapter is removed. */
-const clientRetryMs = 100;
-const errorTags = { 'inth.integration': 'sentry' };
-const urlDetailsPattern = /[?#]/u;
-const cdnBaseUrl = 'https://browser.sentry-cdn.com';
-const defaultVersion = '11.4.0';
-const errorsBundle = 'bundle.min.js';
-const tracingBundle = 'bundle.tracing.min.js';
-const replayBundle = 'replay.min.js';
-/** Subresource integrity for the files of the default version. */
-const defaultIntegrity: Record<string, string> = {
-	[errorsBundle]:
-		'sha384-yR8WDlaM5tdf6UYPdUkCyZhW0OUuGNnKT8haW281Se9cj9eZP3z+iKwFvivogWnz',
-	[replayBundle]:
-		'sha384-mwyc35qA4ycC37dBKk3A7bdqEVGlz8Tk4XkoS0DE4B/No3NgDuhHiofBKNu9PPQh',
-	[tracingBundle]:
-		'sha384-leCZtyH0v+/d38CQgHkDf/buaYk8uIH2vrAwzlLXVLKTcrvUWEUGan36c9ooM12N',
-};
-
-// Sentry allows one Replay per page, and an app can recreate this script on
-// every render, so Replay bookkeeping lives with the client, not the adapter.
-const clientStates = new WeakMap<SentryClient, ClientState>();
-/** A reused recorder follows its current client without stacking old guards. */
-const replayStates = new WeakMap<SentryReplay, ReplayState>();
-// Register mounted gates before SDK initialization, so a later client sees
-// every applicable denial even when that gate has no reason to poll for it.
-const activeGates = new Set<ClientGate>();
-// The same applies to starting Sentry: one start per `getClient`.
-const starts = new WeakMap<() => SentryClient | undefined, Promise<void>>();
-
-const isProduction = (): boolean =>
-	(globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-		?.NODE_ENV === 'production';
-
-const warn = (message: string): void => {
-	if (!isProduction()) {
-		console.warn(`[inth] ${message}`);
-	}
-};
-
-const getSentryGlobal = (): SentryGlobal | undefined =>
-	(globalThis as { Sentry?: SentryGlobal }).Sentry;
-
-const isReplay = (value: unknown): value is SentryReplay =>
-	typeof value === 'object' &&
-	value !== null &&
-	'stop' in value &&
-	typeof value.stop === 'function' &&
-	'start' in value &&
-	typeof value.start === 'function' &&
-	'startBuffering' in value &&
-	typeof value.startBuffering === 'function' &&
-	'getRecordingMode' in value &&
-	typeof value.getRecordingMode === 'function';
-
-const findReplay = (client: SentryClient): SentryReplay | undefined => {
-	const integration = client.getIntegrationByName(replayName);
-	return isReplay(integration) ? integration : undefined;
-};
 
 /**
- * Remove the Replay session id. Sentry clears it when it stops a recording,
- * but keeps it for a session it did not sample.
- */
-const forgetReplaySession = (): void => {
-	try {
-		globalThis.sessionStorage?.removeItem(replaySessionKey);
-	} catch {
-		// Storage can be blocked; Sentry then keeps no session either.
-	}
-};
-
-/** Disable collection through SDK settings while its permission is denied. */
-const deniedDataCollection = () => ({
-	cookies: false,
-	databaseQueryData: false,
-	frameContextLines: 0,
-	genAI: { inputs: false, outputs: false },
-	graphQL: { document: false, variables: false },
-	httpBodies: [],
-	httpHeaders: { request: false, response: false },
-	queryParams: false,
-	queues: false,
-	stackFrameVariables: false,
-	urlQueryParams: false,
-	userInfo: false,
-});
-
-/** Apply denial or restore the original resolved settings, including allowlists. */
-const applyPii = (client: SentryClient, state: ClientState): void => {
-	const dataCollection = client.getDataCollectionOptions?.();
-	if (dataCollection && state.collection) {
-		const denied = deniedDataCollection();
-		for (const field of Object.keys(denied) as (keyof typeof denied)[]) {
-			if (Object.hasOwn(state.collection, field)) {
-				dataCollection[field] = state.piiAllowed
-					? state.collection[field]
-					: denied[field];
-			}
-		}
-	}
-	const settings = client.getSdkMetadata?.()?.sdk?.settings;
-	if (settings && state.inferIp !== undefined && state.inferIp !== 'never') {
-		settings.infer_ip = state.piiAllowed ? state.inferIp : 'never';
-	}
-};
-
-const loadScriptElement = (
-	src: string,
-	integrity?: string,
-	nonce?: string
-): Promise<void> =>
-	new Promise((resolve, reject) => {
-		const element = document.createElement('script');
-		element.src = src;
-		element.async = true;
-		element.setAttribute('crossorigin', 'anonymous');
-		if (nonce) {
-			element.nonce = nonce;
-		}
-		if (integrity) {
-			element.setAttribute('integrity', integrity);
-		}
-		element.addEventListener('load', () => {
-			resolve();
-		});
-		element.addEventListener('error', () => {
-			reject(new Error(`Could not load ${src}`));
-		});
-		document.head.append(element);
-	});
-
-const stripUrlDetails = (url: string): string => {
-	const details = url.search(urlDetailsPattern);
-	return details === -1 ? url : url.slice(0, details);
-};
-
-/** Strip SDK user and HTTP attributes, preserving unrelated telemetry fields. */
-const redactCollectedAttributes = (payload: unknown): void => {
-	if (!isRecord(payload)) {
-		return;
-	}
-	for (const field of ['attributes', 'data']) {
-		const attributes = payload[field];
-		if (!isRecord(attributes)) {
-			continue;
-		}
-		for (const key of Object.keys(attributes)) {
-			if (
-				key.startsWith('user.') ||
-				key.startsWith('sentry.user.') ||
-				key.startsWith('http.request.header.') ||
-				key.startsWith('http.response.header.') ||
-				key === 'url.query' ||
-				key === 'url.fragment'
-			) {
-				Reflect.deleteProperty(attributes, key);
-			} else if (key === 'url.full' || key === 'http.url') {
-				const value = attributes[key];
-				if (typeof value === 'string') {
-					attributes[key] = stripUrlDetails(value);
-				} else if (isRecord(value) && typeof value.value === 'string') {
-					value.value = stripUrlDetails(value.value);
-				}
-			}
-		}
-	}
-};
-
-/** Retain Replay's public client hooks so they can follow a replaced client. */
-const withReplayHooks = <Result>(
-	replay: SentryReplay,
-	setup: () => Result
-): Result => {
-	const binding = replayStates.get(replay);
-	if (!binding) {
-		return setup();
-	}
-	const { client } = binding;
-	const { on } = client;
-	const register = on as ReplayHookRegistrar;
-	client.on = (name, listener) => {
-		const unsubscribe = register.call(client, name, listener);
-		binding.hooks.push({ callback: listener, name, unsubscribe });
-		return unsubscribe;
-	};
-	try {
-		return setup();
-	} finally {
-		client.on = on;
-	}
-};
-
-/** Prevent application starts from buffering DOM data during denial or removal. */
-const guardReplay = (
-	client: SentryClient,
-	replay: SentryReplay,
-	state: ClientState
-): void => {
-	const binding = replayStates.get(replay);
-	if (binding) {
-		if (binding.client !== client) {
-			const register = client.on as ReplayHookRegistrar;
-			for (const hook of binding.hooks) {
-				if (typeof hook.unsubscribe === 'function') {
-					hook.unsubscribe();
-				}
-				hook.unsubscribe = register.call(client, hook.name, hook.callback);
-			}
-		}
-		binding.client = client;
-		binding.state = state;
-		return;
-	}
-	replayStates.set(replay, { client, hooks: [], state });
-	const allowed = (): boolean => {
-		const current = replayStates.get(replay)?.state;
-		return Boolean(
-			current?.replayAllowed && !current.stopping && !current.stopFailed
-		);
-	};
-	const { flush } = replay;
-	if (flush) {
-		replay.flush = (options) =>
-			allowed()
-				? withReplayHooks(replay, () => flush.call(replay, options))
-				: Promise.resolve();
-	}
-	for (const method of ['start', 'startBuffering'] as const) {
-		const start = replay[method];
-		replay[method] = () => {
-			if (allowed()) {
-				withReplayHooks(replay, () => start.call(replay));
-			}
-		};
-	}
-};
-
-/** Feedback keeps its message, but identifying contact fields require consent. */
-const redactFeedback = (contexts: Record<string, unknown>): void => {
-	if (isRecord(contexts.feedback)) {
-		delete contexts.feedback.contact_email;
-		delete contexts.feedback.name;
-	}
-};
-
-/** HttpContext in older SDKs bypasses collection settings for headers and URLs. */
-const redactRequest = (request: unknown): void => {
-	if (!isRecord(request)) {
-		return;
-	}
-	for (const field of ['headers', 'cookies', 'data', 'body', 'query_string']) {
-		Reflect.deleteProperty(request, field);
-	}
-	if (typeof request.url === 'string') {
-		request.url = stripUrlDetails(request.url);
-	}
-};
-
-/** Standard SDK breadcrumbs collect URLs independently of collection settings. */
-const redactBreadcrumbs = (breadcrumbs: unknown): void => {
-	if (!Array.isArray(breadcrumbs)) {
-		return;
-	}
-	for (const breadcrumb of breadcrumbs) {
-		if (!isRecord(breadcrumb) || !isRecord(breadcrumb.data)) {
-			continue;
-		}
-		let fields: string[] = [];
-		if (breadcrumb.category === 'navigation') {
-			fields = ['from', 'to'];
-		} else if (
-			breadcrumb.type === 'http' ||
-			breadcrumb.category === 'fetch' ||
-			breadcrumb.category === 'xhr'
-		) {
-			fields = ['url'];
-		}
-		for (const field of fields) {
-			const url = breadcrumb.data[field];
-			if (typeof url === 'string') {
-				breadcrumb.data[field] = stripUrlDetails(url);
-			}
-		}
-	}
-};
-
-/** Final redaction also catches users added by scope processors or beforeSend. */
-const redactEnvelope = (envelope: SentryEnvelope): void => {
-	for (const [header, payload] of envelope[1]) {
-		if (!isRecord(payload)) {
-			continue;
-		}
-		switch (header.type) {
-			case 'event':
-			case 'transaction':
-			case 'replay_event':
-			case 'feedback':
-				delete payload.user;
-				redactRequest(payload.request);
-				redactBreadcrumbs(payload.breadcrumbs);
-				if (isRecord(payload.contexts)) {
-					redactCollectedAttributes(payload.contexts.trace);
-					if (header.type === 'feedback') {
-						redactFeedback(payload.contexts);
-					}
-				}
-				if (Array.isArray(payload.spans)) {
-					for (const span of payload.spans) {
-						redactCollectedAttributes(span);
-					}
-				}
-				break;
-			case 'user_report':
-				delete payload.email;
-				delete payload.name;
-				break;
-			case 'session':
-				delete payload.did;
-				if (isRecord(payload.attrs)) {
-					delete payload.attrs.ip_address;
-				}
-				break;
-			case 'log':
-			case 'trace_metric':
-			case 'span':
-				redactCollectedAttributes(payload);
-				if (Array.isArray(payload.items)) {
-					for (const item of payload.items) {
-						redactCollectedAttributes(item);
-					}
-				}
-				if (isRecord(payload.ingest_settings)) {
-					payload.ingest_settings.infer_ip = 'never';
-				}
-				break;
-			default:
-				break;
-		}
-	}
-};
-
-const stopReplay = (
-	client: SentryClient,
-	state: ClientState,
-	report: (error: unknown) => void
-): void => {
-	const replay = findReplay(client);
-	if (
-		replay &&
-		replayStates.has(replay) &&
-		replayStates.get(replay)?.state !== state
-	) {
-		// Old clients retain their integration reference after a CDN replacement.
-		// Their cleanup must not stop the recorder or clear the new session.
-		return;
-	}
-	try {
-		if (replay && !state.stopping) {
-			// Recording stops synchronously before the promise is returned.
-			const pending = replay.stop({ flush: false });
-			state.stopping = (async () => {
-				try {
-					await pending;
-					state.stopFailed = false;
-				} catch (error) {
-					state.stopFailed = true;
-					report(error);
-				} finally {
-					state.stopping = undefined;
-				}
-			})();
-		}
-	} catch (error) {
-		state.stopFailed = true;
-		report(error);
-	} finally {
-		forgetReplaySession();
-	}
-};
-
-/** Apply the intersection once, then notify gates without letting them overwrite it. */
-const applyClientPermissions = (
-	client: SentryClient,
-	state: ClientState,
-	report: (error: unknown) => void
-): void => {
-	const gates = [...state.gates];
-	const clientOptions = client.getOptions();
-	const enabled = clientOptions.enabled !== false;
-	// Preserve changes the app makes while Sentry is running.
-	if (enabled !== state.lastEnabled) {
-		state.enabled = enabled;
-	}
-	if (gates.length > 0) {
-		state.errorsAllowed = gates.every((gate) => gate.permissions.errors);
-	}
-	clientOptions.enabled = state.enabled && state.errorsAllowed;
-	state.lastEnabled = clientOptions.enabled !== false;
-	state.piiAllowed =
-		gates.length > 0 && gates.every((gate) => gate.permissions.pii);
-	state.replayAllowed =
-		gates.length > 0 &&
-		gates.every((gate) => gate.permissions.replay) &&
-		state.piiAllowed &&
-		clientOptions.enabled !== false &&
-		Boolean(client.getDsn());
-	applyPii(client, state);
-	if (!state.replayAllowed) {
-		stopReplay(client, state, report);
-	}
-	for (const gate of gates) {
-		gate.onChange(client, state);
-	}
-};
-
-const detachGate = (gate: ClientGate): SentryClient | undefined => {
-	const { client } = gate;
-	if (!client) {
-		return;
-	}
-	const state = clientStates.get(client);
-	state?.gates.delete(gate);
-	if (state?.gates.size === 0) {
-		state.errorsAllowed = !gate.errorsGated;
-	}
-	gate.client = undefined;
-	gate.onChange();
-	return client;
-};
-
-/** Discover shared clients before applying any gate, including late SDK initialization. */
-const syncClientGates = (
-	released?: SentryClient,
-	releasedReport?: (error: unknown) => void
-): void => {
-	const clients = new Map<SentryClient, (error: unknown) => void>();
-	if (released && releasedReport) {
-		clients.set(released, releasedReport);
-	}
-	for (const gate of activeGates) {
-		try {
-			const client = gate.getClient();
-			if (client !== gate.client) {
-				const previous = detachGate(gate);
-				if (previous) {
-					clients.set(previous, gate.report);
-				}
-				if (client) {
-					gate.getState(client).gates.add(gate);
-					gate.client = client;
-				}
-			}
-			if (gate.client) {
-				clients.set(gate.client, gate.report);
-			}
-		} catch (error) {
-			gate.report(error);
-			if (gate.client) {
-				clients.set(gate.client, gate.report);
-			}
-		}
-	}
-	for (const [client, report] of clients) {
-		const state = clientStates.get(client);
-		if (state) {
-			applyClientPermissions(client, state, report);
-		}
-	}
-};
-
-/** Share consent and Replay lifecycle handling between SDK and CDN modes. */
-const createGate = (options: GateOptions) => {
-	let latest: Permissions | undefined;
-	let disposed = false;
-	let revision = 0;
-	let replayWanted: boolean | undefined;
-	let piiWanted: boolean | undefined;
-	let clientTimer: ReturnType<typeof setTimeout> | undefined;
-	let pendingReplay: AbortController | undefined;
-
-	const report = (error: unknown): void => {
-		try {
-			if (options.onError) {
-				options.onError(error);
-			} else {
-				options
-					.getClient()
-					?.captureException(error, { captureContext: { tags: errorTags } });
-			}
-		} catch {
-			// A Sentry failure must never break the consent change.
-		}
-	};
-
-	const settle = async (pending: Promise<void>): Promise<void> => {
-		try {
-			await pending;
-		} catch (error) {
-			report(error);
-		}
-	};
-
-	const getState = (client: SentryClient): ClientState => {
-		const known = clientStates.get(client);
-		if (known) {
-			return known;
-		}
-		const collection = client.getDataCollectionOptions?.();
-		const state: ClientState = {
-			collection: collection ? { ...collection } : undefined,
-			enabled: client.getOptions().enabled !== false,
-			errorsAllowed: true,
-			gates: new Set(),
-			inferIp: client.getSdkMetadata?.()?.sdk?.settings?.infer_ip,
-			lastEnabled: client.getOptions().enabled !== false,
-			piiAllowed: false,
-			replayAllowed: false,
-		};
-		clientStates.set(client, state);
-		client.addEventProcessor((event) => {
-			if (!state.piiAllowed) {
-				delete event.user;
-			}
-			return event;
-		});
-		const filterEnvelope = (envelope: SentryEnvelope): void => {
-			// stop({ flush: false }) discards the pending segment in supported
-			// SDKs. Also block uploads already queued before denial or removal.
-			if (!state.replayAllowed || state.stopping) {
-				for (let index = envelope[1].length - 1; index >= 0; index -= 1) {
-					const type = envelope[1][index]?.[0].type;
-					if (type === 'replay_event' || type === 'replay_recording') {
-						envelope[1].splice(index, 1);
-					}
-				}
-			}
-			if (!state.piiAllowed) {
-				redactEnvelope(envelope);
-			}
-		};
-		client.on('beforeEnvelope', filterEnvelope);
-		const transport = client.getTransport?.();
-		if (transport) {
-			const { send } = transport;
-			transport.send = (envelope) => {
-				filterEnvelope(envelope);
-				return send.call(transport, envelope);
-			};
-		}
-		client.on('beforeSendSession', (session) => {
-			if (state.piiAllowed) {
-				return;
-			}
-			session.did = undefined;
-			session.ipAddress = undefined;
-			if (session.attrs) {
-				session.attrs.ip_address = undefined;
-			}
-		});
-		// close() can happen while consent already has enabled=false. The
-		// option alone cannot distinguish that shutdown from our own denial.
-		const { close } = client;
-		if (close) {
-			client.close = (timeout) => {
-				state.enabled = false;
-				return close.call(client, timeout);
-			};
-		}
-		if (
-			!options.startsSentry &&
-			state.collection?.userInfo === true &&
-			!has(options.piiCategory, ALL_DENIED)
-		) {
-			warn(
-				'Sentry.init ran before Inth, so its first session can infer the visitor IP address before consent. Pass init to sentry(), or disable SDK collection and filter startup events as described in the Sentry integration guide.'
-			);
-		}
-		const existing = findReplay(client);
-		if (existing) {
-			guardReplay(client, existing, state);
-			state.mode = existing.getRecordingMode() ?? null;
-			warn(
-				'Sentry Replay was added in Sentry.init, so it loads and may record before consent. Remove replayIntegration() from Sentry.init and let sentry() load Replay instead.'
-			);
-		}
-		return state;
-	};
-
-	const isClientEnabled = (client: SentryClient, state: ClientState): boolean =>
-		state.enabled &&
-		client.getOptions().enabled !== false &&
-		Boolean(client.getDsn());
-
-	const gate: ClientGate = {
-		errorsGated: options.errorsGated,
-		getClient: options.getClient,
-		getState,
-		onChange: (client, state) => {
-			const replayAllowed = state?.replayAllowed ?? false;
-			if (replayAllowed !== replayWanted) {
-				replayWanted = replayAllowed;
-				revision += 1;
-				pendingReplay?.abort();
-				pendingReplay = undefined;
-			}
-			// Ownership can become available without changing consent.
-			// oxlint-disable-next-line no-use-before-define -- Replay startup synchronizes this gate, so the callbacks depend on each other.
-			queueReplay();
-			if (!client || !state) {
-				piiWanted = undefined;
-				return;
-			}
-			if (options.setUser && state.piiAllowed !== piiWanted) {
-				piiWanted = state.piiAllowed;
-				try {
-					const user = state.piiAllowed ? options.user?.() : null;
-					if (user !== undefined) {
-						options.setUser(user);
-					}
-				} catch (error) {
-					report(error);
-				}
-			}
-		},
-		permissions: { errors: false, pii: false, replay: false },
-		report,
-	};
-
-	const sync = (): SentryClient | undefined => {
-		if (disposed || !latest) {
-			return;
-		}
-		syncClientGates();
-		return gate.client;
-	};
-
-	const loadReplay = async (
-		state: ClientState
-	): Promise<SentryReplay | undefined> => {
-		const { loadReplay: loadIntegration } = options;
-		if (!loadIntegration) {
-			return;
-		}
-		state.loading ??= (async () => await loadIntegration())();
-		try {
-			const replay = await state.loading;
-			if (!isReplay(replay)) {
-				throw new Error(
-					'replay.load() did not return a Sentry Replay integration. Sentry CDN bundles without Replay return a placeholder; load replay.min.js first.'
-				);
-			}
-			return replay;
-		} catch (error) {
-			state.loading = undefined;
-			throw error;
-		}
-	};
-
-	const resumeReplay = async (
-		replay: SentryReplay,
-		state: ClientState,
-		signal: AbortSignal,
-		allowed: () => boolean
-	): Promise<void> => {
-		if (replayStates.get(replay)?.state !== state) {
-			return;
-		}
-		if (replay.getRecordingMode() !== undefined) {
-			return;
-		}
-		if (!(await waitForReplayIdle(signal)) || !allowed()) {
-			return;
-		}
-		if (state.mode === 'session') {
-			replay.start();
-		} else if (state.mode === 'buffer') {
-			replay.startBuffering();
-		}
-	};
-
-	const attachReplay = async (
-		client: SentryClient,
-		state: ClientState,
-		replay: SentryReplay,
-		signal: AbortSignal,
-		allowed: () => boolean
-	): Promise<void> => {
-		const previousState = replayStates.get(replay)?.state;
-		if (previousState && previousState !== state) {
-			await previousState.stopping;
-			if (previousState.stopFailed) {
-				return;
-			}
-		}
-		if (!allowed()) {
-			return;
-		}
-		if (
-			!(await waitForReplayIdle(signal)) ||
-			!allowed() ||
-			findReplay(client)
-		) {
-			return;
-		}
-		guardReplay(client, replay, state);
-		withReplayHooks(replay, () => client.addIntegration(replay));
-		state.mode = previousState
-			? (previousState.mode ?? null)
-			: (replay.getRecordingMode() ?? null);
-		if (allowed()) {
-			await resumeReplay(replay, state, signal, allowed);
-		} else {
-			stopReplay(client, state, report);
-		}
-	};
-
-	const startReplay = async (
-		startRevision: number,
-		signal: AbortSignal
-	): Promise<void> => {
-		const isCurrent = () =>
-			!signal.aborted &&
-			!disposed &&
-			replayWanted === true &&
-			startRevision === revision;
-		if (!(await waitForReplayPaint(signal)) || !isCurrent()) {
-			return;
-		}
-		if (!(await waitForReplayLoad(signal)) || !isCurrent()) {
-			return;
-		}
-		const client = sync();
-		if (!client || !isCurrent()) {
-			return;
-		}
-		const state = getState(client);
-		const allowed = () =>
-			isCurrent() &&
-			state.gates.has(gate) &&
-			state.replayAllowed &&
-			options.getClient() === client &&
-			isClientEnabled(client, state);
-		if (!allowed()) {
-			return;
-		}
-		await state.stopping;
-		if (!allowed() || state.stopFailed) {
-			return;
-		}
-		const existing = findReplay(client);
-		if (existing) {
-			await resumeReplay(existing, state, signal, allowed);
-			return;
-		}
-		if (options.canLoadReplay?.(client) === false) {
-			return;
-		}
-		const replay = await loadReplay(state);
-		if (!replay) {
-			return;
-		}
-		await attachReplay(client, state, replay, signal, allowed);
-	};
-
-	const queueReplay = (): void => {
-		if (pendingReplay || disposed || !replayWanted) {
-			return;
-		}
-		const controller = new AbortController();
-		pendingReplay = controller;
-		void (async () => {
-			try {
-				await startReplay(revision, controller.signal);
-			} catch (error) {
-				report(error);
-			} finally {
-				if (pendingReplay === controller) {
-					pendingReplay = undefined;
-				}
-			}
-		})();
-	};
-
-	// Keep the latest permission even when Sentry initializes much later.
-	// Only one short retry timer runs, and removal cancels it.
-	const retrySync = (): void => {
-		if (clientTimer !== undefined || disposed || !latest?.errors) {
-			return;
-		}
-		clientTimer = setTimeout(() => {
-			clientTimer = undefined;
-			try {
-				if (sync()) {
-					queueReplay();
-				} else {
-					retrySync();
-				}
-			} catch (error) {
-				report(error);
-			}
-		}, clientRetryMs);
-	};
-
-	const denyClient = (released?: SentryClient): void => {
-		try {
-			syncClientGates(released, report);
-			const client = options.getClient();
-			if (!client) {
-				return;
-			}
-			const existing = clientStates.get(client);
-			if (existing && existing.gates.size > 0) {
-				return;
-			}
-			const state = existing ?? getState(client);
-			state.errorsAllowed = !options.errorsGated;
-			applyClientPermissions(client, state, report);
-			options.setUser?.(null);
-		} catch (error) {
-			report(error);
-		}
-	};
-
-	const start = async (): Promise<void> => {
-		if (!options.start) {
-			return;
-		}
-		let pending = starts.get(options.getClient);
-		if (!pending) {
-			pending = options.start();
-			starts.set(options.getClient, pending);
-		}
-		try {
-			await pending;
-		} catch (error) {
-			starts.delete(options.getClient);
-			throw error;
-		}
-		if (disposed) {
-			denyClient();
-		} else if (sync()) {
-			queueReplay();
-		}
-	};
-
-	const update = (info: ScriptCallbackInfo): void => {
-		if (disposed) {
-			return;
-		}
-		// Vendor denial overrides every feature condition, including necessary.
-		const registrations = getScriptRegistrations(info);
-		const every = (category: HasCondition<AllConsentNames>): boolean =>
-			registrations.every((state) => permitted(state, category));
-		const errors = !options.errorsGated || every(errorsCategory);
-		latest = {
-			errors,
-			pii: every(options.piiCategory),
-			replay: errors && every(options.replayCategory),
-		};
-		if (!errors) {
-			clearTimeout(clientTimer);
-			clientTimer = undefined;
-		}
-		if (typeof document === 'undefined') {
-			return;
-		}
-		gate.permissions = latest;
-		activeGates.add(gate);
-		if (errors && options.start) {
-			void settle(start());
-		}
-		try {
-			if (!sync()) {
-				retrySync();
-			}
-			queueReplay();
-		} catch (error) {
-			report(error);
-		}
-	};
-
-	const dispose = (): void => {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		revision += 1;
-		pendingReplay?.abort();
-		pendingReplay = undefined;
-		clearTimeout(clientTimer);
-		clientTimer = undefined;
-		latest = undefined;
-		activeGates.delete(gate);
-		denyClient(detachGate(gate));
-	};
-
-	const initialize = (): void => {
-		if (disposed) {
-			denyClient();
-		} else {
-			sync();
-		}
-	};
-
-	return { dispose, initialize, report, sync, update };
-};
-
-/**
- * Loads the Sentry browser SDK from Sentry's CDN.
- *
- * The `sentry()` helper adds `Sentry.init` and the consent handling.
+ * Loads the Sentry browser SDK from Sentry's CDN. The Sentry adapter in
+ * `@inth/sdk` calls `Sentry.init` and handles consent.
  */
 export const sentryManifest = {
 	...vendorManifestContract,
@@ -1283,11 +175,14 @@ export const sentryManifest = {
 				crossorigin: 'anonymous',
 				integrity: '{{integrity}}',
 			},
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-			src: '{{scriptUrl}}',
+			src: 'https://browser.sentry-cdn.com/{{version}}/{{bundle}}',
 			type: 'loadScript',
 		},
 	],
+	observeConsentBeforeLoad: true,
+	// Independent loaders may select different versions or bundle types.
+	// Share only the physical resource that matches this configuration.
+	resourceKey: 'sentry-{{version}}-{{bundle}}',
 	vendor: 'sentry',
 	vendorDetails: {
 		homepageUrl: 'https://sentry.io/',
@@ -1311,80 +206,13 @@ const hasReplayLoader = (options: SentryOptions): boolean => {
 	);
 };
 
-type IntegrationsOption =
-	| SentryIntegration[]
-	| ((defaults: SentryIntegration[]) => SentryIntegration[])
-	| undefined;
+const replayCategoryOf = (
+	options: SentryOptions
+): HasCondition<AllConsentNames> =>
+	(options.replay ? options.replay.category : undefined) ?? defaultCategory;
 
-const isNamed = (value: unknown, name: string): boolean =>
-	typeof value === 'object' &&
-	value !== null &&
-	'name' in value &&
-	value.name === name;
-
-/** Install consent before any SDK integration can capture startup data. */
-const withConsentInitOptions = (
-	initOptions: Record<string, unknown>,
-	beforeCapture: () => void
-): SentryInitOptions => {
-	const integrations = initOptions.integrations as IntegrationsOption;
-	return {
-		...initOptions,
-		integrations: (defaults) => {
-			const list =
-				typeof integrations === 'function'
-					? integrations(defaults)
-					: [...defaults, ...(integrations ?? [])];
-			return [
-				{
-					beforeSetup: beforeCapture,
-					name: 'InthConsent',
-					setup: beforeCapture,
-				},
-				...list.filter((integration) => integration.name !== 'InthConsent'),
-			];
-		},
-	};
-};
-
-const createInitOptions = (
-	sentryGlobal: SentryGlobal,
-	dsn: string,
-	initOptions: Record<string, unknown>,
-	tracing: boolean,
-	beforeCapture: () => void
-): Record<string, unknown> => {
-	const integrations = initOptions.integrations as IntegrationsOption;
-	return withConsentInitOptions(
-		{
-			...initOptions,
-			dsn,
-			// Like Sentry's Loader Script, add tracing when the bundle has it.
-			integrations: (defaults: SentryIntegration[]) => {
-				let list: SentryIntegration[];
-				if (typeof integrations === 'function') {
-					list = integrations(defaults);
-				} else {
-					list = [...defaults, ...(integrations ?? [])];
-				}
-				if (
-					tracing &&
-					sentryGlobal.browserTracingIntegration &&
-					!list.some((integration) => isNamed(integration, tracingName))
-				) {
-					list.push(sentryGlobal.browserTracingIntegration());
-				}
-				return list;
-			},
-		},
-		beforeCapture
-	);
-};
-
-const getCategory = (
-	options: SentryOptions,
-	replayCategory: HasCondition<AllConsentNames> | undefined,
-	piiCategory: HasCondition<AllConsentNames>
+const getScriptCategory = (
+	options: SentryOptions
 ): HasCondition<AllConsentNames> => {
 	const afterConsent = options.loadMode === 'after-consent';
 	// The loader registers the categories a script names. Naming the feature
@@ -1394,8 +222,8 @@ const getCategory = (
 			...new Set<HasCondition<AllConsentNames>>([
 				'necessary',
 				...(afterConsent ? [errorsCategory] : []),
-				...(replayCategory ? [replayCategory] : []),
-				piiCategory,
+				...(hasReplayLoader(options) ? [replayCategoryOf(options)] : []),
+				options.pii?.category ?? defaultCategory,
 			]),
 		],
 	};
@@ -1406,221 +234,221 @@ const getCategory = (
 	return features;
 };
 
-const cdnClients = new WeakMap<SentryClient, SentryCdnOptions>();
-const activeCdnConfigurations = new WeakSet<SentryCdnOptions>();
-const loadedCdnBundles = new WeakSet<HTMLScriptElement>();
-
-const createCdnScript = (
-	options: SentryCdnOptions,
-	category: HasCondition<AllConsentNames>,
-	gateOptions: Omit<GateOptions, 'getClient' | 'setUser' | 'startsSentry'>
-): Script => {
-	// `sentry()` skips a blank DSN before this runs.
-	const dsn = readId(options.dsn) ?? '';
-	const version = trimToUndefined(options.version) ?? defaultVersion;
+/** What the Sentry adapter needs for the CDN options a site passes. */
+const adapterOptions = (options: SentryCdnOptions): SentryAdapterOptions => {
 	const initOptions = options.initOptions ?? {};
-	const tracing =
-		options.tracing ??
-		(initOptions.tracesSampleRate !== undefined ||
-			initOptions.tracesSampler !== undefined);
-	const bundle = tracing ? tracingBundle : errorsBundle;
-	const integrityFor = (file: string): string | undefined =>
-		version === defaultVersion ? defaultIntegrity[file] : undefined;
-	const replayAllowed = hasReplayLoader(options);
-	const replayOptions =
-		options.replay === false ? undefined : options.replay?.options;
-	let nonce: string | undefined;
-
-	const gate = createGate({
-		...gateOptions,
-		canLoadReplay: (client) => {
-			const owner = cdnClients.get(client);
-			return (
-				owner === options ||
-				(owner !== undefined && !activeCdnConfigurations.has(owner))
-			);
-		},
-		getClient: () => getSentryGlobal()?.getClient(),
-		loadReplay: replayAllowed
-			? async () => {
-					await loadScriptElement(
-						`${cdnBaseUrl}/${version}/${replayBundle}`,
-						integrityFor(replayBundle),
-						nonce
-					);
-					return getSentryGlobal()?.replayIntegration?.(
-						replayOptions
-					) as SentryReplay;
-				}
-			: undefined,
-		setUser: (user) => {
-			getSentryGlobal()?.setUser(user);
-		},
-		startsSentry: true,
-	});
-	const update = (info: ScriptCallbackInfo): void => {
-		activeCdnConfigurations.add(options);
-		if (info.element) {
-			nonce = info.element.nonce || undefined;
-		}
-		gate.update(info);
+	const replay: SentryAdapterOptions['replay'] = {
+		category: replayCategoryOf(options),
+		load: hasReplayLoader(options),
 	};
-
-	const resolved = resolveManifest(sentryManifest, {
-		integrity: integrityFor(bundle),
-		scriptUrl: `${cdnBaseUrl}/${version}/${bundle}`,
-	});
-	let initialized = false;
-	const initialize = (info: ScriptCallbackInfo): void => {
-		update(info);
-		if (
-			initialized ||
-			(options.loadMode === 'after-consent' && !info.hasConsent)
-		) {
-			return;
-		}
-		const sentryGlobal = getSentryGlobal();
-		try {
-			// Consent remounts keep their client. A newly adopted configuration
-			// initializes once, without replacing it on every consent update.
-			const previous = sentryGlobal?.getClient();
-			if (sentryGlobal && (!previous || cdnClients.get(previous) !== options)) {
-				const previousState = previous && clientStates.get(previous);
-				const previousReplay = previous && findReplay(previous);
-				sentryGlobal.init(
-					createInitOptions(sentryGlobal, dsn, initOptions, tracing, () => {
-						gate.initialize();
-					})
-				);
-				const client = sentryGlobal.getClient();
-				if (client) {
-					const state = clientStates.get(client);
-					if (client !== previous && state) {
-						// Sentry permits one Replay per page. Transfer even a pending
-						// load so a new client cannot construct a second recorder.
-						state.loading =
-							previousState?.loading ??
-							(previousReplay ? Promise.resolve(previousReplay) : undefined);
-					}
-					cdnClients.set(client, options);
-					initialized = true;
-				}
-			} else if (previous) {
-				initialized = true;
-			}
-		} catch (error) {
-			gate.report(error);
-		}
-		update(info);
-	};
-
+	if (options.replay && options.replay.options !== undefined) {
+		replay.options = options.replay.options;
+	}
 	return {
-		...resolved,
-		alwaysLoad: options.loadMode === 'after-consent' ? undefined : true,
-		category,
-		observeConsentBeforeLoad: true,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad: update,
-		onConsentChange: (info) => {
-			if (info.element && loadedCdnBundles.has(info.element)) {
-				initialize(info);
-			} else {
-				update(info);
-			}
-		},
-		onDispose: () => {
-			activeCdnConfigurations.delete(options);
-			gate.dispose();
-		},
-		onError: (info) => gate.report(info.error),
-		onLoad: (info) => {
-			if (info.element) {
-				loadedCdnBundles.add(info.element);
-			}
-			initialize(info);
-		},
-		// Independent loaders may select different versions or bundle types.
-		// Share only the physical resource that matches this configuration.
-		resourceKey: `${scriptId}-${version}-${bundle}`,
+		// `sentry()` skips a blank DSN before this runs.
+		dsn: readId(options.dsn) ?? '',
+		initOptions,
+		loadMode: options.loadMode ?? 'always',
+		piiCategory: options.pii?.category ?? defaultCategory,
+		replay,
+		tracing:
+			options.tracing ??
+			(initOptions.tracesSampleRate !== undefined ||
+				initOptions.tracesSampler !== undefined),
+		version: trimToUndefined(options.version) ?? SENTRY_DEFAULT_VERSION,
 	};
 };
 
-const getScriptCategory = (
-	options: SentryOptions
-): HasCondition<AllConsentNames> =>
-	getCategory(
-		options,
-		hasReplayLoader(options)
-			? ((options.replay ? options.replay.category : undefined) ??
-					defaultCategory)
-			: undefined,
-		options.pii?.category ?? defaultCategory
-	);
+/**
+ * The manifest for Sentry from its CDN: the bundle the options select,
+ * pinned with subresource integrity at the default version, and the Sentry
+ * adapter with the options it runs with. The npm helper and the Inth
+ * server both build it here.
+ */
+export const resolveSentryManifest = function resolveSentryManifest(
+	options: SentryCdnOptions
+): ResolvedManifest {
+	const settings = adapterOptions(options);
+	const bundle = settings.tracing ? 'bundle.tracing.min.js' : 'bundle.min.js';
+	return {
+		...getCompiledManifest(sentryManifest, {
+			bundle,
+			integrity: sentryCdnFile(settings.version, bundle).integrity,
+			version: settings.version,
+		}),
+		adapter: {
+			id: 'sentry',
+			options: settings as unknown as NonNullable<
+				ResolvedManifest['adapter']
+			>['options'],
+		},
+		alwaysLoad: options.loadMode === 'after-consent' ? undefined : true,
+		category: getScriptCategory(options),
+		requires: 4,
+	};
+};
+
+/** A sample rate a dashboard may set: a number from 0 to 1. */
+const rate = (label: string, example: number) =>
+	({
+		example,
+		kind: 'number',
+		label,
+		max: 1,
+		min: 0,
+		required: false,
+	}) as const;
+
+/** The DSN parts and other options a dashboard sets. */
+type SentryRemoteOptions = RemoteOptionValues<typeof sentryRemoteOptions>;
+
+/**
+ * What the Inth server may set for Sentry. A dashboard takes the parts of a
+ * sentry.io DSN, not the DSN itself: no option holds a URL, so the DSN is
+ * built on Sentry's own ingest host. A self-hosted Sentry stays npm-only,
+ * as do function options, a user, an error handler and the app-SDK mode.
+ */
+const sentryRemoteOptions = {
+	ingestRegion: {
+		default: 'none',
+		kind: 'enum',
+		label: 'Region in the DSN host (o0.ingest.<region>.sentry.io)',
+		values: ['none', 'us', 'de'],
+	},
+	initOptions: {
+		fields: {
+			environment: {
+				example: 'production',
+				kind: 'id',
+				label: 'Environment',
+				pattern: '^[A-Za-z0-9_.-]{1,64}$',
+				required: false,
+			},
+			release: {
+				example: 'my-app@1.0.0',
+				kind: 'id',
+				label: 'Release',
+				pattern: '^[A-Za-z0-9_.+@-]{1,200}$',
+				required: false,
+			},
+			replaysOnErrorSampleRate: rate('Replay sample rate on error', 1),
+			replaysSessionSampleRate: rate('Replay session sample rate', 0.1),
+			sampleRate: rate('Error sample rate', 1),
+			tracesSampleRate: rate('Traces sample rate', 0.1),
+		},
+		kind: 'object',
+		label: 'Sentry.init options',
+		required: false,
+	},
+	loadMode: {
+		default: 'always',
+		kind: 'enum',
+		label: 'When Sentry runs',
+		values: ['always', 'after-consent'],
+	},
+	organizationId: {
+		example: '123456',
+		kind: 'id',
+		label: 'Organization ID (the number after o in the DSN host)',
+		pattern: '^[0-9]{1,20}$',
+		required: true,
+	},
+	projectId: {
+		example: '7890',
+		kind: 'id',
+		label: 'Project ID (the end of the DSN)',
+		pattern: '^[0-9]{1,20}$',
+		required: true,
+	},
+	publicKey: {
+		example: 'examplePublicKey',
+		kind: 'id',
+		label: 'Public key (the DSN before @)',
+		pattern: '^[0-9A-Za-z]{1,64}$',
+		required: true,
+	},
+	version: {
+		example: '11.4.0',
+		kind: 'id',
+		label: 'Sentry SDK version',
+		pattern: '^[0-9]{1,4}\\.[0-9]{1,4}\\.[0-9]{1,4}$',
+		required: false,
+	},
+} as const;
+
+/** The manifest for options a dashboard set: their DSN on Sentry's host. */
+const resolveSentryRemote = ({
+	ingestRegion,
+	organizationId,
+	projectId,
+	publicKey,
+	...options
+}: SentryRemoteOptions): ResolvedManifest =>
+	resolveSentryManifest({
+		...options,
+		dsn: `https://${publicKey}@o${organizationId}.ingest${ingestRegion === 'none' ? '' : `.${ingestRegion}`}.sentry.io/${projectId}`,
+	});
+
+/**
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote('sentry', sentryRemoteOptions, resolveSentryRemote);
 
 /** Build the SDK or CDN script and its consent gate. */
 const createSentryScript = (options: SentryOptions): Script => {
-	const replayCategory =
-		(options.replay ? options.replay.category : undefined) ?? defaultCategory;
-	const piiCategory = options.pii?.category ?? defaultCategory;
-	const category = getScriptCategory(options);
-	const errorsGated = options.loadMode === 'after-consent';
-	const gateOptions = {
-		errorsGated,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- not a script callback: passes the site's onError option to the consent gate
-		onError: options.onError,
-		piiCategory,
-		replayCategory,
-		user: options.pii?.user,
-	};
-
 	if (options.dsn !== undefined) {
-		return createCdnScript(options, category, gateOptions);
+		const { adapter, ...manifest } = resolveSentryManifest(options);
+		return sentryCdnScript(
+			resolvedManifestToScript(manifest),
+			adapter?.options as unknown as SentryAdapterOptions,
+			{
+				// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: passes the site's onError option to the consent gate, not a script callback
+				onError: options.onError,
+				registrations: getScriptRegistrations,
+				user: options.pii?.user,
+			}
+		);
 	}
 
 	if (options.pii?.user && !options.setUser) {
 		throw new Error('sentry: pass setUser with pii.user');
 	}
+	const errorsGated = options.loadMode === 'after-consent';
 	if (errorsGated && !options.init) {
 		throw new Error(
 			"sentry: pass init with loadMode 'after-consent', so Inth can start Sentry after consent"
 		);
 	}
-	const { init } = options;
-	const gate = createGate({
-		...gateOptions,
-		getClient: options.getClient,
-		loadReplay: options.replay?.load,
-		setUser: options.setUser,
-		start: init
-			? async () => {
-					if (!options.getClient()) {
-						await init(
-							withConsentInitOptions(options.initOptions ?? {}, () => {
-								gate.initialize();
-							})
-						);
-					}
-				}
-			: undefined,
-		startsSentry: init !== undefined,
-	});
-
-	return {
-		alwaysLoad: true,
-		callbackOnly: true,
-		category,
-		id: scriptId,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad: gate.update,
-		onConsentChange: gate.update,
-		onDispose: gate.dispose,
-		onLoad: gate.update,
-		// Like the manifest helpers, the script ID doubles as the vendor slug,
-		// so visitors can turn Sentry off inside a granted category. The
-		// details let the preference surface list it by name.
-		vendor: scriptId,
-		vendorDetails: sentryManifest.vendorDetails,
-	};
+	// The site's own Sentry SDK is code only the site can pass: npm-only.
+	return sentrySdkScript(
+		{
+			alwaysLoad: true,
+			callbackOnly: true,
+			category: getScriptCategory(options),
+			id: scriptId,
+			// Like the manifest helpers, the script ID doubles as the vendor slug,
+			// so visitors can turn Sentry off inside a granted category. The
+			// details let the preference surface list it by name.
+			vendor: scriptId,
+			vendorDetails: sentryManifest.vendorDetails,
+		},
+		{
+			errorsGated,
+			getClient: options.getClient,
+			init: options.init,
+			initOptions: options.initOptions,
+			loadReplay: options.replay?.load,
+			// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: passes the site's onError option to the consent gate, not a script callback
+			onError: options.onError,
+			piiCategory: options.pii?.category ?? defaultCategory,
+			registrations: getScriptRegistrations,
+			replayCategory: replayCategoryOf(options),
+			setUser: options.setUser,
+			user: options.pii?.user,
+		}
+	);
 };
 
 const reuseSentryScript = createScriptReuse<SentryOptions>();

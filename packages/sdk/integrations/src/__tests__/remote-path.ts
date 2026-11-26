@@ -99,8 +99,6 @@ export const splitRemote = function splitRemote(scripts: readonly Script[]): {
 };
 
 let runtimeLoad: Promise<unknown> | undefined;
-/** What the runtime's `prepare` last started, such as loading the level 3 part. */
-let preparing: Promise<unknown> | undefined;
 /** Remote entries the loader refused or skipped, so a scenario fails. */
 let refused: string[] = [];
 
@@ -122,44 +120,68 @@ export const onRemoteDebug = function onRemoteDebug(
 	}
 };
 
+/**
+ * What the runtime's `prepare` is loading, such as the level 3 part or an
+ * adapter.
+ */
+let preparing: Promise<unknown>[] = [];
+
+type ManifestRuntime = Awaited<ReturnType<typeof loadManifestRuntime>>;
+
+/** `runtime`, with each `prepare` it starts recorded for `settleRemote`. */
+const tracked = (runtime: ManifestRuntime): ManifestRuntime => {
+	const { prepare } = runtime;
+	return prepare
+		? {
+				...runtime,
+				prepare: (manifests) => {
+					const pending = prepare(manifests)?.then((moved) =>
+						moved ? tracked(moved) : moved
+					);
+					if (pending) {
+						preparing.push(pending);
+					}
+					return pending;
+				},
+			}
+		: runtime;
+};
+
 /** The loader's `remote` option, as `remoteScripts: true` builds it. */
 export const remoteLoaderOption: NonNullable<ScriptLoaderOptions['remote']> = {
 	level: MANIFEST_RUNTIME_LEVEL,
 	loadRuntime: () => {
-		const load = loadManifestRuntime().then((runtime) => {
-			const { prepare } = runtime;
-			if (!prepare) {
-				return runtime;
-			}
-			return {
-				...runtime,
-				prepare: (manifests: readonly unknown[]) => {
-					const pending = prepare(manifests);
-					preparing = pending ?? preparing;
-					return pending;
-				},
-			};
-		});
+		const load = loadManifestRuntime().then(tracked);
 		runtimeLoad = load;
 		return load;
 	},
 };
 
+/** Waits for each `prepare`, and any a settled one started, then a tick. */
+const settlePreparing = async (): Promise<void> => {
+	if (preparing.length === 0) {
+		return;
+	}
+	const pending = preparing;
+	preparing = [];
+	await Promise.allSettled(pending);
+	// The loader awaited each one first, so it has built what it prepared.
+	await Promise.resolve();
+	await settlePreparing();
+};
+
 /**
  * Waits until a loader that started loading the manifest runtime has built
- * its remote scripts, including ones that waited for the level 3 part.
- * Resolves at once for a scenario with none.
+ * its remote scripts, including ones that waited for the level 3 part or
+ * an adapter. Resolves at once for a scenario with none.
  */
 export const settleRemote = async function settleRemote(): Promise<void> {
 	if (runtimeLoad !== undefined) {
 		await runtimeLoad;
-		// The loader awaited the same promise first, so its scripts are built.
+		// The loader awaited the same promise first, so its scripts are built,
+		// unless it is loading what they need first.
 		await Promise.resolve();
-	}
-	if (preparing !== undefined) {
-		// The loader builds a list that needs the level 3 part once it loaded.
-		await preparing;
-		await Promise.resolve();
+		await settlePreparing();
 	}
 	if (refused.length > 0) {
 		throw new Error(`The loader refused a remote script: ${refused.join(' ')}`);
@@ -169,6 +191,6 @@ export const settleRemote = async function settleRemote(): Promise<void> {
 /** Forgets the runtime load of a finished scenario. */
 export const resetRemote = function resetRemote(): void {
 	runtimeLoad = undefined;
-	preparing = undefined;
+	preparing = [];
 	refused = [];
 };

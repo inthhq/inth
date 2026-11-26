@@ -3,6 +3,7 @@
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
 import {
+	installAdapter,
 	installLevelThree,
 	isDeclarableGlobal,
 	MANIFEST_RUNTIME_LEVEL,
@@ -10,8 +11,9 @@ import {
 	parseResolvedManifest,
 	requiresLevelThree,
 } from '@inth/sdk/manifest-runtime';
+import { sentryAdapter } from '@inth/sdk/manifest-runtime/adapters/sentry';
 import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
-import { describe, expect, it } from 'vite-plus/test';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
 import { resolvedManifestToScript } from './engine/runtime';
@@ -42,6 +44,12 @@ const parseWire = function parseWire(
 	}
 	return parseResolvedManifest(wire);
 };
+
+// The SDK loads each adapter a manifest names before it parses the manifest
+// (`withAdapters`); this test parses without a loader.
+beforeAll(() => {
+	installAdapter(sentryAdapter);
+});
 
 /** npm helpers not named after their registry key. */
 const helperNames: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
@@ -88,11 +96,35 @@ const sharedRegistrationCallbacks: Partial<
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
 };
 
+/**
+ * Options a dashboard sets in another shape than the npm helper takes them.
+ * Sentry's form takes the parts of a sentry.io DSN; a site passes the DSN.
+ */
+const dashboardToNpm: Partial<
+	Record<BuiltInScriptIntegrationKey, (options: Options) => Options>
+> = {
+	sentry: ({
+		ingestRegion,
+		organizationId,
+		projectId,
+		publicKey,
+		...rest
+	}) => ({
+		...rest,
+		dsn: `https://${String(publicKey)}@o${String(organizationId)}.ingest${
+			ingestRegion === undefined || ingestRegion === 'none'
+				? ''
+				: `.${String(ingestRegion)}`
+		}.sentry.io/${String(projectId)}`,
+	}),
+};
+
 /** `options` as a site would pass them to the npm helper. */
 const npmInput = function npmInput(key: string, options: Options): Options {
 	const integration = remoteIntegrations[key] as RemoteIntegration;
 	const required = npmRequired[key as BuiltInScriptIntegrationKey] ?? [];
-	const input = { ...options };
+	const toNpm = dashboardToNpm[key as BuiltInScriptIntegrationKey];
+	const input = toNpm ? toNpm({ ...options }) : { ...options };
 	for (const name of required) {
 		const spec = integration.options[name];
 		if (input[name] === undefined && spec && 'default' in spec) {
@@ -150,6 +182,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	rudderstack: ['cdn.rudderlabs.com'],
 	rybbitAnalytics: ['app.rybbit.io'],
 	segment: ['cdn.segment.com'],
+	sentry: ['browser.sentry-cdn.com'],
 	snapchatPixel: ['sc-static.net'],
 	statableAnalytics: ['statable.com'],
 	theTradeDeskPixel: ['js.adsrvr.org'],
@@ -171,6 +204,7 @@ const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	customerIo: 3,
 	pendo: 3,
 	pirsch: 3,
+	sentry: 4,
 };
 
 /**
@@ -421,6 +455,24 @@ describe('remoteIntegrations', () => {
 				],
 			})
 		).toBe(3);
+	});
+
+	it('reads the Sentry manifest at level 4, the level of its adapter', () => {
+		const manifest = remoteIntegrations.sentry?.resolveRemote({
+			organizationId: '0',
+			projectId: '0',
+			publicKey: 'public',
+		}) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+		const {
+			adapter: _adapter,
+			requires: _requires,
+			...withoutAdapter
+		} = manifest;
+
+		expect(manifestLevel(manifest)).toBe(4);
+		expect(manifest.requires).toBe(4);
+		// Without the adapter, its level 2 fields are the newest it uses.
+		expect(manifestLevel(withoutAdapter)).toBe(2);
 	});
 
 	it.each(cases)(

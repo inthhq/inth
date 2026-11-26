@@ -4,17 +4,16 @@ import type { BuiltInScriptIntegrationKey } from '../registry';
  * Why a registry vendor has no `remote` export yet.
  *
  * - `pending`: a later pull request in the remote-scripts stack converts it.
- *   `pr` is its place in the stack: 12 and 13 need an adapter. The level 2
- *   (8, 9) and level 3 (11) batches left none pending.
+ *   `pr` is its place in the stack: 13 needs an adapter. The level 2 (8, 9),
+ *   level 3 (11) and Sentry adapter (12) batches left none pending.
  * - `npm-only`: it stays an npm helper on purpose, for `reason`.
  *
  * The PR that adds a vendor's `remote` export deletes its row here.
  */
 export type RemoteStatus =
-	| { status: 'pending'; pr: 12 | 13 }
+	| { status: 'pending'; pr: 13 }
 	| { status: 'npm-only'; reason: string };
 
-const adapterSentry = { pr: 12, status: 'pending' } as const;
 const adapter = { pr: 13, status: 'pending' } as const;
 
 /** Every registry key without a `remote` export, and why. */
@@ -51,7 +50,6 @@ export const remoteStatus = {
 	gorgiasChat: adapter,
 	hubspot: adapter,
 	luckyOrange: adapter,
-	sentry: adapterSentry,
 	// The helper points zE.s at the loader's element on every grant, also when
 	// zE is already a function (the stub of an earlier grant, or the loaded
 	// API on a remount). setGlobalPath walks only object-valued path segments

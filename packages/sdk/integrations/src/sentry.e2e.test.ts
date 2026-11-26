@@ -14,9 +14,21 @@ import {
 } from 'vite-plus/test';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
-import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
+import {
+	fromRemote,
+	onRemoteDebug,
+	remoteLoaderOption,
+	resetRemote,
+	splitRemote,
+} from './__tests__/remote-path';
+import {
+	ALL_DENIED,
+	grantedMeasurementConsents,
+	settleScripts,
+} from './e2e-test-utils';
 import { sentry, sentryManifest } from './vendors/analytics/sentry';
 import type {
+	SentryCdnOptions,
 	SentryClient,
 	SentryEnvelope,
 	SentryEvent,
@@ -2586,5 +2598,112 @@ describe('Sentry loaded from the CDN', () => {
 		expect(error).toHaveBeenCalledWith(
 			'sentry: missing or invalid dsn. The script will not load.'
 		);
+	});
+});
+
+/** Options a dashboard sets, which the npm helper takes with a DSN. */
+type DashboardOptions = Omit<SentryCdnOptions, 'dsn'>;
+
+describe.each([
+	[
+		'npm helper',
+		(options: DashboardOptions) =>
+			sentry({
+				...options,
+				dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
+			}),
+	],
+	[
+		'remote manifest',
+		// A dashboard takes the DSN in parts.
+		(options: DashboardOptions) =>
+			fromRemote('sentry', {
+				...options,
+				organizationId: '0',
+				projectId: '0',
+				publicKey: 'examplePublicKey',
+			}),
+	],
+] as const)('Sentry dashboard settings through the %s', (_label, build) => {
+	/** Mounts `script`, or the Inth server's entry it stands in for. */
+	const mountEither = (script: Script, initial = ALL_DENIED) => {
+		const { code, load } = splitRemote([script]);
+		const kernel = createConsentKernel({ initialScriptRegistry: { load } });
+		void kernel.commands.save(initial);
+		const loader = createScriptLoader({
+			kernel,
+			onDebug: onRemoteDebug,
+			remote: remoteLoaderOption,
+			scripts: code,
+		});
+		disposers.push(
+			() => resetRemote(),
+			() => kernel.dispose(),
+			() => loader.dispose()
+		);
+		return { kernel, loader };
+	};
+
+	it('loads the pinned bundle, starts Sentry, and gates Replay and user data on measurement', async () => {
+		const { replays, loaded, processEvent, sentryGlobal } = installSentryCdn();
+		const { kernel } = mountEither(
+			build({
+				initOptions: {
+					environment: 'production',
+					replaysOnErrorSampleRate: 1,
+					replaysSessionSampleRate: 0.1,
+					tracesSampleRate: 0.1,
+				},
+			})
+		);
+		await settleScripts();
+		await settle();
+
+		expect(loaded.map((element) => element.src)).toEqual([
+			`${cdn}/11.4.0/bundle.tracing.min.js`,
+		]);
+		expect(loaded[0]?.getAttribute('integrity')).toBe(
+			'sha384-leCZtyH0v+/d38CQgHkDf/buaYk8uIH2vrAwzlLXVLKTcrvUWEUGan36c9ooM12N'
+		);
+		expect(sentryGlobal.init).toHaveBeenCalledExactlyOnceWith(
+			expect.objectContaining({
+				dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
+				environment: 'production',
+				replaysOnErrorSampleRate: 1,
+				replaysSessionSampleRate: 0.1,
+				tracesSampleRate: 0.1,
+			})
+		);
+		expect(replays).toHaveLength(0);
+		expect(processEvent({ user: { id: 'u1' } }).user).toBeUndefined();
+
+		await kernel.commands.save(grantedMeasurementConsents);
+		await settle();
+		expect(loaded[1]?.src).toBe(`${cdn}/11.4.0/replay.min.js`);
+		expect(replays[0]?.getRecordingMode()).toBe('session');
+		expect(processEvent({ user: { id: 'u1' } }).user).toEqual({ id: 'u1' });
+
+		await kernel.commands.save(ALL_DENIED);
+		expect(replays[0]?.getRecordingMode()).toBeUndefined();
+		expect(processEvent({ user: { id: 'u1' } }).user).toBeUndefined();
+	});
+
+	it('loads nothing until measurement with loadMode after-consent', async () => {
+		const { loaded, sentryGlobal } = installSentryCdn();
+		const { kernel } = mountEither(build({ loadMode: 'after-consent' }));
+		await settleScripts();
+		await settle();
+		expect(loaded).toHaveLength(0);
+		expect(kernel.getSnapshot().consentCategories).toEqual([
+			'measurement',
+			'necessary',
+		]);
+
+		await kernel.commands.save(grantedMeasurementConsents);
+		await settle();
+		expect(loaded.map((element) => element.src)).toEqual([
+			`${cdn}/11.4.0/bundle.min.js`,
+		]);
+		expect(sentryGlobal.init).toHaveBeenCalledOnce();
 	});
 });

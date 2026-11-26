@@ -37,7 +37,7 @@ export const remoteTraceFactory = function remoteTraceFactory(
 		// Imported per scenario, after the golden runner reset the registry.
 		const { remoteIntegrations, validateRemoteOptions } =
 			await import('../../remote');
-		const runtime = await import('@inth/sdk/manifest-runtime');
+		const { loadManifestRuntime } = await import('@inth/sdk/runtime');
 		const validated = validateRemoteOptions(key, options);
 		if (!validated.ok) {
 			throw new Error(
@@ -47,13 +47,10 @@ export const remoteTraceFactory = function remoteTraceFactory(
 		const wire = JSON.stringify(
 			remoteIntegrations[key]?.resolveRemote(validated.options)
 		);
-		// The loader installs the level 3 part before it parses a manifest
-		// that requires it.
-		if (runtime.requiresLevelThree([JSON.parse(wire)])) {
-			const { levelThreePart } =
-				await import('@inth/sdk/manifest-runtime/level-three');
-			runtime.installLevelThree(levelThreePart);
-		}
+		// The runtime the loader uses: its `prepare` loads the level 3 part or
+		// an adapter a manifest needs, before the loader parses the manifest.
+		const loaded = await loadManifestRuntime();
+		const runtime = (await loaded.prepare?.([JSON.parse(wire)])) ?? loaded;
 		let kept: Script | undefined;
 		return () => {
 			if (keepScript && kept) {
