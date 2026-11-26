@@ -3,7 +3,14 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { ALL_DENIED } from './e2e-test-utils';
+import {
+	npmAndRemote,
+	onRemoteDebug,
+	remoteLoaderOption,
+	resetRemote,
+	splitRemote,
+} from './__tests__/remote-path';
+import { ALL_DENIED, settleScripts } from './e2e-test-utils';
 import { fullStory } from './vendors/analytics/fullstory';
 import type {
 	FullStoryApi,
@@ -1049,3 +1056,61 @@ describe('FullStory effective regional configuration', () => {
 		}
 	);
 });
+
+describe.each(npmAndRemote('fullStory', fullStory))(
+	'FullStory dashboard settings through the %s',
+	(_label, build) => {
+		/** Mounts `script`, or the Inth server's entry it stands in for. */
+		const mountEither = (script: ReturnType<typeof fullStory>) => {
+			const { code, load } = splitRemote([script]);
+			const kernel = createConsentKernel({ initialScriptRegistry: { load } });
+			void kernel.commands.save(ALL_DENIED);
+			const loader = createScriptLoader({
+				kernel,
+				onDebug: onRemoteDebug,
+				remote: remoteLoaderOption,
+				scripts: code,
+			});
+			disposals.push(() => {
+				loader.dispose();
+				kernel.dispose();
+				resetRemote();
+			});
+			return kernel;
+		};
+
+		it('bootstraps an EU organization with capture off, then starts, shuts down and restarts it', async () => {
+			const kernel = mountEither(
+				build({ elementConsent: true, orgId: 'o-ABC123-eu1' })
+			);
+			await settleScripts();
+			expect(window.FS).toBeUndefined();
+
+			await kernel.commands.save(granted);
+			expect(loaderElement().src).toBe(
+				'https://edge.eu1.fullstory.com/s/fs.js?org=o-ABC123-eu1'
+			);
+			expect(window._fs_host).toBe('eu1.fullstory.com');
+			expect(window._fs_capture_on_startup).toBe(false);
+			// The stub's Async commands return promises before the SDK loads,
+			// and the page's fetch still reaches the original.
+			expect(apiOf()('getSessionAsync')).toBeInstanceOf(Promise);
+			expect(apiOf()._w?.fetch).toBe(originalFetch);
+
+			const { dispatch } = recorder();
+			const commands = () => dispatch.mock.calls.map((call) => call[0]);
+			expect(commands()).toEqual([
+				'init',
+				'getSession',
+				'setIdentity',
+				'start',
+			]);
+			expect(dispatch.mock.calls.at(-2)?.[1]).toEqual({ consent: true });
+
+			await kernel.commands.save(ALL_DENIED);
+			expect(commands().slice(-2)).toEqual(['setIdentity', 'shutdown']);
+			await kernel.commands.save(granted);
+			expect(commands().slice(-2)).toEqual(['setIdentity', 'restart']);
+		});
+	}
+);

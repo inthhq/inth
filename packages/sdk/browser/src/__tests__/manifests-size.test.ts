@@ -37,8 +37,10 @@ import { expect, it } from 'vite-plus/test';
  * DSN pattern.
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 441.
  * `inth.adapter-gainsight-px.js`, the Gainsight PX installation checks: 1,482.
+ * `inth.adapter-fullstory.js`, the FullStory stub and recorder gate: 2,097.
  */
 const BUDGETS = {
+	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-sentry.js': 6280,

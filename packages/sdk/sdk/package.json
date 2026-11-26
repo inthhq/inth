@@ -211,6 +211,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/sentry.js"
 		},
+		"./manifest-runtime/adapters/fullstory": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/fullstory.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/fullstory.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/fullstory.js"
+		},
 		"./manifest-runtime/adapters/gainsight-px": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/gainsight-px.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/gainsight-px.js",

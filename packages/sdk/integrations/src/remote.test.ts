@@ -166,6 +166,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	databuddy: ['cdn.databuddy.cc'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
+	fullStory: ['edge.fullstory.com', 'edge.eu1.fullstory.com'],
 	gainsightPx: ['web-sdk.aptrinsic.com'],
 	googleTagManager: ['www.googletagmanager.com'],
 	gtag: ['www.googletagmanager.com'],
@@ -220,6 +221,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	customerIo: 3,
+	fullStory: 4,
 	gainsightPx: 4,
 	luckyOrange: 4,
 	pendo: 3,

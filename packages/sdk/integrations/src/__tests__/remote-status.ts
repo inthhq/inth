@@ -34,7 +34,6 @@ export const remoteStatus = {
 	// leave the incoming, granted registration reading denied.
 	dynamicYield: adapter,
 	eloquaTracking: adapter,
-	fullStory: adapter,
 	// Before init() resolves, the chat's API is a Proxy that throws on every
 	// read but init, also on the Symbol.toStringTag read the manifest
 	// runtime makes to tell a vendor object from a browser one. The runtime

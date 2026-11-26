@@ -9,6 +9,7 @@ const ADAPTER_MODULES: Record<
 	AdapterId,
 	() => Promise<ManifestAdapter<never>>
 > = {
+	fullstory: async () => (await import('./fullstory')).fullStoryAdapter,
 	'gainsight-px': async () =>
 		(await import('./gainsight-px')).gainsightPxAdapter,
 	'lucky-orange': async () =>

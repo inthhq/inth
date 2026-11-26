@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { RemoteManifestRuntime } from '../../modules/script-loader/types';
+import * as fullStory from '../adapters/fullstory';
 import * as gainsightPx from '../adapters/gainsight-px';
 import { importAdapter } from '../adapters/index';
 import * as luckyOrange from '../adapters/lucky-orange';
@@ -130,5 +131,55 @@ describe('the Gainsight PX adapter', () => {
 		} finally {
 			Reflect.deleteProperty(window, 'aptrinsic');
 		}
+	});
+});
+
+describe('the FullStory adapter', () => {
+	it('takes an organization and element consent, and nothing else', async () => {
+		expect(
+			await reasonFor(
+				'fullstory',
+				{ elementConsent: false, orgId: 'o-ABC-eu1' },
+				'fullstory'
+			)
+		).toBeUndefined();
+		expect(
+			await reasonFor(
+				'fullstory',
+				{ elementConsent: false, host: 'x.example', orgId: 'o-ABC-eu1' },
+				'fullstory'
+			)
+		).toBe(
+			'its fullstory adapter options are wrong: it has the unknown option host'
+		);
+		expect(
+			await reasonFor(
+				'fullstory',
+				{ elementConsent: false, orgId: 'a.b/c' },
+				'fullstory'
+			)
+		).toBe(
+			'its fullstory adapter options are wrong: its orgId is not an organization ID'
+		);
+		expect(
+			await reasonFor(
+				'fullstory',
+				{ elementConsent: 'yes', orgId: 'o-ABC-eu1' },
+				'fullstory'
+			)
+		).toBe(
+			'its fullstory adapter options are wrong: its elementConsent is not true or false'
+		);
+	});
+
+	it("moves FullStory's endpoints to the organization's region", () => {
+		expect(fullStory.fullStoryEndpoints('o-ABC-eu1')).toEqual({
+			host: 'eu1.fullstory.com',
+			script: 'edge.eu1.fullstory.com/s/fs.js',
+		});
+		expect(fullStory.fullStoryEndpoints('o-ABC-na1')).toEqual({
+			host: 'fullstory.com',
+			script: 'edge.fullstory.com/s/fs.js',
+		});
 	});
 });
