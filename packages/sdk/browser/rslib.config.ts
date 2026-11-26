@@ -88,6 +88,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-oracle-eloqua',
 	'inth.adapter-salesforce-pardot',
 	'inth.adapter-hubspot',
+	'inth.adapter-adobe-target',
 	'inth.adapter-amazon-ads',
 	'inth.adapter-cloudflare-zaraz',
 	'inth.adapter-sentry',
@@ -289,6 +290,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-cloudflare-zaraz',
 			'./src/entries/cdn-adapter-cloudflare-zaraz.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-adobe-target',
+			'./src/entries/cdn-adapter-adobe-target.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(

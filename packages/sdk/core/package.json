@@ -190,6 +190,11 @@
 			"import": "./dist/manifest-runtime/adapters/cloudflare-zaraz.js",
 			"default": "./dist/manifest-runtime/adapters/cloudflare-zaraz.js"
 		},
+		"./manifest-runtime/adapters/adobe-target": {
+			"types": "./dist-types/manifest-runtime/adapters/adobe-target.d.ts",
+			"import": "./dist/manifest-runtime/adapters/adobe-target.js",
+			"default": "./dist/manifest-runtime/adapters/adobe-target.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

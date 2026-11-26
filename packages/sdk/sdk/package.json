@@ -236,6 +236,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/cloudflare-zaraz.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/cloudflare-zaraz.js"
 		},
+		"./manifest-runtime/adapters/adobe-target": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/adobe-target.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/adobe-target.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/adobe-target.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

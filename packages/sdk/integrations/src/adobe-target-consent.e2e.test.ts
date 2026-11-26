@@ -6,10 +6,12 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { adobeTarget } from './vendors/functional/adobe-target';
@@ -340,3 +342,37 @@ describe('Adobe Target pending consent through the core loader', () => {
 		}
 	);
 });
+
+describe.each(npmAndRemote('adobeTarget', adobeTarget))(
+	'Adobe Target Web SDK dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => vi.useRealTimers());
+
+		it('loads the Web SDK from Adobe, configures it with consent pending, and sends one consent request at a time', async () => {
+			vi.useFakeTimers();
+			const sdk = installRuntime();
+			const scripts = [build(options)];
+			loadScripts(scripts, granted);
+			await settleScripts();
+			const element = await finishLoad();
+
+			expect(element.getAttribute('src')).toBe(
+				'https://cdn1.adoberesources.net/alloy/2.30.0/alloy.min.js'
+			);
+			expect(sdk.runtime).toHaveBeenNthCalledWith(1, 'configure', {
+				datastreamId: options.datastreamId,
+				defaultConsent: 'pending',
+				orgId: options.orgId,
+			});
+			updateScripts(scripts, ALL_DENIED);
+			expect(sdk.requests.map((request) => request.general)).toEqual(['in']);
+			sdk.requests[0]?.operation.resolve();
+			await vi.runOnlyPendingTimersAsync();
+			expect(sdk.requests.map((request) => request.general)).toEqual([
+				'in',
+				'out',
+			]);
+		});
+	}
+);

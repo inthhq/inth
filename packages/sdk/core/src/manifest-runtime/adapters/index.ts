@@ -11,6 +11,8 @@ const ADAPTER_MODULES: Record<
 > = {
 	activecampaign: async () =>
 		(await import('./activecampaign')).activeCampaignAdapter,
+	'adobe-target': async () =>
+		(await import('./adobe-target')).adobeTargetAdapter,
 	'amazon-ads': async () => (await import('./amazon-ads')).amazonAdsAdapter,
 	'cloudflare-zaraz': async () =>
 		(await import('./cloudflare-zaraz')).cloudflareZarazAdapter,

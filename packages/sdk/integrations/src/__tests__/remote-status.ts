@@ -19,8 +19,6 @@ const adapter = { pr: 13, status: 'pending' } as const;
 /** Every registry key without a `remote` export, and why. */
 export const remoteStatus = {
 	ada: adapter,
-	// The Web SDK mode needs an adapter; at.js loads from a fixed Adobe host.
-	adobeTarget: adapter,
 	defaultComPixel: adapter,
 	// A level 2 manifest cannot express two behaviours its golden trace
 	// records. The helper inserts api_static.js without an id, and
@@ -50,7 +48,14 @@ export const remoteStatus = {
  * registry key, then by the value of its `mode` option, and why. The remote
  * definition's `mode` enum must not offer them.
  */
-export const remoteModeStatus = {} as const satisfies Partial<
+export const remoteModeStatus = {
+	adobeTarget: {
+		// Adobe hosts no shared at.js file: a site downloads at.js from Target
+		// and hosts it, which the npm helper's scriptUrl takes. A remote form
+		// needs a fixed Adobe host with a path built from validated IDs.
+		atjs: adapter,
+	},
+} as const satisfies Partial<
 	Record<BuiltInScriptIntegrationKey, Record<string, RemoteStatus>>
 >;
 

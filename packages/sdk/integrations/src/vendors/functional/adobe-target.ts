@@ -1,8 +1,12 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
+import { adobeTargetWebSdkScript } from '@inth/sdk/manifest-runtime/adapters/adobe-target';
+import type { AdobeTargetAdapterOptions } from '@inth/sdk/manifest-runtime/adapters/adobe-target';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest, resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,
@@ -71,17 +75,6 @@ export type AdobeTargetOptions =
 	| AdobeTargetAtJsOptions
 	| AdobeTargetWebSdkOptions;
 
-type AlloyQueueEntry = [
-	resolve: (value: unknown) => void,
-	reject: (reason?: unknown) => void,
-	args: [command: string, options?: Record<string, unknown>],
-];
-
-type AlloyFunction = ((
-	command: string,
-	options?: Record<string, unknown>
-) => Promise<unknown>) & { q: AlloyQueueEntry[] };
-
 interface AdobeOptIn {
 	Categories?: { TARGET?: string };
 	approve: (category: string) => void;
@@ -89,8 +82,6 @@ interface AdobeOptIn {
 }
 
 type AdobeTargetWindow = Window & {
-	__alloyNS?: string[];
-	alloy?: AlloyFunction;
 	adobe?: {
 		OptInCategories?: { TARGET?: string };
 		optIn?: AdobeOptIn;
@@ -121,11 +112,21 @@ export const adobeTargetManifest = {
 	},
 } as const satisfies VendorManifest;
 
-/** Web SDK stays installed after its first grant so setConsent can stop it. */
+/**
+ * The Web SDK from Adobe's host. It stays installed after its first grant
+ * so setConsent can stop it. The Adobe Target adapter in `@inth/sdk` starts
+ * it with consent pending and sends consent.
+ */
 export const adobeTargetWebSdkManifest = {
 	...adobeTargetManifest,
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			async: true,
+			src: 'https://cdn1.adoberesources.net/alloy/{{version}}/alloy.min.js',
+			type: 'loadScript',
+		},
+	],
+	observeConsentBeforeLoad: true,
 } as const satisfies VendorManifest;
 
 const signalAtJsConsent = function signalAtJsConsent(granted: boolean): void {
@@ -181,127 +182,44 @@ const createAtJsScript = function createAtJsScript(
 	};
 };
 
-const installAlloyStub = function installAlloyStub(): AlloyFunction {
-	const win = window as AdobeTargetWindow;
-	if (win.alloy) {
-		return win.alloy;
-	}
-	win.__alloyNS ??= [];
-	if (!win.__alloyNS.includes('alloy')) {
-		win.__alloyNS.push('alloy');
-	}
-	// Adobe replaces q.push with its executor, while the public function stays.
-	// The queue entries must keep resolve, reject and command arguments.
-	const alloy: AlloyFunction = Object.assign(
-		(...args: [command: string, options?: Record<string, unknown>]) =>
-			new Promise<unknown>((resolve, reject) => {
-				window.setTimeout(() => {
-					alloy.q.push([resolve, reject, args]);
-				}, 0);
+/**
+ * The manifest for Adobe Target's Web SDK: alloy.min.js at the version
+ * from Adobe's host, and the Adobe Target adapter with the datastream and
+ * organization. The npm helper and the Inth server both build it here.
+ */
+export const resolveAdobeTargetWebSdkManifest =
+	function resolveAdobeTargetWebSdkManifest({
+		category,
+		datastreamId,
+		orgId,
+		version,
+	}: Pick<
+		AdobeTargetWebSdkOptions,
+		'category' | 'datastreamId' | 'orgId' | 'version'
+	>): ResolvedManifest {
+		const options: AdobeTargetAdapterOptions = { datastreamId, orgId };
+		return {
+			...getCompiledManifest(adobeTargetWebSdkManifest, {
+				category: category ?? 'experience',
+				version,
 			}),
-		{ q: [] as AlloyQueueEntry[] }
-	);
-	win.alloy = alloy;
-	return alloy;
-};
-
-const reportAlloyError = (command: string, error: unknown): void => {
-	console.error(`adobeTarget: Web SDK ${command} failed`, error);
-};
+			adapter: { id: 'adobe-target', options: { ...options } },
+			requires: 4,
+		};
+	};
 
 const createWebSdkScript = function createWebSdkScript(
 	options: AdobeTargetWebSdkOptions
 ): Script {
-	const script = resolveManifest(adobeTargetWebSdkManifest, {
-		category: options.category ?? 'experience',
-		scriptUrl: `https://cdn1.adoberesources.net/alloy/${encodeURIComponent(options.version)}/alloy.min.js`,
-	});
-	let loaded = false;
-	let alloy: AlloyFunction | undefined;
-	let configureAttempted = false;
-	let configured = false;
-	let currentConsent = false;
-	let acknowledgedConsent: boolean | undefined;
-	let sendingConsent = false;
-	const sendConsent = async (): Promise<void> => {
-		if (
-			!configured ||
-			!alloy ||
-			sendingConsent ||
-			acknowledgedConsent === currentConsent
-		) {
-			return;
-		}
-		const requestedConsent = currentConsent;
-		sendingConsent = true;
-		try {
-			await alloy('setConsent', {
-				consent: [
-					{
-						standard: 'Adobe',
-						value: { general: requestedConsent ? 'in' : 'out' },
-						version: '1.0',
-					},
-				],
-			});
-			acknowledgedConsent = requestedConsent;
-		} catch (error) {
-			// A rejected request can still change Adobe's persisted consent.
-			acknowledgedConsent = undefined;
-			reportAlloyError('setConsent', error);
-		}
-		sendingConsent = false;
-		if (requestedConsent !== currentConsent) {
-			void sendConsent();
-		}
-	};
-	const configure = async (runtime: AlloyFunction): Promise<void> => {
-		// Alloy retains a rejected configure promise; recovery needs a reload.
-		configureAttempted = true;
-		try {
-			await runtime('configure', {
-				datastreamId: options.datastreamId,
-				defaultConsent: 'pending',
-				orgId: options.orgId,
-			});
-		} catch (error) {
-			reportAlloyError('configure', error);
-			return;
-		}
-		configured = true;
-		void sendConsent();
-	};
-	const signal = (granted: boolean): void => {
-		currentConsent = granted;
-		if (!loaded || !alloy) {
-			return;
-		}
-		if (configured) {
-			void sendConsent();
-		} else if (!configureAttempted && granted) {
-			void configure(alloy);
-		}
-	};
+	const { adapter, ...manifest } = resolveAdobeTargetWebSdkManifest(options);
 	return {
-		...script,
+		...adobeTargetWebSdkScript(
+			resolvedManifestToScript(manifest),
+			adapter?.options as unknown as AdobeTargetAdapterOptions,
+			{ registrations: getScriptRegistrations }
+		),
+		// The site's own nonce is npm-only.
 		nonce: trimToUndefined(options.nonce),
-		observeConsentBeforeLoad: true,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			if (getScriptRegistrations(info).some((state) => state.hasConsent)) {
-				alloy = installAlloyStub();
-			}
-		},
-		onConsentChange(info) {
-			signal(info.hasConsent);
-		},
-		onDispose() {
-			signal(false);
-		},
-		onLoad(info) {
-			loaded = true;
-			signal(info.hasConsent);
-		},
 	};
 };
 
@@ -315,6 +233,51 @@ const isSupportedWebSdkVersion = (version: string): boolean => {
 	const [major = 0, minor = 0] = version.split('.').map(Number);
 	return major > 2 || (major === 2 && minor >= 21);
 };
+
+/**
+ * What the Inth server may set for Adobe Target: the Web SDK from Adobe's
+ * host, with its datastream, organization and version. at.js has no shared
+ * Adobe-hosted file, so a site loads its own download with the npm helper.
+ * The consent condition and nonce are npm-only too. Marked pure so a
+ * bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'adobeTarget',
+		{
+			datastreamId: {
+				example: '0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d',
+				kind: 'id',
+				label: 'Datastream ID',
+				pattern: '^[0-9A-Za-z_-]{1,64}$',
+				required: true,
+			},
+			mode: {
+				default: 'websdk',
+				kind: 'enum',
+				label: 'Library',
+				values: ['websdk'],
+			},
+			orgId: {
+				example: 'ABCDEF0123456789@AdobeOrg',
+				kind: 'id',
+				label: 'Organization ID, with @AdobeOrg',
+				pattern: '^[0-9A-Za-z]{1,64}@AdobeOrg$',
+				required: true,
+			},
+			version: {
+				example: '2.30.0',
+				kind: 'id',
+				label: 'Web SDK version, 2.21.0 or later',
+				// An exact stable version, 2.21.0 or later.
+				pattern:
+					'^(?:(?:[3-9]|[1-9][0-9]+)\\.(?:0|[1-9][0-9]*)|2\\.(?:2[1-9]|[3-9][0-9]|[1-9][0-9]{2,}))\\.(?:0|[1-9][0-9]*)$',
+				required: true,
+			},
+		},
+		({ mode: _mode, ...options }) => resolveAdobeTargetWebSdkManifest(options)
+	);
 
 /**
  * Loads Adobe Target only after the configured consent condition permits it.

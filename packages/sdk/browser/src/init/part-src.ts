@@ -18,6 +18,7 @@ export type InitFile =
 	| 'adapter-activecampaign'
 	| 'adapter-amazon-ads'
 	| 'adapter-cloudflare-zaraz'
+	| 'adapter-adobe-target'
 	| 'adapter-databuddy'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
@@ -32,6 +33,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-activecampaign': '__inthAdapterActivecampaignSrc',
 	'adapter-amazon-ads': '__inthAdapterAmazonAdsSrc',
 	'adapter-cloudflare-zaraz': '__inthAdapterCloudflareZarazSrc',
+	'adapter-adobe-target': '__inthAdapterAdobeTargetSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',

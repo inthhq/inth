@@ -85,6 +85,8 @@ const npmHelper = function npmHelper(
  * option is passed as the sample has it.
  */
 const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
+	// The helper defaults to at.js, which the server does not send.
+	adobeTarget: ['mode'],
 	gtag: ['category'],
 };
 
@@ -186,6 +188,7 @@ const hostOptions: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
 const vendorHosts: Record<string, readonly string[]> = {
 	activeCampaignTracking: ['diffuser-cdn.app-us1.com'],
 	adobeAnalytics: ['assets.adobedtm.com'],
+	adobeTarget: ['cdn1.adoberesources.net'],
 	adrollPixel: ['s.adroll.com'],
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
 	amazonAdsTag: ['c.amazon-adsystem.com'],
@@ -266,6 +269,7 @@ const vendorLevels: Partial<
 	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
 > = {
 	activeCampaignTracking: 4,
+	adobeTarget: 4,
 	amazonAdsTag: 4,
 	cloudflareZaraz: 4,
 	customerIo: 3,

@@ -50,11 +50,13 @@ import { expect, it } from 'vite-plus/test';
  * and chat lifecycle: 2,794.
  * `inth.adapter-oracle-eloqua.js`, the Eloqua consent dispatcher: 2,074.
  * `inth.adapter-salesforce-pardot.js`, Pardot's consent cycle: 570.
+ * `inth.adapter-adobe-target.js`, Adobe's Web SDK consent: 836.
  * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
+	'inth.adapter-adobe-target.js': 870,
 	'inth.adapter-amazon-ads.js': 1550,
 	'inth.adapter-cloudflare-zaraz.js': 1270,
 	'inth.adapter-databuddy.js': 1240,
@@ -113,6 +115,7 @@ it('keeps adapter code out of the runtime files and the Sentry gate in its own',
 
 it.each([
 	['inth.adapter-activecampaign.js', 'an unmanaged tracker exists'],
+	['inth.adapter-adobe-target.js', 'Web SDK'],
 	['inth.adapter-amazon-ads.js', 'amzn-consent.js'],
 	['inth.adapter-cloudflare-zaraz.js', 'zarazConsentAPIReady'],
 	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
