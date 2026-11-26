@@ -50,10 +50,11 @@ const hostedScript = async function hostedScript(): Promise<string> {
 	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n${bundle}`;
 };
 
-// `inth.hosted.js`, `inth.records.js` and `inth.choices.js`, with or
+// `inth.hosted.js`, `inth.records.js`, `inth.choices.js` and the dialog
+// `inth.choices.js` loads when it opens, `inth.choices-dialog.js`, with or
 // without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|records|choices)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|records|choices|choices-dialog)\\.js(?:\\?.*)?$`,
 	'u'
 );
 
