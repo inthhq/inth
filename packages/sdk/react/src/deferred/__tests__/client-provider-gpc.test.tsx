@@ -10,6 +10,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vite-plus/test';
 import { render } from 'vitest-browser-react';
 
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
+import { MANIFEST_RUNTIME_LEVEL } from '../../../../core/src/manifest-runtime/level';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { useSnapshot } from '../../hooks';
@@ -85,6 +86,7 @@ const prefetch = function prefetch() {
 		credentials: 'same-origin',
 		gpc: true,
 		language: null,
+		manifestLevel: MANIFEST_RUNTIME_LEVEL,
 		projectUrl: BACKEND,
 		region: null,
 	};

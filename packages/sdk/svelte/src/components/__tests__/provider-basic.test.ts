@@ -115,7 +115,7 @@ describe('InthProvider Basic Request Behavior', () => {
 			// The query carries the protocol inputs and the consent journey.
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringMatching(
-					/^\/api\/inth\/v1\/consent\/init\?manifestLevel=1&journey=/u
+					/^\/api\/inth\/v1\/consent\/init\?manifestLevel=2&journey=/u
 				),
 				expect.objectContaining({ method: 'GET' })
 			);

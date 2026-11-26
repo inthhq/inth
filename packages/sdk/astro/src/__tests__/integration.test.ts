@@ -277,7 +277,7 @@ describe('resolveOptions', () => {
 			projectUrl: 'https://consent.example.com',
 		});
 		expect(fetch).toHaveBeenCalledWith(
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
 			expect.anything()
 		);
 		expect(serverOptionsSource(calls)).toContain(
@@ -384,7 +384,7 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
-			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest?manifestLevel=1 during the build (/v1/consent/manifest responded 503 (server_error)). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest?manifestLevel=2 during the build (/v1/consent/manifest responded 503 (server_error)). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -428,7 +428,7 @@ describe('resolveOptions', () => {
 		// `inth()` with no options is `manifest()` mode.
 		const { calls } = await runSetup({});
 		expect(fetch).toHaveBeenCalledWith(
-			'https://env.example.com/v1/consent/manifest?manifestLevel=1',
+			'https://env.example.com/v1/consent/manifest?manifestLevel=2',
 			expect.anything()
 		);
 		const hosted = await runSetup({ mode: hostedMode() });

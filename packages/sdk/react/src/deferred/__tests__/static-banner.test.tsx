@@ -10,6 +10,7 @@ import { render } from 'vitest-browser-react';
 
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import { STATIC_BANNER_ATTR as CORE_STATIC_BANNER_ATTR } from '../../../../core/src/libs/static-banner';
+import { MANIFEST_RUNTIME_LEVEL } from '../../../../core/src/manifest-runtime/level';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { STATIC_BANNER_ATTR } from '../../components/prompt/static-banner-shell';
@@ -52,6 +53,7 @@ const requestContext = {
 	credentials: 'same-origin',
 	gpc: false,
 	language: null,
+	manifestLevel: MANIFEST_RUNTIME_LEVEL,
 	projectUrl: BACKEND,
 	region: null,
 };

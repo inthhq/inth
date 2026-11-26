@@ -87,7 +87,7 @@ describe('TanStack Start manifest generation', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@inth/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest?manifestLevel=1 during dev (backend unavailable). The server fetches it at runtime instead'
+				'@inth/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest?manifestLevel=2 during dev (backend unavailable). The server fetches it at runtime instead'
 			)
 		);
 	});
@@ -140,7 +140,7 @@ describe('TanStack Start manifest generation', () => {
 		});
 		await buildGenerated(plugin, 'server');
 		expect(fetchSpy).toHaveBeenCalledWith(
-			'https://env.example.com/v1/consent/manifest?manifestLevel=1',
+			'https://env.example.com/v1/consent/manifest?manifestLevel=2',
 			expect.any(Object)
 		);
 	});
@@ -201,7 +201,7 @@ describe('TanStack Start manifest backend URL', () => {
 		plugin.configResolved({ env, root: await tempRoot() });
 		await buildGenerated(plugin, 'server');
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=1'
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=2'
 		);
 		expect(env.VITE_INTH_PROJECT_URL).toBe('/api/inth');
 	});

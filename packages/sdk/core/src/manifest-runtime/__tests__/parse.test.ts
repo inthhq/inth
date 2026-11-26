@@ -142,7 +142,7 @@ describe('parseResolvedManifest', () => {
 
 	// An older SDK must refuse what a newer manifest adds, never run part of it.
 	it.each<[string, unknown]>([
-		['an unknown manifest field', { ...manifest(), onDisposeSteps: [] }],
+		['an unknown manifest field', { ...manifest(), onUnloadSteps: [] }],
 		[
 			'an unknown step field',
 			{
@@ -252,6 +252,218 @@ describe('parseResolvedManifest', () => {
 		expect(parseResolvedManifest({ ...manifest(), requires })).toEqual({
 			ok: false,
 			reason: 'its requires is not a whole number from 1',
+		});
+	});
+	describe('level 2', () => {
+		const runtimeValue = (value: string, fields = {}) => ({
+			kind: 'inth.runtime-value',
+			value,
+			...fields,
+		});
+		const withSetup = (...steps: unknown[]) => ({
+			...manifest(),
+			requires: 2,
+			setupSteps: steps,
+		});
+		const addon = (fields: Record<string, unknown> = {}) => ({
+			id: 'vendor-addon',
+			src: 'https://cdn.example/addon.js',
+			type: 'loadScriptStep',
+			...fields,
+		});
+
+		it('accepts every level 2 step, field and runtime value', () => {
+			const input = {
+				...withSetup(
+					{
+						args: [
+							runtimeValue('hasConsent'),
+							runtimeValue('consents', {
+								format: 'grantedDenied',
+								mapping: { measurement: ['analytics'] },
+							}),
+							runtimeValue('scriptElement'),
+							{ nonce: runtimeValue('scriptNonce') },
+							runtimeValue('consentGate'),
+						],
+						path: ['vendor', 'api', 'start'],
+						type: 'callGlobal',
+					},
+					addon({
+						async: false,
+						attributes: { 'data-site': 'abc' },
+						unlessGlobal: ['vendor', 'recorder'],
+					}),
+					{ id: 'vendor-addon', type: 'removeScript' },
+					{
+						methods: ['track'],
+						queueFormat: 'nameAndArguments',
+						target: 'vendor',
+						type: 'defineQueueMethods',
+					}
+				),
+				loadScript: {
+					...manifest().loadScript,
+					attributes: { id: 'vendor-main' },
+				},
+				observeConsentBeforeLoad: true,
+				onDisposeSteps: [{ id: 'vendor-addon', type: 'removeScript' }],
+				persistAfterDispose: false,
+				resourceKey: 'vendor-main',
+				target: 'body',
+			};
+
+			expect(parseResolvedManifest(JSON.parse(JSON.stringify(input)))).toEqual({
+				manifest: input,
+				ok: true,
+			});
+		});
+
+		it.each<[string, unknown]>([
+			[
+				'a call with both a path and a global',
+				withSetup({ global: 'a', path: ['a', 'b'], type: 'callGlobal' }),
+			],
+			[
+				'a call with a path and a method',
+				withSetup({ method: 'b', path: ['a'], type: 'callGlobal' }),
+			],
+			[
+				'a call with an empty path',
+				withSetup({ path: [], type: 'callGlobal' }),
+			],
+			['a call with neither', withSetup({ type: 'callGlobal' })],
+			[
+				'a call with a non-string path',
+				withSetup({ path: ['a', 1], type: 'callGlobal' }),
+			],
+			[
+				'an http second script',
+				withSetup(addon({ src: 'http://cdn.example/a.js' })),
+			],
+			['a second script without an id', withSetup(addon({ id: undefined }))],
+			['a second script with a bad id', withSetup(addon({ id: '1addon' }))],
+			[
+				'a second script with an id attribute',
+				withSetup(addon({ attributes: { id: 'other' } })),
+			],
+			[
+				'a second script with an event handler',
+				withSetup(addon({ attributes: { onload: 'x()' } })),
+			],
+			[
+				'a second script with a string async',
+				withSetup(addon({ async: 'no' })),
+			],
+			['an empty unlessGlobal', withSetup(addon({ unlessGlobal: [] }))],
+			['a removeScript without an id', withSetup({ type: 'removeScript' })],
+			[
+				'an unknown queueFormat',
+				withSetup({
+					methods: ['a'],
+					queueFormat: 'spread',
+					target: 'q',
+					type: 'defineQueueMethods',
+				}),
+			],
+			[
+				'consents with an unknown format',
+				withSetup({
+					args: [runtimeValue('consents', { format: 'yes', mapping: {} })],
+					global: 'a',
+					type: 'callGlobal',
+				}),
+			],
+			[
+				'consents mapping a name that is not a category',
+				withSetup({
+					args: [
+						runtimeValue('consents', {
+							format: 'boolean',
+							mapping: { toString: ['a'] },
+						}),
+					],
+					global: 'a',
+					type: 'callGlobal',
+				}),
+			],
+			[
+				'hasConsent with a mapping',
+				withSetup({
+					args: [runtimeValue('hasConsent', { mapping: {} })],
+					global: 'a',
+					type: 'callGlobal',
+				}),
+			],
+			['a target of footer', { ...withSetup(), target: 'footer' }],
+			[
+				'a string observeConsentBeforeLoad',
+				{ ...withSetup(), observeConsentBeforeLoad: 'yes' },
+			],
+			[
+				'a numeric persistAfterDispose',
+				{ ...withSetup(), persistAfterDispose: 1 },
+			],
+			['an empty resourceKey', { ...withSetup(), resourceKey: '' }],
+			[
+				'onDisposeSteps that is not a list',
+				{ ...withSetup(), onDisposeSteps: {} },
+			],
+			[
+				'a second script inserted on dispose',
+				{ ...withSetup(), onDisposeSteps: [addon()] },
+			],
+			[
+				'a script id attribute that is not an id',
+				{
+					...withSetup(),
+					loadScript: {
+						...manifest().loadScript,
+						attributes: { id: 'a b' },
+					},
+				},
+			],
+		])('refuses %s', (_label, input) => {
+			expect(parseResolvedManifest(input).ok).toBe(false);
+		});
+
+		it.each(['eval', 'Function', 'setTimeout', 'setInterval', 'location'])(
+			'refuses calling or constructing %s',
+			(root) => {
+				for (const step of [
+					{ args: ['x'], global: root, type: 'callGlobal' },
+					{ global: root, method: 'call', type: 'callGlobal' },
+					{ global: 'window', method: root, type: 'callGlobal' },
+					{ path: [root], type: 'callGlobal' },
+					{ path: ['globalThis', 'self', root, 'assign'], type: 'callGlobal' },
+					{ assignTo: 'x', constructor: root, type: 'constructGlobal' },
+				]) {
+					expect(
+						parseResolvedManifest(withSetup(step)),
+						JSON.stringify(step)
+					).toEqual({ ok: false, reason: expect.stringContaining('calls') });
+				}
+			}
+		);
+
+		it.each([
+			{ global: 'document', method: 'write', type: 'callGlobal' },
+			{ path: ['document', 'writeln'], type: 'callGlobal' },
+			{ path: ['window', 'document', 'write'], type: 'callGlobal' },
+		])('refuses writing to the document with %j', (step) => {
+			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
+		});
+
+		it('accepts calls that only name a code global further down', () => {
+			expect(
+				parseResolvedManifest(
+					withSetup(
+						{ path: ['vendor', 'eval'], type: 'callGlobal' },
+						{ global: 'vendor', method: 'setTimeout', type: 'callGlobal' },
+						{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' }
+					)
+				).ok
+			).toBe(true);
 		});
 	});
 });

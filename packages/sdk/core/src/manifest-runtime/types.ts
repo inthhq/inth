@@ -11,10 +11,46 @@ export const vendorManifestContract = {
 
 export const RUNTIME_VALUE_KIND = 'inth.runtime-value';
 
-export interface RuntimeValue {
+/**
+ * A value a step reads when it runs, in place of a literal.
+ *
+ * - `date`, `timestamp`: the current time, as a `Date` or epoch milliseconds.
+ * - `hasConsent` (level 2): whether the vendor may run, `false` when the
+ *   visitor turned the vendor off or its consent condition fails.
+ * - `scriptElement` (level 2): the script's element; `undefined` for a
+ *   manifest that loads no script.
+ * - `scriptNonce` (level 2): that element's CSP nonce. An object property
+ *   whose value is a missing nonce is left out.
+ * - `consentGate` (level 2): a function that returns its argument while the
+ *   script is registered and its consent holds when called, and `null`
+ *   otherwise. It returns `null` for good once the script is disposed.
+ */
+export interface SimpleRuntimeValue {
 	kind: typeof RUNTIME_VALUE_KIND;
-	value: 'date' | 'timestamp';
+	value:
+		| 'date'
+		| 'timestamp'
+		| 'hasConsent'
+		| 'scriptElement'
+		| 'scriptNonce'
+		| 'consentGate';
 }
+
+/**
+ * The vendor's consent purposes and their state (level 2). Each purpose
+ * follows the Inth categories that list it in `mapping`. Every purpose is
+ * denied while the vendor may not run.
+ */
+export interface ConsentsRuntimeValue {
+	kind: typeof RUNTIME_VALUE_KIND;
+	value: 'consents';
+	/** Inth category to the vendor purposes it controls. */
+	mapping: Record<string, string[]>;
+	/** `true`/`false`, or `'granted'`/`'denied'`. */
+	format: 'boolean' | 'grantedDenied';
+}
+
+export type RuntimeValue = SimpleRuntimeValue | ConsentsRuntimeValue;
 
 export const runtimeDateValue = {
 	kind: RUNTIME_VALUE_KIND,
@@ -24,6 +60,26 @@ export const runtimeDateValue = {
 export const runtimeTimestampValue = {
 	kind: RUNTIME_VALUE_KIND,
 	value: 'timestamp',
+} as const satisfies RuntimeValue;
+
+export const runtimeHasConsentValue = {
+	kind: RUNTIME_VALUE_KIND,
+	value: 'hasConsent',
+} as const satisfies RuntimeValue;
+
+export const runtimeScriptElementValue = {
+	kind: RUNTIME_VALUE_KIND,
+	value: 'scriptElement',
+} as const satisfies RuntimeValue;
+
+export const runtimeScriptNonceValue = {
+	kind: RUNTIME_VALUE_KIND,
+	value: 'scriptNonce',
+} as const satisfies RuntimeValue;
+
+export const runtimeConsentGateValue = {
+	kind: RUNTIME_VALUE_KIND,
+	value: 'consentGate',
 } as const satisfies RuntimeValue;
 
 export interface ManifestContract {
@@ -113,12 +169,8 @@ export interface DefineStubFunctionStep {
 	ifUndefined?: boolean;
 }
 
-export interface CallGlobalStep {
+interface CallGlobalBase {
 	type: 'callGlobal';
-	/** Global object name (e.g. 'posthog', 'fbq') */
-	global: string;
-	/** Method to call on the global. If omitted, the global itself is called as a function. */
-	method?: string;
 	args?: unknown[];
 	/**
 	 * Clone arguments as literal JSON without interpreting runtime value markers.
@@ -126,6 +178,57 @@ export interface CallGlobalStep {
 	 * @default false
 	 */
 	literalArgs?: boolean;
+}
+
+export type CallGlobalStep = CallGlobalBase &
+	(
+		| {
+				/** Global object name (e.g. 'posthog', 'fbq') */
+				global: string;
+				/** Method to call on the global. If omitted, the global itself is called as a function. */
+				method?: string;
+				path?: never;
+		  }
+		| {
+				global?: never;
+				method?: never;
+				/**
+				 * Path segments under window to the function (level 2), such as
+				 * `['databuddyReplay', 'stop']`. The function is called on the
+				 * object that holds it.
+				 */
+				path: string[];
+		  }
+	);
+
+/**
+ * Inserts a second script tag the manifest's script owns (level 2), such as
+ * a vendor's add-on file. Does nothing when a tag with `id` is already in
+ * the document or `unlessGlobal` is defined. The tag gets the script
+ * element's nonce, and goes when the script is disposed or a
+ * `removeScript` step names it.
+ */
+export interface LoadScriptTagStep {
+	type: 'loadScriptStep';
+	/** The tag's `id`, which `removeScript` names. */
+	id: string;
+	/** An https URL. */
+	src: string;
+	/** Unset leaves the browser's default for inserted scripts, which is async. */
+	async?: boolean;
+	/** The same attributes the manifest's `loadScript` may set. */
+	attributes?: Record<string, string>;
+	/** Path segments under window that, when defined, skip the tag. */
+	unlessGlobal?: string[];
+}
+
+/**
+ * Removes a tag a `loadScriptStep` of the same script inserted (level 2).
+ * A tag with that `id` the script did not insert stays.
+ */
+export interface RemoveScriptStep {
+	type: 'removeScript';
+	id: string;
 }
 
 export interface PushToQueueStep {
@@ -176,6 +279,8 @@ export interface DefineQueueMethodsStep {
 	 * - `callback` pushes `{ name, fn }`, where `fn` replays the captured call
 	 *   against the current global target, matching loaders that own a
 	 *   ready-callback queue.
+	 * - `nameAndArguments` (level 2) pushes `[methodName, arguments]` with the
+	 *   call's own `Arguments` object, as AdRoll's snippet does.
 	 *
 	 * @default 'tuple'
 	 */
@@ -185,7 +290,8 @@ export interface DefineQueueMethodsStep {
 		| 'methodCall'
 		| 'wrappedMethodCall'
 		| 'voidMethodCall'
-		| 'callback';
+		| 'callback'
+		| 'nameAndArguments';
 	/**
 	 * Return the target that owns the methods after a tuple call, even when
 	 * storage uses a separate queue. Other formats keep their return values.
@@ -292,7 +398,9 @@ export type ManifestStep =
 	| DefineGlobalMethodsStep
 	| SetCookieStep
 	| DefineQueueProxyStep
-	| ConstructGlobalStep;
+	| ConstructGlobalStep
+	| LoadScriptTagStep
+	| RemoveScriptStep;
 
 /**
  * Consent signal type determines how consent state is communicated to the vendor.
@@ -336,6 +444,20 @@ export interface ResolvedManifest extends ManifestContract {
 	onConsentChangeSteps: ManifestStep[];
 	onConsentGrantedSteps: ManifestStep[];
 	onConsentDeniedSteps: ManifestStep[];
+	/**
+	 * Steps run when the script is disposed (level 2), even if it never
+	 * loaded. When a new manifest replaces this one, they run once the new
+	 * one has started, and runtime values in them read consent then.
+	 */
+	onDisposeSteps?: ManifestStep[];
+	/** `Script.target` (level 2). */
+	target?: 'head' | 'body';
+	/** `Script.observeConsentBeforeLoad` (level 2). */
+	observeConsentBeforeLoad?: boolean;
+	/** `Script.persistAfterDispose` (level 2). */
+	persistAfterDispose?: boolean;
+	/** `Script.resourceKey` (level 2). */
+	resourceKey?: string;
 	consentMapping?: Record<string, string[]>;
 	consentSignal?: ConsentSignalType;
 	consentSignalTarget?: string;
@@ -357,7 +479,9 @@ export const MANIFEST_STEP_TYPES: Readonly<Record<ManifestStep['type'], true>> =
 		defineQueueProxy: true,
 		defineStubFunction: true,
 		loadScript: true,
+		loadScriptStep: true,
 		pushToQueue: true,
+		removeScript: true,
 		setCookie: true,
 		setGlobal: true,
 		setGlobalPath: true,

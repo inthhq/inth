@@ -104,7 +104,7 @@ describe('createConsentRoute', () => {
 			params('v1', 'consent', 'manifest')
 		);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=1'
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=2'
 		);
 	});
 

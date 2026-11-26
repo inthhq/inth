@@ -183,9 +183,17 @@ describe('prefetch utilities', () => {
 		).toBeUndefined();
 		expect(findPrefetchedInitFor('/api/inth')).toBeUndefined();
 
-		// One from a release before levels sent none, which is level 1.
+		// One from a release before levels sent none, which is level 1: its
+		// answer leaves out the level 2 scripts this SDK runs.
 		if (entry) {
 			delete entry.requestContext.manifestLevel;
+		}
+		expect(
+			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })
+		).toBeUndefined();
+
+		if (entry) {
+			entry.requestContext.manifestLevel = MANIFEST_RUNTIME_LEVEL;
 		}
 		expect(
 			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })

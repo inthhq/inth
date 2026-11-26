@@ -77,7 +77,7 @@ describe('init: GET /v1/consent/init', () => {
 			gpc: '1',
 			journey: '3b241101-e2bb-4255-8caf-4136c566a962',
 			journeyScope: 'page',
-			manifestLevel: '1',
+			manifestLevel: '2',
 			region: 'BY',
 			stored: '0',
 		});
@@ -100,7 +100,7 @@ describe('init: GET /v1/consent/init', () => {
 		await transport.init({ overrides: { language: 'de' }, user: null });
 
 		const url = new URL(calls[0]?.url ?? '');
-		expect(url.search).toBe('?manifestLevel=1');
+		expect(url.search).toBe('?manifestLevel=2');
 		expect(calls[0]?.headers).toEqual({
 			accept: 'application/json',
 			'accept-language': 'de',
@@ -251,7 +251,7 @@ describe('init: GET /v1/consent/init', () => {
 
 		await transport.init({ overrides: {}, user: null });
 
-		expect(calls[0]?.url).toBe('/api/inth/v1/consent/init?manifestLevel=1');
+		expect(calls[0]?.url).toBe('/api/inth/v1/consent/init?manifestLevel=2');
 	});
 });
 

@@ -6,6 +6,13 @@
  * `Script` the script loader mounts.
  */
 export { mapConsentState } from './consent-mapping';
+export {
+	manifestFeatureLevel,
+	MANIFEST_FIELD_LEVELS,
+	RUNTIME_VALUE_LEVELS,
+	STEP_FIELD_LEVELS,
+	STEP_VALUE_LEVELS,
+} from './features';
 export { MANIFEST_RUNTIME_LEVEL } from './level';
 export { parseResolvedManifest } from './parse';
 export type { ParsedManifest } from './parse';

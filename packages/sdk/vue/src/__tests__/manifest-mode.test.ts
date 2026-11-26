@@ -216,7 +216,7 @@ describe('plain Vue modes', () => {
 		try {
 			await context.kernel.commands.init();
 			expect(fetch.mock.calls.map(([url]) => String(url))).toEqual([
-				'https://consent.example.com/v1/consent/manifest?manifestLevel=1',
+				'https://consent.example.com/v1/consent/manifest?manifestLevel=2',
 			]);
 			expect(context.snapshot.value.policyRule.id).toBe('eu-opt-in');
 		} finally {

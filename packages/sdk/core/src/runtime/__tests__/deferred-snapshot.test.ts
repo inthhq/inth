@@ -14,6 +14,7 @@ import {
 
 import { createConsentKernel } from '../../kernel/index';
 import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';
+import { MANIFEST_RUNTIME_LEVEL } from '../../manifest-runtime/level';
 import type { SSRInitialData } from '../../options/ssr';
 import { mapInitOutputToInitResponse } from '../../transports/init-output';
 import { hosted } from '../../transports/mode';
@@ -138,6 +139,7 @@ describe('findPrefetchedInit', () => {
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
+					manifestLevel: MANIFEST_RUNTIME_LEVEL,
 					projectUrl,
 					region: null,
 				},
@@ -159,6 +161,7 @@ describe('findPrefetchedInit', () => {
 			credentials: 'same-origin',
 			gpc,
 			language: null,
+			manifestLevel: MANIFEST_RUNTIME_LEVEL,
 			projectUrl: 'https://consent.example.com',
 			region: null,
 		});
@@ -288,6 +291,7 @@ describe('findPrefetchedInitFor and primeInitRequest', () => {
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
+					manifestLevel: MANIFEST_RUNTIME_LEVEL,
 					projectUrl: 'https://app.example.com/api/inth',
 					region: null,
 				},

@@ -96,7 +96,7 @@ describe('generated manifest default', () => {
 
 		expect(await response.json()).toMatchObject({ revision: 'live' });
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/v1/consent/manifest?manifestLevel=1'
+			'https://consent.example.com/v1/consent/manifest?manifestLevel=2'
 		);
 	});
 

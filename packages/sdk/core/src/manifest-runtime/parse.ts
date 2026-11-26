@@ -2,6 +2,14 @@ import {
 	isCategoryCondition,
 	isCategoryName,
 } from '../modules/script-loader/category-condition';
+import {
+	levelOf,
+	MANIFEST_FIELD_LEVELS,
+	QUEUE_METHOD_FORMATS,
+	RUNTIME_VALUE_LEVELS,
+	SCRIPT_ATTRIBUTE_LEVELS,
+	STEP_FIELD_LEVELS,
+} from './features';
 import { MANIFEST_RUNTIME_LEVEL } from './level';
 import {
 	MANIFEST_STEP_TYPES,
@@ -30,9 +38,21 @@ const STEP_LISTS = [
 	'onConsentChangeSteps',
 	'onConsentGrantedSteps',
 	'onConsentDeniedSteps',
+	'onDisposeSteps',
 ] as const satisfies readonly (keyof ResolvedManifest)[];
 
+/** Step lists a level 1 manifest leaves out. */
+const OPTIONAL_STEP_LISTS: ReadonlySet<string> = new Set(['onDisposeSteps']);
+
 const CONSENT_SIGNALS = new Set(['gtag', 'rudderstack', 'clarity']);
+
+const isStringRecord = (
+	value: unknown,
+	isValue: (entry: unknown) => boolean
+): boolean => isRecord(value) && Object.values(value).every(isValue);
+
+const isOptional = (value: unknown, check: (value: unknown) => boolean) =>
+	value === undefined || check(value);
 
 /**
  * Attributes a manifest may set on its script tag: `data-*` ones a vendor's
@@ -41,6 +61,63 @@ const CONSENT_SIGNALS = new Set(['gtag', 'rudderstack', 'clarity']);
  */
 const TAG_ATTRIBUTE =
 	/^(?:data-[a-z0-9][a-z0-9._-]*|crossorigin|integrity|charset|referrerpolicy)$/u;
+
+/** An element id a vendor's file looks its tag up by. */
+const ELEMENT_ID = /^[A-Za-z][\w-]*$/u;
+
+const isElementId = (value: unknown): boolean =>
+	typeof value === 'string' && ELEMENT_ID.test(value);
+
+/** Script tag attributes: the allowed names, and an `id` that is one. */
+const isTagAttributes = (value: unknown): boolean =>
+	isStringRecord(value, (entry) => typeof entry === 'string') &&
+	Object.entries(value as Record<string, string>).every(([name, entry]) =>
+		levelOf(SCRIPT_ATTRIBUTE_LEVELS, name) === undefined
+			? TAG_ATTRIBUTE.test(name)
+			: isElementId(entry)
+	);
+
+const isNameList = (value: unknown): boolean =>
+	Array.isArray(value) &&
+	value.length > 0 &&
+	value.every((name) => typeof name === 'string' && name.length > 0);
+
+const isBoolean = (value: unknown): boolean => typeof value === 'boolean';
+
+/** Window's own names for itself, which a call path may start with. */
+const WINDOW_NAMES: ReadonlySet<unknown> = new Set([
+	'window',
+	'self',
+	'globalThis',
+	'frames',
+	'parent',
+	'top',
+]);
+
+/** Globals that run a string as code, or navigate, when called. */
+const CODE_ROOTS: ReadonlySet<unknown> = new Set([
+	'eval',
+	'Function',
+	'setTimeout',
+	'setInterval',
+	'location',
+]);
+
+/**
+ * Whether calling or constructing `path` under window would run a string as
+ * code, write to the document or navigate.
+ */
+const reachesCode = (path: readonly unknown[]): boolean => {
+	let start = 0;
+	while (start < path.length - 1 && WINDOW_NAMES.has(path[start])) {
+		start += 1;
+	}
+	const [root, next] = path.slice(start);
+	return (
+		CODE_ROOTS.has(root) ||
+		(root === 'document' && (next === 'write' || next === 'writeln'))
+	);
+};
 
 const isHttpsUrl = (value: unknown): boolean => {
 	if (typeof value !== 'string') {
@@ -53,73 +130,9 @@ const isHttpsUrl = (value: unknown): boolean => {
 	}
 };
 
-const isStringRecord = (
-	value: unknown,
-	isValue: (entry: unknown) => boolean
-): boolean => isRecord(value) && Object.values(value).every(isValue);
-
-const isOptional = (value: unknown, check: (value: unknown) => boolean) =>
-	value === undefined || check(value);
-
-/** The fields each step type may carry, besides `type`. */
-const STEP_KEYS: {
-	readonly [Type in ManifestStep['type']]: readonly Exclude<
-		keyof Extract<ManifestStep, { type: Type }>,
-		'type'
-	>[];
-} = {
-	callGlobal: ['global', 'method', 'args', 'literalArgs'],
-	constructGlobal: [
-		'constructor',
-		'assignTo',
-		'args',
-		'copyAssignedValueToArgProperty',
-	],
-	defineGlobalMethods: ['target', 'methods', 'ifGlobalIsQueue'],
-	defineQueueClass: ['target', 'name', 'queueProperty', 'methods'],
-	defineQueueFunction: ['name', 'queue', 'ifUndefined', 'pushStyle'],
-	defineQueueMethods: [
-		'target',
-		'methods',
-		'queue',
-		'queueFormat',
-		'returnTarget',
-		'preserveExisting',
-	],
-	defineQueueProxy: ['name', 'queue'],
-	defineStubFunction: [
-		'name',
-		'queue',
-		'dispatchProperty',
-		'queueFormat',
-		'aliases',
-		'selfReferences',
-		'properties',
-		'ifUndefined',
-	],
-	loadScript: ['src', 'async', 'defer', 'attributes', 'fetchPriority'],
-	pushToQueue: ['queue', 'value'],
-	setCookie: ['cookie'],
-	setGlobal: ['name', 'value', 'ifUndefined', 'keepExistingQueue'],
-	setGlobalPath: ['path', 'value', 'ifGlobalIsQueue', 'ifUndefined'],
-};
-
-const MANIFEST_KEYS: ReadonlySet<string> = new Set<keyof ResolvedManifest>([
-	...STEP_LISTS,
-	'kind',
-	'schemaVersion',
-	'requires',
-	'vendor',
-	'vendorDetails',
-	'category',
-	'alwaysLoad',
-	'persistAfterConsentRevoked',
-	'loadScript',
-	'consentMapping',
-	'consentSignal',
-	'consentSignalTarget',
-	'consentSignalDefaults',
-]);
+const MANIFEST_KEYS: ReadonlySet<string> = new Set(
+	Object.keys(MANIFEST_FIELD_LEVELS)
+);
 
 /** Fields that hold data a step passes on, not names it reads or writes. */
 const DATA_KEYS: ReadonlySet<string> = new Set([
@@ -138,14 +151,30 @@ const UNSAFE_NAMES: ReadonlySet<string> = new Set([
 	'constructor',
 ]);
 
-const RUNTIME_VALUES: ReadonlySet<unknown> = new Set(['date', 'timestamp']);
-
-const MAX_DEPTH = 32;
-
 const unknownKey = (
 	value: Record<string, unknown>,
 	known: ReadonlySet<string>
 ): string | undefined => Object.keys(value).find((key) => !known.has(key));
+
+/** A consent mapping: Inth categories to lists of vendor names. */
+const isConsentMapping = (value: unknown): boolean =>
+	isStringRecord(
+		value,
+		(entry) =>
+			Array.isArray(entry) && entry.every((name) => typeof name === 'string')
+	) && Object.keys(value as object).every(isCategoryName);
+
+/** Whether `value`, with `kind` set to the runtime value kind, is one this SDK fills in. */
+const isKnownRuntimeValue = (value: Record<string, unknown>): boolean =>
+	levelOf(RUNTIME_VALUE_LEVELS, value.value) !== undefined &&
+	(value.value === 'consents'
+		? unknownKey(value, new Set(['kind', 'value', 'mapping', 'format'])) ===
+				undefined &&
+			isConsentMapping(value.mapping) &&
+			(value.format === 'boolean' || value.format === 'grantedDenied')
+		: unknownKey(value, new Set(['kind', 'value'])) === undefined);
+
+const MAX_DEPTH = 32;
 
 /** The first unsafe name among the names a step reads or writes. */
 const unsafeName = (value: unknown, depth = 0): string | undefined => {
@@ -184,22 +213,82 @@ const hasUnknownRuntimeValue = (value: unknown, depth = 0): boolean => {
 		return false;
 	}
 	if (value.kind === RUNTIME_VALUE_KIND) {
-		return (
-			unknownKey(value, new Set(['kind', 'value'])) !== undefined ||
-			!RUNTIME_VALUES.has(value.value)
-		);
+		return !isKnownRuntimeValue(value);
 	}
 	return Object.values(value).some((entry) =>
 		hasUnknownRuntimeValue(entry, depth + 1)
 	);
 };
 
+/**
+ * Why a step's own fields are wrong, for the step types and fields that
+ * came after level 1, or `undefined`.
+ */
+// oxlint-disable-next-line complexity -- One check per step type.
+const fieldProblem = (step: Record<string, unknown>): string | undefined => {
+	switch (step.type) {
+		case 'callGlobal': {
+			if (step.path === undefined) {
+				return typeof step.global === 'string' &&
+					isOptional(step.method, (method) => typeof method === 'string')
+					? undefined
+					: 'names no global';
+			}
+			return step.global === undefined &&
+				step.method === undefined &&
+				isNameList(step.path)
+				? undefined
+				: 'needs a path of names, or a global, not both';
+		}
+		case 'defineQueueMethods': {
+			return isOptional(step.queueFormat, (format) =>
+				QUEUE_METHOD_FORMATS.has(format)
+			)
+				? undefined
+				: 'has an unknown queueFormat';
+		}
+		case 'loadScriptStep': {
+			return isElementId(step.id) &&
+				isHttpsUrl(step.src) &&
+				isOptional(step.async, isBoolean) &&
+				isOptional(step.unlessGlobal, isNameList) &&
+				isOptional(
+					step.attributes,
+					(attributes) =>
+						isTagAttributes(attributes) &&
+						!Object.hasOwn(attributes as object, 'id')
+				)
+				? undefined
+				: 'needs an id, an https src and allowed attributes';
+		}
+		case 'removeScript': {
+			return isElementId(step.id) ? undefined : 'has no id';
+		}
+		default: {
+			return undefined;
+		}
+	}
+};
+
+/** The global a step calls or constructs, as a path under window. */
+const calledPath = (step: Record<string, unknown>): unknown[] => {
+	if (step.type === 'constructGlobal') {
+		return [step.constructor];
+	}
+	if (step.type !== 'callGlobal') {
+		return [];
+	}
+	if (Array.isArray(step.path)) {
+		return step.path;
+	}
+	return step.method === undefined ? [step.global] : [step.global, step.method];
+};
+
 /** Why a step of a known type cannot run, or `undefined`. */
 const stepProblem = (step: Record<string, unknown>): string | undefined => {
-	const known = new Set<string>([
-		'type',
-		...STEP_KEYS[step.type as ManifestStep['type']],
-	]);
+	const known = new Set<string>(
+		Object.keys(STEP_FIELD_LEVELS[step.type as ManifestStep['type']])
+	);
 	const extra = unknownKey(step, known);
 	if (extra !== undefined) {
 		return `has a ${String(step.type)} step with the unknown field ${extra}`;
@@ -210,6 +299,13 @@ const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	}
 	if (hasUnknownRuntimeValue(step)) {
 		return `has a ${String(step.type)} step with a runtime value this SDK does not know`;
+	}
+	const problem = fieldProblem(step);
+	if (problem !== undefined) {
+		return `has a ${String(step.type)} step that ${problem}`;
+	}
+	if (reachesCode(calledPath(step))) {
+		return `has a ${String(step.type)} step that calls ${calledPath(step).join('.')}`;
 	}
 	return undefined;
 };
@@ -250,6 +346,9 @@ const manifestProblem = (
 	}
 	for (const list of STEP_LISTS) {
 		const steps = manifest[list];
+		if (steps === undefined && OPTIONAL_STEP_LISTS.has(list)) {
+			continue;
+		}
 		if (!Array.isArray(steps)) {
 			return `${list} is not a list`;
 		}
@@ -270,6 +369,10 @@ const manifestProblem = (
 			if (step.type === 'loadScript') {
 				return `${list} has a loadScript step`;
 			}
+			// Nothing would remove a tag inserted after disposal.
+			if (list === 'onDisposeSteps' && step.type === 'loadScriptStep') {
+				return `${list} has a loadScriptStep step`;
+			}
 			const problem = stepProblem(step);
 			if (problem !== undefined) {
 				return `${list} ${problem}`;
@@ -284,17 +387,24 @@ const manifestProblem = (
 			loadScript.type === 'loadScript' &&
 			stepProblem(loadScript) === undefined &&
 			isHttpsUrl(loadScript.src) &&
-			isOptional(
-				loadScript.attributes,
-				(attributes) =>
-					isStringRecord(attributes, (entry) => typeof entry === 'string') &&
-					Object.keys(attributes as object).every((name) =>
-						TAG_ATTRIBUTE.test(name)
-					)
-			)
+			isOptional(loadScript.attributes, isTagAttributes)
 		)
 	) {
-		return 'its loadScript has no https src, or sets an attribute other than data-*, crossorigin, integrity, charset or referrerpolicy';
+		return 'its loadScript has no https src, or sets an attribute other than data-*, crossorigin, integrity, charset, referrerpolicy or an id';
+	}
+	if (
+		!isOptional(
+			manifest.target,
+			(value) => value === 'head' || value === 'body'
+		) ||
+		!isOptional(manifest.observeConsentBeforeLoad, isBoolean) ||
+		!isOptional(manifest.persistAfterDispose, isBoolean) ||
+		!isOptional(
+			manifest.resourceKey,
+			(value) => typeof value === 'string' && value.length > 0
+		)
+	) {
+		return 'target, observeConsentBeforeLoad, persistAfterDispose or resourceKey has the wrong type';
 	}
 	if (
 		!isOptional(manifest.alwaysLoad, (value) => typeof value === 'boolean') ||
@@ -306,16 +416,7 @@ const manifestProblem = (
 		return 'alwaysLoad or persistAfterConsentRevoked has the wrong type';
 	}
 	if (
-		!isOptional(
-			manifest.consentMapping,
-			(value) =>
-				isStringRecord(
-					value,
-					(entry) =>
-						Array.isArray(entry) &&
-						entry.every((name) => typeof name === 'string')
-				) && Object.keys(value as object).every(isCategoryName)
-		) ||
+		!isOptional(manifest.consentMapping, isConsentMapping) ||
 		!isOptional(manifest.consentSignal, (value) =>
 			CONSENT_SIGNALS.has(value as string)
 		) ||
