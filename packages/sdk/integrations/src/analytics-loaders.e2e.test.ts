@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -20,152 +21,164 @@ import { umamiAnalytics } from './vendors/analytics/umami-analytics';
 describe('analytics loader contracts', () => {
 	registerVendorContractCleanup();
 
-	it('exposes Ahrefs loader attributes before append', () => {
-		let attributes: Record<string, string | boolean | null> | undefined;
+	it.each(npmAndRemote('ahrefsAnalytics', ahrefsAnalytics))(
+		'exposes Ahrefs loader attributes before append through the %s',
+		(_label, build) => {
+			let attributes: Record<string, string | boolean | null> | undefined;
 
-		installHeadProbe((node) => {
-			if (!node.src.includes('analytics.ahrefs.com/analytics.js')) {
-				return;
-			}
+			installHeadProbe((node) => {
+				if (!node.src.includes('analytics.ahrefs.com/analytics.js')) {
+					return;
+				}
 
-			attributes = {
-				async: node.async,
-				dataKey: node.getAttribute('data-key'),
-			};
-			node.dispatchEvent(new Event('load'));
-		});
+				attributes = {
+					async: node.async,
+					dataKey: node.getAttribute('data-key'),
+				};
+				node.dispatchEvent(new Event('load'));
+			});
 
-		loadScripts(
-			[
-				{
-					...ahrefsAnalytics({ key: 'AHREFS-CONTRACT' }),
-					id: 'ahrefs-analytics-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
+			loadScripts(
+				[
+					{
+						...build({ key: 'AHREFS-CONTRACT' }),
+						id: 'ahrefs-analytics-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
 
-		expect(attributes).toEqual({
-			async: true,
-			dataKey: 'AHREFS-CONTRACT',
-		});
-	});
+			expect(attributes).toEqual({
+				async: true,
+				dataKey: 'AHREFS-CONTRACT',
+			});
+		}
+	);
 
-	it('serializes Cloudflare beacon config before append', () => {
-		let beaconConfig: Record<string, unknown> | undefined;
-		let defer: boolean | undefined;
+	it.each(npmAndRemote('cloudflareWebAnalytics', cloudflareWebAnalytics))(
+		'serializes Cloudflare beacon config before append through the %s',
+		(_label, build) => {
+			let beaconConfig: Record<string, unknown> | undefined;
+			let defer: boolean | undefined;
 
-		installHeadProbe((node) => {
-			if (!node.src.includes('static.cloudflareinsights.com/beacon.min.js')) {
-				return;
-			}
+			installHeadProbe((node) => {
+				if (!node.src.includes('static.cloudflareinsights.com/beacon.min.js')) {
+					return;
+				}
 
-			const rawConfig = node.getAttribute('data-cf-beacon');
-			if (typeof rawConfig === 'string') {
-				beaconConfig = JSON.parse(rawConfig) as Record<string, unknown>;
-			} else {
-				beaconConfig = undefined;
-			}
-			// oxlint-disable-next-line prefer-destructuring -- Preserve declaration order, interface shape, and public compatibility.
-			defer = node.defer;
-			node.dispatchEvent(new Event('load'));
-		});
+				const rawConfig = node.getAttribute('data-cf-beacon');
+				if (typeof rawConfig === 'string') {
+					beaconConfig = JSON.parse(rawConfig) as Record<string, unknown>;
+				} else {
+					beaconConfig = undefined;
+				}
+				// oxlint-disable-next-line prefer-destructuring -- Preserve declaration order, interface shape, and public compatibility.
+				defer = node.defer;
+				node.dispatchEvent(new Event('load'));
+			});
 
-		loadScripts(
-			[
-				{
-					...cloudflareWebAnalytics({
-						spa: false,
-						token: 'CLOUDFLARE-CONTRACT',
-					}),
-					id: 'cloudflare-web-analytics-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
+			loadScripts(
+				[
+					{
+						...build({
+							spa: false,
+							token: '0123456789abcdef0123456789abcdef',
+						}),
+						id: 'cloudflare-web-analytics-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
 
-		expect(beaconConfig).toEqual({
-			spa: false,
-			token: 'CLOUDFLARE-CONTRACT',
-		});
-		expect(defer).toBe(true);
-	});
+			expect(beaconConfig).toEqual({
+				spa: false,
+				token: '0123456789abcdef0123456789abcdef',
+			});
+			expect(defer).toBe(true);
+		}
+	);
 
-	it('exposes Fathom loader options as data attributes', () => {
-		let attributes: Record<string, string | boolean | null> | undefined;
+	it.each(npmAndRemote('fathomAnalytics', fathomAnalytics))(
+		'exposes Fathom loader options as data attributes through the %s',
+		(_label, build) => {
+			let attributes: Record<string, string | boolean | null> | undefined;
 
-		installHeadProbe((node) => {
-			if (!node.src.includes('cdn.usefathom.com/script.js')) {
-				return;
-			}
+			installHeadProbe((node) => {
+				if (!node.src.includes('cdn.usefathom.com/script.js')) {
+					return;
+				}
 
-			attributes = {
-				dataAuto: node.getAttribute('data-auto'),
-				dataCanonical: node.getAttribute('data-canonical'),
-				dataHonorDnt: node.getAttribute('data-honor-dnt'),
-				dataSite: node.getAttribute('data-site'),
-				dataSpa: node.getAttribute('data-spa'),
-				defer: node.defer,
-			};
-			node.dispatchEvent(new Event('load'));
-		});
+				attributes = {
+					dataAuto: node.getAttribute('data-auto'),
+					dataCanonical: node.getAttribute('data-canonical'),
+					dataHonorDnt: node.getAttribute('data-honor-dnt'),
+					dataSite: node.getAttribute('data-site'),
+					dataSpa: node.getAttribute('data-spa'),
+					defer: node.defer,
+				};
+				node.dispatchEvent(new Event('load'));
+			});
 
-		loadScripts(
-			[
-				{
-					...fathomAnalytics({
-						auto: false,
-						canonical: true,
-						honorDnt: true,
-						site: 'FATHOM-CONTRACT',
-						spa: 'history',
-					}),
-					id: 'fathom-analytics-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
+			loadScripts(
+				[
+					{
+						...build({
+							auto: false,
+							canonical: true,
+							honorDnt: true,
+							site: 'FATHOMCONTRACT',
+							spa: 'history',
+						}),
+						id: 'fathom-analytics-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
 
-		expect(attributes).toEqual({
-			dataAuto: 'false',
-			dataCanonical: 'true',
-			dataHonorDnt: 'true',
-			dataSite: 'FATHOM-CONTRACT',
-			dataSpa: 'history',
-			defer: true,
-		});
-	});
+			expect(attributes).toEqual({
+				dataAuto: 'false',
+				dataCanonical: 'true',
+				dataHonorDnt: 'true',
+				dataSite: 'FATHOMCONTRACT',
+				dataSpa: 'history',
+				defer: true,
+			});
+		}
+	);
 
-	it('exposes Promptwatch project id before append', () => {
-		let attributes: Record<string, string | boolean | null> | undefined;
+	it.each(npmAndRemote('promptwatch', promptwatch))(
+		'exposes Promptwatch project id before append through the %s',
+		(_label, build) => {
+			let attributes: Record<string, string | boolean | null> | undefined;
 
-		installHeadProbe((node) => {
-			if (!node.src.includes('ingest.promptwatch.com/js/client.min.js')) {
-				return;
-			}
+			installHeadProbe((node) => {
+				if (!node.src.includes('ingest.promptwatch.com/js/client.min.js')) {
+					return;
+				}
 
-			attributes = {
-				async: node.async,
-				dataProjectId: node.getAttribute('data-project-id'),
-			};
-			node.dispatchEvent(new Event('load'));
-		});
+				attributes = {
+					async: node.async,
+					dataProjectId: node.getAttribute('data-project-id'),
+				};
+				node.dispatchEvent(new Event('load'));
+			});
 
-		loadScripts(
-			[
-				{
-					...promptwatch({ projectId: 'PROMPTWATCH-CONTRACT' }),
-					id: 'promptwatch-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
+			loadScripts(
+				[
+					{
+						...build({ projectId: 'PROMPTWATCH-CONTRACT' }),
+						id: 'promptwatch-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
 
-		expect(attributes).toEqual({
-			async: true,
-			dataProjectId: 'PROMPTWATCH-CONTRACT',
-		});
-	});
+			expect(attributes).toEqual({
+				async: true,
+				dataProjectId: 'PROMPTWATCH-CONTRACT',
+			});
+		}
+	);
 
 	it('exposes Rybbit loader configuration before append', () => {
 		let attributes: Record<string, string | boolean | null> | undefined;

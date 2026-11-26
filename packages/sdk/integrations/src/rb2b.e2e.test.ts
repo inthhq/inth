@@ -5,6 +5,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -84,53 +85,56 @@ describe('RB2B core loader consent contract', () => {
 	});
 });
 
-describe('RB2B runtime client', () => {
-	registerVendorContractCleanup();
-	it('defines no pre-load stubs, because the account script ignores queued calls', () => {
-		const scripts = [rb2b({ accountKey: 'inthfake' })];
-		loadScripts(scripts, grantedMarketingConsents);
-		expect(document.querySelector('script')?.src).toBe(
-			'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
-		);
-		expect('reb2b' in window).toBe(false);
-	});
-	it('preserves a frozen runtime client when a changed source remounts', () => {
-		const kernel = createConsentKernel();
-		void kernel.commands.save(grantedMarketingConsents);
-		const debug = vi.fn();
-		const loader = createScriptLoader({
-			kernel,
-			onDebug: debug,
-			scripts: [rb2b({ accountKey: 'inthfake' })],
-		});
-		try {
-			const original = document.querySelector('script');
-			expect(original?.src).toBe(
+describe.each(npmAndRemote('rb2b', rb2b))(
+	'RB2B runtime client through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		it('defines no pre-load stubs, because the account script ignores queued calls', () => {
+			const scripts = [build({ accountKey: 'inthfake' })];
+			loadScripts(scripts, grantedMarketingConsents);
+			expect(document.querySelector('script')?.src).toBe(
 				'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
 			);
-			original?.dispatchEvent(new Event('load'));
-			const client = Object.freeze({ collect: vi.fn(), identify: vi.fn() });
-			Object.defineProperty(window, 'reb2b', {
-				configurable: true,
-				value: client,
-				writable: true,
+			expect('reb2b' in window).toBe(false);
+		});
+		it('preserves a frozen runtime client when a changed source remounts', () => {
+			const kernel = createConsentKernel();
+			void kernel.commands.save(grantedMarketingConsents);
+			const debug = vi.fn();
+			const loader = createScriptLoader({
+				kernel,
+				onDebug: debug,
+				scripts: [build({ accountKey: 'inthfake' })],
 			});
-			debug.mockClear();
-			loader.updateScripts([rb2b({ accountKey: 'anotherfake' })]);
-			expect(document.querySelector('script')).not.toBe(original);
-			expect(document.querySelector('script')?.src).toBe(
-				'https://ddwl4m2hdecbv.cloudfront.net/b/anotherfake/anotherfake.js.gz'
-			);
-			expect(window.reb2b).toBe(client);
-			expect(debug).not.toHaveBeenCalledWith(
-				expect.objectContaining({ action: 'callback_error' })
-			);
-		} finally {
-			loader.dispose();
-			kernel.dispose();
-		}
-	});
-});
+			try {
+				const original = document.querySelector('script');
+				expect(original?.src).toBe(
+					'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
+				);
+				original?.dispatchEvent(new Event('load'));
+				const client = Object.freeze({ collect: vi.fn(), identify: vi.fn() });
+				Object.defineProperty(window, 'reb2b', {
+					configurable: true,
+					value: client,
+					writable: true,
+				});
+				debug.mockClear();
+				loader.updateScripts([build({ accountKey: 'anotherfake' })]);
+				expect(document.querySelector('script')).not.toBe(original);
+				expect(document.querySelector('script')?.src).toBe(
+					'https://ddwl4m2hdecbv.cloudfront.net/b/anotherfake/anotherfake.js.gz'
+				);
+				expect(window.reb2b).toBe(client);
+				expect(debug).not.toHaveBeenCalledWith(
+					expect.objectContaining({ action: 'callback_error' })
+				);
+			} finally {
+				loader.dispose();
+				kernel.dispose();
+			}
+		});
+	}
+);
 
 describe('RB2B shared cleanup', () => {
 	afterEach(() => {

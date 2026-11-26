@@ -9,6 +9,7 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -20,33 +21,52 @@ import {
 } from './e2e-test-utils';
 import { statableAnalytics } from './vendors/analytics/statable-analytics';
 
-describe('Statable consent lifecycle', () => {
+describe.each(npmAndRemote('statableAnalytics', statableAnalytics))(
+	'Statable consent lifecycle through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		beforeEach(() => {
+			// Node 25+ replaces jsdom's storage globals with its own Web Storage.
+			vi.stubGlobal('localStorage', jsdom.window.localStorage);
+			vi.stubGlobal('sessionStorage', jsdom.window.sessionStorage);
+		});
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it('leaves scripts, event globals and storage untouched before measurement consent', () => {
+			const script = build({ siteId: '12345' });
+			const cookies = document.cookie;
+			const localKeys = Object.keys(window.localStorage);
+			const sessionKeys = Object.keys(window.sessionStorage);
+
+			expect(loadScripts([script], ALL_DENIED)).toEqual([]);
+			expect(updateScripts([script], grantedMarketingConsents).loaded).toEqual(
+				[]
+			);
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.statable).toBeUndefined();
+			expect(document.cookie).toBe(cookies);
+			expect(Object.keys(window.localStorage)).toEqual(localKeys);
+			expect(Object.keys(window.sessionStorage)).toEqual(sessionKeys);
+		});
+
+		it('removes a downloading loader when measurement is revoked', () => {
+			const scripts = [build({ siteId: '12345' })];
+			loadScripts(scripts, grantedMeasurementConsents);
+			const element = document.querySelector('script');
+			updateScripts(scripts, ALL_DENIED);
+			element?.dispatchEvent(new Event('load'));
+
+			expect(element?.isConnected).toBe(false);
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.statable).toBeUndefined();
+		});
+	}
+);
+
+describe('Statable npm helper options', () => {
 	registerVendorContractCleanup();
-	beforeEach(() => {
-		// Node 25+ replaces jsdom's storage globals with its own Web Storage.
-		vi.stubGlobal('localStorage', jsdom.window.localStorage);
-		vi.stubGlobal('sessionStorage', jsdom.window.sessionStorage);
-	});
-	afterEach(() => {
-		vi.unstubAllGlobals();
-	});
-
-	it('leaves scripts, event globals and storage untouched before measurement consent', () => {
-		const script = statableAnalytics({ siteId: 12345 });
-		const cookies = document.cookie;
-		const localKeys = Object.keys(window.localStorage);
-		const sessionKeys = Object.keys(window.sessionStorage);
-
-		expect(loadScripts([script], ALL_DENIED)).toEqual([]);
-		expect(updateScripts([script], grantedMarketingConsents).loaded).toEqual(
-			[]
-		);
-		expect(document.querySelector('script')).toBeNull();
-		expect(window.statable).toBeUndefined();
-		expect(document.cookie).toBe(cookies);
-		expect(Object.keys(window.localStorage)).toEqual(localKeys);
-		expect(Object.keys(window.sessionStorage)).toEqual(sessionKeys);
-	});
 
 	it('loads once with attributes ready and leaves the real tracker to initialize its API', () => {
 		const scripts = [
@@ -83,17 +103,5 @@ describe('Statable consent lifecycle', () => {
 			'statable-analytics',
 		]);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
-	});
-
-	it('removes a downloading loader when measurement is revoked', () => {
-		const scripts = [statableAnalytics({ siteId: 12345 })];
-		loadScripts(scripts, grantedMeasurementConsents);
-		const element = document.querySelector('script');
-		updateScripts(scripts, ALL_DENIED);
-		element?.dispatchEvent(new Event('load'));
-
-		expect(element?.isConnected).toBe(false);
-		expect(document.querySelector('script')).toBeNull();
-		expect(window.statable).toBeUndefined();
 	});
 });

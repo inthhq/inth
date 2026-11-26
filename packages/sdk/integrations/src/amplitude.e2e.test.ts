@@ -4,6 +4,7 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
@@ -50,7 +51,123 @@ const snapshotQueue = function snapshotQueue(
 	}));
 };
 
-describe('amplitude contract', () => {
+describe.each(npmAndRemote('amplitude', amplitude))(
+	'amplitude contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for measurement consent before appending the loader', () => {
+			let appended = false;
+
+			installHeadProbe((node) => {
+				if (node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
+					appended = true;
+				}
+			});
+
+			loadScripts(
+				[
+					{
+						...build({
+							apiKey: '0123456789abcdef0123456789abcdef',
+						}),
+						id: 'amplitude-contract',
+					},
+				],
+				ALL_DENIED
+			);
+
+			expect(appended).toBe(false);
+			expect((window as TestWindow).amplitude).toBeUndefined();
+		});
+
+		it('calls setOptOut(true) on revoke and keeps the loaded SDK on the page', () => {
+			const setOptOut = vi.fn();
+			const script = {
+				...build({
+					apiKey: '0123456789abcdef0123456789abcdef',
+				}),
+				id: 'amplitude-contract',
+			};
+
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
+					return;
+				}
+
+				win.amplitude = {
+					setOptOut,
+				};
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts([script], grantedMeasurementConsents);
+			updateScripts([script], ALL_DENIED);
+
+			expect(setOptOut).toHaveBeenCalledWith(true);
+			expect(
+				document.querySelector('script[src*="cdn.amplitude.com/libs/"]')
+			).not.toBeNull();
+		});
+
+		it('calls setOptOut(false) when measurement consent is granted after load', () => {
+			const setOptOut = vi.fn();
+			const script = build({
+				apiKey: '0123456789abcdef0123456789abcdef',
+			});
+
+			(window as TestWindow).amplitude = {
+				setOptOut,
+			};
+
+			script.onConsentChange?.({
+				consents: grantedMeasurementConsents,
+				elementId: script.id,
+				hasConsent: true,
+				id: script.id,
+			});
+
+			expect(setOptOut).toHaveBeenCalledWith(false);
+		});
+
+		it('keeps the loaded SDK and opts back in on grant, revoke, grant without a reload', () => {
+			const setOptOut = vi.fn();
+			const track = vi.fn();
+			let appends = 0;
+			const script = {
+				...build({
+					apiKey: '0123456789abcdef0123456789abcdef',
+				}),
+				id: 'amplitude-contract',
+			};
+
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
+					return;
+				}
+
+				appends += 1;
+				// The Browser SDK 2 bundle assigns its live methods onto the snippet
+				// object and drains `_q`.
+				Object.assign(win.amplitude ?? {}, { setOptOut, track });
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts([script], grantedMeasurementConsents);
+			updateScripts([script], ALL_DENIED);
+			loadScripts([script], grantedMeasurementConsents);
+
+			const win = window as TestWindow;
+			win.amplitude?.track?.('Signup');
+
+			expect(appends).toBe(1);
+			expect(setOptOut.mock.calls).toEqual([[true], [false]]);
+			expect(track).toHaveBeenCalledWith('Signup');
+		});
+	}
+);
+
+describe('amplitude npm helper options', () => {
 	registerVendorContractCleanup();
 
 	it('boots the Browser SDK 2 queue contract before the loader appends', () => {
@@ -147,114 +264,5 @@ describe('amplitude contract', () => {
 				resolveType: 'function',
 			},
 		]);
-	});
-
-	it('waits for measurement consent before appending the loader', () => {
-		let appended = false;
-
-		installHeadProbe((node) => {
-			if (node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
-				appended = true;
-			}
-		});
-
-		loadScripts(
-			[
-				{
-					...amplitude({
-						apiKey: 'AMPLITUDE-CONTRACT',
-					}),
-					id: 'amplitude-contract',
-				},
-			],
-			ALL_DENIED
-		);
-
-		expect(appended).toBe(false);
-		expect((window as TestWindow).amplitude).toBeUndefined();
-	});
-
-	it('calls setOptOut(true) on revoke and keeps the loaded SDK on the page', () => {
-		const setOptOut = vi.fn();
-		const script = {
-			...amplitude({
-				apiKey: 'AMPLITUDE-CONTRACT',
-			}),
-			id: 'amplitude-contract',
-		};
-
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
-				return;
-			}
-
-			win.amplitude = {
-				setOptOut,
-			};
-			node.dispatchEvent(new Event('load'));
-		});
-
-		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], ALL_DENIED);
-
-		expect(setOptOut).toHaveBeenCalledWith(true);
-		expect(
-			document.querySelector('script[src*="cdn.amplitude.com/libs/"]')
-		).not.toBeNull();
-	});
-
-	it('calls setOptOut(false) when measurement consent is granted after load', () => {
-		const setOptOut = vi.fn();
-		const script = amplitude({
-			apiKey: 'AMPLITUDE-CONTRACT',
-		});
-
-		(window as TestWindow).amplitude = {
-			setOptOut,
-		};
-
-		script.onConsentChange?.({
-			consents: grantedMeasurementConsents,
-			elementId: script.id,
-			hasConsent: true,
-			id: script.id,
-		});
-
-		expect(setOptOut).toHaveBeenCalledWith(false);
-	});
-
-	it('keeps the loaded SDK and opts back in on grant, revoke, grant without a reload', () => {
-		const setOptOut = vi.fn();
-		const track = vi.fn();
-		let appends = 0;
-		const script = {
-			...amplitude({
-				apiKey: 'AMPLITUDE-CONTRACT',
-			}),
-			id: 'amplitude-contract',
-		};
-
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('cdn.amplitude.com/libs/analytics-browser-')) {
-				return;
-			}
-
-			appends += 1;
-			// The Browser SDK 2 bundle assigns its live methods onto the snippet
-			// object and drains `_q`.
-			Object.assign(win.amplitude ?? {}, { setOptOut, track });
-			node.dispatchEvent(new Event('load'));
-		});
-
-		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], ALL_DENIED);
-		loadScripts([script], grantedMeasurementConsents);
-
-		const win = window as TestWindow;
-		win.amplitude?.track?.('Signup');
-
-		expect(appends).toBe(1);
-		expect(setOptOut.mock.calls).toEqual([[true], [false]]);
-		expect(track).toHaveBeenCalledWith('Signup');
 	});
 });

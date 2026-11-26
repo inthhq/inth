@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
@@ -22,7 +23,65 @@ type HightouchQueue = unknown[] & {
 	[key: string]: unknown;
 };
 
-describe('hightouch contract', () => {
+describe.each(npmAndRemote('hightouch', hightouch))(
+	'hightouch contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('omits page when trackPageView is false', () => {
+			let queueSnapshot: unknown[] | undefined;
+
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.hightouch-events.com/browser')) {
+					return;
+				}
+
+				queueSnapshot = Array.from((win.htevents as HightouchQueue) ?? []);
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts(
+				[
+					{
+						...build({
+							trackPageView: false,
+							writeKey: 'HIGHTOUCHCONTRACT',
+						}),
+						id: 'hightouch-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
+
+			expect(queueSnapshot).toEqual([['load', 'HIGHTOUCHCONTRACT', {}]]);
+		});
+
+		it('waits for measurement consent before appending the loader', () => {
+			let appended = false;
+
+			installHeadProbe((node) => {
+				if (node.src.includes('cdn.hightouch-events.com/browser')) {
+					appended = true;
+				}
+			});
+
+			loadScripts(
+				[
+					{
+						...build({ writeKey: 'HIGHTOUCHCONTRACT' }),
+						id: 'hightouch-contract',
+					},
+				],
+				ALL_DENIED
+			);
+
+			expect(appended).toBe(false);
+			expect(window.htevents).toBeUndefined();
+		});
+	}
+);
+
+describe('hightouch npm helper options', () => {
 	registerVendorContractCleanup();
 
 	it('boots the htevents queue and methods before the loader appends', () => {
@@ -86,56 +145,5 @@ describe('hightouch contract', () => {
 			['page'],
 			['track', 'Signup', { plan: 'pro' }],
 		]);
-	});
-
-	it('omits page when trackPageView is false', () => {
-		let queueSnapshot: unknown[] | undefined;
-
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('cdn.hightouch-events.com/browser')) {
-				return;
-			}
-
-			queueSnapshot = Array.from((win.htevents as HightouchQueue) ?? []);
-			node.dispatchEvent(new Event('load'));
-		});
-
-		loadScripts(
-			[
-				{
-					...hightouch({
-						trackPageView: false,
-						writeKey: 'HIGHTOUCH-CONTRACT',
-					}),
-					id: 'hightouch-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
-
-		expect(queueSnapshot).toEqual([['load', 'HIGHTOUCH-CONTRACT', {}]]);
-	});
-
-	it('waits for measurement consent before appending the loader', () => {
-		let appended = false;
-
-		installHeadProbe((node) => {
-			if (node.src.includes('cdn.hightouch-events.com/browser')) {
-				appended = true;
-			}
-		});
-
-		loadScripts(
-			[
-				{
-					...hightouch({ writeKey: 'HIGHTOUCH-CONTRACT' }),
-					id: 'hightouch-contract',
-				},
-			],
-			ALL_DENIED
-		);
-
-		expect(appended).toBe(false);
-		expect(window.htevents).toBeUndefined();
 	});
 });

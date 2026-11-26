@@ -4,6 +4,7 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
@@ -31,7 +32,132 @@ const snapshotHeapReadyQueue = function snapshotHeapReadyQueue(
 	}));
 };
 
-describe('heap contract', () => {
+describe.each(npmAndRemote('heap', heap))(
+	'heap contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('replays queued callbacks against the loaded Heap runtime shape', () => {
+			const calls: unknown[][] = [];
+
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.us.heap-api.com/config/123456789')) {
+					return;
+				}
+
+				win.heap?.track?.('Signup', { plan: 'pro' });
+				win.heap = {
+					track: (...args: unknown[]) => {
+						calls.push(args);
+					},
+				};
+
+				for (const entry of win.heapReadyCb ?? []) {
+					entry.fn();
+				}
+
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts(
+				[
+					{
+						...build({
+							envId: '123456789',
+						}),
+						id: 'heap-contract',
+					},
+				],
+				grantedMeasurementConsents
+			);
+
+			expect(calls).toEqual([['Signup', { plan: 'pro' }]]);
+		});
+
+		it('waits for measurement consent before appending the loader', () => {
+			let appended = false;
+
+			installHeadProbe((node) => {
+				if (node.src.includes('cdn.us.heap-api.com/config/123456789')) {
+					appended = true;
+				}
+			});
+
+			loadScripts(
+				[
+					{
+						...build({
+							envId: '123456789',
+						}),
+						id: 'heap-contract',
+					},
+				],
+				ALL_DENIED
+			);
+
+			expect(appended).toBe(false);
+			expect((window as TestWindow).heap).toBeUndefined();
+			expect((window as TestWindow).heapReadyCb).toBeUndefined();
+		});
+
+		it('unloads by default on measurement consent revocation', () => {
+			const script = {
+				...build({
+					envId: '123456789',
+				}),
+				id: 'heap-contract',
+			};
+
+			installHeadProbe((node) => {
+				if (node.src.includes('cdn.us.heap-api.com/config/123456789')) {
+					node.dispatchEvent(new Event('load'));
+				}
+			});
+
+			loadScripts([script], grantedMeasurementConsents);
+
+			const result = updateScripts([script], ALL_DENIED);
+
+			expect(result.unloaded).toEqual(['heap-contract']);
+			expect(document.getElementById('inth-script-heap-contract')).toBeNull();
+		});
+
+		it('keeps live heap.js methods on grant, revoke, grant without a reload', () => {
+			const track = vi.fn();
+			let appends = 0;
+			const script = {
+				...build({ envId: '123456789' }),
+				id: 'heap-contract',
+			};
+
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.us.heap-api.com/config/123456789')) {
+					return;
+				}
+
+				appends += 1;
+				if (appends === 1 && win.heap) {
+					// heap.js installs its runtime methods over the snippet stubs once.
+					win.heap.track = track;
+				} else {
+					// Setup ran again for the re-grant. Calls made now must still
+					// reach the running runtime rather than a stub queue.
+					win.heap?.track?.('Signup');
+				}
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts([script], grantedMeasurementConsents);
+			updateScripts([script], ALL_DENIED);
+			loadScripts([script], grantedMeasurementConsents);
+
+			expect(appends).toBe(2);
+			expect(track).toHaveBeenCalledWith('Signup');
+		});
+	}
+);
+
+describe('heap npm helper options', () => {
 	registerVendorContractCleanup();
 
 	it('boots the heap.js callback queue contract before the loader appends', () => {
@@ -100,123 +226,5 @@ describe('heap contract', () => {
 				name: 'identify',
 			},
 		]);
-	});
-
-	it('replays queued callbacks against the loaded Heap runtime shape', () => {
-		const calls: unknown[][] = [];
-
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('cdn.us.heap-api.com/config/123456789')) {
-				return;
-			}
-
-			win.heap?.track?.('Signup', { plan: 'pro' });
-			win.heap = {
-				track: (...args: unknown[]) => {
-					calls.push(args);
-				},
-			};
-
-			for (const entry of win.heapReadyCb ?? []) {
-				entry.fn();
-			}
-
-			node.dispatchEvent(new Event('load'));
-		});
-
-		loadScripts(
-			[
-				{
-					...heap({
-						envId: '123456789',
-					}),
-					id: 'heap-contract',
-				},
-			],
-			grantedMeasurementConsents
-		);
-
-		expect(calls).toEqual([['Signup', { plan: 'pro' }]]);
-	});
-
-	it('waits for measurement consent before appending the loader', () => {
-		let appended = false;
-
-		installHeadProbe((node) => {
-			if (node.src.includes('cdn.us.heap-api.com/config/123456789')) {
-				appended = true;
-			}
-		});
-
-		loadScripts(
-			[
-				{
-					...heap({
-						envId: '123456789',
-					}),
-					id: 'heap-contract',
-				},
-			],
-			ALL_DENIED
-		);
-
-		expect(appended).toBe(false);
-		expect((window as TestWindow).heap).toBeUndefined();
-		expect((window as TestWindow).heapReadyCb).toBeUndefined();
-	});
-
-	it('unloads by default on measurement consent revocation', () => {
-		const script = {
-			...heap({
-				envId: '123456789',
-			}),
-			id: 'heap-contract',
-		};
-
-		installHeadProbe((node) => {
-			if (node.src.includes('cdn.us.heap-api.com/config/123456789')) {
-				node.dispatchEvent(new Event('load'));
-			}
-		});
-
-		loadScripts([script], grantedMeasurementConsents);
-
-		const result = updateScripts([script], ALL_DENIED);
-
-		expect(result.unloaded).toEqual(['heap-contract']);
-		expect(document.getElementById('inth-script-heap-contract')).toBeNull();
-	});
-
-	it('keeps live heap.js methods on grant, revoke, grant without a reload', () => {
-		const track = vi.fn();
-		let appends = 0;
-		const script = {
-			...heap({ envId: '123456789' }),
-			id: 'heap-contract',
-		};
-
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('cdn.us.heap-api.com/config/123456789')) {
-				return;
-			}
-
-			appends += 1;
-			if (appends === 1 && win.heap) {
-				// heap.js installs its runtime methods over the snippet stubs once.
-				win.heap.track = track;
-			} else {
-				// Setup ran again for the re-grant. Calls made now must still
-				// reach the running runtime rather than a stub queue.
-				win.heap?.track?.('Signup');
-			}
-			node.dispatchEvent(new Event('load'));
-		});
-
-		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], ALL_DENIED);
-		loadScripts([script], grantedMeasurementConsents);
-
-		expect(appends).toBe(2);
-		expect(track).toHaveBeenCalledWith('Signup');
 	});
 });
