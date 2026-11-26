@@ -1,3 +1,4 @@
+import { callReachesCode } from './call-path';
 import { emitScriptDebugEvent } from '../libs/script-loader/debug';
 import type {
 	Script,
@@ -371,6 +372,19 @@ const executeStep = function executeStep(
 					? (JSON.parse(JSON.stringify(step.args ?? [])) as unknown[])
 					: (step.args ?? []).map((arg) => cloneStepValue(arg, values));
 
+			// The parser refuses these; a manifest built without it must not
+			// run them either.
+			if (
+				callReachesCode(
+					step.path ??
+						(step.method === undefined
+							? [step.global]
+							: [step.global, step.method])
+				)
+			) {
+				break;
+			}
+
 			if (step.path) {
 				const found = readPath(win, step.path);
 				if (typeof found?.value === 'function') {
@@ -662,6 +676,9 @@ const executeStep = function executeStep(
 		}
 
 		case 'constructGlobal': {
+			if (callReachesCode([step.constructor])) {
+				break;
+			}
 			const Constructor = win[step.constructor];
 			if (typeof Constructor !== 'function') {
 				break;

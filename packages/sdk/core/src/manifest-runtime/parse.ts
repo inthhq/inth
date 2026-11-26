@@ -1,3 +1,4 @@
+import { callReachesCode } from './call-path';
 import {
 	isCategoryCondition,
 	isCategoryName,
@@ -82,41 +83,6 @@ const isNameList = (value: unknown): boolean =>
 	value.every((name) => typeof name === 'string' && name.length > 0);
 
 const isBoolean = (value: unknown): boolean => typeof value === 'boolean';
-
-/** Window's own names for itself, which a call path may start with. */
-const WINDOW_NAMES: ReadonlySet<unknown> = new Set([
-	'window',
-	'self',
-	'globalThis',
-	'frames',
-	'parent',
-	'top',
-]);
-
-/** Globals that run a string as code, or navigate, when called. */
-const CODE_ROOTS: ReadonlySet<unknown> = new Set([
-	'eval',
-	'Function',
-	'setTimeout',
-	'setInterval',
-	'location',
-]);
-
-/**
- * Whether calling or constructing `path` under window would run a string as
- * code, write to the document or navigate.
- */
-const reachesCode = (path: readonly unknown[]): boolean => {
-	let start = 0;
-	while (start < path.length - 1 && WINDOW_NAMES.has(path[start])) {
-		start += 1;
-	}
-	const [root, next] = path.slice(start);
-	return (
-		CODE_ROOTS.has(root) ||
-		(root === 'document' && (next === 'write' || next === 'writeln'))
-	);
-};
 
 const isHttpsUrl = (value: unknown): boolean => {
 	if (typeof value !== 'string') {
@@ -303,7 +269,7 @@ const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	if (problem !== undefined) {
 		return `has a ${String(step.type)} step that ${problem}`;
 	}
-	if (reachesCode(calledPath(step))) {
+	if (callReachesCode(calledPath(step))) {
 		return `has a ${String(step.type)} step that calls ${calledPath(step).join('.')}`;
 	}
 	return undefined;

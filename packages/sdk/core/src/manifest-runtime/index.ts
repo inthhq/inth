@@ -5,6 +5,7 @@
  * `@inth/integrations` builds it and the Inth server sends it, turned into a
  * `Script` the script loader mounts.
  */
+export { callReachesCode } from './call-path';
 export { mapConsentState } from './consent-mapping';
 export {
 	manifestFeatureLevel,

@@ -465,6 +465,17 @@ describe('inlineStepsStart', () => {
 		).toBeUndefined();
 	});
 
+	it.each([
+		['document', 'body', 'insertAdjacentHTML'],
+		['document', 'defaultView', 'eval'],
+		['navigation', 'navigate'],
+		['window', 'vendor', 'track'],
+	].map((path) => [path]))('has no inline form for a call path through browser objects: %j', (path) => {
+		expect(
+			inlineStepsStart([{ args: ['x'], path, type: 'callGlobal' }])
+		).toBeUndefined();
+	});
+
 	it('has no inline form for a value JSON would change', () => {
 		const date = new Date(0);
 		for (const value of [

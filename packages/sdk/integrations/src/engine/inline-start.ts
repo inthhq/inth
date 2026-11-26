@@ -14,6 +14,7 @@
  */
 import type { ScriptServerStart } from '@inth/sdk/engine';
 import {
+	callReachesCode,
 	RUNTIME_VALUE_LEVELS,
 	STEP_FIELD_LEVELS,
 	STEP_VALUE_LEVELS,
@@ -93,6 +94,16 @@ const hasLaterRuntimeValue = function hasLaterRuntimeValue(
 const runsInline = function runsInline(step: ManifestStep): boolean {
 	// constructGlobal only runs after a vendor's script loads.
 	if (step.type === 'constructGlobal') {
+		return false;
+	}
+	// The runtime skips these calls, so the inline code must not make them.
+	if (
+		step.type === 'callGlobal' &&
+		callReachesCode(
+			step.path ??
+				(step.method === undefined ? [step.global] : [step.global, step.method])
+		)
+	) {
 		return false;
 	}
 	const fields = ownLevel(STEP_FIELD_LEVELS, step.type) as

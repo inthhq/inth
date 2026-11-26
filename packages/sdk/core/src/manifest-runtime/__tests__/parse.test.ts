@@ -454,13 +454,40 @@ describe('parseResolvedManifest', () => {
 			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
 		});
 
-		it('accepts calls that only name a code global further down', () => {
+		it.each([
+			['document', 'location', 'assign'],
+			['document', 'defaultView', 'eval'],
+			['document', 'defaultView', 'setTimeout'],
+			['document', 'body', 'insertAdjacentHTML'],
+			['navigation', 'navigate'],
+			['open'],
+			['window', 'vendor', 'track'],
+			['vendor', 'frame', 'opener', 'focus'],
+			['vendor', 'ownerDocument', 'createElement'],
+		].map((path) => [path]))('refuses a call path through browser objects: %j', (path) => {
+			expect(
+				parseResolvedManifest(withSetup({ path, type: 'callGlobal' }))
+			).toEqual({ ok: false, reason: expect.stringContaining('calls') });
+		});
+
+		// A global a vendor names can be a window: an iframe's name puts its
+		// window on this one. So a code name is refused at any depth.
+		it.each([
+			{ path: ['vendor', 'eval'], type: 'callGlobal' },
+			{ global: 'vendor', method: 'setTimeout', type: 'callGlobal' },
+			{ global: 'vendor', method: 'write', type: 'callGlobal' },
+		])('refuses a code name under a vendor global: %j', (step) => {
+			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
+		});
+
+		it('accepts calls on vendor objects and document methods', () => {
 			expect(
 				parseResolvedManifest(
 					withSetup(
-						{ path: ['vendor', 'eval'], type: 'callGlobal' },
-						{ global: 'vendor', method: 'setTimeout', type: 'callGlobal' },
-						{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' }
+						{ path: ['vendor', 'queue', 'push'], type: 'callGlobal' },
+						{ global: 'vendor', method: 'track', type: 'callGlobal' },
+						{ global: 'document', method: 'dispatchEvent', type: 'callGlobal' },
+						{ path: ['document', 'dispatchEvent'], type: 'callGlobal' }
 					)
 				).ok
 			).toBe(true);
