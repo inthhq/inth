@@ -816,6 +816,79 @@ describe('remoteScripts', () => {
 		expect(disposedWith).toEqual([last?.registration]);
 	});
 
+	test('keeps a started callback-only script when a later init changes only its category to one still allowed', async () => {
+		vi.resetModules();
+		const base = await import('../../manifest-runtime/index');
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const consentSeen: boolean[] = [];
+		const starts = vi.fn();
+		const disposed = vi.fn();
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					// Opt-out allows every category, so both lists' categories hold.
+					initialPolicyResolution: matchedResolution(
+						optOutRule({ id: 'opt-out' })
+					),
+					initialScriptRegistry: {
+						load: load(acmeManifest({ category: 'measurement' })),
+					},
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				// A callback-only script with its own disposer, as Zaraz's is.
+				loadManifestRuntime: () =>
+					Promise.resolve({
+						...base,
+						resolvedManifestToScript: (
+							manifest: Parameters<typeof base.resolvedManifestToScript>[0]
+						) => {
+							const { src: _src, ...script } =
+								base.resolvedManifestToScript(manifest);
+							return {
+								...script,
+								callbackOnly: true,
+								onBeforeLoad: starts,
+								onConsentChange: (info: ScriptCallbackInfo) => {
+									consentSeen.push(info.hasConsent);
+								},
+								onDispose: disposed,
+							};
+						},
+					}),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(starts).toHaveBeenCalledOnce());
+
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: {
+				load: load(acmeManifest({ category: 'marketing' })),
+			},
+		});
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(disposed).not.toHaveBeenCalled();
+		expect(starts).toHaveBeenCalledOnce();
+		expect(consentSeen).not.toContain(false);
+		runtime.dispose();
+	});
+
 	test('stops a running script when a later init moves it to a denied category', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({

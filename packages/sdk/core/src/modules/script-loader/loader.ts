@@ -168,6 +168,13 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	 * claims the entry, not the built script.
 	 */
 	const remoteEntryIds = new WeakMap<Script, string>();
+	/**
+	 * The started remote script each category copy stands in for (see
+	 * `keepStarted`): one registration, so replacing one with the other
+	 * never disposes or restarts it, even for a callback-only script.
+	 */
+	const copiedFrom = new WeakMap<Script, Script>();
+	const copyRoot = (script: Script): Script => copiedFrom.get(script) ?? script;
 	const claimedByCode = (): Set<string> =>
 		new Set(
 			codeScripts.flatMap((script) => [codeScriptKey(script), script.id])
@@ -837,10 +844,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			// category applies now, and the rest of its setup on the next page.
 			if (
 				replacement &&
-				activeRemote.has(script.id) === nextRemote.has(script.id) &&
-				script.onDispose === replacement.onDispose &&
-				(!script.onDispose || !mountedCallbackOnly) &&
-				hasSameResource(script, replacement)
+				(copyRoot(script) === copyRoot(replacement) ||
+					(activeRemote.has(script.id) === nextRemote.has(script.id) &&
+						script.onDispose === replacement.onDispose &&
+						(!script.onDispose || !mountedCallbackOnly) &&
+						hasSameResource(script, replacement)))
 			) {
 				freezeConsentReader(script);
 				consentReaders.delete(script);
@@ -992,6 +1000,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const kept = { ...earlier, category: fresh.category };
 		remoteObjects.add(kept);
+		copiedFrom.set(kept, copyRoot(earlier));
 		const key = sharedKeys.get(earlier);
 		if (key !== undefined) {
 			sharedKeys.set(kept, key);
@@ -1098,6 +1107,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	const applyRemote = (): void => {
 		if (remoteEntries.length === 0 || !options.remote) {
 			built = new Map();
+			holdShared(built);
 			setRemoteScripts([]);
 			return;
 		}

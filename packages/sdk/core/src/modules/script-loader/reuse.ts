@@ -238,6 +238,11 @@ export const createScriptReuse = <OptionsType extends object>({
 			previous?.onDispose?.(info);
 		};
 		script.onLoad = (info) => activate(info).onLoad?.(combine(info));
+		// The running script's, not the first one built: a disposed and
+		// remounted script has a new one.
+		if (script.onError) {
+			script.onError = (info) => current?.onError?.(combine(info));
+		}
 		return script;
 	};
 };
