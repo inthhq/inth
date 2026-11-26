@@ -25,12 +25,7 @@ import type {
 	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
-import type {
-	FailedAdapter,
-	ManifestAdapter,
-	ParsedManifest,
-	ResolvedManifest,
-} from '../../manifest-runtime';
+import type { ParsedManifest, ResolvedManifest } from '../../manifest-runtime';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -132,11 +127,6 @@ export interface RemoteManifestRuntime {
 	prepare?: (
 		manifests: readonly unknown[]
 	) => Promise<RemoteManifestRuntime | undefined> | undefined;
-	/**
-	 * Lets the runtime build manifests that name an adapter, or records
-	 * why the adapter did not load (`withAdapters`).
-	 */
-	installAdapter?: (adapter: ManifestAdapter<never> | FailedAdapter) => void;
 }
 
 export interface ScriptLoaderOptions {

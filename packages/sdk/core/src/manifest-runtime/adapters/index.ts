@@ -14,4 +14,4 @@ const ADAPTER_MODULES: Record<
 
 /** Imports the adapter module for `id`. */
 export const importAdapter = (id: AdapterId): Promise<ManifestAdapter<never>> =>
-	(ADAPTER_MODULES[id] as () => Promise<ManifestAdapter<never>>)();
+	ADAPTER_MODULES[id]();

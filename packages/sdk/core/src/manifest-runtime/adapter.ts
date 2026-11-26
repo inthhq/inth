@@ -1,16 +1,17 @@
 /**
- * Where adapters plug into the manifest runtime. An adapter is code the SDK
- * ships for a vendor whose consent handling is a state machine no manifest
- * steps express. A manifest names one in `adapter`, with options; the
- * runtime builds the script from the rest of the manifest and hands it to
- * the adapter, which adds its lifecycle hooks.
+ * Adapters: code the SDK ships for a vendor whose consent handling is a
+ * state machine no manifest steps express. A manifest names one in
+ * `adapter`, with options; the script is built from the rest of the
+ * manifest and handed to the adapter, which adds its lifecycle hooks.
  *
- * Adapter modules load on demand (`withAdapters`), so this file holds only
- * the ones installed so far. Each runtime file has its own, so the script
- * tag installs an adapter into whichever runtime file it uses.
+ * Only a runtime from `withAdapters` runs them: it loads each adapter a
+ * list names, checks the `adapter` field and builds the script. The
+ * runtime's own parser refuses the field, so the manifest runtime files
+ * carry none of this, and no runtime builds such a manifest without its
+ * adapter.
  */
 import type { Script } from '../libs/script-loader/types';
-import type { ADAPTER_LEVELS } from './features';
+import { ADAPTER_LEVELS, levelOf } from './features';
 
 /** The ID of an adapter this SDK ships. */
 export type AdapterId = keyof typeof ADAPTER_LEVELS;
@@ -35,27 +36,42 @@ export interface FailedAdapter {
 	readonly failure: string;
 }
 
-const installed = new Map<string, ManifestAdapter | FailedAdapter>();
+/** The adapters a runtime has loaded, or why each did not, by ID. */
+export type LoadedAdapters = Map<string, ManifestAdapter | FailedAdapter>;
 
 /** Whether `entry` is an adapter that loaded. */
 export const isLoaded = (
 	entry: ManifestAdapter | FailedAdapter | undefined
 ): entry is ManifestAdapter => entry !== undefined && 'script' in entry;
 
-/**
- * Lets the runtime build manifests that name `adapter`, or records why it
- * did not load, so the parser reports that for each manifest that names
- * it. A failure never replaces an adapter that loaded.
- */
-export const installAdapter = function installAdapter(
-	adapter: ManifestAdapter<never> | FailedAdapter
-): void {
-	if (!isLoaded(installed.get(adapter.id))) {
-		installed.set(adapter.id, adapter);
-	}
-};
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** The adapter installed under `id`, or why it did not load. */
-export const installedAdapter = (
-	id: string
-): ManifestAdapter | FailedAdapter | undefined => installed.get(id);
+const ADAPTER_KEYS: ReadonlySet<string> = new Set(['id', 'options']);
+
+/**
+ * Why a manifest's `adapter` cannot run, as the rest of a parser reason:
+ * an ID this SDK does not ship, an adapter that is not loaded or failed to
+ * load, or options the adapter refuses.
+ */
+export const adapterProblem = function adapterProblem(
+	adapter: unknown,
+	loaded: LoadedAdapters
+): string | undefined {
+	if (
+		!(isRecord(adapter) && isRecord(adapter.options)) ||
+		Object.keys(adapter).some((key) => !ADAPTER_KEYS.has(key))
+	) {
+		return 'its adapter is not an id with options';
+	}
+	const { id } = adapter;
+	if (levelOf(ADAPTER_LEVELS, id) === undefined) {
+		return `it names the adapter ${JSON.stringify(id)}, which this SDK does not have`;
+	}
+	const entry = loaded.get(id as string);
+	if (!isLoaded(entry)) {
+		return `its ${String(id)} adapter ${entry ? `did not load: ${entry.failure}` : 'is not loaded'}`;
+	}
+	const problem = entry.problem(adapter.options);
+	return problem && `its ${String(id)} adapter options are wrong: ${problem}`;
+};

@@ -1,9 +1,11 @@
 import { appendInitParams } from '@inth/sdk-schema/types';
 
 import type { RemoteManifestRuntime } from '../modules/script-loader/types';
-import type { AdapterId, ManifestAdapter } from './adapter';
+import { adapterProblem, isLoaded } from './adapter';
+import type { AdapterId, LoadedAdapters, ManifestAdapter } from './adapter';
 import { ADAPTER_LEVELS, levelOf } from './features';
 import type { LevelThreePart } from './part';
+import type { ManifestAdapterField } from './types';
 
 /**
  * The highest manifest runtime level this SDK runs.
@@ -89,42 +91,62 @@ export const namedAdapters = (manifests: readonly unknown[]): AdapterId[] => [
 ];
 
 /**
- * `runtime` with a `prepare` that loads, with `load`, each adapter a
- * manifest names that `runtime` has not installed, and installs it. One
- * that fails to load is installed as a failure, so the parser reports why
- * for each manifest that names it, and is tried again for a later list.
- * When the runtime's own `prepare` moves to another runtime, such as the
- * script tag's level 3 file, the adapters install into that one.
+ * `runtime`, made to run adapters. Its `prepare` loads, with `load`, each
+ * adapter a list names that has not loaded; one that fails is kept as a
+ * failure and tried again for a later list. Its parser checks a manifest's
+ * `adapter` (an ID this SDK ships, loaded, with options the adapter
+ * accepts) and the rest with `runtime`'s, and refuses with the reason,
+ * including why the adapter failed to load. It builds the script from the
+ * rest of the manifest and hands it to the adapter, with no `serverStart`:
+ * an adapter's hooks run in the browser, so a server render leaves the
+ * script to it. When `runtime`'s own `prepare` moves to another runtime,
+ * such as the script tag's level 3 file, that one runs the same adapters.
  */
 export const withAdapters = function withAdapters(
 	runtime: RemoteManifestRuntime,
-	load: (id: AdapterId) => Promise<ManifestAdapter<never>>
+	load: (id: AdapterId) => Promise<ManifestAdapter<never>>,
+	loaded: LoadedAdapters = new Map()
 ): RemoteManifestRuntime {
-	const installed = new Set<string>();
+	const missing = (manifests: readonly unknown[]) =>
+		namedAdapters(manifests).filter((id) => !isLoaded(loaded.get(id)));
 	const install = (manifests: readonly unknown[]) =>
 		Promise.all(
-			namedAdapters(manifests)
-				.filter((id) => !installed.has(id))
-				.map(async (id) => {
-					try {
-						runtime.installAdapter?.(await load(id));
-						installed.add(id);
-					} catch (error) {
-						runtime.installAdapter?.({
-							failure: error instanceof Error ? error.message : String(error),
-							id,
-						});
-					}
-				})
+			missing(manifests).map(async (id) => {
+				try {
+					loaded.set(id, await load(id));
+				} catch (error) {
+					loaded.set(id, {
+						failure: error instanceof Error ? error.message : String(error),
+						id,
+					});
+				}
+			})
 		);
 	return {
 		...runtime,
+		parseResolvedManifest: (value) => {
+			const { adapter, ...rest } = (value ?? {}) as Record<string, unknown>;
+			if (adapter === undefined) {
+				return runtime.parseResolvedManifest(value);
+			}
+			const reason = adapterProblem(adapter, loaded);
+			if (reason !== undefined) {
+				return { ok: false, reason };
+			}
+			const parsed = runtime.parseResolvedManifest(rest);
+			return parsed.ok
+				? {
+						manifest: {
+							...parsed.manifest,
+							adapter: adapter as ManifestAdapterField,
+						},
+						ok: true,
+					}
+				: parsed;
+		},
 		prepare: (manifests) => {
 			const earlier = runtime.prepare?.(manifests);
-			if (
-				!earlier &&
-				namedAdapters(manifests).every((id) => installed.has(id))
-			) {
+			if (!earlier && missing(manifests).length === 0) {
 				return undefined;
 			}
 			const prepare = async () => {
@@ -134,15 +156,22 @@ export const withAdapters = function withAdapters(
 				} catch {
 					// The parser refuses, and reports, each manifest that needed it.
 				}
-				if (next) {
-					const adapted = withAdapters(next, load);
-					await adapted.prepare?.(manifests);
-					return adapted;
-				}
 				await install(manifests);
-				return undefined;
+				return next && withAdapters(next, load, loaded);
 			};
 			return prepare();
+		},
+		resolvedManifestToScript: ({ adapter, ...manifest }) => {
+			const script = runtime.resolvedManifestToScript(manifest);
+			if (!adapter) {
+				return script;
+			}
+			const { serverStart: _serverStart, ...base } = script;
+			// The parser refused the manifest unless its adapter loaded.
+			return (loaded.get(adapter.id) as ManifestAdapter<unknown>).script(
+				base,
+				adapter.options
+			);
 		},
 	};
 };

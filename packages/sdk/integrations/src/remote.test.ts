@@ -3,16 +3,16 @@
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
 import {
-	installAdapter,
+	ADAPTER_LEVELS,
 	installLevelThree,
 	isDeclarableGlobal,
 	MANIFEST_RUNTIME_LEVEL,
 	manifestRoots,
 	parseResolvedManifest,
-	requiresLevelThree,
+	withAdapters,
+	withLevelThreePart,
 } from '@inth/sdk/manifest-runtime';
-import { sentryAdapter } from '@inth/sdk/manifest-runtime/adapters/sentry';
-import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
+import { importAdapter } from '@inth/sdk/manifest-runtime/adapters';
 import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
@@ -33,22 +33,24 @@ import { vendorModules } from './remote-catalogue';
 type Options = Record<string, RemoteOptionValue>;
 
 /**
- * Parses a manifest from the wire as the browser does: the loader installs
- * the level 3 part before it parses a manifest that requires level 3.
+ * The manifest runtime as the SDK runs it: the level 3 part, the adapters
+ * this SDK ships, and the server render's inline start.
  */
-const parseWire = function parseWire(
-	wire: unknown
-): ReturnType<typeof parseResolvedManifest> {
-	if (requiresLevelThree([wire])) {
-		installLevelThree(levelThreePart);
-	}
-	return parseResolvedManifest(wire);
-};
+const sdk = withAdapters(
+	withLevelThreePart(
+		{ installLevelThree, parseResolvedManifest, resolvedManifestToScript },
+		() => import('@inth/sdk/manifest-runtime/level-three')
+	),
+	importAdapter
+);
 
-// The SDK loads each adapter a manifest names before it parses the manifest
-// (`withAdapters`); this test parses without a loader.
-beforeAll(() => {
-	installAdapter(sentryAdapter);
+beforeAll(async () => {
+	// Loads the level 3 part and each adapter, as the loader does before it
+	// builds a list that needs them.
+	await sdk.prepare?.([
+		{ requires: 3 },
+		...Object.keys(ADAPTER_LEVELS).map((id) => ({ adapter: { id } })),
+	]);
 });
 
 /** npm helpers not named after their registry key. */
@@ -331,11 +333,11 @@ const remoteScript = function remoteScript(
 	const wire: unknown = JSON.parse(
 		JSON.stringify(remoteIntegrations[key]?.resolveRemote(validated.options))
 	);
-	const parsed = parseWire(wire);
+	const parsed = sdk.parseResolvedManifest(wire);
 	if (!parsed.ok) {
 		throw new Error(`${key}: ${parsed.reason}`);
 	}
-	return resolvedManifestToScript(parsed.manifest);
+	return sdk.resolvedManifestToScript(parsed.manifest);
 };
 
 describe('remoteIntegrations', () => {
@@ -358,7 +360,9 @@ describe('remoteIntegrations', () => {
 		expect(JSON.parse(JSON.stringify(manifest))).toEqual(manifest);
 		expect(manifest?.vendor).toBe(remoteIntegrations[key]?.vendor);
 		// The SDK runs what it receives only once it passes its own check.
-		expect(parseWire(JSON.parse(JSON.stringify(manifest)))).toEqual({
+		expect(
+			sdk.parseResolvedManifest(JSON.parse(JSON.stringify(manifest)))
+		).toEqual({
 			manifest: expect.anything(),
 			ok: true,
 		});

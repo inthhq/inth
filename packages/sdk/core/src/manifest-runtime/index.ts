@@ -5,8 +5,12 @@
  * `@inth/integrations` builds it and the Inth server sends it, turned into a
  * `Script` the script loader mounts.
  */
-export { installAdapter } from './adapter';
-export type { AdapterId, FailedAdapter, ManifestAdapter } from './adapter';
+export type {
+	AdapterId,
+	FailedAdapter,
+	LoadedAdapters,
+	ManifestAdapter,
+} from './adapter';
 export { callReachesCode, stepReachesCode } from './call-path';
 export { mapConsentState } from './consent-mapping';
 export { isDeclarableGlobal, manifestRoots } from './globals';

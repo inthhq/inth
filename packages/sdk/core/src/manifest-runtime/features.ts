@@ -14,11 +14,14 @@ import type {
 
 type Level = 1 | 2 | 3 | 4;
 
-/** Each manifest field's level. */
+/**
+ * Each manifest field's level, but `adapter`: its level is its adapter's
+ * ({@link ADAPTER_LEVELS}), and the runtime's own parser refuses it, since
+ * only `withAdapters` runs adapters.
+ */
 export const MANIFEST_FIELD_LEVELS: Readonly<
-	Record<keyof ResolvedManifest, Level>
+	Record<Exclude<keyof ResolvedManifest, 'adapter'>, Level>
 > = {
-	adapter: 4,
 	afterLoadSteps: 1,
 	alwaysLoad: 1,
 	bootstrapSteps: 1,
@@ -232,9 +235,9 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
  * Each adapter this SDK ships, by `adapter.id`, and its level. An ID not
  * listed here is one the parser refuses.
  */
-export const ADAPTER_LEVELS: Readonly<Record<string, Level>> = {
+export const ADAPTER_LEVELS = {
 	sentry: 4,
-};
+} as const satisfies Readonly<Record<string, Level>>;
 
 /**
  * The script attributes `loadScript` may set besides `data-*` ones and the
@@ -376,14 +379,14 @@ export const manifestFeatureLevel = function manifestFeatureLevel(
 		if (value === undefined) {
 			continue;
 		}
-		level = Math.max(level, levelOf(MANIFEST_FIELD_LEVELS, field) ?? Infinity);
+		level = Math.max(
+			level,
+			(field === 'adapter'
+				? levelOf(ADAPTER_LEVELS, (value as { id?: unknown }).id)
+				: levelOf(MANIFEST_FIELD_LEVELS, field)) ?? Infinity
+		);
 		if (field === 'loadScript') {
 			level = Math.max(level, stepLevel(value as ManifestStep));
-		} else if (field === 'adapter') {
-			level = Math.max(
-				level,
-				levelOf(ADAPTER_LEVELS, (value as { id?: unknown }).id) ?? Infinity
-			);
 		} else if (field.endsWith('Steps') && Array.isArray(value)) {
 			for (const step of value as ManifestStep[]) {
 				level = Math.max(level, stepLevel(step));

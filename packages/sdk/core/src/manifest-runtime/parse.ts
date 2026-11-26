@@ -2,7 +2,6 @@ import {
 	isCategoryCondition,
 	isCategoryName,
 } from '../modules/script-loader/category-condition';
-import { installedAdapter, isLoaded } from './adapter';
 import {
 	calledPath,
 	callReachesCode,
@@ -11,7 +10,6 @@ import {
 	writtenNames,
 } from './call-path';
 import {
-	ADAPTER_LEVELS,
 	levelOf,
 	MANIFEST_FIELD_LEVELS,
 	QUEUE_METHOD_FORMATS,
@@ -341,31 +339,6 @@ const globalsProblem = (
 	return undefined;
 };
 
-const ADAPTER_KEYS: ReadonlySet<string> = new Set(['id', 'options']);
-
-/**
- * Why a manifest's `adapter` cannot run: an ID this SDK does not ship, an
- * adapter that is not loaded, or options it refuses.
- */
-const adapterProblem = (adapter: unknown): string | undefined => {
-	if (
-		!(isRecord(adapter) && isRecord(adapter.options)) ||
-		unknownKey(adapter, ADAPTER_KEYS) !== undefined
-	) {
-		return 'its adapter is not an id with options';
-	}
-	const { id } = adapter;
-	if (levelOf(ADAPTER_LEVELS, id) === undefined) {
-		return `it names the adapter ${JSON.stringify(id)}, which this SDK does not have`;
-	}
-	const loaded = installedAdapter(id as string);
-	if (!isLoaded(loaded)) {
-		return `its ${String(id)} adapter ${loaded ? `did not load: ${loaded.failure}` : 'is not loaded'}`;
-	}
-	const problem = loaded.problem(adapter.options);
-	return problem && `its ${String(id)} adapter options are wrong: ${problem}`;
-};
-
 /** Why `manifest` cannot run, or `undefined` when it can. */
 // oxlint-disable-next-line complexity -- One check per manifest field.
 const manifestProblem = (
@@ -398,12 +371,6 @@ const manifestProblem = (
 	}
 	if (typeof manifest.vendor !== 'string' || manifest.vendor.length === 0) {
 		return 'it names no vendor';
-	}
-	if (manifest.adapter !== undefined) {
-		const problem = adapterProblem(manifest.adapter);
-		if (problem !== undefined) {
-			return problem;
-		}
 	}
 	if (!isCategoryCondition(manifest.category)) {
 		return 'its category is not a condition over known categories';

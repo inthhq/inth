@@ -1,25 +1,15 @@
 /**
  * @vitest-environment jsdom
  *
- * Adapters: a manifest's `adapter` field names code the SDK ships. Each
- * test imports the runtime afresh, since installed adapters are module
- * state.
+ * Adapters: a manifest's `adapter` field names code the SDK ships, which a
+ * runtime from `withAdapters` loads and runs.
  */
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ScriptCallbackInfo } from '../../libs/script-loader/types';
 import type { RemoteManifestRuntime } from '../../modules/script-loader/types';
-import type * as SentryModule from '../adapters/sentry';
-import type * as RuntimeModule from '../index';
-
-let runtime: typeof RuntimeModule;
-let sentry: typeof SentryModule;
-
-beforeEach(async () => {
-	vi.resetModules();
-	runtime = await import('../index');
-	sentry = await import('../adapters/sentry');
-});
+import * as sentry from '../adapters/sentry';
+import * as runtime from '../index';
 
 const sentryOptions = (overrides: Record<string, unknown> = {}) => ({
 	dsn: 'https://public@o0.ingest.sentry.io/0',
@@ -63,8 +53,22 @@ const sentryManifest = (
 	vendor: 'sentry',
 });
 
-const reason = (value: unknown) => {
-	const parsed = runtime.parseResolvedManifest(value);
+const base = (): RemoteManifestRuntime => ({
+	parseResolvedManifest: runtime.parseResolvedManifest,
+	resolvedManifestToScript: runtime.resolvedManifestToScript,
+});
+
+const loadSentry = () => Promise.resolve(sentry.sentryAdapter);
+
+/** A runtime from `withAdapters` that has loaded the Sentry adapter. */
+const adapterRuntime = async () => {
+	const adapted = runtime.withAdapters(base(), loadSentry);
+	await adapted.prepare?.([sentryManifest()]);
+	return adapted;
+};
+
+const reasonFrom = (adapted: RemoteManifestRuntime, value: unknown) => {
+	const parsed = adapted.parseResolvedManifest(value);
 	return parsed.ok ? undefined : parsed.reason;
 };
 
@@ -94,53 +98,73 @@ describe('adapter levels', () => {
 });
 
 describe('parsing a manifest that names an adapter', () => {
-	it('refuses an adapter this SDK does not ship', () => {
-		expect(reason(sentryManifest({ id: 'acme', options: {} }))).toBe(
-			'it names the adapter "acme", which this SDK does not have'
-		);
-		// Not an inherited name either.
-		expect(reason(sentryManifest({ id: 'constructor', options: {} }))).toBe(
-			'it names the adapter "constructor", which this SDK does not have'
-		);
+	it("is refused by the runtime's own parser, which runs no adapters", () => {
+		expect(runtime.parseResolvedManifest(sentryManifest())).toEqual({
+			ok: false,
+			reason: 'it has the unknown field adapter',
+		});
 	});
 
-	it('refuses an adapter field that is not an id with options', () => {
+	it('refuses an adapter this SDK does not ship', async () => {
+		const adapted = await adapterRuntime();
+
+		expect(
+			reasonFrom(adapted, sentryManifest({ id: 'acme', options: {} }))
+		).toBe('it names the adapter "acme", which this SDK does not have');
+		// Not an inherited name either.
+		expect(
+			reasonFrom(adapted, sentryManifest({ id: 'constructor', options: {} }))
+		).toBe('it names the adapter "constructor", which this SDK does not have');
+	});
+
+	it('refuses an adapter field that is not an id with options', async () => {
+		const adapted = await adapterRuntime();
+
 		for (const adapter of [
 			'sentry',
 			{ id: 'sentry' },
 			{ id: 'sentry', options: [] },
 			{ id: 'sentry', options: {}, src: 'https://evil.example/a.js' },
 		]) {
-			expect(reason(sentryManifest(adapter))).toBe(
+			expect(reasonFrom(adapted, sentryManifest(adapter))).toBe(
 				'its adapter is not an id with options'
 			);
 		}
 	});
 
-	it('refuses an adapter that is not loaded, and says why one failed to', () => {
-		expect(reason(sentryManifest())).toBe('its sentry adapter is not loaded');
+	it('refuses an adapter that is not loaded, and says why one failed to', async () => {
+		const adapted = runtime.withAdapters(base(), () =>
+			Promise.reject(new Error('offline'))
+		);
 
-		runtime.installAdapter({ failure: 'offline', id: 'sentry' });
+		expect(reasonFrom(adapted, sentryManifest())).toBe(
+			'its sentry adapter is not loaded'
+		);
 
-		expect(reason(sentryManifest())).toBe(
+		await adapted.prepare?.([sentryManifest()]);
+
+		expect(reasonFrom(adapted, sentryManifest())).toBe(
 			'its sentry adapter did not load: offline'
 		);
 	});
 
-	it('accepts the manifest once the adapter is installed, and a failure never replaces it', () => {
-		runtime.installAdapter(sentry.sentryAdapter);
-		runtime.installAdapter({ failure: 'offline', id: 'sentry' });
+	it('accepts the manifest once the adapter loaded, and checks the rest with the runtime', async () => {
+		const adapted = await adapterRuntime();
 
-		expect(runtime.parseResolvedManifest(sentryManifest())).toEqual({
+		expect(adapted.parseResolvedManifest(sentryManifest())).toEqual({
 			manifest: sentryManifest(),
 			ok: true,
 		});
+		expect(reasonFrom(adapted, { ...sentryManifest(), vendor: '' })).toBe(
+			'it names no vendor'
+		);
 	});
 
-	it("refuses options the adapter's validator refuses", () => {
-		runtime.installAdapter(sentry.sentryAdapter);
+	it("refuses options the adapter's validator refuses", async () => {
+		const adapted = await adapterRuntime();
 		const withOptions = (overrides: Record<string, unknown>) =>
-			reason(
+			reasonFrom(
+				adapted,
 				sentryManifest({ id: 'sentry', options: sentryOptions(overrides) })
 			);
 
@@ -177,9 +201,9 @@ describe('parsing a manifest that names an adapter', () => {
 });
 
 describe('building a manifest that names an adapter', () => {
-	it('hands the script built from the rest of the manifest to the adapter', () => {
-		runtime.installAdapter(sentry.sentryAdapter);
-		const script = runtime.resolvedManifestToScript(sentryManifest() as never);
+	it('hands the script built from the rest of the manifest to the adapter', async () => {
+		const adapted = await adapterRuntime();
+		const script = adapted.resolvedManifestToScript(sentryManifest() as never);
 
 		expect(script).toMatchObject({
 			alwaysLoad: true,
@@ -203,32 +227,28 @@ describe('building a manifest that names an adapter', () => {
 		]);
 	});
 
-	it('starts it in the browser only, even with an inline start for a server render', () => {
-		runtime.installAdapter(sentry.sentryAdapter);
-		const inline = vi.fn(() => ({ code: '/* start */' }) as never);
-		const build = runtime.createManifestScriptFactory(inline);
+	it('starts it in the browser only, even with an inline start for a server render', async () => {
+		const build = runtime.createManifestScriptFactory(
+			() => ({ code: '/* start */' }) as never
+		);
+		const script = vi.fn(sentry.sentryAdapter.script);
+		const adapted = runtime.withAdapters(
+			{ ...base(), resolvedManifestToScript: build },
+			() => Promise.resolve({ ...sentry.sentryAdapter, script })
+		);
+		await adapted.prepare?.([sentryManifest()]);
 		const { adapter: _adapter, ...plain } = sentryManifest();
 
-		expect(build(sentryManifest() as never).serverStart).toBeUndefined();
+		expect(
+			adapted.resolvedManifestToScript(sentryManifest() as never).serverStart
+		).toBeUndefined();
+		// The adapter never sees the server start of the script it is handed.
+		expect(script.mock.calls[0]?.[0]).not.toHaveProperty('serverStart');
 		expect(build(plain as never).serverStart).toBeTypeOf('function');
-	});
-
-	it('throws for an adapter that is not loaded', () => {
-		expect(() =>
-			runtime.resolvedManifestToScript(sentryManifest() as never)
-		).toThrow(
-			'Load the sentry adapter before building a manifest that names it.'
-		);
 	});
 });
 
 describe('withAdapters', () => {
-	const base = (): RemoteManifestRuntime => ({
-		installAdapter: runtime.installAdapter,
-		parseResolvedManifest: runtime.parseResolvedManifest,
-		resolvedManifestToScript: runtime.resolvedManifestToScript,
-	});
-
 	it('loads nothing for manifests that name no adapter, or one this SDK does not ship', () => {
 		const load = vi.fn();
 		const adapted = runtime.withAdapters(base(), load);
@@ -240,8 +260,8 @@ describe('withAdapters', () => {
 		expect(load).not.toHaveBeenCalled();
 	});
 
-	it('loads each named adapter once and installs it', async () => {
-		const load = vi.fn(() => Promise.resolve(sentry.sentryAdapter));
+	it('loads each named adapter once', async () => {
+		const load = vi.fn(loadSentry);
 		const adapted = runtime.withAdapters(base(), load);
 
 		await adapted.prepare?.([sentryManifest(), sentryManifest()]);
@@ -251,7 +271,7 @@ describe('withAdapters', () => {
 		expect(adapted.prepare?.([sentryManifest()])).toBeUndefined();
 	});
 
-	it('installs a failed load as a failure, and tries again for a later list', async () => {
+	it('tries a failed load again for a later list', async () => {
 		const load = vi
 			.fn<(id: string) => Promise<typeof sentry.sentryAdapter>>()
 			.mockRejectedValueOnce(new Error('offline'))
@@ -259,34 +279,33 @@ describe('withAdapters', () => {
 		const adapted = runtime.withAdapters(base(), load);
 
 		await adapted.prepare?.([sentryManifest()]);
-		expect(adapted.parseResolvedManifest(sentryManifest())).toEqual({
-			ok: false,
-			reason: 'its sentry adapter did not load: offline',
-		});
+		expect(adapted.parseResolvedManifest(sentryManifest()).ok).toBe(false);
 
 		await adapted.prepare?.([sentryManifest()]);
 		expect(adapted.parseResolvedManifest(sentryManifest()).ok).toBe(true);
 		expect(load).toHaveBeenCalledTimes(2);
 	});
 
-	it('installs the adapters into the runtime the earlier prepare moves to', async () => {
-		const next = { ...base(), installAdapter: vi.fn() };
+	it('runs the same adapters in the runtime the earlier prepare moves to', async () => {
+		const moved = vi.fn(runtime.resolvedManifestToScript);
+		const load = vi.fn(loadSentry);
 		const adapted = runtime.withAdapters(
 			{
 				...base(),
-				installAdapter: vi.fn(),
-				prepare: () => Promise.resolve(next),
+				prepare: () =>
+					Promise.resolve({ ...base(), resolvedManifestToScript: moved }),
 			},
-			() => Promise.resolve(sentry.sentryAdapter)
+			load
 		);
 
-		const moved = await adapted.prepare?.([sentryManifest()]);
+		const next = await adapted.prepare?.([sentryManifest()]);
+		next?.resolvedManifestToScript(sentryManifest() as never);
 
-		expect(next.installAdapter).toHaveBeenCalledExactlyOnceWith(
-			sentry.sentryAdapter
-		);
-		// Later lists keep loading adapters, into the runtime it moved to.
-		expect(moved?.prepare).toBeTypeOf('function');
+		expect(next?.parseResolvedManifest(sentryManifest()).ok).toBe(true);
+		expect(moved).toHaveBeenCalledOnce();
+		expect(load).toHaveBeenCalledOnce();
+		// Later lists load adapters into it too.
+		expect(next?.prepare).toBeTypeOf('function');
 	});
 });
 

@@ -5,9 +5,10 @@ import type {
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
 import {
-	installAdapter,
 	installLevelThree,
 	manifestRoots,
+	parseResolvedManifest,
+	withAdapters,
 } from '@inth/sdk/manifest-runtime';
 import { sentryAdapter } from '@inth/sdk/manifest-runtime/adapters/sentry';
 import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
@@ -1350,8 +1351,14 @@ describe('inlineStepsStart', () => {
 		});
 	});
 	describe('manifests that name an adapter', () => {
-		beforeAll(() => {
-			installAdapter(sentryAdapter);
+		// The manifest runtime as the SDK runs it, with the Sentry adapter.
+		const sdk = withAdapters(
+			{ parseResolvedManifest, resolvedManifestToScript },
+			() => Promise.resolve(sentryAdapter)
+		);
+
+		beforeAll(async () => {
+			await sdk.prepare?.([{ adapter: { id: 'sentry' } }]);
 		});
 
 		it('leaves the script to the browser, even with steps the HTML could run', () => {
@@ -1388,7 +1395,7 @@ describe('inlineStepsStart', () => {
 				id: 'sentry',
 				vendor: { granted: true, id: 'sentry' },
 			};
-			const adapted = resolvedManifestToScript({
+			const adapted = sdk.resolvedManifestToScript({
 				...manifest,
 				adapter: {
 					id: 'sentry',
