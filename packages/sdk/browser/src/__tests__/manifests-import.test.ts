@@ -315,5 +315,56 @@ describe('loadManifestsFile', () => {
 					'its sentry adapter did not load: inth.adapter-sentry.js did not load from /files/sentry.js, or is from another release',
 			});
 		});
+
+		test.each([
+			['gainsight-px', '__inthAdapterGainsightPx'],
+			['lucky-orange', '__inthAdapterLuckyOrange'],
+			['oracle-eloqua', '__inthAdapterOracleEloqua'],
+			['salesforce-pardot', '__inthAdapterSalesforcePardot'],
+		])(
+			'loads the %s adapter from its own file, attribute and backend global',
+			async (id, key) => {
+				const named = { ...manifest, adapter: { id, options: {} } };
+				const adapter = { ...sentryAdapter, id };
+				initTag();
+				loadPartFile.mockImplementation(
+					(fileKey: string) =>
+						Promise.resolve(
+							fileKey === key ? { adapter, key: fileKey } : runtimeFile(fileKey)
+						) as never
+				);
+
+				await (await loadManifestsFile([named])).prepare?.([named]);
+				expect(loadPartFile).toHaveBeenLastCalledWith(
+					key,
+					expect.stringMatching(
+						new RegExp(String.raw`/sdk/inth\.adapter-${id}\.js\?v=`, 'u')
+					),
+					undefined
+				);
+
+				initTag({ [`data-adapter-${id}-src`]: `/files/${id}.js` });
+				await (await loadManifestsFile([named])).prepare?.([named]);
+				expect(loadPartFile).toHaveBeenLastCalledWith(
+					key,
+					`/files/${id}.js`,
+					undefined
+				);
+
+				const global = `${key}Src`;
+				(window as unknown as Record<string, string>)[global] =
+					`https://backend.example/${id}.js`;
+				try {
+					await (await loadManifestsFile([named])).prepare?.([named]);
+					expect(loadPartFile).toHaveBeenLastCalledWith(
+						key,
+						`https://backend.example/${id}.js`,
+						undefined
+					);
+				} finally {
+					Reflect.deleteProperty(window, global);
+				}
+			}
+		);
 	});
 });
