@@ -100,7 +100,11 @@ export const dynamicYieldScript = function dynamicYieldScript(
 		return removed;
 	};
 	const grantedRegistration = (info: ScriptCallbackInfo) =>
-		(extras.registrations?.(info) ?? [info]).find((state) => state.hasConsent);
+		(
+			extras.registrations?.(info) ??
+			// The registrations a shared remote script's info carries.
+			info.registrations ?? [info]
+		).find((state) => state.hasConsent);
 	const updateConsent = (info: ScriptCallbackInfo) => {
 		const granted = grantedRegistration(info);
 		if (granted) {
