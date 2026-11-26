@@ -1,12 +1,18 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { SetGlobalPathStep, VendorManifest } from '../../types';
+import type {
+	ResolvedManifest,
+	SetGlobalPathStep,
+	VendorManifest,
+} from '../../types';
 import { booleanDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -61,10 +67,28 @@ const releaseIntegrity: Readonly<
 };
 
 /**
- * The URL and integrity of a Databuddy CDN file. Without `version` it is
- * Databuddy's unversioned file, which changes with each release, so it
- * loads without integrity. An `override` URL wins and loads without
- * integrity too, since Inth cannot know its bytes.
+ * The file name and integrity of a Databuddy CDN file. Without `version` it
+ * is Databuddy's unversioned file, which changes with each release, so it
+ * loads without integrity.
+ */
+const cdnFile = function cdnFile(
+	file: DatabuddyFile,
+	version: string | undefined
+): { integrity: string | undefined; name: string } {
+	if (version === undefined) {
+		return { integrity: undefined, name: `${file}.js` };
+	}
+	return {
+		integrity: Object.hasOwn(releaseIntegrity, version)
+			? releaseIntegrity[version]?.[file]
+			: undefined,
+		name: `${file}.${version}.js`,
+	};
+};
+
+/**
+ * The URL and integrity of a Databuddy CDN file. An `override` URL wins and
+ * loads without integrity, since Inth cannot know its bytes.
  */
 const resolveCdnScript = function resolveCdnScript(
 	file: DatabuddyFile,
@@ -75,15 +99,8 @@ const resolveCdnScript = function resolveCdnScript(
 	if (src !== undefined) {
 		return { integrity: undefined, src };
 	}
-	if (version === undefined) {
-		return { integrity: undefined, src: `${cdnBaseUrl}/${file}.js` };
-	}
-	return {
-		integrity: Object.hasOwn(releaseIntegrity, version)
-			? releaseIntegrity[version]?.[file]
-			: undefined,
-		src: `${cdnBaseUrl}/${file}.${version}.js`,
-	};
+	const { integrity, name } = cdnFile(file, version);
+	return { integrity, src: `${cdnBaseUrl}/${name}` };
 };
 
 const disableTracker = {
@@ -139,10 +156,10 @@ export const databuddyManifest = {
 				'data-track-interactions': '{{trackInteractions}}',
 				'data-track-outgoing-links': '{{trackOutgoingLinks}}',
 				'data-track-web-vitals': '{{trackWebVitals}}',
+				integrity: '{{integrity}}',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.databuddy.cc/{{scriptFile}}',
 			type: 'loadScript',
 		},
 	],
@@ -430,46 +447,128 @@ const createReplayLoader = function createReplayLoader(
 	};
 };
 
+/**
+ * Builds the serializable manifest behind {@link databuddy} without
+ * `replay`. `clientId` must already be trimmed and non-empty.
+ */
+export const resolveDatabuddyManifest = function resolveDatabuddyManifest(
+	options: Omit<DatabuddyConsentOptions, 'scriptUrl' | 'replay'>
+): ResolvedManifest {
+	const { clientId } = options;
+	const apiUrl = options.apiUrl ?? 'https://basket.databuddy.cc';
+	const features = options.features ?? {};
+	const loader = cdnFile('databuddy', trimToUndefined(options.version));
+
+	return getCompiledManifest(
+		options.loadMode === 'always'
+			? databuddyAlwaysLoadManifest
+			: databuddyManifest,
+		{
+			apiUrl,
+			clientId,
+			configWhenDenied: options.configWhenDenied ?? {
+				apiUrl,
+				clientId,
+				disabled: true,
+			},
+			configWhenGranted: options.configWhenGranted ?? {
+				apiUrl,
+				clientId,
+				disabled: false,
+			},
+			integrity: loader.integrity,
+			scriptFile: loader.name,
+			trackErrors: booleanDataAttribute(features.errors),
+			trackInteractions: booleanDataAttribute(features.interactions),
+			trackOutgoingLinks: booleanDataAttribute(features.outgoingLinks),
+			trackWebVitals: booleanDataAttribute(features.webVitals),
+		}
+	);
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver. `replay` stays npm-only for now: a fresh registration would stop
+ * the recorder for good where the helper shares one script, so it waits for
+ * an adapter. `apiUrl`, the config objects and `scriptUrl` stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'databuddy',
+		{
+			clientId: {
+				example: 'db_1234567890abcdef',
+				kind: 'id',
+				label: 'Client ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+			features: {
+				fields: {
+					errors: {
+						default: false,
+						kind: 'boolean',
+						label: 'Track JavaScript errors',
+					},
+					interactions: {
+						default: true,
+						kind: 'boolean',
+						label: 'Track rage clicks, dead clicks and abandoned forms',
+					},
+					outgoingLinks: {
+						default: false,
+						kind: 'boolean',
+						label: 'Track clicks on links to other sites',
+					},
+					webVitals: {
+						default: false,
+						kind: 'boolean',
+						label: 'Track web vitals',
+					},
+				},
+				kind: 'object',
+				label: 'Tracking features',
+				required: false,
+			},
+			loadMode: {
+				default: 'after-consent',
+				kind: 'enum',
+				label: 'When to load',
+				values: ['after-consent', 'always'],
+			},
+			version: {
+				example: '2026-10-30.1',
+				kind: 'id',
+				label: 'Pinned release',
+				pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[.][0-9]+$',
+				required: false,
+			},
+		},
+		resolveDatabuddyManifest
+	);
+
 const createDatabuddyScript = function createDatabuddyScript(
 	options: DatabuddyConsentOptions
 ): Script {
 	const { clientId } = options;
 	const apiUrl = options.apiUrl ?? 'https://basket.databuddy.cc';
-	const features = options.features ?? {};
-	const manifest =
-		options.loadMode === 'always'
-			? databuddyAlwaysLoadManifest
-			: databuddyManifest;
 	const version = trimToUndefined(options.version);
-	const loader = resolveCdnScript('databuddy', version, options.scriptUrl);
-
-	const resolved = resolveManifest(manifest, {
-		apiUrl,
-		clientId,
-		configWhenDenied: options.configWhenDenied ?? {
-			apiUrl,
-			clientId,
-			disabled: true,
-		},
-		configWhenGranted: options.configWhenGranted ?? {
-			apiUrl,
-			clientId,
-			disabled: false,
-		},
-		scriptUrl: loader.src,
-		trackErrors: booleanDataAttribute(features.errors),
-		trackInteractions: booleanDataAttribute(features.interactions),
-		trackOutgoingLinks: booleanDataAttribute(features.outgoingLinks),
-		trackWebVitals: booleanDataAttribute(features.webVitals),
-	});
-	// The hash goes on here, not through the manifest, so the exported
-	// manifest resolves with the same config as before `version` existed.
-	const script: Script = loader.integrity
-		? {
-				...resolved,
-				attributes: { ...resolved.attributes, integrity: loader.integrity },
-			}
-		: resolved;
+	const resolved = resolvedManifestToScript(resolveDatabuddyManifest(options));
+	// A site's own URL loads without integrity, since Inth cannot know its
+	// bytes.
+	const script: Script =
+		trimToUndefined(options.scriptUrl) === undefined
+			? resolved
+			: {
+					...withScriptUrl(resolved, options.scriptUrl),
+					attributes: Object.fromEntries(
+						Object.entries(resolved.attributes ?? {}).filter(
+							([name]) => name !== 'integrity'
+						)
+					),
+				};
 	if (!options.replay) {
 		return script;
 	}
@@ -491,7 +590,7 @@ const createDatabuddyScript = function createDatabuddyScript(
 
 	return {
 		...script,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion: replay needs an adapter
 		onConsentChange(info) {
 			script.onConsentChange?.(info);
 			if (info.hasConsent) {

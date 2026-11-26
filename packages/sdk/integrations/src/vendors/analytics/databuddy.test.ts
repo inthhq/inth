@@ -17,20 +17,26 @@ const PINNED_INTEGRITY =
 describe('databuddy', () => {
 	setupScriptHelperTest();
 
-	it('resolves the exported manifest from the same config as before version', () => {
-		const script = resolveManifest(databuddyManifest, {
+	it('resolves the exported manifest from a CDN file name, with integrity only when given', () => {
+		const config = {
 			apiUrl: 'https://basket.databuddy.cc',
 			clientId: 'db_123',
 			configWhenGranted: { clientId: 'db_123', disabled: false },
-			scriptUrl: 'https://cdn.databuddy.cc/databuddy.js',
+			integrity: undefined,
+			scriptFile: 'databuddy.js',
 			trackErrors: undefined,
 			trackInteractions: undefined,
 			trackOutgoingLinks: undefined,
 			trackWebVitals: undefined,
-		});
+		};
+		const script = resolveManifest(databuddyManifest, config);
 
 		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
 		expect(script.attributes).not.toHaveProperty('integrity');
+		expect(
+			resolveManifest(databuddyManifest, { ...config, integrity: 'sha384-x' })
+				.attributes
+		).toHaveProperty('integrity', 'sha384-x');
 	});
 
 	it('waits for measurement consent by default', () => {

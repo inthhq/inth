@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vite-plus/test';
 
-import { remoteModeStatus, remoteStatus } from './__tests__/remote-status';
+import {
+	remoteModeStatus,
+	remoteOptionStatus,
+	remoteStatus,
+} from './__tests__/remote-status';
 import type { RemoteStatus } from './__tests__/remote-status';
 import { builtInScriptIntegrations } from './registry';
 import type { BuiltInScriptIntegrationKey } from './registry';
@@ -134,6 +138,20 @@ describe('remote catalogue', () => {
 			expect(mode?.kind, `${key} has no remote mode option`).toBe('enum');
 			const values = mode?.kind === 'enum' ? mode.values : [];
 			expect(values.filter((value) => Object.hasOwn(modes, value))).toEqual([]);
+		}
+	);
+
+	it.each(Object.entries(remoteOptionStatus))(
+		'%s declares no option a later pull request adds',
+		(key, options) => {
+			const definition = remoteOf(key as BuiltInScriptIntegrationKey);
+
+			expect(definition, `${key} has no remote definition`).toBeDefined();
+			expect(
+				Object.keys(definition?.options ?? {}).filter((name) =>
+					Object.hasOwn(options, name)
+				)
+			).toEqual([]);
 		}
 	);
 

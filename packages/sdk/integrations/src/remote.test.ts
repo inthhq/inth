@@ -98,6 +98,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],
+	databuddy: ['cdn.databuddy.cc'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
 	googleTagManager: ['www.googletagmanager.com'],

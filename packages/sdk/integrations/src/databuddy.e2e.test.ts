@@ -4,6 +4,7 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -11,6 +12,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
@@ -418,3 +420,49 @@ describe('databuddy contract', () => {
 		expect(stop).not.toHaveBeenCalled();
 	});
 });
+
+describe.each(npmAndRemote('databuddy', databuddy))(
+	'databuddy dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('loads the pinned release before consent with its feature switches, disabled until measurement is granted', async () => {
+			const { loaderScripts } = probeDatabuddyScripts();
+			const scripts = [
+				build({
+					clientId: 'db_contract',
+					features: {
+						errors: true,
+						interactions: false,
+						outgoingLinks: false,
+						webVitals: true,
+					},
+					loadMode: 'always',
+					version: '2026-10-30.1',
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+
+			const [loader] = loaderScripts;
+			expect(loader?.src).toBe(
+				'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
+			);
+			expect(loader?.getAttribute('integrity')).toMatch(/^sha384-/u);
+			expect(loader?.dataset).toMatchObject({
+				clientId: 'db_contract',
+				trackErrors: 'true',
+				trackInteractions: 'false',
+				trackOutgoingLinks: 'false',
+				trackWebVitals: 'true',
+			});
+			const win = window as TestWindow;
+			expect(win.databuddyConfig).toMatchObject({ disabled: true });
+			expect(win.databuddy?.options.disabled).toBe(true);
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(win.databuddyConfig).toMatchObject({ disabled: false });
+			expect(win.databuddy?.options.disabled).toBe(false);
+		});
+	}
+);
