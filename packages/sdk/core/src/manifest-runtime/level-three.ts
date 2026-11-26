@@ -41,6 +41,14 @@ interface Load {
 	element?: HTMLScriptElement;
 	/** `onLoad` ran for this load, and its element has not failed since. */
 	loaded: boolean;
+	/**
+	 * What `lost` compares with outside a callback: the consent a `listen`
+	 * or `then` run that tested `lost` saw, or, when none has since the
+	 * load's last callback, that callback's.
+	 */
+	seen?: ConsentState;
+	/** A `lost` condition ran outside a callback, in the run going now. */
+	tested?: boolean;
 }
 
 /** What level 3 keeps for one script. */
@@ -107,10 +115,17 @@ const holds = (condition: ManifestCondition, values: StepValues): boolean => {
 	}
 	if ('lost' in condition) {
 		const now = consentsOf(values.info);
-		// Between callbacks, the last callback is the previous run.
-		const before = own?.running
-			? own.previous
-			: values.state?.latest && consentsOf(values.state.latest);
+		let before = own?.previous;
+		// Between callbacks, the consent the last run saw, so a listener
+		// reports a loss once, not on every event.
+		if (!own?.running) {
+			const load = own?.load;
+			before =
+				load?.seen ?? (values.state?.latest && consentsOf(values.state.latest));
+			if (load) {
+				load.tested = true;
+			}
+		}
 		return condition.lost.some(
 			(category) => before?.[category] === true && now[category] !== true
 		);
@@ -156,6 +171,7 @@ const runLater = (
 	if (!info) {
 		return;
 	}
+	load.tested = false;
 	try {
 		runtime.phase(steps, {
 			callback,
@@ -167,6 +183,11 @@ const runLater = (
 		});
 	} catch {
 		// `phase` reported the failed step; nothing called this to tell.
+	}
+	// Every `lost` in this run compared with the same consent; the next
+	// run compares with what this one saw.
+	if (load.tested) {
+		load.seen = consentsOf(info);
 	}
 };
 
@@ -293,6 +314,10 @@ const script: LevelThreePart['script'] = (built, liveState, manifest) => {
 				endLoad(own.load);
 			} else if (name === 'onDispose') {
 				endLoad(own.load);
+			}
+			if (own.load) {
+				// From here on, `lost` outside a callback compares with this one.
+				own.load.seen = undefined;
 			}
 			const outer = { previous: own.previous, running: own.running };
 			own.callback = name;

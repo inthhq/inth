@@ -398,7 +398,9 @@ export interface ConstructGlobalStep {
  * - `consent`: the condition holds for the vendor's consent now. Every
  *   optional category reads denied while the visitor has the vendor off.
  * - `lost`: one of the categories was granted when this script's previous
- *   callback ran, and is not now.
+ *   callback ran, and is not now. In a `listen` or `then` step, the
+ *   comparison is with the last such step that tested `lost` since that
+ *   callback, so a listener reports one loss once.
  * - `flag`: a `setFlag` step of this script last set the flag to `true`.
  * - `loaded`: the script's file loaded for its current element, and that
  *   element is still in the document.

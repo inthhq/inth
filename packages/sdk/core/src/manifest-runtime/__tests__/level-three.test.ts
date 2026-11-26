@@ -380,6 +380,47 @@ describe('lost', () => {
 	});
 });
 
+describe('lost, in a listener', () => {
+	test('reports a loss once, then compares with the consent it last saw', () => {
+		const { kernel } = mount([
+			build({
+				alwaysLoad: true,
+				setupSteps: [
+					{
+						event: 'vendor:ping',
+						steps: [
+							ifStep(
+								{ lost: ['marketing'] },
+								[recordStep('lost')],
+								[recordStep('kept')]
+							),
+						],
+						target: 'window',
+						type: 'listen',
+					},
+				],
+			}),
+		]);
+
+		window.dispatchEvent(new Event('vendor:ping'));
+		void kernel.commands.save({ marketing: false, measurement: true });
+		window.dispatchEvent(new Event('vendor:ping'));
+		window.dispatchEvent(new Event('vendor:ping'));
+		void kernel.commands.save(granted);
+		window.dispatchEvent(new Event('vendor:ping'));
+		void kernel.commands.save({ marketing: false, measurement: true });
+		window.dispatchEvent(new Event('vendor:ping'));
+
+		expect(record.mock.calls).toEqual([
+			['kept'],
+			['lost'],
+			['kept'],
+			['kept'],
+			['lost'],
+		]);
+	});
+});
+
 describe('setFlag', () => {
 	test('keeps a flag for the script, and clears it on dispose', () => {
 		const script = build({
