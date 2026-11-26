@@ -436,7 +436,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 		});
 
 		expect(fetchSpy).toHaveBeenCalledWith(
-			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=2&language=de',
+			'https://consent.example.com/api/inth/v1/consent/manifest?manifestLevel=1&language=de',
 			expect.anything()
 		);
 		expect(sink.ended()).toBe(true);
@@ -495,9 +495,11 @@ describe('@inth/nextjs/pages: API bridge', () => {
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 		});
 
+		// A current browser sends its level, which is the level the render
+		// reads at.
 		const sink = await callRoute(route, {
 			headers: { host: 'app.example.com' },
-			url: '/api/consent/v1/consent/manifest',
+			url: '/api/consent/v1/consent/manifest?manifestLevel=2',
 		});
 		const config = await resolveConsent({
 			config: consentConfig,
