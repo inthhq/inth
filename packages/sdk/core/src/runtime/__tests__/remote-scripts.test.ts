@@ -154,6 +154,58 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('skips an entry a script in code already loads when its built script has another ID', async () => {
+		vi.resetModules();
+		const base = await import('../../manifest-runtime/index');
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const code: Script = {
+			category: 'marketing',
+			id: 'acme-pixel',
+			src: 'https://cdn.acme.example/own-copy.js',
+		};
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: false as const,
+				mode: quietMode,
+				persistence: false,
+				prefetch: {
+					initialScriptRegistry: {
+						load: load(acmeManifest({ alwaysLoad: true })),
+					},
+				},
+				remoteScripts: true,
+				scriptLoader: { onDebug },
+				scripts: [code],
+			},
+			{
+				...defaultRuntimeModules,
+				// Registers under its own ID, as Default Forms' adapter does.
+				loadManifestRuntime: () =>
+					Promise.resolve({
+						...base,
+						resolvedManifestToScript: (manifest) => {
+							const script = base.resolvedManifestToScript(manifest);
+							return { ...script, id: `${script.id}-sdk` };
+						},
+					}),
+			}
+		);
+		runtime.start();
+
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'skipped',
+					message: expect.stringContaining('code wins'),
+					scriptId: 'acme-pixel',
+				})
+			)
+		);
+		expect(tags('https://cdn.acme.example/own-copy.js')).toHaveLength(1);
+		expect(tags()).toHaveLength(0);
+		runtime.dispose();
+	});
+
 	test.each([
 		[
 			'a step type the runtime does not know',

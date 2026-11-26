@@ -124,6 +124,12 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	 * What code scripts claim: each one's `integration ?? vendor ?? id`, and
 	 * its `id`, so the merged list never holds two scripts with one id.
 	 */
+	/**
+	 * The server entry ID each remote script was built for. An adapter can
+	 * register its script under another ID (Default Forms does), and code
+	 * claims the entry, not the built script.
+	 */
+	const remoteEntryIds = new WeakMap<Script, string>();
 	const claimedByCode = (): Set<string> =>
 		new Set(
 			codeScripts.flatMap((script) => [codeScriptKey(script), script.id])
@@ -923,6 +929,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const kept = { ...earlier, category: fresh.category };
 		remoteObjects.add(kept);
+		remoteEntryIds.set(kept, remoteEntryIds.get(earlier) ?? earlier.id);
 		return kept;
 	};
 	const buildRemote = (loaded: RemoteManifestRuntime): Script[] => {
@@ -939,6 +946,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				if (parsed.ok) {
 					const fresh = loaded.resolvedManifestToScript(parsed.manifest);
 					remoteObjects.add(fresh);
+					remoteEntryIds.set(fresh, entry.id);
 					script = keepStarted(cached?.script, fresh);
 				} else {
 					reportRemote(
@@ -961,11 +969,12 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		const claimed = claimedByCode();
 		const merged = [...codeScripts];
 		for (const script of remoteScripts) {
-			if (claimed.has(script.id)) {
+			const entryId = remoteEntryIds.get(script) ?? script.id;
+			if (claimed.has(entryId) || claimed.has(script.id)) {
 				reportRemote(
 					'skipped',
-					script.id,
-					`Remote script ${script.id} does not load: a script in code loads ${script.id}, and code wins.`
+					entryId,
+					`Remote script ${entryId} does not load: a script in code loads ${entryId}, and code wins.`
 				);
 				continue;
 			}
