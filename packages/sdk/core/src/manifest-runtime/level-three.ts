@@ -22,7 +22,7 @@ import {
 	isCategoryName,
 } from '../modules/script-loader/category-condition';
 import type { ConsentState } from '../types';
-import { manifestFeatureLevel, STEP_FIELD_LEVELS } from './features';
+import { manifestFeatureLevel, someStep, STEP_FIELD_LEVELS } from './features';
 import type {
 	LevelThreePart,
 	RuntimeAccess,
@@ -252,15 +252,12 @@ const LIFECYCLE: readonly ScriptLifecycleCallback[] = [
 
 /** Whether `steps`, or steps nested in them, keep anything disposal has to clear. */
 const keepsState = (steps: unknown): boolean =>
-	Array.isArray(steps) &&
-	steps.some(
-		(step: Record<string, unknown>) =>
+	someStep(
+		steps,
+		(step) =>
 			step.type === 'setFlag' ||
 			step.type === 'listen' ||
-			(step.type === 'callGlobal' && step.then !== undefined) ||
-			keepsState(step.then) ||
-			keepsState(step.else) ||
-			keepsState(step.steps)
+			(step.type === 'callGlobal' && step.then !== undefined)
 	);
 
 const script: LevelThreePart['script'] = (built, liveState, manifest) => {

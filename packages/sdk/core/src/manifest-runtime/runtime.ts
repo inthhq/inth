@@ -9,7 +9,7 @@ import type {
 import type { ConsentState } from '../types';
 import { stepReachesCode } from './call-path';
 import { mapConsentState } from './consent-mapping';
-import { levelOf, RUNTIME_VALUE_LEVELS } from './features';
+import { levelOf, RUNTIME_VALUE_LEVELS, someStep } from './features';
 import { isNativeFunction, undeclaredRoot } from './globals';
 import { levelThree } from './part';
 import type {
@@ -1085,7 +1085,9 @@ const STEP_LIST_NAMES = [
 const needsDispose = (resolvedManifest: ResolvedManifest): boolean =>
 	(resolvedManifest.onDisposeSteps?.length ?? 0) > 0 ||
 	STEP_LIST_NAMES.some((list) =>
-		resolvedManifest[list].some(
+		// A tag inserted inside an `if` is removed on dispose, too.
+		someStep(
+			resolvedManifest[list],
 			(step) =>
 				step.type === 'loadScriptStep' || usesRuntimeValue(step, 'consentGate')
 		)

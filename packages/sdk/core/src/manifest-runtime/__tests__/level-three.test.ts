@@ -315,6 +315,28 @@ test('skips a nested call or write the parser would refuse', async () => {
 	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then']]);
 });
 
+test('removes a tag a nested step inserted when the script is disposed', () => {
+	const { loader } = mount([
+		build({
+			alwaysLoad: true,
+			setupSteps: [
+				ifStep({ documentReady: true }, [
+					{
+						id: 'vendor-addon',
+						src: 'https://cdn.example/addon.js',
+						type: 'loadScriptStep',
+					},
+				]),
+			],
+		}),
+	]);
+	expect(document.getElementById('vendor-addon')).not.toBeNull();
+
+	loader.updateScripts([]);
+
+	expect(document.getElementById('vendor-addon')).toBeNull();
+});
+
 describe('lost', () => {
 	test("holds for a category the script's previous callback had and this one has not", () => {
 		const { kernel } = mount([
