@@ -87,6 +87,84 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
       errors: [notFixed],
       name: "no host",
     },
+    {
+      code: `
+        const source = { src: '{{scriptUrl}}' };
+        export const step = { type: 'loadScript' as const, ...source };
+      `,
+      errors: [{ column: 59, line: 3, messageId: "notFixed" }],
+      name: "a src hidden in a spread const",
+    },
+    {
+      code: `export const step = { type: 'loadScript', ...{ src: '{{scriptUrl}}' } };`,
+      errors: [notFixed],
+      name: "a src hidden in a spread literal",
+    },
+    {
+      code: `
+        const base = { type: 'loadScript' } as const;
+        export const step = { ...base, src: '{{scriptUrl}}' };
+      `,
+      errors: [notFixed],
+      name: "a step type from a spread",
+    },
+    {
+      code: `export const step = (extra: object) => ({ src: 'https://cdn.example.com/a.js', type: 'loadScript', ...extra });`,
+      errors: [{ messageId: "unresolved" }],
+      name: "a spread the rule cannot follow after src",
+    },
+    {
+      code: `
+        const key = 'src';
+        export const step = { type: 'loadScript', [key]: '{{scriptUrl}}' };
+      `,
+      errors: [{ messageId: "unresolved" }],
+      name: "a computed key",
+    },
+    {
+      code: `
+        const step = { src: '{{scriptUrl}}' };
+        export const m = { install: [step] };
+      `,
+      errors: [notFixed],
+      name: "an install entry from a const",
+    },
+    {
+      code: `
+        const unrelated = { trackerDomain: { kind: 'hostname' } };
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+      `,
+      errors: [{ messageId: "hostPlaceholder" }],
+      name: "a hostname declaration outside the remote options",
+    },
+    {
+      code: `
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+        export const remote = defineRemote('pardot', {
+          otherDomain: { kind: 'hostname', label: 'Other', required: true },
+        }, resolve);
+      `,
+      errors: [{ messageId: "hostPlaceholder" }],
+      name: "a hostname option with another name",
+    },
+    {
+      code: `
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+        export const remote = defineRemote('pardot', {
+          settings: { trackerDomain: { kind: 'hostname' } },
+        }, resolve);
+      `,
+      errors: [{ messageId: "hostPlaceholder" }],
+      name: "a hostname declaration nested inside an option",
+    },
+    {
+      code: `
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+        export const remote = defineRemote('pardot', {}, () => ({ trackerDomain: { kind: 'hostname' } }));
+      `,
+      errors: [{ messageId: "hostPlaceholder" }],
+      name: "a hostname declaration in the resolver",
+    },
   ],
   valid: [
     {
@@ -128,6 +206,35 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
     {
       code: `export const m = { install: [{ type: 'callGlobal', global: 'gtag' }] };`,
       name: "a step without src",
+    },
+    {
+      code: `
+        const source = { src: 'https://cdn.example.com/a.js' };
+        export const step = { type: 'loadScript', ...source };
+      `,
+      name: "a spread src with a literal host",
+    },
+    {
+      code: `export const step = (base: object) => ({ ...base, src: 'https://cdn.example.com/a.js', type: 'loadScript' });`,
+      name: "a literal src after a spread the rule cannot follow",
+    },
+    {
+      code: `
+        const options = {
+          trackerDomain: { kind: 'hostname', label: 'Tracker domain', required: true },
+        } as const;
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+        export const remote = defineRemoteIntegration('pardot', options, resolve);
+      `,
+      name: "a hostname option in a const options object",
+    },
+    {
+      code: `
+        const hostOptions = { trackerDomain: { kind: 'hostname', label: 'Tracker domain', required: true } };
+        export const m = { install: [{ src: 'https://{{trackerDomain}}/pd.js', type: 'loadScript' }] };
+        export const remote = defineRemote('pardot', { ...hostOptions }, resolve);
+      `,
+      name: "a hostname option spread into the options",
     },
   ],
 });

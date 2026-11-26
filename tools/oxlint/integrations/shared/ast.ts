@@ -87,25 +87,6 @@ export const resolveValue = (
   return resolveConstInit(sourceCode, value) ?? value;
 };
 
-/** A property of an object literal by static name. */
-export const findProperty = (
-  object: ESTree.ObjectExpression,
-  name: string
-): ESTree.ObjectProperty | undefined =>
-  object.properties.find(
-    (property): property is ESTree.ObjectProperty =>
-      property.type === "Property" && propertyKeyName(property) === name
-  );
-
-/** The string a property holds when it is a plain string literal. */
-export const stringPropertyValue = (
-  object: ESTree.ObjectExpression,
-  name: string
-): string | null => {
-  const property = findProperty(object, name);
-  return property ? stringLiteralValue(unwrapExpression(property.value)) : null;
-};
-
 /**
  * Where an object literal's effective value for a name comes from, with
  * spreads of local object literals followed. `via` is the property, or the
