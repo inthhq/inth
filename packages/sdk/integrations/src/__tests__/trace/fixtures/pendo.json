@@ -222,6 +222,45 @@
 			{
 				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
 			}
+		],
+		"consent withdrawn inside initialize on the first regrant": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "deny" },
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "arm a withdrawal inside initialize" },
+			{ "step": "grant" },
+			{
+				"call": "pendo.initialize",
+				"args": [
+					{ "account": { "id": "account-1" }, "visitor": { "id": "visitor-1" } }
+				]
+			},
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
 		]
 	}
 }
