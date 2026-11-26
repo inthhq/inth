@@ -20,18 +20,83 @@ const PROTOTYPE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 type JsonObject = Record<string, unknown>;
 
-const isRecord = function isRecord(value: unknown): value is JsonObject {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
-};
-
-const matches = function matches(pattern: string, value: string): boolean {
-	return new RegExp(pattern, 'u').test(value);
-};
-
 /** Records an issue; returns undefined so a reader can return the call. */
 const fail = function fail(issues: string[], message: string): undefined {
 	issues.push(message);
 	return undefined;
+};
+
+const isRecord = function isRecord(value: unknown): value is JsonObject {
+	return value !== null && typeof value === 'object' && !Array.isArray(value);
+};
+
+const NOT_PLAIN = Symbol('not plain data');
+
+/**
+ * Copies a plain object or array: prototype `Object.prototype` or `null`
+ * (`Array.prototype` for an array) and only own enumerable data properties.
+ * Values are read from their descriptors, so no getter or proxy trap runs
+ * after this; anything else, including a proxy whose traps throw, is
+ * `NOT_PLAIN`. A value that is not an object comes back as it is. Shallow:
+ * each nested value is checked when its own spec reads it.
+ */
+const toPlain = function toPlain(value: unknown): unknown {
+	if (value === null || typeof value !== 'object') {
+		return value;
+	}
+	try {
+		const prototype: unknown = Object.getPrototypeOf(value);
+		const list = prototype === Array.prototype && Array.isArray(value);
+		if (!list && prototype !== Object.prototype && prototype !== null) {
+			return NOT_PLAIN;
+		}
+		if (Object.getOwnPropertySymbols(value).length > 0) {
+			return NOT_PLAIN;
+		}
+		const entries: [string, unknown][] = [];
+		for (const [name, descriptor] of Object.entries(
+			Object.getOwnPropertyDescriptors(value)
+		)) {
+			if (list && name === 'length') {
+				continue;
+			}
+			if (!('value' in descriptor) || descriptor.enumerable !== true) {
+				return NOT_PLAIN;
+			}
+			entries.push([name, descriptor.value]);
+		}
+		if (!list) {
+			// fromEntries defines own properties, so no key reaches a prototype.
+			return Object.fromEntries(entries);
+		}
+		// Integer keys come first and in order: a hole or an extra key fails.
+		return entries.every(([name], index) => name === String(index)) &&
+			entries.length === (value as unknown[]).length
+			? entries.map(([, item]) => item)
+			: NOT_PLAIN;
+	} catch {
+		return NOT_PLAIN;
+	}
+};
+
+/** Reads a plain object, or adds an issue naming `subject`. */
+const readRecord = function readRecord(
+	issues: string[],
+	subject: string,
+	value: unknown
+): JsonObject | undefined {
+	const plain = toPlain(value);
+	if (isRecord(plain)) {
+		return plain;
+	}
+	return fail(
+		issues,
+		`${subject} must be ${plain === NOT_PLAIN ? 'plain data' : 'an object'}`
+	);
+};
+
+const matches = function matches(pattern: string, value: string): boolean {
+	return new RegExp(pattern, 'u').test(value);
 };
 
 /**
@@ -81,8 +146,12 @@ const readIdList = function readIdList(
 	issues: string[],
 	path: string,
 	spec: RemoteIdListOption,
-	value: unknown
+	input: unknown
 ): string[] | undefined {
+	const value = toPlain(input);
+	if (value === NOT_PLAIN) {
+		return fail(issues, `'${path}' must be plain data`);
+	}
 	if (!Array.isArray(value)) {
 		return fail(issues, `'${path}' must be a list of IDs`);
 	}
@@ -115,10 +184,11 @@ const readMap = function readMap(
 	issues: string[],
 	path: string,
 	spec: RemoteMapOption,
-	value: unknown
+	input: unknown
 ): Record<string, string> | undefined {
-	if (!isRecord(value)) {
-		return fail(issues, `'${path}' must be an object`);
+	const value = readRecord(issues, `'${path}'`, input);
+	if (value === undefined) {
+		return undefined;
 	}
 	const entries = Object.entries(value);
 	if (entries.length > spec.maxEntries) {
@@ -236,12 +306,11 @@ const readFields = function readFields(
 			continue;
 		}
 		let read: RemoteOptionValue | undefined;
-		if (spec.kind !== 'object') {
-			read = readValue(issues, path, spec, value);
-		} else if (isRecord(value)) {
-			read = readFields(issues, `${path}.`, spec.fields, value);
+		if (spec.kind === 'object') {
+			const fields = readRecord(issues, `'${path}'`, value);
+			read = fields && readFields(issues, `${path}.`, spec.fields, fields);
 		} else {
-			fail(issues, `'${path}' must be an object`);
+			read = readValue(issues, path, spec, value);
 		}
 		if (read !== undefined) {
 			result.push([name, read]);
@@ -262,9 +331,8 @@ export const validateOptionValues = function validateOptionValues(
 	input: unknown
 ): RemoteOptionsValidation {
 	const issues: string[] = [];
-	const options = isRecord(input)
-		? readFields(issues, '', specs, input)
-		: fail(issues, 'options must be an object');
+	const record = readRecord(issues, 'options', input);
+	const options = record && readFields(issues, '', specs, record);
 	return options === undefined
 		? { issues: issues.map((issue) => `${key}: ${issue}`), ok: false }
 		: { ok: true, options };

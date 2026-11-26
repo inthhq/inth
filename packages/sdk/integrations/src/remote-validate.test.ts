@@ -240,6 +240,121 @@ describe('validateOptionValues', () => {
 		);
 	});
 
+	describe('plain data', () => {
+		const getter = (value: unknown) =>
+			Object.defineProperty({}, 'trackPageView', {
+				enumerable: true,
+				get: () => value,
+			});
+		const throwing = () =>
+			Object.defineProperty({}, 'code', {
+				enumerable: true,
+				get: () => {
+					throw new Error('read');
+				},
+			});
+
+		it.each([
+			['a Date', Object.assign(new Date(0), { trackPageView: true }), ''],
+			['a class instance', new URLSearchParams(), ''],
+			['an object with a getter', getter(true), ''],
+			['an object with a symbol key', { [Symbol('x')]: 1 }, ''],
+			[
+				'an object with a hidden key',
+				Object.defineProperty({}, 'trackPageView', { value: true }),
+				'',
+			],
+			[
+				'a nested object with a getter',
+				{ consent: { region: throwing() } },
+				'consent.region',
+			],
+			[
+				'a nested class instance',
+				{ consent: Object.assign(new Date(0), { mode: 'opt-in' }) },
+				'consent',
+			],
+			[
+				'a map with a getter',
+				{
+					purposes: Object.defineProperty({}, 'ads', {
+						enumerable: true,
+						get: () => 'marketing',
+					}),
+				},
+				'purposes',
+			],
+			[
+				'a list with a getter',
+				{
+					ids: Object.defineProperty(['A1'], 0, {
+						get: () => 'A1',
+					}),
+				},
+				'ids',
+			],
+			[
+				'a list with another prototype',
+				{
+					ids: Object.setPrototypeOf(['A1'], Object.create(Array.prototype)),
+				},
+				'ids',
+			],
+		])('refuses %s without reading it', (_label, input, path) => {
+			const issues = issuesFor(input);
+
+			expect(issues).toEqual([
+				path === ''
+					? 'test: options must be plain data'
+					: `test: '${path}' must be plain data`,
+			]);
+		});
+
+		it('refuses an object with a throwing getter instead of throwing', () => {
+			expect(() => validate(throwing())).not.toThrow();
+			expect(validate({ consent: { region: throwing() } }).ok).toBe(false);
+		});
+
+		it('refuses a proxy that throws instead of throwing', () => {
+			const proxy = new Proxy(
+				{},
+				{
+					getPrototypeOf: () => {
+						throw new Error('trap');
+					},
+					ownKeys: () => {
+						throw new Error('trap');
+					},
+				}
+			);
+
+			expect(validate(proxy)).toEqual({
+				issues: ['test: options must be plain data'],
+				ok: false,
+			});
+		});
+
+		it('accepts objects with a null prototype', () => {
+			const input = Object.assign(Object.create(null) as object, {
+				consent: Object.assign(Object.create(null) as object, {
+					mode: 'opt-out',
+				}),
+				purposes: Object.assign(Object.create(null) as object, {
+					ads: 'marketing',
+				}),
+			});
+
+			expect(validate(input)).toEqual({
+				ok: true,
+				options: {
+					consent: { mode: 'opt-out' },
+					purposes: { ads: 'marketing' },
+					trackPageView: true,
+				},
+			});
+		});
+	});
+
 	describe('URL-shaped strings', () => {
 		const url = 'https://evil.example/x.js';
 
