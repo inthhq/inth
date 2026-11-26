@@ -20,4 +20,14 @@ export const dynamicYieldTrace: TraceSpec = {
 		}),
 };
 
-export const traces = [dynamicYieldTrace];
+/**
+ * With only options a dashboard can set: no page context, which is page
+ * data a site passes in code, and the EU data center.
+ */
+export const dynamicYieldDashboardTrace: TraceSpec = {
+	...dynamicYieldTrace,
+	name: 'dynamic-yield.dashboard',
+	script: () => dynamicYield({ region: 'eu', sectionId: '8765432' }),
+};
+
+export const traces = [dynamicYieldTrace, dynamicYieldDashboardTrace];

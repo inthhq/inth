@@ -1,0 +1,398 @@
+{
+	"name": "dynamic-yield.dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{ "step": "dispose" },
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		],
+		"revoke before api_dynamic.js loads": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js"
+				},
+				"async": false
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": true } }
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"nonce": "trace-nonce",
+					"src": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js"
+				},
+				"async": false
+			},
+			{ "load": "https://cdn-eu.dynamicyield.com/api/8765432/api_static.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn-eu.dynamicyield.com/api/8765432/api_static.js]"
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn-eu.dynamicyield.com/api/8765432/api_dynamic.js]"
+			},
+			{
+				"global": "DY",
+				"value": { "userActiveConsent": { "accepted": false } }
+			}
+		]
+	}
+}
