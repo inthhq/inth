@@ -16,12 +16,16 @@ import { expect, it } from 'vite-plus/test';
 /**
  * Gzipped bytes. `inth.manifests.js`: level 1 was 4,690, level 2 brought it
  * to 6,264, the checks on what a step calls and writes to 6,594, and level 3
- * to 6,665, since its steps build into `inth.manifests3.js` only.
- * `inth.manifests3.js`, the same runtime with level 3: 8,986.
+ * to 6,665, since its steps build into `inth.manifests3.js` only. Refusing
+ * prototype names in every name, removing tags nested steps insert on
+ * dispose, and tying a promise to its load brought it to 6,793.
+ * `inth.manifests3.js`, the same runtime with level 3: 8,986, then 9,126
+ * with those and level 3's `requires` check, flag names and `lost` outside
+ * a callback.
  */
 const BUDGETS = {
-	'inth.manifests.js': 6700,
-	'inth.manifests3.js': 9050,
+	'inth.manifests.js': 6830,
+	'inth.manifests3.js': 9160,
 };
 
 it.each(Object.entries(BUDGETS))(
