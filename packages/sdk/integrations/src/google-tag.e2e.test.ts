@@ -255,6 +255,24 @@ describe.each(npmAndRemote('gtag', gtag))(
 			expect(requests[0]?.queue[2]).toEqual(['config', 'G-DASH1']);
 		});
 
+		it('keeps the ad types the visitor allowed when its own category is denied', async () => {
+			const win = window as TestWindow;
+			const scripts = [build({ category: 'measurement', id: 'G-DASH1' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, grantedMarketingConsents);
+
+			expect(toArgs(win.dataLayer?.at(-1))).toEqual([
+				'consent',
+				'update',
+				expect.objectContaining({
+					ad_storage: 'granted',
+					analytics_storage: 'denied',
+				}),
+			]);
+		});
+
 		it('with after-consent, waits for its category, loads once, then denies on withdrawal', async () => {
 			const requests = recordGoogleRequests();
 			const win = window as TestWindow;

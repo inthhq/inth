@@ -101,5 +101,22 @@ describe.each(npmAndRemote('microsoft-clarity', clarity))(
 				{ ad_Storage: 'denied', analytics_Storage: 'denied' },
 			]);
 		});
+
+		it('keeps ad storage allowed when only measurement is withdrawn', async () => {
+			const win = window as unknown as { clarity?: ClarityStub };
+			const scripts = [build({ id: 'abcdef1234' })];
+			const both = { ...grantedMeasurementConsents, marketing: true };
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, both);
+			await settleScripts();
+			updateScripts(scripts, { ...both, measurement: false });
+
+			expect(win.clarity?.q?.at(-1)).toEqual([
+				'consentv2',
+				{ ad_Storage: 'granted', analytics_Storage: 'denied' },
+			]);
+		});
 	}
 );
