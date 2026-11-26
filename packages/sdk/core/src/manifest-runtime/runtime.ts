@@ -505,10 +505,10 @@ const executeStep = function executeStep(
 			) {
 				break;
 			}
+			// Before the call, which can end this load and start another.
+			const then = step.then && levelThree()?.settle(step.then, values, access);
 			const result: unknown = call.apply(holder, args);
-			if (step.then) {
-				levelThree()?.settle(result, step.then, values, access);
-			}
+			then?.(result);
 			break;
 		}
 

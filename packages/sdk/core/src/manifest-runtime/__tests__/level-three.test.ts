@@ -739,6 +739,50 @@ describe('callGlobal.then', () => {
 		expect(record).not.toHaveBeenCalled();
 	});
 
+	test('a promise belongs to the load its call started in, when the call starts another', async () => {
+		const init = deferred();
+		let save = (_consents: Record<string, boolean>) => {};
+		// The vendor's method revokes and grants again before it returns.
+		win.__api = {
+			init: () => {
+				save({ ...granted, measurement: false });
+				save(granted);
+				return init.promise;
+			},
+		};
+		const { kernel } = mount([
+			build({
+				loadScript,
+				setupSteps: [
+					{
+						event: 'vendor:ready',
+						steps: [
+							{
+								global: '__api',
+								method: 'init',
+								then: [recordStep('initialized')],
+								type: 'callGlobal',
+							},
+						],
+						target: 'window',
+						type: 'listen',
+					},
+				],
+			}),
+		]);
+		save = (consents) => {
+			void kernel.commands.save(consents);
+		};
+		const first = element();
+
+		window.dispatchEvent(new Event('vendor:ready'));
+		init.resolve(undefined);
+		await settle();
+
+		expect(element()).not.toBe(first);
+		expect(record).not.toHaveBeenCalled();
+	});
+
 	test("an old load's promise does not act on the load after a revoke and grant", async () => {
 		const calls = [deferred(), deferred()];
 		const pending = [...calls];

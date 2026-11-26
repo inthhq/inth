@@ -209,15 +209,15 @@ const run: LevelThreePart['run'] = (step, values, runtime) => {
 	}
 };
 
-const settle: LevelThreePart['settle'] = (result, steps, values, runtime) => {
+const settle: LevelThreePart['settle'] = (steps, values, runtime) => {
 	const { info, state } = values;
 	const own = state && stateOf(state);
 	const load = own?.load;
 	if (!(state && own && load?.live)) {
-		return;
+		return undefined;
 	}
 	const { callback } = own;
-	const wait = async () => {
+	const wait = async (result: unknown) => {
 		try {
 			await result;
 		} catch (error) {
@@ -239,7 +239,9 @@ const settle: LevelThreePart['settle'] = (result, steps, values, runtime) => {
 		}
 		runLater(state, load, steps, 'then', callback, runtime);
 	};
-	void wait();
+	return (result) => {
+		void wait(result);
+	};
 };
 
 const LIFECYCLE: readonly ScriptLifecycleCallback[] = [

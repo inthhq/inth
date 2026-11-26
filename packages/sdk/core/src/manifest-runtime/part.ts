@@ -86,13 +86,16 @@ export interface LevelThreePart {
 	) => string | undefined;
 	/** Runs an `if`, `setFlag` or `listen` step. */
 	run: (step: ManifestStep, values: StepValues, runtime: RuntimeAccess) => void;
-	/** Runs `steps` once `result` settles, if the load it ran in is current. */
+	/**
+	 * Called before a call runs: returns what takes the call's result and
+	 * runs `steps` once it settles, if the load the call ran in is still
+	 * current. The call itself can start another load.
+	 */
 	settle: (
-		result: unknown,
 		steps: ManifestStep[],
 		values: StepValues,
 		runtime: RuntimeAccess
-	) => void;
+	) => ((result: unknown) => void) | undefined;
 	/**
 	 * Adds the bookkeeping level 3 steps read to the script built from
 	 * `manifest`. `liveState` returns the state of the registration a
