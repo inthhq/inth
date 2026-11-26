@@ -38,7 +38,6 @@ export const remoteStatus = {
 	gorgiasChat: level3,
 	hubspot: adapter,
 	luckyOrange: adapter,
-	marketoMunchkin: level2,
 	// Classic mode converts with level 2; consent mode needs an adapter (13).
 	pardotTracking: level2,
 	pendo: level3,

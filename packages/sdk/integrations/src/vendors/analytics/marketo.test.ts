@@ -4,7 +4,7 @@ import {
 	expectScriptMatchesIntegration,
 	expectSkippedScript,
 } from '../../__tests__/helpers';
-import { marketoMunchkin } from './marketo';
+import { marketoMunchkin, resolveMarketoManifest } from './marketo';
 
 describe('marketoMunchkin', () => {
 	it('matches its public registry and export', () => {
@@ -38,5 +38,24 @@ describe('marketoMunchkin', () => {
 		expect(
 			marketoMunchkin({ munchkinId: 'AAA-BBB-CCC', scriptUrl: '   ' }).src
 		).toBe('https://munchkin.marketo.net/munchkin.js');
+	});
+	it("leaves out init options equal to Munchkin's own defaults", () => {
+		// A dashboard form fills every default; Munchkin must get the same
+		// options as a site that left them unset.
+		const manifest = resolveMarketoManifest({
+			initOptions: {
+				anonymizeIP: false,
+				asyncOnly: true,
+				cookieAnon: true,
+				wsInfo: 'abc',
+			},
+			munchkinId: 'AAA-BBB-CCC',
+		});
+
+		expect(manifest.onLoadGrantedSteps).toEqual([
+			expect.objectContaining({
+				args: ['AAA-BBB-CCC', { asyncOnly: true, wsInfo: 'abc' }],
+			}),
+		]);
 	});
 });

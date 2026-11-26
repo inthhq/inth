@@ -8,10 +8,12 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { marketoMunchkin } from './vendors/analytics/marketo';
@@ -113,3 +115,36 @@ describe('Marketo SDK initialization', () => {
 		});
 	});
 });
+
+describe.each(npmAndRemote('marketoMunchkin', marketoMunchkin))(
+	'Marketo dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.Munchkin;
+		});
+
+		it('initializes with the saved options once the loader runs with marketing consent', async () => {
+			const init = vi.fn();
+			const scripts = [
+				build({
+					initOptions: { anonymizeIP: true, cookieAnon: false },
+					munchkinId: 'AAA-BBB-CCC',
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, unrelated);
+			expect(document.querySelector('script[src]')).toBeNull();
+
+			updateScripts(scripts, granted);
+			window.Munchkin = { init };
+			expect(init).not.toHaveBeenCalled();
+			getLoader().dispatchEvent(new Event('load'));
+			expect(init).toHaveBeenCalledExactlyOnceWith('AAA-BBB-CCC', {
+				anonymizeIP: true,
+				cookieAnon: false,
+			});
+		});
+	}
+);

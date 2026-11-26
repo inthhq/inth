@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -20,12 +22,21 @@ declare global {
 	}
 }
 
-/** Marketo's loader, gated on marketing consent. */
+/**
+ * Marketo's loader, gated on consent, and Munchkin's initialisation once it
+ * loads with consent. The loader completes `onLoad` only for its current,
+ * connected element, so a loader removed before it ran never initialises.
+ */
 export const marketoManifest = {
 	...vendorManifestContract,
-	category: 'marketing',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	category: '{{category}}',
+	install: [
+		{
+			async: true,
+			src: 'https://munchkin.marketo.net/munchkin.js',
+			type: 'loadScript',
+		},
+	],
 	onLoadGranted: [
 		{
 			args: ['{{munchkinId}}', '{{initOptions}}'],
@@ -55,6 +66,90 @@ export interface MarketoMunchkinOptions {
 	scriptUrl?: string;
 }
 
+/** Munchkin's own defaults for the init options a dashboard may set. */
+const MUNCHKIN_DEFAULTS: Readonly<Record<string, unknown>> = {
+	anonymizeIP: false,
+	asyncOnly: false,
+	cookieAnon: true,
+};
+
+/**
+ * `initOptions` without the values Munchkin uses anyway, so a dashboard
+ * form, which fills every default, sends the same options as a site that
+ * left them unset.
+ */
+const withoutMunchkinDefaults = (
+	initOptions: Record<string, unknown> = {}
+): Record<string, unknown> =>
+	Object.fromEntries(
+		Object.entries(initOptions).filter(
+			([name, value]) =>
+				!(
+					Object.hasOwn(MUNCHKIN_DEFAULTS, name) &&
+					MUNCHKIN_DEFAULTS[name] === value
+				)
+		)
+	);
+
+/**
+ * Builds the serializable manifest behind {@link marketoMunchkin}.
+ * `munchkinId` must already be trimmed and non-empty.
+ */
+export const resolveMarketoManifest = function resolveMarketoManifest({
+	munchkinId,
+	initOptions,
+	category = 'marketing',
+}: Omit<MarketoMunchkinOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(marketoManifest, {
+		category,
+		initOptions: withoutMunchkinDefaults(initOptions),
+		munchkinId,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `category`, `scriptUrl` and other init options stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'marketoMunchkin',
+		{
+			initOptions: {
+				fields: {
+					anonymizeIP: {
+						default: false,
+						kind: 'boolean',
+						label: 'Anonymize IP addresses',
+					},
+					asyncOnly: {
+						default: false,
+						kind: 'boolean',
+						label: 'Send tracking requests asynchronously only',
+					},
+					cookieAnon: {
+						default: true,
+						kind: 'boolean',
+						label: 'Track new anonymous visitors',
+					},
+				},
+				kind: 'object',
+				label: 'Munchkin options',
+				required: false,
+			},
+			munchkinId: {
+				example: '123-ABC-456',
+				kind: 'id',
+				label: 'Munchkin account ID',
+				pattern: '^[0-9A-Za-z]{3}-[0-9A-Za-z]{3}-[0-9A-Za-z]{3}$',
+				required: true,
+			},
+		},
+		resolveMarketoManifest
+	);
+
 /**
  * Loads and initializes Munchkin after marketing consent.
  *
@@ -77,22 +172,14 @@ export const marketoMunchkin = function marketoMunchkin(
 			manifest: marketoManifest,
 		});
 	}
-	const script = resolveManifest(marketoManifest, {
-		initOptions: options.initOptions ?? {},
-		munchkinId,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://munchkin.marketo.net/munchkin.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveMarketoManifest({
+				category,
+				initOptions: options.initOptions,
+				munchkinId,
+			})
 		),
-	});
-	return {
-		...script,
-		category,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onLoad(info) {
-			if (info.hasConsent && info.element?.isConnected) {
-				script.onLoad?.(info);
-			}
-		},
-	};
+		options.scriptUrl
+	);
 };

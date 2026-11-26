@@ -108,6 +108,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	linkedinInsights: ['snap.licdn.com'],
 	liveIntentTag: ['b-code.liadm.com'],
 	logRocket: ['cdn.logrocket.io'],
+	marketoMunchkin: ['munchkin.marketo.net'],
 	matomoAnalytics: ['cdn.matomo.cloud'],
 	metaPixel: ['connect.facebook.net'],
 	'microsoft-clarity': ['www.clarity.ms'],
