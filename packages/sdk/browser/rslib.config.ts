@@ -37,6 +37,8 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   requires level 3. Both are served next to `dist/inth.hosted.js`.
  * - `dist/inth.adapter-activecampaign.js` — the ActiveCampaign adapter, the
  *   same way.
+ * - `dist/inth.adapter-oracle-eloqua.js` — the Oracle Eloqua adapter, the
+ *   same way.
  * - `dist/inth.adapter-sentry.js` — the Sentry adapter, which the engine
  *   loads beside the manifest runtime only when a manifest names it.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
@@ -86,6 +88,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.manifests',
 	'inth.manifests3',
 	'inth.adapter-activecampaign',
+	'inth.adapter-oracle-eloqua',
 	'inth.adapter-sentry',
 	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
@@ -265,6 +268,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-activecampaign',
 			'./src/entries/cdn-adapter-activecampaign.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-oracle-eloqua',
+			'./src/entries/cdn-adapter-oracle-eloqua.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(

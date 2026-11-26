@@ -242,6 +242,7 @@ export const ADAPTER_LEVELS = {
 	fullstory: 4,
 	'gainsight-px': 4,
 	'lucky-orange': 4,
+	'oracle-eloqua': 4,
 	sentry: 4,
 } as const satisfies Readonly<Record<string, Level>>;
 

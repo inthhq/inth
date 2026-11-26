@@ -45,6 +45,7 @@ import { expect, it } from 'vite-plus/test';
  * a failed load, and the option patterns the dashboard shares.
  * `inth.adapter-activecampaign.js`, the ActiveCampaign ownership checks
  * and tracking reconciler: 1,525.
+ * `inth.adapter-oracle-eloqua.js`, the Eloqua consent dispatcher: 2,074.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
@@ -52,6 +53,7 @@ const BUDGETS = {
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
+	'inth.adapter-oracle-eloqua.js': 2110,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
 	'inth.manifests3.js': 12040,

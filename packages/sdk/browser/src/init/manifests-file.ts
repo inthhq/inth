@@ -42,6 +42,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
 	'lucky-orange': '__inthAdapterLuckyOrange',
+	'oracle-eloqua': '__inthAdapterOracleEloqua',
 	sentry: '__inthAdapterSentry',
 };
 

@@ -10,12 +10,14 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { eloquaTracking as EloquaTrackingFactory } from './vendors/analytics/oracle-eloqua';
@@ -998,5 +1000,69 @@ describe('Eloqua dispatcher lifecycle', () => {
 		responses[0]?.dispatchEvent(new Event('load'));
 		expect(responses).toHaveLength(2);
 		responses[1]?.dispatchEvent(new Event('load'));
+	});
+});
+
+describe.each(
+	npmAndRemote(
+		'eloquaTracking',
+		(options: { siteId: string; firstPartyCookieDomain?: string }) =>
+			eloquaTracking(options)
+	)
+)('Oracle Eloqua dashboard settings through the %s', (_label, build) => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		clearAllScripts();
+		for (const response of document.querySelectorAll('script[src*="pps="]')) {
+			response.dispatchEvent(new Event('error'));
+			response.remove();
+		}
+		delete window._elqQ;
+	});
+
+	it('opts in once the SDK loads, and tracks the page only after the opt-in response loads', async () => {
+		const scripts = [
+			build({
+				firstPartyCookieDomain: 'track.example.com',
+				siteId: '1973398186',
+			}),
+		];
+		loadScripts(scripts, ALL_DENIED);
+		await settleScripts();
+		expect(document.querySelector('script[src]')).toBeNull();
+
+		updateScripts(scripts, granted);
+		await settleScripts();
+		const loader = getLoader();
+		expect(loader.src).toBe('https://img.en25.com/i/elqCfg.min.js');
+		expect(window._elqQ).toEqual([
+			['elqSetSiteId', '1973398186'],
+			['elqUseFirstPartyCookie', 'track.example.com'],
+		]);
+		const push = vi.fn((command: unknown[]) => {
+			if (command[0] === 'elqOptIn' || command[0] === 'elqOptOut') {
+				const response = document.createElement('script');
+				response.src = `https://s1973398186.t.eloqua.com/visitor/v200/svrGP?pps=${command[0] === 'elqOptIn' ? '41' : '42'}&siteid=1973398186`;
+				document.head.append(response);
+			}
+		});
+		window._elqQ = { push };
+		loader.dispatchEvent(new Event('load'));
+		expect(push.mock.calls).toEqual([
+			[['elqSetSiteId', '1973398186']],
+			[['elqUseFirstPartyCookie', 'track.example.com']],
+			[['elqOptIn']],
+		]);
+
+		document
+			.querySelector('script[src*="pps=41"]')
+			?.dispatchEvent(new Event('load'));
+		expect(push.mock.calls.at(-1)).toEqual([
+			['elqTrackPageView', window.location.href],
+		]);
+
+		updateScripts(scripts, ALL_DENIED);
+		expect(push.mock.calls.at(-1)).toEqual([['elqOptOut']]);
+		expect(getLoader()).toBe(loader);
 	});
 });

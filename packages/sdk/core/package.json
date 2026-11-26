@@ -165,6 +165,11 @@
 			"import": "./dist/manifest-runtime/adapters/activecampaign.js",
 			"default": "./dist/manifest-runtime/adapters/activecampaign.js"
 		},
+		"./manifest-runtime/adapters/oracle-eloqua": {
+			"types": "./dist-types/manifest-runtime/adapters/oracle-eloqua.d.ts",
+			"import": "./dist/manifest-runtime/adapters/oracle-eloqua.js",
+			"default": "./dist/manifest-runtime/adapters/oracle-eloqua.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

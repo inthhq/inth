@@ -166,6 +166,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	crisp: ['client.crisp.chat'],
 	customerIo: ['cdp.customer.io', 'cdp-eu.customer.io'],
 	databuddy: ['cdn.databuddy.cc'],
+	eloquaTracking: ['img.en25.com'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
 	fullStory: ['edge.fullstory.com', 'edge.eu1.fullstory.com'],
@@ -228,6 +229,7 @@ const vendorLevels: Partial<
 	customerIo: 3,
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),
+	eloquaTracking: 4,
 	fullStory: 4,
 	gainsightPx: 4,
 	luckyOrange: 4,

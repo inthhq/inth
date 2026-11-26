@@ -32,7 +32,6 @@ export const remoteStatus = {
 	// { accepted: false }, as the helper does on a plain dispose, would
 	// leave the incoming, granted registration reading denied.
 	dynamicYield: adapter,
-	eloquaTracking: adapter,
 	// Before init() resolves, the chat's API is a Proxy that throws on every
 	// read but init, also on the Symbol.toStringTag read the manifest
 	// runtime makes to tell a vendor object from a browser one. The runtime

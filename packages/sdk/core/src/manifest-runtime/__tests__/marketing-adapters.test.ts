@@ -46,3 +46,42 @@ describe('the ActiveCampaign adapter', () => {
 		}
 	});
 });
+
+describe('the Oracle Eloqua adapter', () => {
+	it('ships at level 4 and loads by its ID', async () => {
+		expect(ADAPTER_LEVELS['oracle-eloqua']).toBe(4);
+		expect((await importAdapter('oracle-eloqua')).id).toBe('oracle-eloqua');
+	});
+
+	it('takes a site ID and a lowercase first-party cookie hostname', async () => {
+		const adapter = await importAdapter('oracle-eloqua');
+
+		expect(adapter.problem({ siteId: '1973398186' })).toBeUndefined();
+		expect(
+			adapter.problem({
+				firstPartyCookieDomain: 'track.example.com',
+				siteId: '1973398186',
+			})
+		).toBeUndefined();
+		expect(
+			adapter.problem({
+				scriptUrl: 'https://evil.example/elqCfg.js',
+				siteId: '1973398186',
+			})
+		).toBe('it has the unknown option scriptUrl');
+		expect(adapter.problem({ siteId: 1_973_398_186 })).toBe(
+			'its siteId is not a site ID'
+		);
+		for (const firstPartyCookieDomain of [
+			'Track.Example.com',
+			'https://track.example.com',
+			'track.example.com/x',
+			'10.0.0.1',
+			'localhost',
+		]) {
+			expect(
+				adapter.problem({ firstPartyCookieDomain, siteId: '1973398186' })
+			).toBe('its firstPartyCookieDomain is not a hostname');
+		}
+	});
+});

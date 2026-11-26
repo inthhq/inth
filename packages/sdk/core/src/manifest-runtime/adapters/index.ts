@@ -17,6 +17,7 @@ const ADAPTER_MODULES: Record<
 		(await import('./gainsight-px')).gainsightPxAdapter,
 	'lucky-orange': async () =>
 		(await import('./lucky-orange')).luckyOrangeAdapter,
+	'oracle-eloqua': async () => (await import('./oracle-eloqua')).eloquaAdapter,
 	sentry: async () => (await import('./sentry')).sentryAdapter,
 };
 
