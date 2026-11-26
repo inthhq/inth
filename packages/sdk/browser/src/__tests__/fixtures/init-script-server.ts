@@ -31,6 +31,16 @@
  *   `adapter` names the Sentry adapter, which loads from
  *   `inth.adapter-sentry.js`. The page's `remote=<mode>` points its tag
  *   there, and `no-remote` adds `data-remote-scripts="false"`.
+ * - `/__inth-init__/backend-remote-all/v1/consent/init`: every integration in
+ *   `@inth/integrations/remote` on `scriptRegistry.load`, as the Inth server
+ *   builds and filters them for the request's `manifestLevel`
+ *   (`remote-integrations-list.ts`), with an opt-in policy for every
+ *   category. The page's `remote=all` also listens to the script loader's
+ *   debug events (`window.__debug`) and stands in for Zaraz's consent API,
+ *   which records each `set` on `window.__zaraz`. Its requests are not
+ *   counted in `inits` or `saves`, and `init-delay` does not hold them.
+ * - `/__inth-init__/remote-integrations`: that list, with the integrations
+ *   the server could not build an entry for.
  * - `/__inth-init__/backend/v1/consent/records`: counts saves.
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
@@ -50,6 +60,11 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 import { enTranslations } from '@inth/sdk-translations';
+
+import {
+	loadForLevel,
+	remoteIntegrationList,
+} from './remote-integrations-list';
 
 /** The remote script's file, on a host that never answers. */
 export const REMOTE_SRC = 'https://remote-pixel.invalid/pixel.js';
@@ -162,9 +177,20 @@ const remoteRegistry = (mode: string | undefined) => {
 			};
 };
 
-const initBody = (remote?: string) =>
+/** Every category a remote integration can use. */
+const ALL_CATEGORIES = [
+	'experience',
+	'functionality',
+	'marketing',
+	'measurement',
+] as const;
+
+const initBody = (
+	remote?: string,
+	registry: Record<string, unknown> = remoteRegistry(remote)
+) =>
 	JSON.stringify({
-		...remoteRegistry(remote),
+		...registry,
 		branding: 'inth',
 		location: { countryCode: 'DE', regionCode: null },
 		policyResolution: writePolicyResolutionWire(
@@ -172,7 +198,10 @@ const initBody = (remote?: string) =>
 				rules: [
 					{
 						...policyRulePresets.europeOptIn(),
-						categories: ['measurement', 'marketing'],
+						categories:
+							remote === 'all'
+								? [...ALL_CATEGORIES]
+								: ['measurement', 'marketing'],
 						match: { isDefault: true },
 						scopeMode: 'strict',
 					},
@@ -214,7 +243,11 @@ const settings: Record<string, ((query: URLSearchParams) => void) | undefined> =
 		},
 	};
 
-const page = (query: URLSearchParams): string => {
+/**
+ * The fixture page. `zarazPurposes` are the purposes the page's Zaraz
+ * stand-in starts with, each denied.
+ */
+const page = (query: URLSearchParams, zarazPurposes: string[] = []): string => {
 	const queue = query.has('queue')
 		? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
 		: '';
@@ -236,7 +269,12 @@ const page = (query: URLSearchParams): string => {
 	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend${query.has('remote') ? `-remote-${query.get('remote')}` : ''}"${query.has('no-remote') ? ' data-remote-scripts="false"' : ''} data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
-	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>
+	// Before any Inth file, so the listener sees the loader's first event.
+	const probes =
+		query.get('remote') === 'all'
+			? `<script>window.__debug = []; window.__inthScriptDebugListeners = new Set([function (event) { window.__debug.push(event); }]); window.__zaraz = []; (function () { var purposes = ${JSON.stringify(Object.fromEntries(zarazPurposes.map((id) => [id, false])))}; window.zaraz = { consent: { APIReady: true, getAll: function () { return Object.assign({}, purposes); }, set: function (next) { window.__zaraz.push(next); Object.assign(purposes, next); }, sendQueuedEvents: function () {} } }; })();</script>`
+			: '';
+	return `<!doctype html><html><head><meta charset="utf-8">${probes}${head}</head><body>
 <script>window.__ran = [];</script>
 ${query.has('hero') ? `<img fetchpriority="high" alt="" src="/__inth-init__/hero.svg?delay=${Number(query.get('hero'))}">` : ''}
 <p>Page</p>
@@ -289,16 +327,93 @@ const disableFixtureCache = (url: URL, response: ServerResponse): void => {
 	response.setHeader('cache-control', 'no-store');
 };
 
+/** The purposes the page's Zaraz stand-in starts with. */
+const zarazPurposesFor = async (
+	url: URL,
+	integrationsDist: string
+): Promise<string[]> =>
+	url.searchParams.get('remote') === 'all'
+		? (await remoteIntegrationList(integrationsDist)).zarazPurposes
+		: [];
+
+/**
+ * The `/v1/consent/init` answer for `remote`. For `all`, the list is
+ * filtered for the request's `manifestLevel`, as the Inth server does.
+ */
+const initAnswer = async function initAnswer(
+	remote: string | undefined,
+	url: URL,
+	integrationsDist: string
+): Promise<string> {
+	if (remote !== 'all') {
+		return initBody(remote);
+	}
+	const load = loadForLevel(
+		await remoteIntegrationList(integrationsDist),
+		Number(url.searchParams.get('manifestLevel') ?? 1)
+	);
+	return initBody(remote, { scriptRegistry: { load } });
+};
+
+/** Answer `/__inth-init__/remote-integrations`. */
+const serveRemoteIntegrations = async function serveRemoteIntegrations(
+	response: ServerResponse,
+	integrationsDist: string
+): Promise<void> {
+	response.setHeader('Content-Type', 'application/json');
+	try {
+		response.end(JSON.stringify(await remoteIntegrationList(integrationsDist)));
+	} catch (error) {
+		response.statusCode = 500;
+		response.end(
+			JSON.stringify({
+				error: `Build @inth/integrations first: ${error instanceof Error ? error.message : String(error)}`,
+			})
+		);
+	}
+};
+
+/**
+ * Answer a request to `/__inth-init__/backend<-remote-mode>/<route>`. The
+ * `all` backend's pages run beside other test files, so its requests leave
+ * the `inits` and `saves` counters and the init delay those files set alone.
+ */
+const serveBackend = async function serveBackend(
+	request: IncomingMessage,
+	response: ServerResponse,
+	url: URL,
+	{ remote, route }: { remote?: string; route?: string },
+	integrationsDist: string
+): Promise<void> {
+	const counted = remote !== 'all';
+	response.setHeader('Access-Control-Allow-Origin', '*');
+	response.setHeader('Content-Type', 'application/json');
+	if (route === 'v1/consent/init') {
+		inits += counted ? 1 : 0;
+		await wait(counted ? initDelay : 0);
+		response.end(await initAnswer(remote, url, integrationsDist));
+		return;
+	}
+	if (request.method === 'POST') {
+		saves += counted ? 1 : 0;
+		response.end(await recordAnswer(request));
+		return;
+	}
+	response.end('{}');
+};
+
 /**
  * Answer one fixture request, or call `next`.
  *
  * @param dist - The package's `dist` directory.
+ * @param integrationsDist - `@inth/integrations`' `dist` directory.
  */
 export const serveInitScriptFixture = async function serveInitScriptFixture(
 	request: IncomingMessage,
 	response: ServerResponse,
 	next: () => void,
-	dist: string
+	dist: string,
+	integrationsDist: string
 ): Promise<void> {
 	const url = new URL(request.url ?? '/', 'http://fixture.test');
 	disableFixtureCache(url, response);
@@ -337,7 +452,9 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 	if (url.pathname === '/__inth-init__/page') {
 		failsSincePage = 0;
 		response.setHeader('Content-Type', 'text/html');
-		response.end(page(url.searchParams));
+		response.end(
+			page(url.searchParams, await zarazPurposesFor(url, integrationsDist))
+		);
 		return;
 	}
 	const setting = settings[url.pathname];
@@ -358,6 +475,10 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		hostedRequests = 0;
 		return;
 	}
+	if (url.pathname === '/__inth-init__/remote-integrations') {
+		await serveRemoteIntegrations(response, integrationsDist);
+		return;
+	}
 	if (url.pathname === '/__inth-init__/saves') {
 		response.setHeader('Content-Type', 'application/json');
 		response.end(JSON.stringify(saves));
@@ -376,20 +497,13 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 			url.pathname
 		);
 	if (backend?.groups) {
-		response.setHeader('Access-Control-Allow-Origin', '*');
-		response.setHeader('Content-Type', 'application/json');
-		if (backend.groups.route === 'v1/consent/init') {
-			inits += 1;
-			await wait(initDelay);
-			response.end(initBody(backend.groups.remote));
-			return;
-		}
-		if (request.method === 'POST') {
-			saves += 1;
-			response.end(await recordAnswer(request));
-			return;
-		}
-		response.end('{}');
+		await serveBackend(
+			request,
+			response,
+			url,
+			backend.groups,
+			integrationsDist
+		);
 		return;
 	}
 	next();

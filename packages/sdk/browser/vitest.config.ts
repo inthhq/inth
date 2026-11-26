@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { baseConfig } from '@inth/vitest-config/base';
+import type { Page, Route } from 'playwright';
 import { defineConfig, mergeConfig } from 'vite-plus';
 import { playwright } from 'vite-plus/test/browser-playwright';
 
@@ -15,6 +16,22 @@ const WEBVIEW_TOKEN = 'feedc0de00000000feedc0de00000000';
 /** The request key the WebView fixture's native script was given. */
 const WEBVIEW_KEY = '0badc0de0badc0de0badc0de0badc0de';
 
+/** Hosts the dev server answers on; every other host is a third party. */
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+/** What `watchRequests` saw since the last `takeRequests`. */
+interface WatchedRequests {
+	/** The `dist/` files requested through `/__inth-dist__/`. */
+	dist: string[];
+	/** Third-party URLs, each answered with empty JavaScript. */
+	thirdParty: string[];
+}
+/**
+ * The requests `watchRequests` saw, by page. Each browser session has its
+ * own page, and test files run in parallel across sessions, so one file
+ * never reads another's requests.
+ */
+const watchedRequests = new WeakMap<Page, WatchedRequests>();
+
 export default mergeConfig(
 	baseConfig,
 	defineConfig({
@@ -26,7 +43,8 @@ export default mergeConfig(
 							request,
 							response,
 							next,
-							resolve(__dirname, 'dist')
+							resolve(__dirname, 'dist'),
+							resolve(__dirname, '../integrations/dist')
 						);
 					});
 				},
@@ -296,6 +314,56 @@ export default mergeConfig(
 					server: { watch: null },
 					test: {
 						browser: {
+							commands: {
+								/**
+								 * From now on, in every frame of this session's page,
+								 * answers each request to a host other than the dev
+								 * server with empty JavaScript, so vendor files load
+								 * without the test reaching the vendor, and records it
+								 * and each `/__inth-dist__/` file requested.
+								 */
+								async watchRequests(context) {
+									const { page } = context as unknown as { page: Page };
+									if (watchedRequests.has(page)) {
+										return;
+									}
+									const watched: WatchedRequests = { dist: [], thirdParty: [] };
+									watchedRequests.set(page, watched);
+									await page.route(
+										(url) => !LOCAL_HOSTS.has(url.hostname),
+										(route: Route) => {
+											watched.thirdParty.push(route.request().url());
+											return route.fulfill({
+												body: '',
+												contentType: 'text/javascript',
+												headers: { 'access-control-allow-origin': '*' },
+											});
+										}
+									);
+									await page.route(
+										(url) =>
+											LOCAL_HOSTS.has(url.hostname) &&
+											url.pathname.startsWith('/__inth-dist__/'),
+										(route: Route) => {
+											watched.dist.push(
+												new URL(route.request().url()).pathname.slice(
+													'/__inth-dist__/'.length
+												)
+											);
+											return route.fallback();
+										}
+									);
+								},
+								/** What `watchRequests` saw since the last call. */
+								takeRequests(context): WatchedRequests {
+									const { page } = context as unknown as { page: Page };
+									const watched = watchedRequests.get(page);
+									return {
+										dist: watched?.dist.splice(0) ?? [],
+										thirdParty: watched?.thirdParty.splice(0) ?? [],
+									};
+								},
+							},
 							enabled: true,
 							headless: true,
 							instances: [{ browser: 'chromium' }],

@@ -507,6 +507,15 @@
       ],
       "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
     },
+    "@inth/sdk-browser#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
     "@inth/react-native#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": [
