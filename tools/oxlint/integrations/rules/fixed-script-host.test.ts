@@ -36,6 +36,16 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
       name: "a loadScriptStep",
     },
     {
+      code: `const LOAD_SCRIPT = 'loadScript';\nexport const step = { src: '{{scriptUrl}}', type: LOAD_SCRIPT };`,
+      errors: [notFixed],
+      name: "a step whose type comes from a const",
+    },
+    {
+      code: "export const step = { src: '{{scriptUrl}}', type: `loadScript` };",
+      errors: [notFixed],
+      name: "a step whose type is a template literal",
+    },
+    {
       code: `export const m = { install: [{ src: '{{scriptUrl}}' }] };`,
       errors: [notFixed],
       name: "an install entry without a type",

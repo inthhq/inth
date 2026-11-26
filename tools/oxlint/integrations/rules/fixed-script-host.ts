@@ -7,7 +7,6 @@ import {
   propertyKeyName,
   resolveValue,
   stringLiteralValue,
-  unwrapExpression,
 } from "../shared/ast.ts";
 import { isHostnameSpec, remoteOptions } from "../shared/remote.ts";
 
@@ -70,6 +69,16 @@ const isInstallList = (node: ESTree.Node | undefined): boolean => {
   );
 };
 
+/** A string literal's value, or a template literal's when it has no expressions. */
+const staticString = (node: ESTree.Node): string | null => {
+  if (node.type === "TemplateLiteral") {
+    return node.expressions.length === 0
+      ? (node.quasis[0]?.value.cooked ?? null)
+      : null;
+  }
+  return stringLiteralValue(node);
+};
+
 /** A `loadScript` step, a `loadScriptStep`, or any entry of an `install` list. */
 const isScriptStep = (
   sourceCode: SourceCode,
@@ -78,8 +87,10 @@ const isScriptStep = (
   // The last `type` the rule can see, so a spread it cannot follow after the
   // type does not hide the step.
   const typeEntry = objectEntries(sourceCode, node).entries.get("type");
+  // Read the type the way `src` is read, through a `const`, so a step cannot
+  // hide by naming its type indirectly.
   const type = typeEntry
-    ? stringLiteralValue(unwrapExpression(typeEntry.value))
+    ? staticString(resolveValue(sourceCode, typeEntry.value))
     : null;
   return (
     (type !== null && SCRIPT_STEP_TYPES.has(type)) || isInstallList(node.parent)
