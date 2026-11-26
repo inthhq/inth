@@ -229,15 +229,20 @@ const WRITTEN_FIELDS = [
 
 /**
  * Every name a step writes, from a step that may not have passed the
- * parser. A call's path is what it calls, which `calledPath` reads, and a
- * `listen` step's target is the window or document it listens on.
+ * parser. A call's path is what it calls, which `calledPath` reads, a
+ * `listen` step's target is the window or document it listens on, and a
+ * flag's name is a key in the script's own flags, not on the page.
  *
  * @internal
  */
 export const writtenNames = function writtenNames(
 	step: Readonly<Record<string, unknown>>
 ): readonly unknown[] {
-	if (step.type === 'callGlobal' || step.type === 'listen') {
+	if (
+		step.type === 'callGlobal' ||
+		step.type === 'listen' ||
+		step.type === 'setFlag'
+	) {
 		return [];
 	}
 	return [

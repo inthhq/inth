@@ -312,6 +312,20 @@ describe('level 3', () => {
 		}
 	);
 
+	it.each(['src', 'onload', 'href'])(
+		'accepts %s as a flag name, which never touches the page',
+		(name) => {
+			expect(
+				parseResolvedManifest(
+					withSetup(
+						{ name, type: 'setFlag', value: true },
+						ifStep({ flag: name }, [call])
+					)
+				).ok
+			).toBe(true);
+		}
+	);
+
 	it('says how deep steps may nest', () => {
 		expect(parseResolvedManifest(withSetup(nested(5, call)))).toEqual({
 			ok: false,
