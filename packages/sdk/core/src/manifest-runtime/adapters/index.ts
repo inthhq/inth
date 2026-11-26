@@ -9,6 +9,8 @@ const ADAPTER_MODULES: Record<
 	AdapterId,
 	() => Promise<ManifestAdapter<never>>
 > = {
+	activecampaign: async () =>
+		(await import('./activecampaign')).activeCampaignAdapter,
 	databuddy: async () => (await import('./databuddy')).databuddyAdapter,
 	fullstory: async () => (await import('./fullstory')).fullStoryAdapter,
 	'gainsight-px': async () =>

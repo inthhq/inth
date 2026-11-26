@@ -1,4 +1,43 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+/**
+ * The ActiveCampaign adapter: runs Diffuser, ActiveCampaign's site tracking
+ * SDK, under Inth consent. Before it sets the tag's `src` it checks that no
+ * other ActiveCampaign tracker owns the page (`window.pgo`, its alias
+ * globals, or a pending tag for the same file), and once the SDK loads it
+ * allows tracking for the visitor and keeps the visitor's email in step.
+ *
+ * A manifest from the Inth server names it as
+ * `adapter: { id: 'activecampaign' }` with
+ * {@link ActiveCampaignAdapterOptions}; the `activeCampaignTracking()`
+ * helper in `@inth/integrations` builds its script with the same function,
+ * and adds what only a site's own code can pass: the visitor's email.
+ */
+import type {
+	Script,
+	ScriptCallbackInfo,
+} from '../../libs/script-loader/types';
+import type { ManifestAdapter } from '../adapter';
+
+type PgoCommand = ((...args: unknown[]) => void) & {
+	q?: IArguments[];
+	l?: number;
+};
+
+type TrackerWindow = Window & {
+	pgo?: PgoCommand;
+	prismGlobalObjectAlias?: string;
+};
+
+/** What a manifest's `adapter.options` hold for ActiveCampaign. */
+export interface ActiveCampaignAdapterOptions {
+	/** The account ID from the tracking snippet. */
+	accountId: string;
+}
+
+/** What only the npm helper passes: data about the visitor. */
+export interface ActiveCampaignExtras {
+	/** The visitor's email, sent once tracking is allowed. */
+	email?: string;
+}
 
 interface TrackingConfig {
 	accountId: string;
@@ -21,7 +60,7 @@ interface Runtime {
 	config?: TrackingConfig;
 	element: HTMLScriptElement;
 	status: 'waiting' | 'pending' | 'loaded' | 'error';
-	command?: Window['pgo'];
+	command?: PgoCommand;
 	email?: string;
 	allowed: boolean;
 }
@@ -90,7 +129,7 @@ const start = (state: TrackingState, beforeAppend = false): void => {
 	if (!registration || (!beforeAppend && !runtime.element.isConnected)) {
 		return;
 	}
-	const browser = document.defaultView;
+	const browser = document.defaultView as TrackerWindow | null;
 	const { config, info, script } = registration;
 	const { element } = runtime;
 	// Another tracker may load from the vendor's URL or from the
@@ -132,7 +171,7 @@ const reconcile = (state: TrackingState): void => {
 	const { command } = runtime;
 	if (
 		!runtime.element.isConnected ||
-		state.document.defaultView?.pgo !== command ||
+		(state.document.defaultView as TrackerWindow | null)?.pgo !== command ||
 		!command
 	) {
 		runtime.status = 'error';
@@ -178,11 +217,22 @@ const schedule = (state: TrackingState): void => {
 	});
 };
 
-/** Retain Diffuser's physical SDK while reconciling consent and email. @internal */
-export const withActiveCampaignRuntime = (
-	script: Script,
-	config: TrackingConfig
-): Script => {
+/**
+ * `base`, the script built from ActiveCampaign's manifest, made to retain
+ * Diffuser's SDK while it reconciles consent and the visitor's email. The
+ * tracker loads from `base.src`, or the URL `scriptLoader.sources` or the
+ * script registry chose.
+ */
+export const activeCampaignScript = function activeCampaignScript(
+	base: Script,
+	{ accountId }: ActiveCampaignAdapterOptions,
+	{ email }: ActiveCampaignExtras = {}
+): Script {
+	const config: TrackingConfig = {
+		accountId,
+		email,
+		scriptUrl: base.src ?? '',
+	};
 	const standalone = Symbol('activecampaign-registration');
 	const update = (info: ScriptCallbackInfo): TrackingState => {
 		let state = states.get(document);
@@ -193,15 +243,17 @@ export const withActiveCampaignRuntime = (
 		state.registrations.set(info.registration ?? standalone, {
 			config: info.source ? { ...config, loadUrl: info.source.src } : config,
 			info,
-			script,
+			script: base,
 		});
 		schedule(state);
 		return state;
 	};
+	// The tag's `src` waits for the ownership check in the browser, so a
+	// server render writes no inline start.
+	const { serverStart: _serverStart, ...rest } = base;
 	return {
-		...script,
+		...rest,
 		observeConsentBeforeLoad: true,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
 		onBeforeLoad(info) {
 			const state = update(info);
 			const { element } = info;
@@ -246,7 +298,7 @@ export const withActiveCampaignRuntime = (
 		onLoad(info) {
 			const state = update(info);
 			const { runtime } = state;
-			const browser = document.defaultView;
+			const browser = document.defaultView as TrackerWindow | null;
 			if (
 				!runtime ||
 				runtime.status === 'error' ||
@@ -270,3 +322,31 @@ export const withActiveCampaignRuntime = (
 		persistAfterDispose: true,
 	};
 };
+
+const ACCOUNT_ID = /^[0-9A-Za-z_-]{1,64}$/u;
+
+/**
+ * Why `options` are not {@link ActiveCampaignAdapterOptions} the Inth
+ * server may send, or `undefined`.
+ */
+export const activeCampaignOptionsProblem =
+	function activeCampaignOptionsProblem(
+		options: Readonly<Record<string, unknown>>
+	): string | undefined {
+		const extra = Object.keys(options).find((name) => name !== 'accountId');
+		if (extra !== undefined) {
+			return `it has the unknown option ${extra}`;
+		}
+		return typeof options.accountId === 'string' &&
+			ACCOUNT_ID.test(options.accountId)
+			? undefined
+			: 'its accountId is not an account ID';
+	};
+
+/** The ActiveCampaign adapter, as a manifest's `adapter: { id: 'activecampaign' }` runs it. */
+export const activeCampaignAdapter: ManifestAdapter<ActiveCampaignAdapterOptions> =
+	{
+		id: 'activecampaign',
+		problem: activeCampaignOptionsProblem,
+		script: (base, options) => activeCampaignScript(base, options),
+	};

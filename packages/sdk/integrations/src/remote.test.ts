@@ -153,6 +153,7 @@ const npmInput = function npmInput(key: string, options: Options): Options {
 
 /** Hosts each integration may load its script from. */
 const vendorHosts: Record<string, readonly string[]> = {
+	activeCampaignTracking: ['diffuser-cdn.app-us1.com'],
 	adobeAnalytics: ['assets.adobedtm.com'],
 	adrollPixel: ['s.adroll.com'],
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
@@ -223,6 +224,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 const vendorLevels: Partial<
 	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
 > = {
+	activeCampaignTracking: 4,
 	customerIo: 3,
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),

@@ -1,11 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
+import { activeCampaignScript } from '@inth/sdk/manifest-runtime/adapters/activecampaign';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract, runtimeTimestampValue } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
-import { withActiveCampaignRuntime } from './activecampaign-runtime';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -14,7 +16,11 @@ declare global {
 	}
 }
 
-/** ActiveCampaign's current pgo snippet with tracking disabled at startup. */
+/**
+ * ActiveCampaign's current pgo snippet with tracking disabled at startup.
+ * The ActiveCampaign adapter in `@inth/sdk` sets the tag's `src` once no
+ * other tracker owns the page, and allows tracking after the SDK loads.
+ */
 export const activeCampaignTrackingManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
@@ -37,14 +43,11 @@ export const activeCampaignTrackingManifest = {
 			type: 'callGlobal',
 		},
 		{ args: ['setTrackByDefault', false], global: 'pgo', type: 'callGlobal' },
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
-	],
-	onConsentDenied: [
-		{ args: ['setTrackByDefault', false], global: 'pgo', type: 'callGlobal' },
-	],
-	onLoadGranted: [
-		{ args: ['process', 'allowTracking'], global: 'pgo', type: 'callGlobal' },
+		{
+			async: true,
+			src: 'https://diffuser-cdn.app-us1.com/diffuser/diffuser.js',
+			type: 'loadScript',
+		},
 	],
 	persistAfterConsentRevoked: true,
 	vendor: 'activecampaign',
@@ -68,6 +71,45 @@ export interface ActiveCampaignTrackingOptions {
 }
 
 /**
+ * The manifest for ActiveCampaign: the snippet's queue and account, and the
+ * ActiveCampaign adapter. `accountId` must already be trimmed and
+ * non-empty. The npm helper and the Inth server both build it here.
+ */
+export const resolveActiveCampaignManifest =
+	function resolveActiveCampaignManifest({
+		accountId,
+	}: {
+		accountId: string;
+	}): ResolvedManifest {
+		return {
+			...getCompiledManifest(activeCampaignTrackingManifest, { accountId }),
+			adapter: { id: 'activecampaign', options: { accountId } },
+			requires: 4,
+		};
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the
+ * same resolver; `email`, `category` and `scriptUrl` stay npm-only. Marked
+ * pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'activeCampaignTracking',
+		{
+			accountId: {
+				example: '123456',
+				kind: 'id',
+				label: 'Account ID',
+				pattern: '^[0-9]{1,20}$',
+				required: true,
+			},
+		},
+		resolveActiveCampaignManifest
+	);
+
+/**
  * Loads ActiveCampaign site tracking only after consent.
  * Keep reloadOnConsentRevoked enabled. setTrackByDefault(false) does not
  * revoke an allowTracking call on an already-running tracker.
@@ -86,17 +128,15 @@ export const activeCampaignTracking = function activeCampaignTracking(
 			manifest: activeCampaignTrackingManifest,
 		});
 	}
-	const email = trimToUndefined(options.email);
-	const scriptUrl = resolveScriptUrl(
-		options.scriptUrl,
-		'https://diffuser-cdn.app-us1.com/diffuser/diffuser.js'
-	);
-	const script = resolveManifest(activeCampaignTrackingManifest, {
+	const { adapter: _adapter, ...manifest } = resolveActiveCampaignManifest({
 		accountId,
-		scriptUrl,
 	});
-	return withActiveCampaignRuntime(
-		{ ...script, category },
-		{ accountId, email, scriptUrl }
+	return activeCampaignScript(
+		{
+			...withScriptUrl(resolvedManifestToScript(manifest), options.scriptUrl),
+			category,
+		},
+		{ accountId },
+		{ email: trimToUndefined(options.email) }
 	);
 };

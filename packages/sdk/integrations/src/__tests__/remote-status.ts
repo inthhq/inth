@@ -18,7 +18,6 @@ const adapter = { pr: 13, status: 'pending' } as const;
 
 /** Every registry key without a `remote` export, and why. */
 export const remoteStatus = {
-	activeCampaignTracking: adapter,
 	ada: adapter,
 	// The Web SDK mode needs an adapter; at.js loads from a fixed Adobe host.
 	adobeTarget: adapter,

@@ -15,14 +15,16 @@ export type InitFile =
 	| 'dialog'
 	| 'manifests'
 	| 'manifests3'
+	| 'adapter-activecampaign'
 	| 'adapter-databuddy'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
-	| 'adapter-sentry'
-	| 'adapter-lucky-orange';
+	| 'adapter-lucky-orange'
+	| 'adapter-sentry';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
+	'adapter-activecampaign': '__inthAdapterActivecampaignSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',

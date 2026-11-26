@@ -10,10 +10,12 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { activeCampaignTracking as ActiveCampaignTracking } from './vendors/email-and-sms/activecampaign';
@@ -718,5 +720,56 @@ describe('ActiveCampaign registration ownership', () => {
 			first.dispose();
 			second.dispose();
 		}
+	});
+});
+
+describe.each(
+	npmAndRemote('activeCampaignTracking', (options: { accountId: string }) =>
+		activeCampaignTracking(options)
+	)
+)('ActiveCampaign dashboard settings through the %s', (_label, build) => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		delete window.pgo;
+		delete window.prismGlobalObjectAlias;
+	});
+
+	it('loads Diffuser after marketing consent and allows tracking once it loads', async () => {
+		const scripts = [build({ accountId: '123456' })];
+		loadScripts(scripts, ALL_DENIED);
+		await settleScripts();
+		expect(document.querySelector('script[src]')).toBeNull();
+		expect(window.pgo).toBeUndefined();
+
+		updateScripts(scripts, granted);
+		await settleScripts();
+		const loader = getLoader();
+		expect(loader.src).toBe(
+			'https://diffuser-cdn.app-us1.com/diffuser/diffuser.js'
+		);
+		expect(window.pgo?.q?.map((args) => Array.from(args))).toEqual([
+			['setAccount', '123456'],
+			['setTrackByDefault', false],
+		]);
+		const pgo = vi.fn();
+		window.pgo = pgo;
+		loader.dispatchEvent(new Event('load'));
+		await Promise.resolve();
+		expect(pgo.mock.calls).toEqual([['process', 'allowTracking']]);
+	});
+
+	it('leaves an unmanaged tracker alone and loads no second copy', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const existing = vi.fn();
+		window.pgo = existing;
+		loadScripts([build({ accountId: '123456' })], granted);
+		await settleScripts();
+
+		expect(document.querySelector('script[src]')).toBeNull();
+		expect(window.pgo).toBe(existing);
+		expect(existing).not.toHaveBeenCalled();
+		expect(error).toHaveBeenCalledWith(
+			'activeCampaignTracking: an unmanaged tracker exists; remove the original snippet'
+		);
 	});
 });

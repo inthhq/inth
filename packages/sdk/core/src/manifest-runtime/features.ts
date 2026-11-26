@@ -237,6 +237,7 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
  * listed here is one the parser refuses.
  */
 export const ADAPTER_LEVELS = {
+	activecampaign: 4,
 	databuddy: 4,
 	fullstory: 4,
 	'gainsight-px': 4,

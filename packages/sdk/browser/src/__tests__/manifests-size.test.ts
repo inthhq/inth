@@ -43,15 +43,18 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-databuddy.js`, Databuddy's session replay recorder: 1,195,
  * then 1,229 with the recorder claimed from `onBeforeLoad`, its release on
  * a failed load, and the option patterns the dashboard shares.
+ * `inth.adapter-activecampaign.js`, the ActiveCampaign ownership checks
+ * and tracking reconciler: 1,525.
  */
 const BUDGETS = {
+	'inth.adapter-activecampaign.js': 1560,
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 12020,
+	'inth.manifests3.js': 12040,
 };
 
 it.each(Object.entries(BUDGETS))(
