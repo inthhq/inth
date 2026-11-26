@@ -31,6 +31,8 @@ const sentryManifest = (
 	alwaysLoad: true,
 	bootstrapSteps: [],
 	category: { or: ['necessary', 'measurement'] },
+	// Its steps touch no window root; the adapter's own code is not steps.
+	globals: [],
 	kind: 'inth.vendor-manifest',
 	loadScript: {
 		async: true,
@@ -158,6 +160,27 @@ describe('parsing a manifest that names an adapter', () => {
 		expect(reasonFrom(adapted, { ...sentryManifest(), vendor: '' })).toBe(
 			'it names no vendor'
 		);
+	});
+
+	it('checks the roots of its own steps against its globals', async () => {
+		const adapted = await adapterRuntime();
+		const queue = { name: 'sentryQueue', type: 'setGlobal', value: [] };
+
+		expect(
+			reasonFrom(adapted, { ...sentryManifest(), setupSteps: [queue] })
+		).toBe(
+			'setupSteps has a setGlobal step that uses the global sentryQueue, which globals does not declare'
+		);
+		expect(
+			reasonFrom(adapted, {
+				...sentryManifest(),
+				globals: ['sentryQueue'],
+				setupSteps: [queue],
+			})
+		).toBeUndefined();
+		expect(
+			reasonFrom(adapted, { ...sentryManifest(), globals: undefined })
+		).toEqual(expect.stringContaining('globals'));
 	});
 
 	it("refuses options the adapter's validator refuses", async () => {
