@@ -167,9 +167,7 @@ export const describeGoldenTraces = async function describeGoldenTraces(
 			// A recording run rewrites the fixture with the spec's scenarios.
 			it.skipIf(write)('fixture holds the same scenarios as the spec', () => {
 				const mismatch = scenarioNameMismatch(spec, fixture);
-				if (mismatch !== undefined) {
-					throw new Error(mismatch);
-				}
+				expect(mismatch, mismatch).toBeUndefined();
 			});
 
 			for (const scenario of scenariosOf(spec)) {

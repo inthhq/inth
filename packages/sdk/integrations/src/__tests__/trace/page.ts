@@ -229,9 +229,9 @@ const recordCookies = (push: TraceRecorder['push']) => {
 const fakeIdleCallbacks = () => {
 	vi.stubGlobal(
 		'requestIdleCallback',
-		(callback: IdleRequestCallback): number =>
+		(idleWork: IdleRequestCallback): number =>
 			setTimeout(() => {
-				callback({ didTimeout: false, timeRemaining: () => 50 });
+				idleWork({ didTimeout: false, timeRemaining: () => 50 });
 			}, 0) as unknown as number
 	);
 	vi.stubGlobal('cancelIdleCallback', (handle: number) => {
