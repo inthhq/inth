@@ -1088,7 +1088,16 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		remoteEntryIds.set(kept, remoteEntryIds.get(earlier) ?? earlier.id);
 		return kept;
 	};
-	const buildRemote = (loaded: RemoteManifestRuntime): Script[] => {
+	/**
+	 * The scripts `loaded` builds for the current entries. With `waiting`,
+	 * code that `prepare` is still loading may build an entry `loaded`
+	 * refuses, so that entry is skipped without a report and built again
+	 * once the code arrives.
+	 */
+	const buildRemote = (
+		loaded: RemoteManifestRuntime,
+		waiting = false
+	): Script[] => {
 		const next = new Map<string, { manifest: string; script: Script | null }>();
 		const scripts: Script[] = [];
 		for (const entry of remoteEntries) {
@@ -1120,6 +1129,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 					};
 				}
 				if (refusal) {
+					if (waiting) {
+						continue;
+					}
 					reportRemote(
 						'error',
 						entry.id,
@@ -1141,15 +1153,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		holdShared(next);
 		return scripts;
 	};
-	/** The scripts already built for `entries` whose manifest is unchanged. */
-	const keptRemote = (entries: RemoteEntry[]): Script[] =>
-		entries.flatMap((entry) => {
-			const cached = built.get(entry.id);
-			return cached?.script &&
-				cached.manifest === JSON.stringify(entry.manifest)
-				? [cached.script]
-				: [];
-		});
 	/** The code scripts, then each remote script no code script claims. */
 	const mergedScripts = (): Script[] => {
 		const claimed = claimedByCode();
@@ -1188,14 +1191,27 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 	};
 	/**
-	 * Build `entries` with `loaded`, once what it lacks for them has loaded
-	 * (`prepare`), unless a later list replaced them.
+	 * Build `entries` with `loaded` now, unless a later list replaced them.
+	 * When `loaded` lacks code some of them need (`prepare`), build the rest
+	 * now and those once the code has loaded, so a slow adapter or level 3
+	 * file holds back only the entries that need it. Building now also drops
+	 * an entry the list removed before the snapshot that brought the list
+	 * can grant its category, and checks a changed entry against the script
+	 * it replaces.
 	 */
 	const buildWith = async (
 		loaded: RemoteManifestRuntime,
-		entries: RemoteEntry[],
-		pending = loaded.prepare?.(entries.map(({ manifest }) => manifest))
+		entries: RemoteEntry[]
 	): Promise<void> => {
+		if (disposed || remoteEntries !== entries) {
+			return;
+		}
+		const pending = loaded.prepare?.(entries.map(({ manifest }) => manifest));
+		setRemoteScripts(buildRemote(loaded, pending !== undefined));
+		if (!pending) {
+			runtime = loaded;
+			return;
+		}
 		let use = loaded;
 		try {
 			const next = await pending;
@@ -1244,18 +1260,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			void loadRemote(options.remote, remoteEntries);
 			return;
 		}
-		const pending = runtime.prepare?.(
-			remoteEntries.map(({ manifest }) => manifest)
-		);
-		if (pending) {
-			// Until the code arrives, keep only the scripts whose entries this
-			// list kept unchanged. The snapshot that brought the list may also
-			// grant consent, and a removed entry must not start on it.
-			setRemoteScripts(keptRemote(remoteEntries));
-			void buildWith(runtime, remoteEntries, pending);
-		} else {
-			setRemoteScripts(buildRemote(runtime));
-		}
+		// Runs to its first `await` now, so the list is in place before the
+		// snapshot that brought it reconciles.
+		void buildWith(runtime, remoteEntries);
 	};
 	syncRemote = (snapshot) => {
 		if (!readLoad(snapshot)) {

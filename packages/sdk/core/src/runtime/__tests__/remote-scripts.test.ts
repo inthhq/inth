@@ -472,6 +472,8 @@ describe('remoteScripts', () => {
 	});
 
 	test('drops a removed entry before the answer that removes it grants its category, while the new list waits for code', async () => {
+		// A fresh manifest runtime: an earlier test installed the level 3 part.
+		vi.resetModules();
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const part = Promise.withResolvers<undefined>();
 		const base = await import('../../manifest-runtime/index');
@@ -529,7 +531,7 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
-	test("hands the first list's manifests to the runtime loader, and builds with the runtime prepare gives", async () => {
+	test("hands the first list's manifests to the runtime loader, and builds with the runtime prepare gives what the first could not", async () => {
 		const loadManifestRuntime = vi.fn(async () => {
 			const base = await import('../../manifest-runtime/index');
 			const upgraded = {
@@ -538,6 +540,12 @@ describe('remoteScripts', () => {
 			};
 			return {
 				...base,
+				// The runtime the loader gives lacks the code this list needs.
+				parseResolvedManifest: () => ({
+					needsCode: true as const,
+					ok: false as const,
+					reason: 'it needs code that has not loaded',
+				}),
 				prepare: vi.fn(() => Promise.resolve(upgraded)),
 				upgraded,
 			};
@@ -1005,6 +1013,144 @@ describe('remoteScripts', () => {
 		expect(builds).toBe(2);
 		expect(disposed).not.toHaveBeenCalled();
 		expect(tags(SENTRY_SRC)).toHaveLength(1);
+		runtime.dispose();
+	});
+
+	test('runs the rest of the first list while an adapter file is still downloading', async () => {
+		vi.resetModules();
+		const manifests = await import('../../manifest-runtime/index');
+		const adapter = Promise.withResolvers<never>();
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: false as const,
+				mode: quietMode,
+				persistence: false,
+				prefetch: {
+					initialScriptRegistry: {
+						load: [
+							...load(acmeManifest({ alwaysLoad: true })),
+							sentryEntry(),
+						],
+					},
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve(
+						manifests.withAdapters(manifests, () => adapter.promise)
+					),
+			}
+		);
+		runtime.start();
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(tags(SENTRY_SRC)).toHaveLength(0);
+		adapter.reject(new Error('offline'));
+		runtime.dispose();
+	});
+
+	test('keeps the registration a refused entry would replace while the list waits for level 3 code', async () => {
+		vi.resetModules();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const part = Promise.withResolvers<undefined>();
+		const manifests = await import('../../manifest-runtime/index');
+		const { sentryAdapter } =
+			await import('../../manifest-runtime/adapters/sentry');
+		const disposed = vi.fn();
+		const updated = vi.fn();
+		let builds = 0;
+		const conflicting = manifests.withAdapters(
+			{
+				...manifests,
+				// The level 3 part is still downloading.
+				prepare: (list: readonly unknown[]) =>
+					manifests.requiresLevelThree(list) ? part.promise : undefined,
+			},
+			() =>
+				Promise.resolve({
+					...sentryAdapter,
+					script: (base: Script, options: never) => {
+						builds += 1;
+						const refuse = builds > 1;
+						const script = sentryAdapter.script(base, options);
+						return {
+							...script,
+							onConsentChange: (info) => {
+								if (!refuse) {
+									updated();
+								}
+								script.onConsentChange?.(info);
+							},
+							onDispose: disposed,
+							validate: () => {
+								if (refuse) {
+									throw new Error('reload the page to change Sentry');
+								}
+							},
+						};
+					},
+				})
+		);
+		const changed = sentryEntry({
+			options: {
+				...(
+					sentryEntry().manifest as unknown as {
+						adapter: { options: Record<string, unknown> };
+					}
+				).adapter.options,
+				piiCategory: 'marketing',
+			},
+		});
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: [sentryEntry()] },
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () => Promise.resolve(conflicting),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags(SENTRY_SRC)).toHaveLength(1));
+
+		answer.resolve({
+			scriptRegistry: {
+				load: [
+					changed,
+					...load(acmeManifest({ alwaysLoad: true })),
+					{
+						id: 'acme-3',
+						integration: 'acmeThree',
+						manifest: { ...levelThree('ACME-3'), vendor: 'acme-3' },
+					},
+				],
+			},
+		});
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect(builds).toBe(2);
+		expect(disposed).not.toHaveBeenCalled();
+		expect(tags(SENTRY_SRC)).toHaveLength(1);
+		part.resolve(undefined);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		updated.mockClear();
+		await runtime.kernel.commands.save('all');
+		await vi.waitFor(() => expect(updated).toHaveBeenCalled());
+		expect(disposed).not.toHaveBeenCalled();
 		runtime.dispose();
 	});
 
