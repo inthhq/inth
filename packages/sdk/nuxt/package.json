@@ -32,7 +32,12 @@
 		"schema",
 		"docs",
 		"AGENTS.md",
-		"SKILL.md"
+		"SKILL.md",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

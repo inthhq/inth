@@ -42,12 +42,14 @@
 		"!dist/package.json",
 		"!dist/!(schematics)/package.json",
 		"!dist/README.md",
-		"!dist/**/__tests__/**",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*",
 		"docs",
 		"AGENTS.md",
-		"SKILL.md"
+		"SKILL.md",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

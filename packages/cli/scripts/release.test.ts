@@ -194,3 +194,23 @@ test("releases only the CLI and its native packages, not the SDK", async () => {
   expect(isReleaseIgnored("npm:@inth/sdk")).toBe(true);
   expect(isReleaseIgnored("npm:@inth/cli")).toBe(false);
 });
+
+test("the CLI and its native packages leave test code out of their tarballs", async () => {
+  for (const file of [
+    "packages/cli/package.json",
+    ...nativePackages.map((name) => `npm/${name}/package.json`),
+  ]) {
+    const { files } = z
+      .object({ files: z.array(z.string()) })
+      .parse(JSON.parse(await readFile(path.join(repository, file), "utf-8")));
+    expect(files, file).toEqual(
+      expect.arrayContaining([
+        "!**/__tests__/**",
+        "!**/__mocks__/**",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!**/*.stories.*",
+      ])
+    );
+  }
+});

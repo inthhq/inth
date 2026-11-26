@@ -64,7 +64,12 @@
 		"src/styles.css",
 		"src/styles.tw3.css",
 		"src/iab/styles.css",
-		"src/iab/styles.tw3.css"
+		"src/iab/styles.tw3.css",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

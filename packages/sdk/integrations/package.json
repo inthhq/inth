@@ -66,10 +66,14 @@
 	"files": [
 		"dist",
 		"dist-types",
-		"!dist-types/**/__tests__/**",
 		"AGENTS.md",
 		"docs",
-		"SKILL.md"
+		"SKILL.md",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": false,

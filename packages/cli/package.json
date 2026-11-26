@@ -19,7 +19,12 @@
     "LICENSE",
     "scripts/run-published.js",
     "AGENTS.md",
-    "SKILL.md"
+    "SKILL.md",
+    "!**/__tests__/**",
+    "!**/__mocks__/**",
+    "!**/*.test.*",
+    "!**/*.spec.*",
+    "!**/*.stories.*"
   ],
   "type": "module",
   "publishConfig": {
