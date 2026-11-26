@@ -4,6 +4,7 @@
  * `manifestFeatureLevel` reads a manifest's level from them, so a feature
  * cannot be runnable without a level.
  */
+import { isObject, MAX_DEPTH, NESTED_STEP_LISTS, someStep } from './some-step';
 import { RUNTIME_VALUE_KIND } from './types';
 import type {
 	ManifestCondition,
@@ -252,14 +253,6 @@ type UnionKeys<Union> = {
 	[Key in Union extends unknown ? keyof Union : never]: true;
 };
 
-/** Step fields that hold a list of nested steps. */
-const NESTED_STEP_LISTS = ['then', 'else', 'steps'] as const;
-
-const MAX_DEPTH = 32;
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-	typeof value === 'object' && value !== null;
-
 /** `table[name]` when `table` lists `name` itself, so `constructor` is not inherited. */
 export const levelOf = <Entry = Level>(
 	table: Readonly<Record<string, Entry>> | undefined,
@@ -268,23 +261,6 @@ export const levelOf = <Entry = Level>(
 	table && typeof name === 'string' && Object.hasOwn(table, name)
 		? table[name]
 		: undefined;
-
-/** Whether `test` holds for a step in `steps`, or a step nested in one. */
-export const someStep = (
-	steps: unknown,
-	test: (step: Record<string, unknown>) => boolean,
-	depth = 0
-): boolean =>
-	Array.isArray(steps) &&
-	depth <= MAX_DEPTH &&
-	steps.some(
-		(step) =>
-			isObject(step) &&
-			(test(step) ||
-				NESTED_STEP_LISTS.some((field) =>
-					someStep(step[field], test, depth + 1)
-				))
-	);
 
 /** The highest level of a runtime value inside `value`. */
 const valueLevel = (value: unknown, depth = 0): number => {
@@ -395,3 +371,5 @@ export const manifestFeatureLevel = function manifestFeatureLevel(
 	}
 	return level;
 };
+
+export { someStep };

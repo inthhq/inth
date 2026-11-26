@@ -8,7 +8,10 @@
  */
 
 import type { AllConsentNames, Script } from '@inth/sdk-core';
-import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk-core/manifest-runtime';
+import {
+	MANIFEST_RUNTIME_LEVEL,
+	requiresLevelThree,
+} from '@inth/sdk-core/manifest-runtime';
 import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 import { runsAtManifestLevel } from '@inth/sdk-schema/types';
 
@@ -75,7 +78,7 @@ export interface RemoteStandIns {
 	/** Every category those entries ask for. */
 	categories: AllConsentNames[];
 	/**
-	 * Whether one of those entries requires manifest runtime level 3, which
+	 * Whether one of those entries uses level 3 steps, which
 	 * `inth.manifests3.js` runs in place of `inth.manifests.js`.
 	 */
 	levelThree?: boolean;
@@ -124,7 +127,7 @@ export const readRemoteStandIns = function readRemoteStandIns(
 			continue;
 		}
 		claimed.add(id);
-		result.levelThree ||= (manifest.requires as number) >= 3;
+		result.levelThree ||= requiresLevelThree([manifest]);
 		result.categories.push(...categories);
 		result.scripts.push({
 			alwaysLoad: manifest.alwaysLoad === true,

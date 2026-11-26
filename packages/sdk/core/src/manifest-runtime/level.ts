@@ -5,6 +5,7 @@ import { adapterProblem, isLoaded } from './adapter';
 import type { AdapterId, LoadedAdapters, ManifestAdapter } from './adapter';
 import { ADAPTER_LEVELS, levelOf } from './features';
 import type { LevelThreePart } from './part';
+import { someStep } from './some-step';
 import type { ManifestAdapterField } from './types';
 
 /**
@@ -36,11 +37,36 @@ export const MANIFEST_RUNTIME_LEVEL = 4;
 export const withManifestLevel = (url: string): string =>
 	appendInitParams(url, { manifestLevel: MANIFEST_RUNTIME_LEVEL });
 
-/** Whether one of `manifests` requires level 3 or later. */
+/**
+ * The level 3 step types. With `callGlobal.then`, the steps and fields
+ * `STEP_FIELD_LEVELS` puts at level 3, listed here so `inth.js`, which
+ * reads this, carries no level table; a test keeps the two the same.
+ */
+const LEVEL_THREE_STEPS: ReadonlySet<unknown> = new Set([
+	'defer',
+	'if',
+	'listen',
+	'setFlag',
+]);
+
+/** Whether `step` is a level 3 step, or has a level 3 field. */
+const isLevelThreeStep = (step: Record<string, unknown>): boolean =>
+	LEVEL_THREE_STEPS.has(step.type) ||
+	(step.type === 'callGlobal' && step.then !== undefined);
+
+/**
+ * Whether one of `manifests` needs the level 3 part: it requires level 3
+ * or later, and its own steps use level 3. An adapter does not count, so a
+ * level 4 manifest whose steps need level 2 at most runs without the part.
+ */
 export const requiresLevelThree = (manifests: readonly unknown[]): boolean =>
 	manifests.some(
 		(manifest) =>
-			((manifest as { requires?: unknown } | null)?.requires as number) >= 3
+			((manifest as { requires?: unknown } | null)?.requires as number) >= 3 &&
+			Object.entries(manifest as Record<string, unknown>).some(
+				([list, steps]) =>
+					list.endsWith('Steps') && someStep(steps, isLevelThreeStep)
+			)
 	);
 
 /**

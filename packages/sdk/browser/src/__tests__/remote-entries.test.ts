@@ -81,16 +81,23 @@ describe('readRemoteStandIns', () => {
 		expect(read.categories).toEqual(['marketing']);
 	});
 
-	test('says whether an entry it reads requires level 3', () => {
+	test('says whether an entry it reads uses level 3 steps', () => {
 		const read = (load: unknown[]) =>
 			readRemoteStandIns(answer({ load }), [
 				{ category: 'marketing', id: 'claimed' },
 			]).levelThree;
+		const levelThree = (requires: number) => ({
+			requires,
+			setupSteps: [{ name: 'ready', type: 'setFlag', value: true }],
+		});
 
 		expect(read([entry('a'), entry('b', { requires: 2 })])).toBeFalsy();
-		expect(read([entry('a'), entry('b', { requires: 3 })])).toBe(true);
+		expect(read([entry('a'), entry('b', levelThree(3))])).toBe(true);
+		expect(read([entry('b', levelThree(4))])).toBe(true);
+		// Level 4 for an adapter alone needs no level 3 file.
+		expect(read([entry('b', { requires: 4 })])).toBeFalsy();
 		// The engine skips a claimed entry, so it needs no level 3 file.
-		expect(read([entry('claimed', { requires: 3 })])).toBeFalsy();
+		expect(read([entry('claimed', levelThree(3))])).toBeFalsy();
 	});
 
 	test('skips an entry whose id a code script uses, whatever its vendor', () => {

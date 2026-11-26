@@ -69,7 +69,12 @@ describe('loadManifestsFile', () => {
 		);
 	});
 
-	const levelThree = [{ requires: 3 }];
+	/** A manifest whose steps use level 3, as `requires: 3` says. */
+	const levelThreeManifest = () => ({
+		requires: 3,
+		setupSteps: [{ name: 'ready', type: 'setFlag', value: true }],
+	});
+	const levelThree = [levelThreeManifest()];
 	const initTag = (attributes: Record<string, string> = {}) => {
 		const tag = document.createElement('script');
 		tag.setAttribute('src', '/sdk/inth.js');
@@ -111,7 +116,7 @@ describe('loadManifestsFile', () => {
 		expect(runtime.prepare?.([...first])).toBeUndefined();
 		// A later list that needs level 3 tries the file again.
 		await expect(
-			runtime.prepare?.([{ requires: 3 }])
+			runtime.prepare?.([levelThreeManifest()])
 		).resolves.toMatchObject({ key: '__inthManifests3' });
 	});
 
@@ -205,7 +210,24 @@ describe('loadManifestsFile', () => {
 			);
 		});
 
+		test('loads inth.manifests.js for a level 4 manifest whose own steps need level 2 at most', async () => {
+			initTag();
+
+			await loadManifestsFile([manifest]);
+
+			expect(loadPartFile).toHaveBeenCalledExactlyOnceWith(
+				'__inthManifests',
+				expect.stringMatching(/\/sdk\/inth\.manifests\.js\?v=/u),
+				undefined
+			);
+		});
+
 		test('runs adapters in inth.manifests.js when inth.manifests3.js fails for the first list', async () => {
+			const withLevelThree = {
+				...manifest,
+				...levelThreeManifest(),
+				requires: 4,
+			};
 			initTag();
 			loadPartFile.mockImplementation((key: string) => {
 				if (key === '__inthManifests3') {
@@ -218,9 +240,14 @@ describe('loadManifestsFile', () => {
 				) as never;
 			});
 
-			const runtime = await loadManifestsFile([manifest]);
-			await runtime.prepare?.([manifest]);
+			const runtime = await loadManifestsFile([withLevelThree]);
+			await runtime.prepare?.([withLevelThree]);
 
+			expect(loadPartFile).toHaveBeenCalledWith(
+				'__inthManifests3',
+				expect.any(String),
+				undefined
+			);
 			expect(runtime).toMatchObject({ key: '__inthManifests' });
 			expect(runtime.resolvedManifestToScript(manifest as never)).toMatchObject(
 				{ adapted: true, vendor: 'sentry' }
@@ -281,6 +308,8 @@ describe('loadManifestsFile', () => {
 			await runtime.prepare?.([manifest]);
 
 			expect(runtime.parseResolvedManifest(manifest)).toEqual({
+				// A later list tries the file again.
+				needsCode: true,
 				ok: false,
 				reason:
 					'its sentry adapter did not load: inth.adapter-sentry.js did not load from /files/sentry.js, or is from another release',

@@ -48,7 +48,10 @@ beforeAll(async () => {
 	// Loads the level 3 part and each adapter, as the loader does before it
 	// builds a list that needs them.
 	await sdk.prepare?.([
-		{ requires: 3 },
+		{
+			requires: 3,
+			setupSteps: [{ name: 'ready', type: 'setFlag', value: true }],
+		},
 		...Object.keys(ADAPTER_LEVELS).map((id) => ({ adapter: { id } })),
 	]);
 });

@@ -34,7 +34,7 @@ const own =
 /**
  * The manifest runtime, from `inth.manifests.js` at this version
  * (`partSrc`), next to `inth.js`, or next to the engine on a page without
- * one. When one of `manifests` requires level 3 it is
+ * one. When one of `manifests` uses level 3 steps it is
  * `inth.manifests3.js`, the same runtime with level 3, from the same place
  * with the same nonce; a later list that needs level 3 moves to it
  * through `prepare`. When `inth.manifests3.js` fails for the first list,

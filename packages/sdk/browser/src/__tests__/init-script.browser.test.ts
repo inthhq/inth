@@ -896,7 +896,9 @@ describe('scripts the Inth server lists', () => {
 		// The tag goes in only once the entry parsed and built with its adapter.
 		await expect.poll(sentryTag, { timeout: 8000 }).not.toBeNull();
 		expect(requested(win, 'inth.adapter-sentry.js')).toBe(true);
-		expect(requested(win, 'inth.manifests3.js')).toBe(true);
+		// The manifest is level 4 for its adapter; its steps need level 2.
+		expect(manifestsRequested(win)).toBe(true);
+		expect(requested(win, 'inth.manifests3.js')).toBe(false);
 	});
 
 	it('loads no adapter file for a list that names no adapter', async () => {
