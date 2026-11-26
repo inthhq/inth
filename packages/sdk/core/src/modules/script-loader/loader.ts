@@ -61,12 +61,6 @@ const heldMessage = (reason: HeldScript['reason'], script: Script): string => {
 	return `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`;
 };
 
-const validateScripts = (scripts: Script[]): void => {
-	for (const script of scripts) {
-		script.validate?.(script);
-	}
-};
-
 /**
  * The remote scripts the loaders on this page built, by manifest JSON.
  * Loaders that list an equal manifest share one script, as npm helpers
@@ -325,9 +319,19 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	const refusedIds = new Set<string>();
 	/** When each script resolved from a signed registry entry stops being valid. */
 	const signatureExpiry = new WeakMap<Script, number>();
+	/** The IDs of the remote scripts the last `resolveSources` refused. */
+	let refusedRemote = new Set<string>();
 	/** Resolve a list and keep what it holds back; returns what mounts. */
 	const resolveSources = (scripts: readonly Script[]): Script[] => {
 		const resolved = withSources(scripts);
+		// By ID: a URL from `scriptLoader.sources` or the registry gives a
+		// remote script a copy, and a list never has two scripts with one ID.
+		const remoteIds = new Set(
+			scripts
+				.filter((script) => remoteObjects.has(script))
+				.map((script) => script.id)
+		);
+		refusedRemote = new Set();
 		// Only a site that requires signatures refuses an expired one, so
 		// only there must a script not mount past its expiry
 		if (options.registry?.requireSignatures) {
@@ -337,7 +341,26 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		// A held script is checked once it resolves, against the URL it then
 		// loads from, so it is not compared with its vendor URL meanwhile.
-		validateScripts(resolved.scripts);
+		// A code script's check rejects the batch. A remote script's check
+		// refuses only that script, so one entry cannot stop the others.
+		const valid = resolved.scripts.filter((script) => {
+			if (!remoteIds.has(script.id)) {
+				script.validate?.(script);
+				return true;
+			}
+			try {
+				script.validate?.(script);
+				return true;
+			} catch (error) {
+				reportRemote(
+					'error',
+					script.id,
+					`Remote script ${script.id} does not load: ${(error instanceof Error ? error.message : String(error)).replace(/[.]$/u, '')}.`
+				);
+				refusedRemote.add(script.id);
+				return false;
+			}
+		});
 		({ held } = resolved);
 		for (const { reason, script } of held) {
 			if (reason === 'waiting' || refusedIds.has(script.id)) {
@@ -353,7 +376,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				timestamp: Date.now(),
 			});
 		}
-		return resolved.scripts;
+		return valid;
 	};
 	const initialScripts = resolveSources(options.scripts);
 	registerCategories([...initialScripts, ...held.map(({ script }) => script)]);
@@ -853,13 +876,27 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			held = heldBefore;
 			return;
 		}
-		const nextScripts = new Set(next);
-		const nextById = new Map(next.map((script) => [script.id, script]));
 		const nextRemote = new Map(
 			configuredNext
 				.filter((script) => remoteObjects.has(script))
 				.map((script) => [script.id, script])
 		);
+		// A refused remote script leaves the registered remote script with
+		// its ID in place: a vendor that cannot change its setup without a
+		// reload keeps getting consent updates.
+		for (const id of refusedRemote) {
+			const kept = activeRemote.get(id);
+			const registered =
+				kept && normalized.find(({ script }) => script.id === id)?.script;
+			if (kept && registered) {
+				next.push(registered);
+				nextRemote.set(id, kept);
+			} else {
+				nextRemote.delete(id);
+			}
+		}
+		const nextScripts = new Set(next);
+		const nextById = new Map(next.map((script) => [script.id, script]));
 		const previous = new Set(normalized.map(({ script }) => script));
 		const snapshot = kernel.getSnapshot();
 		for (const script of previous) {

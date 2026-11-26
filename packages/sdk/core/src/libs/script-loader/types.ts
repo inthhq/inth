@@ -155,6 +155,8 @@ export interface Script {
 	/**
 	 * Validate before initial registration or configuration replacement.
 	 * Throw to reject the batch before existing registrations are changed.
+	 * A script the Inth server sent is refused alone instead: the rest of
+	 * the batch registers, and a registered script with its ID stays.
 	 * Must not mutate script or SDK state. Lifecycle callback errors are isolated;
 	 * the loader does not catch validation errors.
 	 * @param resolved - The script as the loader mounts it, with the URL and
