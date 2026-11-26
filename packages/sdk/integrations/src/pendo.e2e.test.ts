@@ -1,4 +1,6 @@
 /** @vitest-environment jsdom */
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import {
 	afterEach,
 	beforeEach,
@@ -153,6 +155,46 @@ describe('Pendo event lifecycle', () => {
 		updateScripts([], granted);
 
 		expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
+	});
+	it('keeps events stopped while another loader sharing the script denies measurement', async () => {
+		// Sharing one script between loaders is npm-only; the remote form has
+		// one registration per vendor.
+		const firstKernel = createConsentKernel();
+		const secondKernel = createConsentKernel();
+		void firstKernel.commands.save(granted);
+		void secondKernel.commands.save(granted);
+		const first = createScriptLoader({
+			kernel: firstKernel,
+			scripts: [pendo({ apiKey: 'shared-key' })],
+		});
+		const second = createScriptLoader({
+			kernel: secondKernel,
+			scripts: [pendo({ apiKey: 'shared-key' })],
+		});
+		try {
+			const runtime = {
+				initialize: vi.fn(),
+				startSendingEvents: vi.fn(),
+				stopSendingEvents: vi.fn(),
+			};
+			window.pendo = runtime;
+			getLoader().dispatchEvent(new Event('load'));
+			await Promise.resolve();
+			expect(runtime.initialize).toHaveBeenCalledOnce();
+
+			void firstKernel.commands.save({ ...granted, measurement: false });
+			expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
+			void secondKernel.commands.save({ ...granted, marketing: true });
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(runtime.startSendingEvents).not.toHaveBeenCalled();
+		} finally {
+			first.dispose();
+			second.dispose();
+			firstKernel.dispose();
+			secondKernel.dispose();
+		}
 	});
 	it('does not initialize after in-flight withdrawal; first regrant initializes without changing identity', async () => {
 		const scripts = [pendo({ apiKey: 'late-key' })];

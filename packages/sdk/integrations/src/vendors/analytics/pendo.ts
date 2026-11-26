@@ -1,5 +1,10 @@
 /* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
-import type { AllConsentNames, Script } from '@inth/sdk/engine';
+import type {
+	AllConsentNames,
+	Script,
+	ScriptCallbackInfo,
+} from '@inth/sdk/engine';
+import { ALL_DENIED } from '@inth/sdk/manifest-runtime';
 import type { ManifestCondition } from '@inth/sdk/manifest-runtime';
 
 import { defineRemote } from '../../remote-define';
@@ -233,6 +238,33 @@ export const remote =
 const reusePendo = createScriptReuse<PendoOptions>();
 
 /**
+ * `script`, given the consent of every loader `createScriptReuse` shares it
+ * between: while one of them denies Pendo, the manifest sees every category
+ * denied. The remote form has one registration, so it needs none of this.
+ */
+const withSharedConsent = function withSharedConsent(script: Script): Script {
+	// `Object.create` keeps the info's other fields, enumerable or not.
+	const shared = (info: ScriptCallbackInfo): ScriptCallbackInfo =>
+		info.hasConsent
+			? info
+			: (Object.create(info, {
+					consents: { value: ALL_DENIED },
+				}) as ScriptCallbackInfo);
+	// `onBeforeLoad` reads no consent, and keeps the inline start that
+	// `serverStart` checks it against.
+	const { onConsentChange, onLoad } = script;
+	/* oxlint-disable integrations/no-vendor-callbacks -- npm-only: several loaders can share one Pendo script, and its consent is theirs combined */
+	if (onLoad) {
+		script.onLoad = (info) => onLoad(shared(info));
+	}
+	if (onConsentChange) {
+		script.onConsentChange = (info) => onConsentChange(shared(info));
+	}
+	/* oxlint-enable integrations/no-vendor-callbacks */
+	return script;
+};
+
+/**
  * Logs a loaded agent that installed no `window.pendo`, after each
  * callback that would have started or stopped it. A manifest cannot log:
  * `console` is a browser global, so the remote form stays silent.
@@ -289,10 +321,12 @@ export const pendo = function pendo(options: PendoOptions): Script {
 		});
 	}
 	return reusePendo(options, ({ scriptUrl, ...saved }) =>
-		logMissingApi(
-			withScriptUrl(
-				levelThreeScript(resolvePendoManifest({ ...saved, apiKey })),
-				scriptUrl
+		withSharedConsent(
+			logMissingApi(
+				withScriptUrl(
+					levelThreeScript(resolvePendoManifest({ ...saved, apiKey })),
+					scriptUrl
+				)
 			)
 		)
 	);
