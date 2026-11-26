@@ -759,6 +759,126 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('runs an adapter entry once its adapter loads for a later list, after the first download failed', async () => {
+		vi.resetModules();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const manifests = await import('../../manifest-runtime/index');
+		const { sentryAdapter } =
+			await import('../../manifest-runtime/adapters/sentry');
+		const loadAdapter = vi
+			.fn<() => Promise<typeof sentryAdapter>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValue(sentryAdapter);
+		const other = {
+			id: 'other',
+			integration: 'other',
+			manifest: acmeManifest({
+				alwaysLoad: true,
+				loadScript: { async: true, src: OTHER_SRC, type: 'loadScript' },
+				vendor: 'other',
+			}),
+		};
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: [sentryEntry()] },
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve(manifests.withAdapters(manifests, loadAdapter)),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(loadAdapter).toHaveBeenCalledOnce());
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		expect(tags(SENTRY_SRC)).toHaveLength(0);
+
+		answer.resolve({ scriptRegistry: { load: [sentryEntry(), other] } });
+
+		await vi.waitFor(() => expect(tags(OTHER_SRC)).toHaveLength(1));
+		await vi.waitFor(() => expect(tags(SENTRY_SRC)).toHaveLength(1));
+		runtime.dispose();
+	});
+
+	test.each([
+		[
+			'whose adapter options check throws',
+			async () => {
+				const manifests = await import('../../manifest-runtime/index');
+				const { sentryAdapter } =
+					await import('../../manifest-runtime/adapters/sentry');
+				return manifests.withAdapters(manifests, () =>
+					Promise.resolve({
+						...sentryAdapter,
+						problem: () => {
+							throw new Error('broken check');
+						},
+					})
+				);
+			},
+		],
+		[
+			'whose parse throws',
+			async () => {
+				const manifests = await import('../../manifest-runtime/index');
+				return {
+					...manifests,
+					parseResolvedManifest: (value: unknown) => {
+						if ((value as { vendor?: unknown }).vendor === 'sentry') {
+							throw new Error('broken parser');
+						}
+						return manifests.parseResolvedManifest(value);
+					},
+				};
+			},
+		],
+	])(
+		'refuses only an entry %s, and runs the rest of the list',
+		async (_label, loadManifestRuntime) => {
+			vi.resetModules();
+			const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+			const runtime = createConsentRuntimeWith(
+				{
+					enabled: false as const,
+					mode: quietMode,
+					persistence: false,
+					prefetch: {
+						initialScriptRegistry: { load: [...load(), sentryEntry()] },
+					},
+					remoteScripts: true,
+					scriptLoader: { onDebug },
+				},
+				{ ...defaultRuntimeModules, loadManifestRuntime }
+			);
+			runtime.start();
+
+			await vi.waitFor(() => expect(tags()).toHaveLength(1));
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message: expect.stringMatching(
+						/^Remote script sentry \(sentry\) does not load: .*broken/u
+					),
+					scriptId: 'sentry',
+				})
+			);
+			expect(tags(SENTRY_SRC)).toHaveLength(0);
+			runtime.dispose();
+		}
+	);
+
 	test('refuses an entry that names an adapter this SDK does not ship', async () => {
 		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
 		const runtime = startOff({

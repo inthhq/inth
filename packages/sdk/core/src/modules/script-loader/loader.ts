@@ -1061,25 +1061,36 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			if (cached?.manifest === manifest) {
 				({ script } = cached);
 			} else {
-				const parsed = loaded.parseResolvedManifest(entry.manifest);
-				if (parsed.ok) {
-					const fresh = shareRemote(holder, manifest, () =>
-						loaded.resolvedManifestToScript(parsed.manifest)
-					);
-					sharedKeys.set(fresh, manifest);
-					heldKeys.add(manifest);
-					remoteObjects.add(fresh);
-					remoteEntryIds.set(fresh, entry.id);
-					script = keepStarted(cached?.script, fresh);
-				} else {
+				let refusal: { reason: string; needsCode?: true } | undefined;
+				try {
+					const parsed = loaded.parseResolvedManifest(entry.manifest);
+					if (parsed.ok) {
+						const fresh = shareRemote(holder, manifest, () =>
+							loaded.resolvedManifestToScript(parsed.manifest)
+						);
+						sharedKeys.set(fresh, manifest);
+						heldKeys.add(manifest);
+						remoteObjects.add(fresh);
+						remoteEntryIds.set(fresh, entry.id);
+						script = keepStarted(cached?.script, fresh);
+					} else {
+						refusal = parsed;
+					}
+				} catch (error) {
+					// A check or an adapter that throws refuses only this entry.
+					refusal = {
+						reason: `checking or building it threw${error instanceof Error ? `: ${error.message}` : ''}`,
+					};
+				}
+				if (refusal) {
 					reportRemote(
 						'error',
 						entry.id,
-						`Remote script ${entry.id} (${entry.integration}) does not load: ${parsed.reason}.`
+						`Remote script ${entry.id} (${entry.integration}) does not load: ${refusal.reason}.`
 					);
 					// Parse it again for a later list, once the code it needs
 					// may have loaded.
-					if (parsed.needsCode) {
+					if (refusal.needsCode) {
 						continue;
 					}
 				}

@@ -131,7 +131,13 @@ export const withAdapters = function withAdapters(
 			}
 			const reason = adapterProblem(adapter, loaded);
 			if (reason !== undefined) {
-				return { ok: false, reason };
+				const id = (adapter as { id?: unknown } | null)?.id;
+				// An adapter this SDK ships that has not loaded may load for a
+				// later list.
+				return levelOf(ADAPTER_LEVELS, id) !== undefined &&
+					!isLoaded(loaded.get(id as string))
+					? { needsCode: true, ok: false, reason }
+					: { ok: false, reason };
 			}
 			const parsed = runtime.parseResolvedManifest(rest);
 			return parsed.ok
