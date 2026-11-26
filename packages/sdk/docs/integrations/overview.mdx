@@ -217,24 +217,29 @@ const manifest = remoteIntegrations.googleTagManager?.resolveRemote(
 );
 ```
 
-| Key | Options |
-| --- | --- |
-| `googleTagManager` | `id` (`GTM-`), `loadMode`: `always` or `after-consent` |
-| `gtag` | `id` (`G-`, `GT-`, `AW-` or `DC-`), `category`: `measurement` or `marketing`, `loadMode` |
-| `metaPixel` | `pixelId` |
-| `posthog` | `id` (`phc_`), `region`: `eu` or `us`, `loadMode` |
-| `microsoft-clarity` | `id` |
-| `tiktokPixel` | `pixelId` |
-| `linkedinInsights` | `id` |
+<include src="../shared/reference/remote-integrations.mdx" />
 
-- An option is an ID that must match its `pattern`, or one of a closed list of values. No option can set a host, a URL, an object or a function, so script URL overrides, init options and consent mappings stay npm-only.
-- `validateRemoteOptions` rejects unknown keys, missing IDs, pattern mismatches, URLs and values outside a list, and fills in list defaults. `resolveRemote` throws on options that fail validation and returns a new object on every call.
+Each entry's `options` is plain data, so a settings form can render from it. Every option has a `kind`, and every value is JSON:
+
+| Kind | Value |
+| --- | --- |
+| `id` | A string that matches `pattern`, such as `example`. |
+| `hostname` | A DNS name such as `go.example.com`: lowercase labels, with no scheme, port, path, credentials or IP address. Only for a tracker on the customer's own domain. |
+| `enum` | One of `values`. Missing takes `default`. |
+| `boolean` | `true` or `false`. Missing takes `default`. |
+| `number` | A finite number within `min` and `max`; with `integer`, no fraction. |
+| `idList` | Up to `maxItems` distinct strings, each matching `pattern`. |
+| `object` | The declared `fields` only, each a scalar kind or one more object of scalars. |
+| `map` | Up to `maxEntries` keys matching `keyPattern`, each mapped to one of `values`. |
+
+No kind takes a URL or a function, so script URL overrides, init options and callbacks stay npm-only. A string that looks like a URL fails in every kind.
+
+- `validateRemoteOptions` rejects unknown keys at any depth, missing required values, wrong types, values outside a pattern, range or list, and URL-shaped strings, with one issue per problem. It fills in `enum` and `boolean` defaults. `resolveRemote` throws on options that fail validation and returns a new object on every call.
 - A remote entry builds the same script as its npm helper called with the same options, including the helper's consent settings. Google Tag Manager still loads before a choice in the `necessary` category. With `loadMode: 'after-consent'` it waits until `measurement` or `marketing` is allowed, which an opt-out policy can allow before any choice.
-- Each entry's `options` is plain data, so a settings form can render from it.
 
 A manifest that needs a manifest runtime above level 1 carries `requires`, the level it needs. Every manifest today is level 1 and carries no `requires`. The SDK sends its own level as the `manifestLevel` query parameter on `/v1/consent/init` and `/v1/consent/manifest`, and refuses a manifest whose `requires` is higher. On the server, call `manifestLevel(manifest)`, set `requires` to the result when it is above 1, and list an entry only for a request whose `manifestLevel` is at least that level. Read a request without `manifestLevel` as level 1.
 
-Integrations that run their own lifecycle code, such as HubSpot and Sentry, stay npm-only.
+Each vendor file exports its entry as `remote`, made with `defineRemote` from the resolver its npm helper calls, and `remoteIntegrations` collects them from the integrations registry. Integrations that run their own lifecycle code, such as HubSpot and Sentry, stay npm-only until the SDK can run them from a manifest.
 
 The script tag loads these integrations by default; set `data-remote-scripts="false"` on it to turn that off. With npm, only React and the core runtime support it so far: set `remoteScripts: true`, such as `<InthProvider options={{ remoteScripts: true }}>`. The Vue, Svelte, Angular and Astro packages don't pass the option on yet. A script your site declares in code for the same integration wins over the one from the server.
 
