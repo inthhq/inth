@@ -119,23 +119,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	const remoteObjects = new WeakSet<Script>();
 	/** The remote scripts in the registered list, by id. */
 	let activeRemote = new Map<string, Script>();
-	/**
-	 * Each remote script's manifest without its category. Two scripts with
-	 * the same setup are one lifecycle: a server list that changes only an
-	 * entry's category keeps it running, as a helper rerendered with a new
-	 * category does.
-	 */
-	const remoteSetup = new WeakMap<Script, string>();
-	/** Whether two remote scripts with one ID run the same setup. */
-	const sameRemoteSetup = (
-		current: Script | undefined,
-		next: Script | undefined
-	): boolean =>
-		current === next ||
-		(current !== undefined &&
-			next !== undefined &&
-			remoteSetup.has(current) &&
-			remoteSetup.get(current) === remoteSetup.get(next));
 	/** Whether a code script claims a remote entry's integration. */
 	/**
 	 * What code scripts claim: each one's `integration ?? vendor ?? id`, and
@@ -803,15 +786,14 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			} else if (retainedElements.has(script.id)) {
 				mountedCallbackOnly = false;
 			}
-			// A script that moves between code and the Inth server's list, or
-			// whose server manifest changed other than its category, starts a
-			// fresh lifecycle, even when it loads the same file.
+			// A script that moves between code and the Inth server's list
+			// starts a fresh lifecycle, even when it loads the same file. A
+			// server list that changes a running entry's manifest keeps it
+			// running, as a helper rerendered with new options does: its new
+			// category applies now, and the rest of its setup on the next page.
 			if (
 				replacement &&
-				sameRemoteSetup(
-					activeRemote.get(script.id),
-					nextRemote.get(script.id)
-				) &&
+				activeRemote.has(script.id) === nextRemote.has(script.id) &&
 				script.onDispose === replacement.onDispose &&
 				(!script.onDispose || !mountedCallbackOnly) &&
 				hasSameResource(script, replacement)
@@ -931,10 +913,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				if (parsed.ok) {
 					script = loaded.resolvedManifestToScript(parsed.manifest);
 					remoteObjects.add(script);
-					remoteSetup.set(
-						script,
-						JSON.stringify({ ...entry.manifest, category: undefined })
-					);
 				} else {
 					reportRemote(
 						'error',

@@ -306,7 +306,7 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
-	test('runs the new setup when a later init changes a manifest but not its file', async () => {
+	test('keeps the running setup when a later init changes a manifest but not its file, as a rerendered helper does', async () => {
 		const withAccount = (account: string) =>
 			load(
 				acmeManifest({
@@ -335,15 +335,21 @@ describe('remoteScripts', () => {
 		runtime.start();
 		await vi.waitFor(() => expect(tags()).toHaveLength(1));
 
-		answer.resolve({ scriptRegistry: { load: withAccount('ACME-NEW') } });
+		const [tag] = tags();
 
+		answer.resolve({ scriptRegistry: { load: withAccount('ACME-NEW') } });
 		await vi.waitFor(() =>
-			expect((window as { acmeQueue?: unknown[] }).acmeQueue).toContainEqual([
-				'init',
-				'ACME-NEW',
-			])
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
 		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		const queue = (window as { acmeQueue?: unknown[] }).acmeQueue;
+		expect(queue).toContainEqual(['init', 'ACME-OLD']);
+		expect(queue).not.toContainEqual(['init', 'ACME-NEW']);
 		expect(tags()).toHaveLength(1);
+		expect(tags()[0]).toBe(tag);
 		runtime.dispose();
 	});
 
@@ -390,6 +396,43 @@ describe('remoteScripts', () => {
 				(item) => JSON.stringify(item) === JSON.stringify(['init', 'ACME-1'])
 			)
 		).toHaveLength(1);
+		runtime.dispose();
+	});
+
+	test('stops a running script when a later init moves it to a denied category', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const runtime = createConsentRuntime({
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(
+					optOutRule({ id: 'opt-out' })
+				),
+				initialScriptRegistry: {
+					load: load(acmeManifest({ category: 'measurement' })),
+				},
+			},
+			reloadOnConsentRevoked: false,
+			remoteScripts: true,
+		});
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		await runtime.kernel.commands.save({
+			marketing: false,
+			measurement: true,
+		});
+
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: { load: load(acmeManifest({ category: 'marketing' })) },
+		});
+
+		await vi.waitFor(() => expect(tags()).toHaveLength(0));
 		runtime.dispose();
 	});
 
