@@ -2,6 +2,12 @@
 	"name": "sentry.cdn",
 	"scenarios": {
 		"denied, grant, load, revoke, regrant, dispose": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start denied" },
 			{
 				"insert": "script",
@@ -53,6 +59,11 @@
 				}
 			},
 			{ "step": "deny" },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{ "step": "grant" },
 			{ "step": "load" },
@@ -84,12 +95,28 @@
 			},
 			{ "step": "dispose" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
 			}
 		],
 		"granted, load, dispose": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start granted" },
 			{
 				"insert": "script",
@@ -140,12 +167,28 @@
 				}
 			},
 			{ "step": "dispose" },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
 			}
 		],
 		"replace with identical options while granted": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start granted" },
 			{
 				"insert": "script",
@@ -225,12 +268,28 @@
 			},
 			{ "step": "dispose" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
 			}
 		],
 		"replace while a revoke is pending": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start granted" },
 			{
 				"insert": "script",
@@ -281,6 +340,11 @@
 				}
 			},
 			{ "step": "replace-while-revoke-pending" },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{ "step": "grant" },
 			{ "step": "load" },
@@ -312,12 +376,28 @@
 			},
 			{ "step": "dispose" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
 			}
 		],
 		"load after the element was removed": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start granted" },
 			{
 				"insert": "script",
@@ -349,6 +429,12 @@
 			{ "step": "dispose" }
 		],
 		"grant then revoke in the same tick": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start denied" },
 			{
 				"insert": "script",
@@ -379,7 +465,27 @@
 			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
 			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
 			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{
 				"global": "Sentry",
 				"value": {
@@ -430,12 +536,28 @@
 			},
 			{ "step": "dispose" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"
 			}
 		],
 		"consent reaches the client": [
+			{
+				"storage": "session",
+				"op": "setItem",
+				"key": "sentryReplaySession",
+				"value": "{\"id\":\"earlier-session\"}"
+			},
 			{ "step": "start denied" },
 			{
 				"insert": "script",
@@ -465,7 +587,27 @@
 			{ "call": "client.addEventProcessor", "args": ["[Function]"] },
 			{ "call": "client.on", "args": ["beforeEnvelope", "[Function]"] },
 			{ "call": "client.on", "args": ["beforeSendSession", "[Function]"] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{
 				"global": "Sentry",
 				"value": {
@@ -532,6 +674,11 @@
 			},
 			{ "step": "deny" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{ "step": "read the client options" },
 			{
@@ -543,6 +690,16 @@
 			},
 			{ "step": "dispose" },
 			{ "call": "replay.stop", "args": [{ "flush": false }] },
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
+			{
+				"storage": "session",
+				"op": "removeItem",
+				"key": "sentryReplaySession"
+			},
 			{ "call": "Sentry.setUser", "args": [null] },
 			{
 				"remove": "[<script> #inth-#1 https://browser.sentry-cdn.com/11.4.0/bundle.min.js]"

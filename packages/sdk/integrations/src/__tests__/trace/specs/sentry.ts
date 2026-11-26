@@ -133,6 +133,8 @@ export const sentryCdnTrace: TraceSpec = {
 	setup() {
 		client = undefined;
 		state = undefined;
+		// A Replay session from an earlier page view, which a stop must forget.
+		sessionStorage.setItem('sentryReplaySession', '{"id":"earlier-session"}');
 	},
 	// The adapter waits for paint, load and idle before it starts Replay.
 	stepMs: 10_000,

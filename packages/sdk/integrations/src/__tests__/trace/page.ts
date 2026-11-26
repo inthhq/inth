@@ -239,10 +239,49 @@ const fakeIdleCallbacks = () => {
 	});
 };
 
+type StorageArea = 'local' | 'session';
+
+/** Records writes to both storage areas as `{ storage, op, key, value }`. */
+const recordStorage = (
+	win: Window,
+	push: TraceRecorder['push']
+): (() => void) => {
+	const areaOf = (storage: unknown): StorageArea =>
+		storage === win.localStorage ? 'local' : 'session';
+	const proto = (win as Window & typeof globalThis).Storage.prototype;
+	const { clear, removeItem, setItem } = proto;
+	const setSpy = vi
+		.spyOn(proto, 'setItem')
+		.mockImplementation(function recordSet(this: Storage, key, value) {
+			// oxlint-disable-next-line sort-keys -- A fixture line reads area, operation, key, value.
+			push({ storage: areaOf(this), op: 'setItem', key, value: String(value) });
+			setItem.call(this, key, value);
+		});
+	const removeSpy = vi
+		.spyOn(proto, 'removeItem')
+		.mockImplementation(function recordRemove(this: Storage, key) {
+			// oxlint-disable-next-line sort-keys -- See above.
+			push({ storage: areaOf(this), op: 'removeItem', key });
+			removeItem.call(this, key);
+		});
+	const clearSpy = vi
+		.spyOn(proto, 'clear')
+		.mockImplementation(function recordClear(this: Storage) {
+			// oxlint-disable-next-line sort-keys -- See above.
+			push({ storage: areaOf(this), op: 'clear' });
+			clear.call(this);
+		});
+	return () => {
+		setSpy.mockRestore();
+		removeSpy.mockRestore();
+		clearSpy.mockRestore();
+	};
+};
+
 /**
  * Fixes time, randomness and idle callbacks, so queued timestamps and IDs
- * repeat, and records console output and cookie writes. Returns what
- * undoes it.
+ * repeat, and records console output, cookie writes and storage writes.
+ * Returns what undoes it.
  */
 export const installPageFakes = function installPageFakes(
 	push: TraceRecorder['push']
@@ -270,6 +309,7 @@ export const installPageFakes = function installPageFakes(
 		vi.stubGlobal('localStorage', storage.localStorage);
 		vi.stubGlobal('sessionStorage', storage.sessionStorage);
 	}
+	const restoreStorage = storage ? recordStorage(storage, push) : () => {};
 	recordCookies(push);
 	return () => {
 		vi.clearAllTimers();
@@ -278,6 +318,7 @@ export const installPageFakes = function installPageFakes(
 		document.body.replaceChildren();
 		Reflect.deleteProperty(document, 'cookie');
 		clearCookies();
+		restoreStorage();
 		storage?.localStorage.clear();
 		storage?.sessionStorage.clear();
 		vi.unstubAllGlobals();

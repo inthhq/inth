@@ -8,6 +8,7 @@
  * - `call`: a call on a vendor global the spec stubbed;
  * - `insert` / `remove` / `attr` / `text`: DOM changes, any parent;
  * - `cookie`: a `document.cookie` write;
+ * - `storage`: a `setItem`, `removeItem` or `clear` on local or session storage;
  * - `load` / `error`: the harness completing a vendor file;
  * - `global` / `deleted`: `window` properties that changed during a step;
  * - `warn` / `consoleError` / `callbackError`: diagnostics.
