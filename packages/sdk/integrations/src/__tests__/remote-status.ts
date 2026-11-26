@@ -40,7 +40,6 @@ export const remoteStatus = {
 	pendo: level3,
 	pirsch: level3,
 	sentry: adapterSentry,
-	vercelSpeedInsights: level2Lifecycle,
 	zendeskWidget: level3,
 } as const satisfies Partial<Record<BuiltInScriptIntegrationKey, RemoteStatus>>;
 

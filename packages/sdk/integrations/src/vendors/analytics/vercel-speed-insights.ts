@@ -1,9 +1,15 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { trimToUndefined } from '../_shared/script-url';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
+import { runtimeConsentGateValue, vendorManifestContract } from '../../types';
+import type {
+	ManifestStep,
+	ResolvedManifest,
+	VendorManifest,
+} from '../../types';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 export type VercelSpeedInsightsMode = 'auto' | 'development' | 'production';
 
@@ -29,10 +35,24 @@ type SpeedInsightsWindow = Window & {
 };
 
 /**
+ * Hands the collector the script's consent gate as its `beforeSend`, which
+ * drops every report while measurement is not allowed and after the script
+ * is disposed. The collector holds one `beforeSend`, and another
+ * registration may have set its own, so the gate is set again on every
+ * consent change. A server render leaves this step to hydration: the gate
+ * is the browser's own function.
+ */
+const registerConsentGate = {
+	args: ['beforeSend', runtimeConsentGateValue],
+	global: 'si',
+	type: 'callGlobal',
+} as const satisfies ManifestStep;
+
+/**
  * Vercel Speed Insights vendor manifest.
  *
- * Seeds the `si` queue the collector replays when it starts, then loads the
- * collector.
+ * Seeds the `si` queue the collector replays when it starts, registers the
+ * consent gate, then loads the collector.
  */
 export const vercelSpeedInsightsManifest = {
 	...vendorManifestContract,
@@ -57,6 +77,7 @@ export const vercelSpeedInsightsManifest = {
 	],
 	category: 'measurement',
 	install: [
+		registerConsentGate,
 		{
 			attributes: {
 				'data-dsn': '{{dsn}}',
@@ -67,11 +88,11 @@ export const vercelSpeedInsightsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://va.vercel-scripts.com/v1/speed-insights/{{scriptFile}}',
 			type: 'loadScript',
 		},
 	],
+	onConsentChange: [registerConsentGate],
 	vendor: 'vercel-speed-insights',
 	vendorDetails: {
 		homepageUrl: 'https://vercel.com/products/speed-insights',
@@ -79,6 +100,16 @@ export const vercelSpeedInsightsManifest = {
 		name: 'Vercel Speed Insights',
 		privacyPolicyUrl: 'https://vercel.com/legal/privacy-notice',
 	},
+} as const satisfies VendorManifest;
+
+/**
+ * {@link vercelSpeedInsightsManifest} without the consent gate, for the npm
+ * helper with a site's `beforeSend`, which registers its own gate around it.
+ */
+const siteGateManifest = {
+	...vercelSpeedInsightsManifest,
+	install: [vercelSpeedInsightsManifest.install[1]],
+	onConsentChange: [],
 } as const satisfies VendorManifest;
 
 export interface VercelSpeedInsightsOptions {
@@ -105,20 +136,6 @@ export interface VercelSpeedInsightsOptions {
 	beforeSend?: VercelSpeedInsightsBeforeSend;
 }
 
-const getSpeedInsightsScriptUrl = function getSpeedInsightsScriptUrl(
-	options: VercelSpeedInsightsOptions
-): string {
-	const scriptUrl = trimToUndefined(options.scriptUrl);
-	if (scriptUrl) {
-		return scriptUrl;
-	}
-	if (options.mode === 'development' || options.debug) {
-		return 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js';
-	}
-
-	return 'https://va.vercel-scripts.com/v1/speed-insights/script.js';
-};
-
 const getSampleRateAttribute = function getSampleRateAttribute(
 	sampleRate: number | undefined
 ): string | undefined {
@@ -132,6 +149,111 @@ const getSampleRateAttribute = function getSampleRateAttribute(
 	}
 
 	return String(sampleRate);
+};
+
+type ManifestOptions = Omit<
+	VercelSpeedInsightsOptions,
+	'scriptUrl' | 'beforeSend'
+>;
+
+const compile = (
+	manifest: VendorManifest,
+	{ dsn, mode, debug, endpoint, sampleRate }: ManifestOptions
+): ResolvedManifest =>
+	getCompiledManifest(manifest, {
+		dsn: trimToUndefined(dsn),
+		endpoint: trimToUndefined(endpoint),
+		sampleRate: getSampleRateAttribute(sampleRate),
+		scriptFile:
+			mode === 'development' || debug ? 'script.debug.js' : 'script.js',
+	});
+
+/**
+ * Builds the serializable manifest behind {@link vercelSpeedInsights}
+ * without a `beforeSend`. `mode` and `endpoint` stay npm-only.
+ *
+ * @throws {TypeError} When `sampleRate` is not a number from 0 to 1.
+ */
+export const resolveVercelSpeedInsightsManifest =
+	function resolveVercelSpeedInsightsManifest(
+		options: ManifestOptions
+	): ResolvedManifest {
+		return compile(vercelSpeedInsightsManifest, options);
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'vercelSpeedInsights',
+		{
+			debug: {
+				default: false,
+				kind: 'boolean',
+				label: 'Load the debug bundle',
+			},
+			dsn: {
+				example: 'prj_AbC123dEf456',
+				kind: 'id',
+				label: 'Project DSN',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: false,
+			},
+			sampleRate: {
+				example: 0.5,
+				kind: 'number',
+				label: 'Share of page loads that report',
+				max: 1,
+				min: 0,
+				required: false,
+			},
+		},
+		resolveVercelSpeedInsightsManifest
+	);
+
+/**
+ * The site's `beforeSend` behind a consent gate of its own, an npm-only
+ * extra: a manifest cannot carry the site's function. Registered on every
+ * callback the manifest's gate would be.
+ */
+const withSiteBeforeSend = function withSiteBeforeSend(
+	script: Script,
+	beforeSend: VercelSpeedInsightsBeforeSend
+): Script {
+	let hasConsent = false;
+	const gate: VercelSpeedInsightsBeforeSend = (event) =>
+		hasConsent ? beforeSend(event) : null;
+	const applyConsent = ({ hasConsent: allowed }: ScriptCallbackInfo): void => {
+		hasConsent = allowed;
+		(window as SpeedInsightsWindow).si?.('beforeSend', gate);
+	};
+	const { onBeforeLoad, onConsentChange } = script;
+	return {
+		...script,
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: gates the site's beforeSend function
+		onBeforeLoad(info) {
+			onBeforeLoad?.(info);
+			applyConsent(info);
+		},
+		onConsentChange(info) {
+			onConsentChange?.(info);
+			applyConsent(info);
+		},
+		// Disposing the loader calls no consent callback, and the collector
+		// keeps running. Close this gate without registering it again: a
+		// replacement may already have registered its own.
+		onDispose() {
+			hasConsent = false;
+		},
+		// A `beforeSend` must see every report, and the HTML would start the
+		// collector before hydration registers the gate, so the script loader
+		// starts it after hydration.
+		serverStart: undefined,
+	};
 };
 
 /**
@@ -153,69 +275,22 @@ const getSampleRateAttribute = function getSampleRateAttribute(
  * vercelSpeedInsights({ sampleRate: 0.5 });
  * ```
  */
-export const vercelSpeedInsights = function vercelSpeedInsights(
-	options: VercelSpeedInsightsOptions = {}
-): Script {
-	const resolved = resolveManifest(vercelSpeedInsightsManifest, {
-		dsn: trimToUndefined(options.dsn),
-		endpoint: trimToUndefined(options.endpoint),
-		sampleRate: getSampleRateAttribute(options.sampleRate),
-		scriptUrl: getSpeedInsightsScriptUrl(options),
-	});
-
-	let hasConsent = false;
-	const { beforeSend } = options;
-	const gate: VercelSpeedInsightsBeforeSend = (event) => {
-		if (!hasConsent) {
-			return null;
-		}
-
-		return beforeSend ? beforeSend(event) : event;
-	};
-
-	// The collector holds one `beforeSend` callback, and another helper
-	// instance may have registered its own, so register on every change.
-	const applyConsent = ({ hasConsent: allowed }: ScriptCallbackInfo): void => {
-		hasConsent = allowed;
-		(window as SpeedInsightsWindow).si?.('beforeSend', gate);
-	};
-
-	const manifestOnBeforeLoad = resolved.onBeforeLoad;
-	const onBeforeLoad: Script['onBeforeLoad'] = (info) => {
-		manifestOnBeforeLoad?.(info);
-		applyConsent(info);
-	};
-	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-	resolved.onBeforeLoad = onBeforeLoad;
-
-	// The HTML starts the collector only when consent allows it, and nothing
-	// can revoke consent before hydration registers the gate, so until then
-	// the gate would pass every report. A `beforeSend` must see every report,
-	// so with one the script loader starts the collector after hydration.
-	const manifestServerStart = resolved.serverStart;
-	resolved.serverStart =
-		beforeSend || !manifestServerStart
-			? undefined
-			: (info, started) =>
-					started.onBeforeLoad === onBeforeLoad
-						? manifestServerStart(info, {
-								...started,
-								onBeforeLoad: manifestOnBeforeLoad,
-							})
-						: undefined;
-
-	const manifestOnConsentChange = resolved.onConsentChange;
-	resolved.onConsentChange = (info) => {
-		manifestOnConsentChange?.(info);
-		applyConsent(info);
-	};
-
-	// Disposing the loader calls no consent callback, and the collector keeps
-	// running. Close this instance's gate without registering it again: a
-	// replacement loader may already have registered its own.
-	resolved.onDispose = () => {
-		hasConsent = false;
-	};
-
-	return resolved;
+export const vercelSpeedInsights = function vercelSpeedInsights({
+	beforeSend,
+	scriptUrl,
+	...options
+}: VercelSpeedInsightsOptions = {}): Script {
+	if (!beforeSend) {
+		return withScriptUrl(
+			resolvedManifestToScript(resolveVercelSpeedInsightsManifest(options)),
+			scriptUrl
+		);
+	}
+	return withSiteBeforeSend(
+		withScriptUrl(
+			resolvedManifestToScript(compile(siteGateManifest, options)),
+			scriptUrl
+		),
+		beforeSend
+	);
 };

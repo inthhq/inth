@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -9,6 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { vercelSpeedInsights } from './vendors/analytics/vercel-speed-insights';
@@ -113,3 +115,51 @@ describe('Vercel Speed Insights loader contract', () => {
 		expect(send()).toBeNull();
 	});
 });
+
+describe.each(npmAndRemote('vercelSpeedInsights', vercelSpeedInsights))(
+	'Vercel Speed Insights dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('loads the debug collector after measurement consent and drops reports once consent goes', async () => {
+			let beforeSend: VercelSpeedInsightsBeforeSend | undefined;
+			const append = installHeadProbe((node, win) => {
+				if (!node.src.endsWith('/v1/speed-insights/script.debug.js')) {
+					return;
+				}
+				const siWindow = win as SpeedInsightsWindow;
+				siWindow.sil = true;
+				const queued = siWindow.siq ?? [];
+				siWindow.si = (action, handler) => {
+					if (action === 'beforeSend') {
+						beforeSend = handler;
+					}
+				};
+				for (const [action, handler] of queued) {
+					siWindow.si(action, handler);
+				}
+			});
+			const scripts = [
+				build({ debug: true, dsn: 'prj_abc123', sampleRate: 0.25 }),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(append).not.toHaveBeenCalled();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			const [element] = append.mock.calls[0] ?? [];
+			expect(element).toBeInstanceOf(HTMLScriptElement);
+			expect((element as HTMLScriptElement).src).toBe(
+				'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js'
+			);
+			expect((element as HTMLScriptElement).dataset).toMatchObject({
+				dsn: 'prj_abc123',
+				sampleRate: '0.25',
+			});
+			expect(beforeSend?.(event)).toEqual(event);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(beforeSend?.(event)).toBeNull();
+		});
+	}
+);
