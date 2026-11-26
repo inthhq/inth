@@ -1,0 +1,32 @@
+name: Draft PRs
+
+# GitHub has no setting that opens pull requests as drafts. This converts a
+# pull request opened as ready for review back to a draft. The author marks it
+# ready once its checks pass and it is worth a reviewer's time.
+#
+# pull_request_target gives fork PRs a token that can write. The job only calls
+# the API and never checks out or runs the PR's code.
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] no checkout, API call only
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  draft:
+    name: Convert to draft
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      # convertPullRequestToDraft fails with "Resource not accessible by
+      # integration" unless the token can also write contents.
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Convert to draft
+        run: gh pr ready --undo "$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
