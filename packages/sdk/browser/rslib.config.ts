@@ -97,6 +97,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-fullstory',
 	'inth.adapter-gainsight-px',
 	'inth.adapter-lucky-orange',
+	'inth.adapter-gorgias',
 	'inth.adapter-zendesk',
 	'inth.adapter-ada',
 ]);
@@ -318,6 +319,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-lucky-orange',
 			'./src/entries/cdn-adapter-lucky-orange.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-gorgias',
+			'./src/entries/cdn-adapter-gorgias.ts'
 		),
 		scriptTagLib(
 			'inth.adapter-zendesk',

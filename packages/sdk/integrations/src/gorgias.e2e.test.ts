@@ -13,11 +13,13 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { fromRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { gorgiasChat } from './vendors/functional/gorgias';
@@ -384,3 +386,84 @@ describe('Gorgias Chat loader contract', () => {
 		expect({ ...window.sessionStorage }).toEqual(session);
 	});
 });
+
+/**
+ * Gorgias's chat API as its loader installs it: until `init()` resolves,
+ * a Proxy that throws on every read but `init`.
+ */
+const installLoaderProxy = function installLoaderProxy() {
+	let ready = false;
+	const disableSegment = vi.fn();
+	const init = vi.fn(() => {
+		ready = true;
+		return Promise.resolve();
+	});
+	window.GorgiasChat = new Proxy({ disableSegment, init } as never, {
+		get(target: Record<string, unknown>, name) {
+			if (name !== 'init' && !ready) {
+				throw new Error(`GorgiasChat.${String(name)} before init()`);
+			}
+			return target[name as string];
+		},
+	});
+	return { disableSegment, init };
+};
+
+/** Options as a dashboard saves them: the snippet version as text. */
+interface DashboardOptions {
+	appKey: string;
+	version: '2' | '3';
+}
+
+describe.each([
+	[
+		'npm helper',
+		({ appKey, version }: DashboardOptions) =>
+			gorgiasChat({ appKey, version: version === '2' ? 2 : 3 }),
+	],
+	[
+		'remote manifest',
+		(options: DashboardOptions) => fromRemote('gorgiasChat', options),
+	],
+] as const)(
+	'Gorgias Chat dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.GorgiasChat;
+		});
+
+		it('awaits init() on the loader proxy, then disables Segment while measurement is denied', async () => {
+			const scripts = [build({ appKey: 'app-key', version: '3' })];
+			loadScripts(scripts, grantedConsents);
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe(
+				'https://config.gorgias.chat/bundle-loader/app-key'
+			);
+			const { disableSegment, init } = installLoaderProxy();
+			loader.dispatchEvent(new Event('load'));
+
+			await vi.waitFor(() => expect(disableSegment).toHaveBeenCalledOnce());
+			expect(init).toHaveBeenCalledOnce();
+		});
+
+		it('loads the v2 loader and keeps Segment while measurement is granted', async () => {
+			const scripts = [build({ appKey: 'app-key', version: '2' })];
+			loadScripts(scripts, { ...grantedConsents, measurement: true });
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe(
+				'https://config.gorgias.chat/gorgias-chat-bundle-loader.js?applicationId=app-key'
+			);
+			const { disableSegment, init } = installLoaderProxy();
+			loader.dispatchEvent(new Event('load'));
+			await vi.waitFor(() => expect(init).toHaveBeenCalledOnce());
+			await Promise.resolve();
+			expect(disableSegment).not.toHaveBeenCalled();
+
+			updateScripts(scripts, grantedConsents);
+			expect(disableSegment).toHaveBeenCalledOnce();
+		});
+	}
+);

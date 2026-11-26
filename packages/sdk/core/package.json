@@ -210,6 +210,11 @@
 			"import": "./dist/manifest-runtime/adapters/zendesk.js",
 			"default": "./dist/manifest-runtime/adapters/zendesk.js"
 		},
+		"./manifest-runtime/adapters/gorgias": {
+			"types": "./dist-types/manifest-runtime/adapters/gorgias.d.ts",
+			"import": "./dist/manifest-runtime/adapters/gorgias.js",
+			"default": "./dist/manifest-runtime/adapters/gorgias.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

@@ -22,6 +22,7 @@ const ADAPTER_MODULES: Record<
 	fullstory: async () => (await import('./fullstory')).fullStoryAdapter,
 	'gainsight-px': async () =>
 		(await import('./gainsight-px')).gainsightPxAdapter,
+	gorgias: async () => (await import('./gorgias')).gorgiasAdapter,
 	hubspot: async () => (await import('./hubspot')).hubspotAdapter,
 	'lucky-orange': async () =>
 		(await import('./lucky-orange')).luckyOrangeAdapter,

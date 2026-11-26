@@ -57,6 +57,7 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
  * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
  * `inth.adapter-ada.js`, Ada's start and stop chain: 932.
+ * `inth.adapter-gorgias.js`, Gorgias's wait for init() and Segment switch: 665.
  * `inth.adapter-zendesk.js`, Zendesk's loader reference and cookie range: 741.
  */
 const BUDGETS = {
@@ -69,6 +70,7 @@ const BUDGETS = {
 	'inth.adapter-default-com.js': 2280,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
+	'inth.adapter-gorgias.js': 690,
 	'inth.adapter-hubspot.js': 2830,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-oracle-eloqua.js': 2110,
@@ -76,7 +78,7 @@ const BUDGETS = {
 	'inth.adapter-sentry.js': 6280,
 	'inth.adapter-zendesk.js': 770,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 12110,
+	'inth.manifests3.js': 12140,
 };
 
 it.each(Object.entries(BUDGETS))(

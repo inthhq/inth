@@ -1,8 +1,11 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { gorgiasScript } from '@inth/sdk/manifest-runtime/adapters/gorgias';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 
 interface GorgiasChatApi {
@@ -16,18 +19,22 @@ declare global {
 	}
 }
 
-/** Gorgias Chat loader, gated on functionality consent. */
+/**
+ * Gorgias Chat loader, gated on functionality consent. The Gorgias adapter
+ * in `@inth/sdk` waits for the chat and disables Segment while measurement
+ * is denied.
+ */
 export const gorgiasChatManifest = {
 	...vendorManifestContract,
 	category: 'functionality',
 	install: [
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the helper fills the whole URL from a fixed vendor host
-			src: '{{scriptSrc}}',
+			src: 'https://config.gorgias.chat/{{loaderPath}}',
 			type: 'loadScript',
 		},
 	],
+	target: 'body',
 	vendor: 'gorgias',
 	vendorDetails: {
 		homepageUrl: 'https://www.gorgias.com/',
@@ -44,14 +51,56 @@ export interface GorgiasChatOptions {
 	version?: 2 | 3;
 }
 
-interface GorgiasLoad {
-	element: HTMLScriptElement;
-	measurement: boolean;
-	api?: GorgiasChatApi;
-	initializing: boolean;
-	segmentDisabled: boolean;
-	removeListener: () => void;
-}
+/**
+ * The manifest for Gorgias Chat: the bundle loader for the app key and
+ * snippet version, and the Gorgias adapter. The app key must already be
+ * trimmed and non-empty. The npm helper and the Inth server both build it
+ * here.
+ */
+export const resolveGorgiasChatManifest = function resolveGorgiasChatManifest({
+	appKey,
+	version = 3,
+}: GorgiasChatOptions): ResolvedManifest {
+	const encodedKey = encodeURIComponent(appKey);
+	return {
+		...getCompiledManifest(gorgiasChatManifest, {
+			loaderPath:
+				version === 2
+					? `gorgias-chat-bundle-loader.js?applicationId=${encodedKey}`
+					: `bundle-loader/${encodedKey}`,
+		}),
+		adapter: { id: 'gorgias', options: {} },
+		requires: 4,
+	};
+};
+
+/**
+ * What the Inth server may set for Gorgias Chat: the app key and the
+ * snippet version, as text since a dashboard enum holds strings.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'gorgiasChat',
+		{
+			appKey: {
+				example: '01HABCDEFGHJKMNPQRSTVWXYZ0',
+				kind: 'id',
+				label: 'App key (v3), or application ID (v2)',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+			version: {
+				default: '3',
+				kind: 'enum',
+				label: 'Installation snippet version',
+				values: ['3', '2'],
+			},
+		},
+		({ appKey, version }) =>
+			resolveGorgiasChatManifest({ appKey, version: version === '2' ? 2 : 3 })
+	);
 
 /**
  * Loads Gorgias Chat after its mapped consent gate allows it.
@@ -78,121 +127,9 @@ export const gorgiasChat = function gorgiasChat(
 			manifest: gorgiasChatManifest,
 		});
 	}
-
-	const version = options.version ?? 3;
-	const encodedKey = encodeURIComponent(appKey);
-	const script = resolveManifest(gorgiasChatManifest, {
-		scriptSrc:
-			version === 2
-				? `https://config.gorgias.chat/gorgias-chat-bundle-loader.js?applicationId=${encodedKey}`
-				: `https://config.gorgias.chat/bundle-loader/${encodedKey}`,
+	const { adapter: _adapter, ...manifest } = resolveGorgiasChatManifest({
+		...options,
+		appKey,
 	});
-	let current: GorgiasLoad | undefined;
-
-	const isCurrent = (load: GorgiasLoad): boolean =>
-		current === load && load.element.isConnected;
-	const disableSegment = (load: GorgiasLoad): void => {
-		if (load.api && !load.segmentDisabled) {
-			load.api.disableSegment();
-			load.segmentDisabled = true;
-		}
-	};
-	const cancel = (): void => {
-		current?.removeListener();
-		current = undefined;
-	};
-	const ready = (load: GorgiasLoad): void => {
-		if (!isCurrent(load) || load.api) {
-			return;
-		}
-		load.api = window.GorgiasChat;
-		if (!load.api) {
-			return;
-		}
-		load.removeListener();
-		if (!load.measurement) {
-			disableSegment(load);
-		}
-	};
-	const waitForInit = async (load: GorgiasLoad): Promise<void> => {
-		if (!isCurrent(load) || load.api || load.initializing) {
-			return;
-		}
-		const api = window.GorgiasChat;
-		if (!api) {
-			return;
-		}
-		load.initializing = true;
-		// The vendor's pre-init Proxy throws on reads of every method except
-		// init. Do not inspect disableSegment until its promise resolves.
-		try {
-			await api.init();
-		} catch (error) {
-			if (isCurrent(load)) {
-				cancel();
-				console.error('gorgiasChat: chat initialization failed.', error);
-			}
-			return;
-		}
-		ready(load);
-	};
-	const update = (info: ScriptCallbackInfo): GorgiasLoad | undefined => {
-		if (!info.hasConsent) {
-			if (current) {
-				disableSegment(current);
-			}
-			cancel();
-			return;
-		}
-		if (!info.element) {
-			return;
-		}
-		if (current?.element !== info.element) {
-			cancel();
-			const onReady = (): void => {
-				if (current && current.element === info.element) {
-					ready(current);
-				}
-			};
-			const load: GorgiasLoad = {
-				element: info.element,
-				initializing: false,
-				measurement: info.consents.measurement === true,
-				removeListener: () =>
-					window.removeEventListener('gorgias-widget-loaded', onReady),
-				segmentDisabled: false,
-			};
-			current = load;
-			window.addEventListener('gorgias-widget-loaded', onReady);
-		}
-		const load = current;
-		if (load) {
-			load.measurement = info.consents.measurement === true;
-			if (isCurrent(load) && !load.measurement) {
-				disableSegment(load);
-			}
-		}
-		return load;
-	};
-
-	return {
-		...script,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad: update,
-		onConsentChange(info) {
-			const load = update(info);
-			if (load) {
-				void waitForInit(load);
-			}
-		},
-		onDispose: cancel,
-		onError: cancel,
-		onLoad(info) {
-			const load = update(info);
-			if (load) {
-				void waitForInit(load);
-			}
-		},
-		target: 'body',
-	};
+	return gorgiasScript(resolvedManifestToScript(manifest));
 };

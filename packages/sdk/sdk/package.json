@@ -256,6 +256,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/zendesk.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/zendesk.js"
 		},
+		"./manifest-runtime/adapters/gorgias": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/gorgias.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/gorgias.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/gorgias.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

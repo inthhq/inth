@@ -387,6 +387,7 @@ describe('on-demand chunks', () => {
 			'manifest-runtime/adapters/default-com',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',
+			'manifest-runtime/adapters/gorgias',
 			'manifest-runtime/adapters/hubspot',
 			'manifest-runtime/adapters/index',
 			'manifest-runtime/adapters/lucky-orange',

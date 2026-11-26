@@ -46,6 +46,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	'default-com': '__inthAdapterDefaultCom',
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
+	gorgias: '__inthAdapterGorgias',
 	hubspot: '__inthAdapterHubspot',
 	'lucky-orange': '__inthAdapterLuckyOrange',
 	'oracle-eloqua': '__inthAdapterOracleEloqua',

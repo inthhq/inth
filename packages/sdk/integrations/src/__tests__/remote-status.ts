@@ -26,13 +26,6 @@ export const remoteStatus = {
 	// { accepted: false }, as the helper does on a plain dispose, would
 	// leave the incoming, granted registration reading denied.
 	dynamicYield: adapter,
-	// Before init() resolves, the chat's API is a Proxy that throws on every
-	// read but init, also on the Symbol.toStringTag read the manifest
-	// runtime makes to tell a vendor object from a browser one. The runtime
-	// reads a throw as a browser object and skips GorgiasChat.init(), so a
-	// manifest never reaches the init() path (gorgias.test.ts, "waits for the
-	// real loader proxy contract").
-	gorgiasChat: adapter,
 } as const satisfies Partial<Record<BuiltInScriptIntegrationKey, RemoteStatus>>;
 
 /**

@@ -24,6 +24,7 @@ export type InitFile =
 	| 'adapter-default-com'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
+	| 'adapter-gorgias'
 	| 'adapter-hubspot'
 	| 'adapter-lucky-orange'
 	| 'adapter-oracle-eloqua'
@@ -42,6 +43,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-default-com': '__inthAdapterDefaultComSrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
+	'adapter-gorgias': '__inthAdapterGorgiasSrc',
 	'adapter-hubspot': '__inthAdapterHubspotSrc',
 	'adapter-lucky-orange': '__inthAdapterLuckyOrangeSrc',
 	'adapter-oracle-eloqua': '__inthAdapterOracleEloquaSrc',

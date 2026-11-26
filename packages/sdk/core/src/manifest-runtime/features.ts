@@ -246,6 +246,7 @@ export const ADAPTER_LEVELS = {
 	'default-com': 4,
 	fullstory: 4,
 	'gainsight-px': 4,
+	gorgias: 4,
 	hubspot: 4,
 	'lucky-orange': 4,
 	'oracle-eloqua': 4,

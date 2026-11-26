@@ -130,6 +130,7 @@ const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
  * Options a dashboard sets in another shape than the npm helper takes them.
  * Sentry's form takes the parts of a sentry.io DSN; a site passes the DSN.
  * Zaraz's form keys purposes by purpose ID; a site keys them by category.
+ * Gorgias's form takes its snippet version as text.
  */
 const dashboardToNpm: Partial<
 	Record<BuiltInScriptIntegrationKey, (options: Options) => Options>
@@ -167,6 +168,14 @@ const dashboardToNpm: Partial<
 			input.schedulerOrigins = (schedulerDomains as string[]).map(
 				(domain) => `https://${domain}`
 			);
+		}
+		return input;
+	},
+	// A dashboard enum holds text; the helper takes the version as a number.
+	gorgiasChat: ({ version, ...rest }) => {
+		const input: Options = { ...rest };
+		if (version !== undefined) {
+			input.version = Number(version);
 		}
 		return input;
 	},
@@ -248,6 +257,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	fullStory: ['edge.fullstory.com', 'edge.eu1.fullstory.com'],
 	gainsightPx: ['web-sdk.aptrinsic.com'],
 	googleTagManager: ['www.googletagmanager.com'],
+	gorgiasChat: ['config.gorgias.chat'],
 	gtag: ['www.googletagmanager.com'],
 	heap: ['cdn.us.heap-api.com'],
 	hightouch: ['cdn.hightouch-events.com'],
@@ -331,6 +341,7 @@ const vendorLevels: Partial<
 	eloquaTracking: 4,
 	fullStory: 4,
 	gainsightPx: 4,
+	gorgiasChat: 4,
 	hubspot: 4,
 	luckyOrange: 4,
 	// Classic mode, the default, is a plain manifest; consent mode names an
