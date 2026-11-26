@@ -37,6 +37,42 @@ describe('adobeAnalytics', () => {
 		);
 	});
 
+	it('builds the Adobe-hosted embed URL from trimmed embed IDs', () => {
+		const script = adobeAnalytics({
+			companyId: ' a7d65461e54e ',
+			environmentId: 'f3a2b1c0d9e8-staging',
+			propertyId: '01d650ac6ffb',
+		});
+
+		expect(script.src).toBe(
+			'https://assets.adobedtm.com/a7d65461e54e/01d650ac6ffb/launch-f3a2b1c0d9e8-staging.min.js'
+		);
+	});
+
+	it('prefers scriptUrl over embed IDs', () => {
+		const script = adobeAnalytics({
+			companyId: 'a7d65461e54e',
+			environmentId: 'f3a2b1c0d9e8',
+			propertyId: '01d650ac6ffb',
+			scriptUrl: 'https://tags.example.com/launch.min.js',
+		});
+
+		expect(script.src).toBe('https://tags.example.com/launch.min.js');
+	});
+
+	it('skips when an embed ID is blank', () => {
+		expectSkippedScript(
+			() =>
+				adobeAnalytics({
+					companyId: 'a7d65461e54e',
+					environmentId: ' ',
+					propertyId: '01d650ac6ffb',
+				}),
+			{ category: 'measurement', id: 'adobe-analytics' },
+			'adobeAnalytics: missing or invalid scriptUrl'
+		);
+	});
+
 	it('supports synchronous deployment', () => {
 		const script = adobeAnalytics({
 			async: false,

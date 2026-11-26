@@ -1,13 +1,16 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { skipScript } from '../_shared/required-id';
 import {
 	joinUrlPath,
 	stripTrailingSlashes,
 	trimToUndefined,
+	withScriptUrl,
 } from '../_shared/script-url';
 
 declare global {
@@ -48,6 +51,11 @@ const resolveMatomoOrigin = function resolveMatomoOrigin(
 };
 
 interface MatomoManifestOptions {
+	/**
+	 * Load `matomo.js` from Matomo Cloud's CDN. Otherwise the npm helper's
+	 * self-hosted script URL fills the step.
+	 */
+	cloud: boolean;
 	enableConsentMode: boolean;
 	consentInitiallyGiven: boolean;
 	enableLinkTracking: boolean;
@@ -115,12 +123,20 @@ const buildInstallSteps = function buildInstallSteps(
 		});
 	}
 
-	install.push({
-		async: true,
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		src: '{{scriptUrl}}',
-		type: 'loadScript',
-	});
+	if (options.cloud) {
+		install.push({
+			async: true,
+			src: 'https://cdn.matomo.cloud/{{cloudId}}/matomo.js',
+			type: 'loadScript',
+		});
+	} else {
+		install.push({
+			async: true,
+			// oxlint-disable-next-line integrations/fixed-script-host -- npm-only: a self-hosted Matomo serves matomo.js from the site's own server
+			src: '{{scriptUrl}}',
+			type: 'loadScript',
+		});
+	}
 
 	return install;
 };
@@ -226,6 +242,7 @@ const createMatomoAnalyticsManifest = function createMatomoAnalyticsManifest(
 };
 
 export const matomoAnalyticsManifest = createMatomoAnalyticsManifest({
+	cloud: true,
 	consentInitiallyGiven: false,
 	disableCookies: false,
 	enableConsentMode: false,
@@ -259,6 +276,113 @@ export interface MatomoAnalyticsOptions {
 	defaultConsent?: 'required' | 'given';
 }
 
+/** Matomo Cloud settings: the account host replaces a self-hosted URL. */
+export type MatomoCloudOptions = Pick<
+	MatomoAnalyticsOptions,
+	| 'defaultConsent'
+	| 'disableCookies'
+	| 'enableLinkTracking'
+	| 'siteId'
+	| 'trackPageView'
+	| 'trackerUrl'
+> & {
+	/** Matomo Cloud account host, such as `example.matomo.cloud`. */
+	cloudId: string;
+};
+
+/** The `*.matomo.cloud` host in `cloudId`, unless `matomoUrl` overrides it. */
+const readMatomoCloudHost = function readMatomoCloudHost(
+	options: MatomoAnalyticsOptions
+): string | undefined {
+	if (options.matomoUrl || !options.cloudId) {
+		return undefined;
+	}
+	const host = stripTrailingSlashes(stripProtocol(options.cloudId.trim()));
+	return host.endsWith('.matomo.cloud') ? host : undefined;
+};
+
+const matomoManifestOptions = function matomoManifestOptions(
+	options: Omit<MatomoAnalyticsOptions, 'cloudId'>,
+	cloud: boolean
+): MatomoManifestOptions {
+	return {
+		cloud,
+		consentInitiallyGiven: options.defaultConsent === 'given',
+		disableCookies: options.disableCookies ?? false,
+		enableConsentMode:
+			options.defaultConsent === 'required' ||
+			options.defaultConsent === 'given',
+		enableLinkTracking: options.enableLinkTracking ?? false,
+		trackPageView: options.trackPageView ?? true,
+	};
+};
+
+/**
+ * Builds the serializable manifest behind {@link matomoAnalytics} for a
+ * Matomo Cloud account. Loads `matomo.js` from Matomo's CDN, as Matomo's own
+ * snippet does, and tracks to the account host unless `trackerUrl` (npm-only)
+ * says otherwise.
+ */
+export const resolveMatomoAnalyticsManifest =
+	function resolveMatomoAnalyticsManifest({
+		cloudId,
+		siteId,
+		trackerUrl,
+		...options
+	}: MatomoCloudOptions): ResolvedManifest {
+		return getCompiledManifest(
+			createMatomoAnalyticsManifest(matomoManifestOptions(options, true)),
+			{
+				cloudId,
+				siteId: String(siteId ?? 1),
+				trackerUrl: trackerUrl ?? `https://${cloudId}/matomo.php`,
+			}
+		);
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'matomoAnalytics',
+		{
+			cloudId: {
+				example: 'example.matomo.cloud',
+				kind: 'id',
+				label: 'Matomo Cloud host',
+				pattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.matomo\\.cloud$',
+				required: true,
+			},
+			disableCookies: {
+				default: false,
+				kind: 'boolean',
+				label: 'Disable cookies',
+			},
+			enableLinkTracking: {
+				default: false,
+				kind: 'boolean',
+				label: 'Track outbound links and downloads',
+			},
+			siteId: {
+				example: '1',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[1-9][0-9]*$',
+				required: false,
+			},
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+		},
+		resolveMatomoAnalyticsManifest
+	);
+
 /**
  * Creates a Matomo Analytics script.
  *
@@ -271,12 +395,25 @@ export interface MatomoAnalyticsOptions {
 export const matomoAnalytics = function matomoAnalytics(
 	options: MatomoAnalyticsOptions = {}
 ): Script {
+	const cloudHost = readMatomoCloudHost(options);
+	if (cloudHost !== undefined) {
+		return withScriptUrl(
+			resolvedManifestToScript(
+				resolveMatomoAnalyticsManifest({
+					...options,
+					cloudId: cloudHost,
+					trackerUrl: trimToUndefined(options.trackerUrl),
+				})
+			),
+			options.scriptUrl
+		);
+	}
+
 	const origin = resolveMatomoOrigin(options);
 	let trackerUrl = trimToUndefined(options.trackerUrl);
 	if (!trackerUrl && origin) {
 		trackerUrl = joinUrlPath(origin, 'matomo.php');
 	}
-
 	let scriptUrl = trimToUndefined(options.scriptUrl);
 	if (!scriptUrl && origin) {
 		scriptUrl = joinUrlPath(origin, 'matomo.js');
@@ -289,21 +426,10 @@ export const matomoAnalytics = function matomoAnalytics(
 		);
 	}
 
-	const enableConsentMode =
-		options.defaultConsent === 'required' || options.defaultConsent === 'given';
-	const consentInitiallyGiven = options.defaultConsent === 'given';
-
-	const manifest = createMatomoAnalyticsManifest({
-		consentInitiallyGiven,
-		disableCookies: options.disableCookies ?? false,
-		enableConsentMode,
-		enableLinkTracking: options.enableLinkTracking ?? false,
-		trackPageView: options.trackPageView ?? true,
-	});
-
-	return resolveManifest(manifest, {
-		scriptUrl,
-		siteId: String(options.siteId ?? 1),
-		trackerUrl,
-	});
+	return resolvedManifestToScript(
+		getCompiledManifest(
+			createMatomoAnalyticsManifest(matomoManifestOptions(options, false)),
+			{ scriptUrl, siteId: String(options.siteId ?? 1), trackerUrl }
+		)
+	);
 };

@@ -32,7 +32,7 @@ export const scripts = [
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `matomoUrl` | None | Your Matomo server base URL. Loads `<matomoUrl>/matomo.js` and sends hits to `<matomoUrl>/matomo.php`. |
-| `cloudId` | None | Matomo Cloud ID, used when `matomoUrl` is unset. Values ending in `.matomo.cloud` resolve to `https://<cloudId>`; other values resolve to `https://cdn.matomo.cloud/<cloudId>`. |
+| `cloudId` | None | Matomo Cloud ID, used when `matomoUrl` is unset. Values ending in `.matomo.cloud` load `https://cdn.matomo.cloud/<cloudId>/matomo.js` and track to `https://<cloudId>/matomo.php`; other values resolve both to `https://cdn.matomo.cloud/<cloudId>`. |
 | `trackerUrl` | `matomo.php` on the Matomo origin | Tracker endpoint override. |
 | `scriptUrl` | `matomo.js` on the Matomo origin | Loader URL override. Without `matomoUrl` or `cloudId`, set both `trackerUrl` and `scriptUrl` or the helper logs an error and skips loading. |
 | `siteId` | `1` | Site ID queued with `setSiteId`. |

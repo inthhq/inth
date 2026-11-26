@@ -34,7 +34,8 @@ export const scripts = [
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `scriptUrl` | Required | Full `https:` embed URL for your Tags property environment. Custom-hosted embed URLs work. Trimmed automatically. Blank, invalid, or non-`https:` URLs log an error and skip loading. |
+| `scriptUrl` | Required unless the IDs are set | Full `https:` embed URL for your Tags property environment. Custom-hosted embed URLs work. Trimmed automatically. Blank, invalid, or non-`https:` URLs log an error and skip loading. Wins over the IDs. |
+| `companyId`, `propertyId`, `environmentId` | None | The parts of an Adobe-hosted embed URL, `https://assets.adobedtm.com/{companyId}/{propertyId}/launch-{environmentId}.min.js`. Set all three instead of `scriptUrl`; a remote integration uses these. |
 | `async` | `true` | Loads the Tags library asynchronously. Set `false` only for legacy synchronous deployments. |
 | `seedAdobeDataLayer` | `true` | Initializes `window.adobeDataLayer` to `[]` before loading when undefined. |
 

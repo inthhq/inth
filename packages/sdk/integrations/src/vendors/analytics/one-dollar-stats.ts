@@ -1,8 +1,10 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 
 /** The classic script from OneDollarStats' installation instructions. */
 export const ONE_DOLLAR_STATS_SCRIPT_SRC =
@@ -45,6 +47,76 @@ export interface OneDollarStatsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link oneDollarStats}. Each setting
+ * reaches its attribute through a placeholder, so a value is copied as is.
+ *
+ * @throws {Error} When hostname is not a bare host, or a setting name is not
+ * a valid attribute name or its value is not a string.
+ */
+export const resolveOneDollarStatsManifest =
+	function resolveOneDollarStatsManifest(
+		options: OneDollarStatsOptions = {}
+	): ResolvedManifest {
+		if (
+			options.hostname !== undefined &&
+			(typeof options.hostname !== 'string' ||
+				!/^[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*(?::\d+)?$/u.test(
+					options.hostname
+				))
+		) {
+			throw new Error(
+				'oneDollarStats: hostname must be a bare host name like docs.example.com, without a scheme, path, query, or fragment'
+			);
+		}
+
+		const attributes: Record<string, string> = {};
+		const config: Record<string, string> = {};
+		for (const [setting, value] of Object.entries(options)) {
+			if (value === undefined) {
+				continue;
+			}
+			if (!SETTING_NAME.test(setting)) {
+				throw new Error(
+					`oneDollarStats: ${setting} is not a valid setting name; use lowercase letters, digits and hyphens`
+				);
+			}
+			if (typeof value !== 'string') {
+				throw new Error(`oneDollarStats: ${setting} must be a string`);
+			}
+			if (setting === 'hash-routing' && value === 'false') {
+				continue;
+			}
+			const key = `setting${Object.keys(config).length}`;
+			attributes[`data-${setting}`] = `{{${key}}}`;
+			config[key] = value;
+		}
+
+		return getCompiledManifest(
+			{
+				...oneDollarStatsManifest,
+				install: [
+					{
+						attributes,
+						defer: true,
+						src: ONE_DOLLAR_STATS_SCRIPT_SRC,
+						type: 'loadScript',
+					},
+				],
+			},
+			config
+		);
+	};
+
+/**
+ * What the Inth server may set for this vendor: nothing, since the tracker
+ * needs no key. Its settings stay npm-only. Marked pure so a bundler drops it
+ * from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote('oneDollarStats', {}, () => resolveOneDollarStatsManifest());
+
+/**
  * Creates a consent-gated OneDollarStats script. No API key is required.
  * The tracker reads data attributes from `document.currentScript` and
  * handles client-side navigation itself.
@@ -56,37 +128,5 @@ export interface OneDollarStatsOptions {
 export const oneDollarStats = function oneDollarStats(
 	options: OneDollarStatsOptions = {}
 ): Script {
-	if (
-		options.hostname !== undefined &&
-		(typeof options.hostname !== 'string' ||
-			!/^[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*(?::\d+)?$/u.test(options.hostname))
-	) {
-		throw new Error(
-			'oneDollarStats: hostname must be a bare host name like docs.example.com, without a scheme, path, query, or fragment'
-		);
-	}
-
-	const attributes: Record<string, string> = {};
-	for (const [setting, value] of Object.entries(options)) {
-		if (value === undefined) {
-			continue;
-		}
-		if (!SETTING_NAME.test(setting)) {
-			throw new Error(
-				`oneDollarStats: ${setting} is not a valid setting name; use lowercase letters, digits and hyphens`
-			);
-		}
-		if (typeof value !== 'string') {
-			throw new Error(`oneDollarStats: ${setting} must be a string`);
-		}
-		if (setting === 'hash-routing' && value === 'false') {
-			continue;
-		}
-		attributes[`data-${setting}`] = value;
-	}
-
-	return {
-		...resolveManifest(oneDollarStatsManifest),
-		attributes,
-	};
+	return resolvedManifestToScript(resolveOneDollarStatsManifest(options));
 };

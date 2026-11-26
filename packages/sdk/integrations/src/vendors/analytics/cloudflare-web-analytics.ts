@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -32,8 +34,7 @@ export const cloudflareWebAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://static.cloudflareinsights.com/beacon.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -66,6 +67,45 @@ export interface CloudflareWebAnalyticsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link cloudflareWebAnalytics}.
+ */
+export const resolveCloudflareWebAnalyticsManifest =
+	function resolveCloudflareWebAnalyticsManifest({
+		token,
+		spa = true,
+	}: Omit<CloudflareWebAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		return getCompiledManifest(cloudflareWebAnalyticsManifest, {
+			beaconConfig: JSON.stringify({ spa, token }),
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'cloudflareWebAnalytics',
+		{
+			spa: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track single-page app navigation',
+			},
+			token: {
+				example: '0123456789abcdef0123456789abcdef',
+				kind: 'id',
+				label: 'Site token',
+				pattern: '^[0-9a-f]{32}$',
+				required: true,
+			},
+		},
+		resolveCloudflareWebAnalyticsManifest
+	);
+
+/**
  * Creates a Cloudflare Web Analytics script.
  *
  * @see https://developers.cloudflare.com/analytics/web-analytics/get-started/
@@ -95,17 +135,10 @@ export const cloudflareWebAnalytics = function cloudflareWebAnalytics(
 		});
 	}
 
-	const resolved = resolveManifest(cloudflareWebAnalyticsManifest, {
-		beaconConfig: JSON.stringify({
-			spa: options.spa ?? true,
-
-			token,
-		}),
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://static.cloudflareinsights.com/beacon.min.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveCloudflareWebAnalyticsManifest({ spa: options.spa, token })
 		),
-	});
-
-	return resolved;
+		options.scriptUrl
+	);
 };

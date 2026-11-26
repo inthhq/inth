@@ -1,8 +1,10 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 
 declare global {
@@ -14,6 +16,11 @@ declare global {
 
 interface AdobeAnalyticsManifestOptions {
 	async: boolean;
+	/**
+	 * Load the embed from Adobe's host, built from the embed IDs. Otherwise the
+	 * npm helper's `scriptUrl` fills the step.
+	 */
+	adobeHosted: boolean;
 	seedAdobeDataLayer: boolean;
 }
 
@@ -49,12 +56,20 @@ const createAdobeAnalyticsManifest = function createAdobeAnalyticsManifest(
 		});
 	}
 
-	install.push({
-		async: options.async,
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		src: '{{scriptUrl}}',
-		type: 'loadScript',
-	});
+	if (options.adobeHosted) {
+		install.push({
+			async: options.async,
+			src: 'https://assets.adobedtm.com/{{companyId}}/{{propertyId}}/launch-{{environmentId}}.min.js',
+			type: 'loadScript',
+		});
+	} else {
+		install.push({
+			async: options.async,
+			// oxlint-disable-next-line integrations/fixed-script-host -- npm-only: the site's own embed URL, which may be self-hosted
+			src: '{{scriptUrl}}',
+			type: 'loadScript',
+		});
+	}
 
 	return {
 		...vendorManifestContract,
@@ -78,6 +93,7 @@ const createAdobeAnalyticsManifest = function createAdobeAnalyticsManifest(
  * commonly hosted at `https://assets.adobedtm.com/.../launch-*.min.js`.
  */
 export const adobeAnalyticsManifest = createAdobeAnalyticsManifest({
+	adobeHosted: true,
 	async: true,
 	seedAdobeDataLayer: true,
 });
@@ -87,7 +103,24 @@ const skippedAdobeAnalyticsScript = {
 	manifest: adobeAnalyticsManifest,
 } as const;
 
-export interface AdobeAnalyticsOptions {
+/**
+ * The IDs in an Adobe-hosted Tags embed URL:
+ * `https://assets.adobedtm.com/{companyId}/{propertyId}/launch-{environmentId}.min.js`.
+ */
+export interface AdobeAnalyticsEmbedIds {
+	/** The first path segment of the embed URL. */
+	companyId: string;
+	/** The second path segment of the embed URL. */
+	propertyId: string;
+	/**
+	 * The part between `launch-` and `.min.js`, including a `-development` or
+	 * `-staging` suffix.
+	 */
+	environmentId: string;
+}
+
+/** The embed URL from the site's own Adobe Tags embed code. */
+export interface AdobeAnalyticsEmbedUrl {
 	/**
 	 * Adobe Experience Platform Data Collection web property embed URL.
 	 *
@@ -97,7 +130,17 @@ export interface AdobeAnalyticsOptions {
 	 * Self-hosted Launch/Tags embeds are supported as long as they use `https:`.
 	 */
 	scriptUrl: string;
+}
 
+/**
+ * Adobe Analytics options: the embed URL, or the IDs of an Adobe-hosted
+ * embed. When both are set, `scriptUrl` wins.
+ */
+export type AdobeAnalyticsOptions = AdobeAnalyticsLoadOptions &
+	(AdobeAnalyticsEmbedUrl | AdobeAnalyticsEmbedIds);
+
+/** How the Adobe Tags library loads. */
+export interface AdobeAnalyticsLoadOptions {
 	/**
 	 * Load the Adobe Tags library asynchronously.
 	 *
@@ -118,6 +161,88 @@ export interface AdobeAnalyticsOptions {
 	 */
 	seedAdobeDataLayer?: boolean;
 }
+
+/**
+ * Builds the serializable manifest behind {@link adobeAnalytics} for an
+ * Adobe-hosted embed. The IDs must already be trimmed and non-empty.
+ */
+export const resolveAdobeAnalyticsManifest =
+	function resolveAdobeAnalyticsManifest({
+		companyId,
+		propertyId,
+		environmentId,
+		async = true,
+		seedAdobeDataLayer = true,
+	}: AdobeAnalyticsEmbedIds & AdobeAnalyticsLoadOptions): ResolvedManifest {
+		return getCompiledManifest(
+			createAdobeAnalyticsManifest({
+				adobeHosted: true,
+				async,
+				seedAdobeDataLayer,
+			}),
+			{ companyId, environmentId, propertyId }
+		);
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'adobeAnalytics',
+		{
+			async: {
+				default: true,
+				kind: 'boolean',
+				label: 'Load asynchronously',
+			},
+			companyId: {
+				example: 'a7d65461e54e',
+				kind: 'id',
+				label: 'Company ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+			environmentId: {
+				example: 'f3a2b1c0d9e8',
+				kind: 'id',
+				label: 'Environment ID',
+				pattern: '^[A-Za-z0-9]+(?:-(?:development|staging))?$',
+				required: true,
+			},
+			propertyId: {
+				example: '01d650ac6ffb',
+				kind: 'id',
+				label: 'Property ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+			seedAdobeDataLayer: {
+				default: true,
+				kind: 'boolean',
+				label: 'Create the Adobe Client Data Layer',
+			},
+		},
+		resolveAdobeAnalyticsManifest
+	);
+
+/** The embed IDs, trimmed, or undefined when one is missing or blank. */
+const readEmbedIds = function readEmbedIds(
+	options: AdobeAnalyticsOptions
+): AdobeAnalyticsEmbedIds | undefined {
+	if (!('companyId' in options)) {
+		return undefined;
+	}
+	const companyId = readId(options.companyId);
+	const propertyId = readId(options.propertyId);
+	const environmentId = readId(options.environmentId);
+	return companyId && propertyId && environmentId
+		? { companyId, environmentId, propertyId }
+		: undefined;
+};
 
 /**
  * Creates an Adobe Analytics script.
@@ -149,25 +274,37 @@ export interface AdobeAnalyticsOptions {
 export const adobeAnalytics = function adobeAnalytics(
 	options: AdobeAnalyticsOptions
 ): Script {
-	const scriptUrl = readId(options.scriptUrl);
+	const async = options.async ?? true;
+	const seedAdobeDataLayer = options.seedAdobeDataLayer ?? true;
+	const scriptUrl =
+		'scriptUrl' in options ? readId(options.scriptUrl) : undefined;
 	if (scriptUrl === undefined) {
-		return skipMissingId(
-			'adobeAnalytics',
-			'scriptUrl',
-			skippedAdobeAnalyticsScript
+		const ids = readEmbedIds(options);
+		if (ids === undefined) {
+			return skipMissingId(
+				'adobeAnalytics',
+				'scriptUrl',
+				skippedAdobeAnalyticsScript
+			);
+		}
+		return resolvedManifestToScript(
+			resolveAdobeAnalyticsManifest({ ...ids, async, seedAdobeDataLayer })
 		);
 	}
+
 	const problem = getAdobeAnalyticsScriptUrlProblem(scriptUrl);
 	if (problem !== undefined) {
 		return skipScript(problem, skippedAdobeAnalyticsScript);
 	}
 
-	const manifest = createAdobeAnalyticsManifest({
-		async: options.async ?? true,
-		seedAdobeDataLayer: options.seedAdobeDataLayer ?? true,
-	});
-
-	return resolveManifest(manifest, {
-		scriptUrl,
-	});
+	return resolvedManifestToScript(
+		getCompiledManifest(
+			createAdobeAnalyticsManifest({
+				adobeHosted: false,
+				async,
+				seedAdobeDataLayer,
+			}),
+			{ scriptUrl }
+		)
+	);
 };

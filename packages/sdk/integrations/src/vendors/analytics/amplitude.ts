@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Browser SDK 2 version used by the default Amplitude CDN loader URL.
@@ -222,8 +224,7 @@ export const amplitudeManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: DEFAULT_AMPLITUDE_SCRIPT_URL,
 			type: 'loadScript',
 		},
 	],
@@ -288,6 +289,37 @@ export interface AmplitudeOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link amplitude}.
+ */
+export const resolveAmplitudeManifest = function resolveAmplitudeManifest({
+	apiKey,
+	initOptions = {},
+}: Omit<AmplitudeOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(amplitudeManifest, { apiKey, initOptions });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'amplitude',
+		{
+			apiKey: {
+				example: '0123456789abcdef0123456789abcdef',
+				kind: 'id',
+				label: 'API key',
+				pattern: '^[0-9a-f]{32}$',
+				required: true,
+			},
+		},
+		resolveAmplitudeManifest
+	);
+
+/**
  * Creates an Amplitude Browser SDK 2 script.
  *
  * @remarks
@@ -326,9 +358,10 @@ export const amplitude = function amplitude({
 		});
 	}
 
-	return resolveManifest(amplitudeManifest, {
-		apiKey: normalizedApiKey,
-		initOptions,
-		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_AMPLITUDE_SCRIPT_URL),
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveAmplitudeManifest({ apiKey: normalizedApiKey, initOptions })
+		),
+		scriptUrl
+	);
 };

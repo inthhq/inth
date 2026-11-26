@@ -1,11 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { booleanDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -46,8 +48,7 @@ export const fathomAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.usefathom.com/script.js',
 			type: 'loadScript',
 		},
 	],
@@ -95,6 +96,64 @@ export interface FathomAnalyticsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link fathomAnalytics}.
+ */
+export const resolveFathomAnalyticsManifest =
+	function resolveFathomAnalyticsManifest({
+		site,
+		spa,
+		auto,
+		canonical,
+		honorDnt,
+	}: Omit<FathomAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		return getCompiledManifest(fathomAnalyticsManifest, {
+			autoAttribute: booleanDataAttribute(auto),
+			canonicalAttribute: booleanDataAttribute(canonical),
+			honorDntAttribute: booleanDataAttribute(honorDnt),
+			site,
+			spa,
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'fathomAnalytics',
+		{
+			auto: { default: true, kind: 'boolean', label: 'Track page views' },
+			canonical: {
+				default: true,
+				kind: 'boolean',
+				label: 'Use the canonical URL',
+			},
+			honorDnt: {
+				default: false,
+				kind: 'boolean',
+				label: 'Honor Do Not Track',
+			},
+			site: {
+				example: 'ABCDEFGH',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[A-Z0-9]+$',
+				required: true,
+			},
+			spa: {
+				default: 'auto',
+				kind: 'enum',
+				label: 'Single-page app mode',
+				values: ['auto', 'history', 'hash'],
+			},
+		},
+		resolveFathomAnalyticsManifest
+	);
+
+/**
  * Creates a Fathom Analytics script.
  *
  * @see https://usefathom.com/docs/script/script-settings
@@ -125,17 +184,10 @@ export const fathomAnalytics = function fathomAnalytics(
 		});
 	}
 
-	const resolved = resolveManifest(fathomAnalyticsManifest, {
-		autoAttribute: booleanDataAttribute(options.auto),
-		canonicalAttribute: booleanDataAttribute(options.canonical),
-		honorDntAttribute: booleanDataAttribute(options.honorDnt),
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://cdn.usefathom.com/script.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveFathomAnalyticsManifest({ ...options, site })
 		),
-		site,
-		spa: options.spa,
-	});
-
-	return resolved;
+		options.scriptUrl
+	);
 };

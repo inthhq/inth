@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -37,8 +39,7 @@ export const ahrefsAnalyticsManifest = {
 				'data-key': '{{key}}',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://analytics.ahrefs.com/analytics.js',
 			type: 'loadScript',
 		},
 	],
@@ -63,6 +64,37 @@ export interface AhrefsAnalyticsOptions {
 	 */
 	scriptUrl?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link ahrefsAnalytics}.
+ */
+export const resolveAhrefsAnalyticsManifest =
+	function resolveAhrefsAnalyticsManifest({
+		key,
+	}: Omit<AhrefsAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		return getCompiledManifest(ahrefsAnalyticsManifest, { key });
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'ahrefsAnalytics',
+		{
+			key: {
+				example: 'aBcD1234eFgH5678',
+				kind: 'id',
+				label: 'Project key',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolveAhrefsAnalyticsManifest
+	);
 
 /**
  * Creates an Ahrefs Analytics script.
@@ -94,11 +126,8 @@ export const ahrefsAnalytics = function ahrefsAnalytics(
 		});
 	}
 
-	return resolveManifest(ahrefsAnalyticsManifest, {
-		key,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://analytics.ahrefs.com/analytics.js'
-		),
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(resolveAhrefsAnalyticsManifest({ key })),
+		options.scriptUrl
+	);
 };

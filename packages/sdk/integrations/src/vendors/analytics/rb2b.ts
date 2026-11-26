@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -20,8 +22,13 @@ declare global {
 export const rb2bManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			async: true,
+			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/{{keyPath}}/{{keyPath}}.js.gz',
+			type: 'loadScript',
+		},
+	],
 	persistAfterConsentRevoked: true,
 	vendor: 'rb2b',
 	vendorDetails: {
@@ -73,6 +80,38 @@ const isSupportedScriptUrl = function isSupportedScriptUrl(
 };
 
 /**
+ * Builds the serializable manifest behind {@link rb2b}.
+ */
+export const resolveRb2bManifest = function resolveRb2bManifest({
+	accountKey,
+}: Omit<Rb2bOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(rb2bManifest, {
+		keyPath: encodeURIComponent(accountKey),
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'rb2b',
+		{
+			accountKey: {
+				example: '0D7P8HPGQ7O5',
+				kind: 'id',
+				label: 'Account key',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveRb2bManifest
+	);
+
+/**
  * Loads RB2B after marketing consent, once per page.
  * @param options - Public account key and optional loader URL.
  * @returns A gated script, or a skipped script for an invalid key or loader URL.
@@ -90,18 +129,16 @@ export const rb2b = function rb2b(options: Rb2bOptions): Script {
 			manifest: rb2bManifest,
 		});
 	}
-	const key = encodeURIComponent(accountKey);
-	const scriptUrl = resolveScriptUrl(
-		options.scriptUrl,
-		`https://ddwl4m2hdecbv.cloudfront.net/b/${key}/${key}.js.gz`
-	);
-	if (!isSupportedScriptUrl(scriptUrl, accountKey)) {
+	const scriptUrl = trimToUndefined(options.scriptUrl);
+	if (scriptUrl !== undefined && !isSupportedScriptUrl(scriptUrl, accountKey)) {
 		return skipScript(
 			'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path',
 			{ category: 'marketing', manifest: rb2bManifest }
 		);
 	}
-	return resolveManifest(rb2bManifest, {
-		scriptUrl,
-	});
+
+	return withScriptUrl(
+		resolvedManifestToScript(resolveRb2bManifest({ accountKey })),
+		scriptUrl
+	);
 };

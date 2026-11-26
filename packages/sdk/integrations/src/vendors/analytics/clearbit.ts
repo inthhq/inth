@@ -1,16 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
-
-const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
-	publishableKey: string
-): string {
-	return `https://tag.clearbitscripts.com/v1/${encodeURIComponent(publishableKey)}/tags.js`;
-};
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Clearbit vendor manifest.
@@ -28,8 +24,7 @@ export const clearbitManifest = {
 				referrerpolicy: 'strict-origin-when-cross-origin',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://tag.clearbitscripts.com/v1/{{keyPath}}/tags.js',
 			type: 'loadScript',
 		},
 	],
@@ -54,6 +49,38 @@ export interface ClearbitOptions {
 	 */
 	scriptUrl?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link clearbit}.
+ */
+export const resolveClearbitManifest = function resolveClearbitManifest({
+	publishableKey,
+}: Omit<ClearbitOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(clearbitManifest, {
+		keyPath: encodeURIComponent(publishableKey),
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'clearbit',
+		{
+			publishableKey: {
+				example: 'pk_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d',
+				kind: 'id',
+				label: 'Publishable key',
+				pattern: '^pk_[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveClearbitManifest
+	);
 
 /**
  * Creates a Clearbit enrichment script.
@@ -88,10 +115,8 @@ export const clearbit = function clearbit(options: ClearbitOptions): Script {
 		});
 	}
 
-	return resolveManifest(clearbitManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			getDefaultClearbitScriptUrl(publishableKey)
-		),
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(resolveClearbitManifest({ publishableKey })),
+		options.scriptUrl
+	);
 };

@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Promptwatch vendor manifest.
@@ -21,8 +23,7 @@ export const promptwatchManifest = {
 				'data-project-id': '{{projectId}}',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://ingest.promptwatch.com/js/client.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -43,6 +44,36 @@ export interface PromptwatchOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link promptwatch}.
+ */
+export const resolvePromptwatchManifest = function resolvePromptwatchManifest({
+	projectId,
+}: Omit<PromptwatchOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(promptwatchManifest, { projectId });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'promptwatch',
+		{
+			projectId: {
+				example: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
+				kind: 'id',
+				label: 'Project ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolvePromptwatchManifest
+	);
+
+/**
  * Promptwatch analytics script for AI traffic and usage insights.
  *
  * @remarks When `projectId` is missing or blank, the helper logs
@@ -61,11 +92,10 @@ export const promptwatch = function promptwatch({
 		});
 	}
 
-	const defaultScriptUrl = 'https://ingest.promptwatch.com/js/client.min.js';
-	const normalizedScriptUrl = resolveScriptUrl(scriptUrl, defaultScriptUrl);
-
-	return resolveManifest(promptwatchManifest, {
-		projectId: normalizedProjectId,
-		scriptUrl: normalizedScriptUrl,
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolvePromptwatchManifest({ projectId: normalizedProjectId })
+		),
+		scriptUrl
+	);
 };

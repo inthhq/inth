@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { joinUrlPath, resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Default Heap config-loader base URL.
@@ -268,8 +270,7 @@ export const heapManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.us.heap-api.com/config/{{envId}}/heap_config.js',
 			type: 'loadScript',
 		},
 	],
@@ -374,15 +375,39 @@ const normalizeClientConfig = function normalizeClientConfig(
 	};
 };
 
-const resolveHeapScriptUrl = function resolveHeapScriptUrl(
-	envId: string,
-	scriptUrl: string | undefined
-): string {
-	return resolveScriptUrl(
-		scriptUrl,
-		joinUrlPath(DEFAULT_HEAP_CONFIG_BASE_URL, `${envId}/heap_config.js`)
-	);
+/**
+ * Builds the serializable manifest behind {@link heap}.
+ */
+export const resolveHeapManifest = function resolveHeapManifest({
+	envId,
+	clientConfig,
+}: Omit<HeapOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(heapManifest, {
+		clientConfig: normalizeClientConfig(clientConfig),
+		envId,
+	});
 };
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'heap',
+		{
+			envId: {
+				example: '1234567890',
+				kind: 'id',
+				label: 'Environment ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+		},
+		resolveHeapManifest
+	);
 
 /**
  * Creates a Heap web analytics script.
@@ -425,9 +450,10 @@ export const heap = function heap({
 		});
 	}
 
-	return resolveManifest(heapManifest, {
-		clientConfig: normalizeClientConfig(clientConfig),
-		envId: normalizedEnvId,
-		scriptUrl: resolveHeapScriptUrl(normalizedEnvId, scriptUrl),
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveHeapManifest({ clientConfig, envId: normalizedEnvId })
+		),
+		scriptUrl
+	);
 };

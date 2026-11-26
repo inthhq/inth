@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -77,8 +79,7 @@ export const mixpanelAnalyticsManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -148,6 +149,50 @@ export interface MixpanelAnalyticsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link mixpanelAnalytics}.
+ */
+export const resolveMixpanelAnalyticsManifest =
+	function resolveMixpanelAnalyticsManifest({
+		token,
+		initOptions,
+	}: Omit<MixpanelAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		return getCompiledManifest(mixpanelAnalyticsManifest, {
+			// The SDK loads before consent and initializes before the helper's
+			// first opt-in or opt-out call lands, so start every visitor opted out
+			// of tracking and storage.
+			initOptions: {
+				...initOptions,
+				opt_out_persistence_by_default:
+					initOptions?.opt_out_persistence_by_default ?? true,
+				opt_out_tracking_by_default:
+					initOptions?.opt_out_tracking_by_default ?? true,
+			},
+			token,
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'mixpanelAnalytics',
+		{
+			token: {
+				example: '0123456789abcdef0123456789abcdef',
+				kind: 'id',
+				label: 'Project token',
+				pattern: '^[0-9A-Fa-f]{32}$',
+				required: true,
+			},
+		},
+		resolveMixpanelAnalyticsManifest
+	);
+
+/**
  * Creates a Mixpanel Analytics script.
  *
  * @remarks When `token` is missing, blank, or not a 32-character
@@ -184,21 +229,10 @@ export const mixpanelAnalytics = function mixpanelAnalytics({
 		);
 	}
 
-	return resolveManifest(mixpanelAnalyticsManifest, {
-		// The SDK loads before consent and initializes before the helper's
-		// first opt-in or opt-out call lands, so start every visitor opted out
-		// of tracking and storage.
-		initOptions: {
-			...initOptions,
-			opt_out_persistence_by_default:
-				initOptions?.opt_out_persistence_by_default ?? true,
-			opt_out_tracking_by_default:
-				initOptions?.opt_out_tracking_by_default ?? true,
-		},
-		scriptUrl: resolveScriptUrl(
-			scriptUrl,
-			'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveMixpanelAnalyticsManifest({ initOptions, token: normalizedToken })
 		),
-		token: normalizedToken,
-	});
+		scriptUrl
+	);
 };

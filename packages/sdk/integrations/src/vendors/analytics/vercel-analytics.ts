@@ -1,9 +1,11 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { trimToUndefined } from '../_shared/script-url';
+import type { ResolvedManifest, VendorManifest } from '../../types';
+import { withScriptUrl } from '../_shared/script-url';
 
 export type VercelAnalyticsMode = 'auto' | 'development' | 'production';
 
@@ -53,8 +55,7 @@ export const vercelAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://va.vercel-scripts.com/v1/{{scriptFile}}',
 			type: 'loadScript',
 		},
 	],
@@ -82,35 +83,72 @@ export interface VercelAnalyticsOptions {
 	scriptUrl?: string;
 }
 
-const getVercelScriptUrl = function getVercelScriptUrl(
-	options: VercelAnalyticsOptions
-): string {
-	const scriptUrl = trimToUndefined(options.scriptUrl);
-	if (scriptUrl) {
-		return scriptUrl;
-	}
-	if (options.mode === 'development' || options.debug) {
-		return 'https://va.vercel-scripts.com/v1/script.debug.js';
-	}
+/**
+ * Builds the serializable manifest behind {@link vercelAnalytics}. `mode`
+ * and `endpoint` stay npm-only.
+ */
+export const resolveVercelAnalyticsManifest =
+	function resolveVercelAnalyticsManifest({
+		dsn,
+		disableAutoTrack,
+		mode,
+		debug,
+		endpoint,
+	}: Omit<VercelAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		let disableAutoTrackAttribute: string | undefined;
+		if (disableAutoTrack) {
+			disableAutoTrackAttribute = '1';
+		}
 
-	return 'https://va.vercel-scripts.com/v1/script.js';
-};
+		return getCompiledManifest(vercelAnalyticsManifest, {
+			disableAutoTrackAttribute,
+			dsn,
+			endpoint,
+			scriptFile:
+				mode === 'development' || debug ? 'script.debug.js' : 'script.js',
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'vercelAnalytics',
+		{
+			debug: {
+				default: false,
+				kind: 'boolean',
+				label: 'Load the debug bundle',
+			},
+			disableAutoTrack: {
+				default: false,
+				kind: 'boolean',
+				label: 'Turn off automatic page views',
+			},
+			dsn: {
+				example: 'prj_AbC123dEf456',
+				kind: 'id',
+				label: 'Project DSN',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: false,
+			},
+		},
+		resolveVercelAnalyticsManifest
+	);
 
 /**
  * Creates a Vercel Analytics script.
  */
-export const vercelAnalytics = function vercelAnalytics(
-	options: VercelAnalyticsOptions = {}
-): Script {
-	let disableAutoTrackAttribute: string | undefined;
-	if (options.disableAutoTrack) {
-		disableAutoTrackAttribute = '1';
-	}
-
-	return resolveManifest(vercelAnalyticsManifest, {
-		disableAutoTrackAttribute,
-		dsn: options.dsn,
-		endpoint: options.endpoint,
-		scriptUrl: getVercelScriptUrl(options),
-	});
+export const vercelAnalytics = function vercelAnalytics({
+	scriptUrl,
+	...options
+}: VercelAnalyticsOptions = {}): Script {
+	return withScriptUrl(
+		resolvedManifestToScript(resolveVercelAnalyticsManifest(options)),
+		scriptUrl
+	);
 };

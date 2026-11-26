@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -49,8 +51,7 @@ export const hotjarManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://static.hotjar.com/c/hotjar-{{siteId}}.js?sv={{version}}',
 			type: 'loadScript',
 		},
 	],
@@ -80,6 +81,40 @@ export interface HotjarOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link hotjar}.
+ */
+export const resolveHotjarManifest = function resolveHotjarManifest({
+	siteId,
+	version = 6,
+}: Omit<HotjarOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(hotjarManifest, {
+		siteId: String(siteId),
+		version,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'hotjar',
+		{
+			siteId: {
+				example: '1234567',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[1-9][0-9]*$',
+				required: true,
+			},
+		},
+		resolveHotjarManifest
+	);
+
+/**
  * Creates a Hotjar script.
  *
  * @remarks When `siteId` is missing, blank, or `0`, the helper logs
@@ -106,12 +141,10 @@ export const hotjar = function hotjar({
 		});
 	}
 
-	return resolveManifest(hotjarManifest, {
-		scriptUrl: resolveScriptUrl(
-			scriptUrl,
-			`https://static.hotjar.com/c/hotjar-${normalizedSiteId}.js?sv=${version}`
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveHotjarManifest({ siteId: normalizedSiteId, version })
 		),
-		siteId: normalizedSiteId,
-		version,
-	});
+		scriptUrl
+	);
 };

@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -19,9 +21,6 @@ declare global {
 		};
 	}
 }
-
-const DEFAULT_LOGROCKET_SCRIPT_URL =
-	'https://cdn.logrocket.io/LogRocket.min.js';
 
 const isLogRocketAppId = function isLogRocketAppId(appId: string): boolean {
 	const segments = appId.split('/');
@@ -57,8 +56,7 @@ export const logRocketManifest = {
 				crossorigin: 'anonymous',
 			},
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.logrocket.io/LogRocket.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -111,6 +109,61 @@ export interface LogRocketOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link logRocket}. `appId` must
+ * already be a trimmed `org/app` ID. `asyncScriptUrl` stays npm-only.
+ */
+export const resolveLogRocketManifest = function resolveLogRocketManifest({
+	appId,
+	initOptions = {},
+	asyncScriptUrl,
+}: Omit<LogRocketOptions, 'scriptUrl'>): ResolvedManifest {
+	const asyncUrl = trimToUndefined(asyncScriptUrl);
+	let manifest: VendorManifest = logRocketManifest;
+	if (asyncUrl) {
+		// Proxy setups chain-load the logger bundle from _lrAsyncScript; seed it
+		// before the main SDK executes.
+		manifest = {
+			...logRocketManifest,
+			bootstrap: [
+				{
+					ifUndefined: false,
+					name: '_lrAsyncScript',
+					type: 'setGlobal',
+					value: '{{asyncScriptUrl}}',
+				},
+			],
+		} satisfies VendorManifest;
+	}
+
+	return getCompiledManifest(manifest, {
+		appId,
+		asyncScriptUrl: asyncUrl,
+		initOptions,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'logRocket',
+		{
+			appId: {
+				example: 'abc123/my-app',
+				kind: 'id',
+				label: 'App ID',
+				pattern: '^[a-z0-9-]+/[a-z0-9-]+$',
+				required: true,
+			},
+		},
+		resolveLogRocketManifest
+	);
+
+/**
  * Creates a LogRocket script.
  *
  * @see https://docs.logrocket.com/reference/init
@@ -149,32 +202,15 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 			skippedLogRocketScript
 		);
 	}
-	const asyncScriptUrl = trimToUndefined(options.asyncScriptUrl);
 
-	let manifest: VendorManifest = logRocketManifest;
-	if (asyncScriptUrl) {
-		// Proxy setups chain-load the logger bundle from _lrAsyncScript; seed it
-		// before the main SDK executes.
-		manifest = {
-			...logRocketManifest,
-			bootstrap: [
-				{
-					ifUndefined: false,
-					name: '_lrAsyncScript',
-					type: 'setGlobal',
-					value: '{{asyncScriptUrl}}',
-				},
-			],
-		} satisfies VendorManifest;
-	}
-
-	return resolveManifest(manifest, {
-		appId,
-		asyncScriptUrl,
-		initOptions: options.initOptions ?? {},
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			DEFAULT_LOGROCKET_SCRIPT_URL
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveLogRocketManifest({
+				appId,
+				asyncScriptUrl: options.asyncScriptUrl,
+				initOptions: options.initOptions,
+			})
 		),
-	});
+		options.scriptUrl
+	);
 };

@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Public Segment Analytics.js API exposed on `window.analytics`.
@@ -148,8 +150,7 @@ export const segmentManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.segment.com/analytics.js/v1/{{writeKey}}/analytics.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -174,30 +175,14 @@ export interface SegmentOptions {
 }
 
 /**
- * Creates a Segment Analytics.js script.
- *
- * @remarks When `writeKey` is missing or blank, the helper logs
- *   `segment: missing or invalid writeKey` with `console.error` and
- *   returns a script that never loads.
+ * Builds the serializable manifest behind {@link segment}.
  */
-export const segment = function segment({
+export const resolveSegmentManifest = function resolveSegmentManifest({
 	writeKey,
 	loadOptions = {},
 	trackPageView = true,
-	scriptUrl,
-}: SegmentOptions): Script {
-	const normalizedWriteKey = readId(writeKey);
-	if (normalizedWriteKey === undefined) {
-		return skipMissingId('segment', 'writeKey', {
-			category: 'measurement',
-			manifest: segmentManifest,
-		});
-	}
-	const segmentCdnBase = 'https://cdn.segment.com/analytics.js/v1';
-	const defaultScriptUrl = `${segmentCdnBase}/${normalizedWriteKey}/analytics.min.js`;
-
+}: Omit<SegmentOptions, 'scriptUrl'>): ResolvedManifest {
 	let manifest: VendorManifest = segmentManifest;
-
 	if (!trackPageView) {
 		manifest = {
 			...segmentManifest,
@@ -212,8 +197,56 @@ export const segment = function segment({
 		} satisfies VendorManifest;
 	}
 
-	return resolveManifest(manifest, {
-		loadOptions,
-		scriptUrl: resolveScriptUrl(scriptUrl, defaultScriptUrl),
-	});
+	return getCompiledManifest(manifest, { loadOptions, writeKey });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'segment',
+		{
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+			writeKey: {
+				example: 'AbCdEfGhIjKlMnOpQrStUvWxYz012345',
+				kind: 'id',
+				label: 'Write key',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveSegmentManifest
+	);
+
+/**
+ * Creates a Segment Analytics.js script.
+ *
+ * @remarks When `writeKey` is missing or blank, the helper logs
+ *   `segment: missing or invalid writeKey` with `console.error` and
+ *   returns a script that never loads.
+ */
+export const segment = function segment({
+	scriptUrl,
+	...options
+}: SegmentOptions): Script {
+	const writeKey = readId(options.writeKey);
+	if (writeKey === undefined) {
+		return skipMissingId('segment', 'writeKey', {
+			category: 'measurement',
+			manifest: segmentManifest,
+		});
+	}
+
+	return withScriptUrl(
+		resolvedManifestToScript(resolveSegmentManifest({ ...options, writeKey })),
+		scriptUrl
+	);
 };

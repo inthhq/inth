@@ -42,7 +42,7 @@ describe('matomoAnalytics', () => {
 		}
 	});
 
-	it('resolves cloud IDs and queue bootstrap commands', () => {
+	it('loads a Matomo Cloud account from the CDN and tracks to its host', () => {
 		const globalRef = getTestGlobal();
 		const script = matomoAnalytics({
 			cloudId: 'my-site.matomo.cloud',
@@ -51,7 +51,9 @@ describe('matomoAnalytics', () => {
 			siteId: 2,
 		});
 
-		expect(script.src).toBe('https://my-site.matomo.cloud/matomo.js');
+		expect(script.src).toBe(
+			'https://cdn.matomo.cloud/my-site.matomo.cloud/matomo.js'
+		);
 		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));
 		expect(globalRef._paq).toEqual([
 			['setTrackerUrl', 'https://my-site.matomo.cloud/matomo.php'],

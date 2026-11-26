@@ -1,11 +1,17 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { booleanDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { joinUrlPath } from '../_shared/script-url';
+import {
+	joinUrlPath,
+	trimToUndefined,
+	withScriptUrl,
+} from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -46,8 +52,7 @@ export const rybbitAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://app.rybbit.io/api/script.js',
 			type: 'loadScript',
 		},
 	],
@@ -90,19 +95,79 @@ export interface RybbitAnalyticsOptions {
 	scriptUrl?: string;
 }
 
-const getRybbitScriptUrl = function getRybbitScriptUrl(
-	options: RybbitAnalyticsOptions
-): string {
-	const url = options.scriptUrl?.trim();
-	if (url && url.length > 0) {
-		return url;
-	}
-	if (options.analyticsHost) {
-		return joinUrlPath(options.analyticsHost, 'script.js');
-	}
+/**
+ * Builds the serializable manifest behind {@link rybbitAnalytics}.
+ * `analyticsHost`, `apiKey`, the pattern lists and `debounce` stay npm-only.
+ */
+export const resolveRybbitAnalyticsManifest =
+	function resolveRybbitAnalyticsManifest({
+		siteId,
+		autoTrackPageview,
+		trackSpa,
+		trackQuery,
+		trackOutbound,
+		trackErrors,
+		sessionReplay,
+		webVitals,
+		skipPatterns,
+		maskPatterns,
+		debounce,
+		apiKey,
+	}: Omit<
+		RybbitAnalyticsOptions,
+		'scriptUrl' | 'analyticsHost'
+	>): ResolvedManifest {
+		return getCompiledManifest(rybbitAnalyticsManifest, {
+			apiKey,
+			autoTrackPageview: booleanDataAttribute(autoTrackPageview),
+			debounce: debounce === undefined ? undefined : String(debounce),
+			maskPatterns: maskPatterns ? JSON.stringify(maskPatterns) : undefined,
+			sessionReplay: booleanDataAttribute(sessionReplay),
+			siteId: String(siteId),
+			skipPatterns: skipPatterns ? JSON.stringify(skipPatterns) : undefined,
+			trackErrors: booleanDataAttribute(trackErrors),
+			trackOutbound: booleanDataAttribute(trackOutbound),
+			trackQuery: booleanDataAttribute(trackQuery),
+			trackSpa: booleanDataAttribute(trackSpa),
+			webVitals: booleanDataAttribute(webVitals),
+		});
+	};
 
-	return 'https://app.rybbit.io/api/script.js';
-};
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'rybbitAnalytics',
+		{
+			sessionReplay: {
+				default: false,
+				kind: 'boolean',
+				label: 'Session replay',
+			},
+			siteId: {
+				example: '123',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[A-Za-z0-9-]+$',
+				required: true,
+			},
+			trackErrors: {
+				default: false,
+				kind: 'boolean',
+				label: 'Track errors',
+			},
+			webVitals: {
+				default: false,
+				kind: 'boolean',
+				label: 'Web Vitals',
+			},
+		},
+		resolveRybbitAnalyticsManifest
+	);
 
 /**
  * Creates a Rybbit Analytics script.
@@ -111,9 +176,11 @@ const getRybbitScriptUrl = function getRybbitScriptUrl(
  *   `rybbitAnalytics: missing or invalid siteId` with `console.error` and
  *   returns a script that never loads.
  */
-export const rybbitAnalytics = function rybbitAnalytics(
-	options: RybbitAnalyticsOptions
-): Script {
+export const rybbitAnalytics = function rybbitAnalytics({
+	scriptUrl,
+	analyticsHost,
+	...options
+}: RybbitAnalyticsOptions): Script {
 	const siteId = readId(options.siteId);
 	if (siteId === undefined) {
 		return skipMissingId('rybbitAnalytics', 'siteId', {
@@ -122,34 +189,13 @@ export const rybbitAnalytics = function rybbitAnalytics(
 		});
 	}
 
-	let debounce: string | undefined;
-	if (options.debounce !== undefined) {
-		debounce = String(options.debounce);
-	}
-
-	let skipPatterns: string | undefined;
-	if (options.skipPatterns) {
-		skipPatterns = JSON.stringify(options.skipPatterns);
-	}
-
-	let maskPatterns: string | undefined;
-	if (options.maskPatterns) {
-		maskPatterns = JSON.stringify(options.maskPatterns);
-	}
-
-	return resolveManifest(rybbitAnalyticsManifest, {
-		apiKey: options.apiKey,
-		autoTrackPageview: booleanDataAttribute(options.autoTrackPageview),
-		debounce,
-		maskPatterns,
-		scriptUrl: getRybbitScriptUrl(options),
-		sessionReplay: booleanDataAttribute(options.sessionReplay),
-		siteId,
-		skipPatterns,
-		trackErrors: booleanDataAttribute(options.trackErrors),
-		trackOutbound: booleanDataAttribute(options.trackOutbound),
-		trackQuery: booleanDataAttribute(options.trackQuery),
-		trackSpa: booleanDataAttribute(options.trackSpa),
-		webVitals: booleanDataAttribute(options.webVitals),
-	});
+	// A self-hosted Rybbit serves its script from `analyticsHost`, unless
+	// `scriptUrl` names it directly.
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveRybbitAnalyticsManifest({ ...options, siteId })
+		),
+		trimToUndefined(scriptUrl) ??
+			(analyticsHost ? joinUrlPath(analyticsHost, 'script.js') : undefined)
+	);
 };

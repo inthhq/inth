@@ -1,11 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { booleanDataAttribute, listDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -42,8 +44,7 @@ export const umamiAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cloud.umami.is/script.js',
 			type: 'loadScript',
 		},
 	],
@@ -99,6 +100,64 @@ export interface UmamiAnalyticsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link umamiAnalytics}. `hostUrl`,
+ * `tag` and `beforeSend` stay npm-only.
+ */
+export const resolveUmamiAnalyticsManifest =
+	function resolveUmamiAnalyticsManifest({
+		websiteId,
+		hostUrl,
+		autoTrack,
+		domains,
+		tag,
+		beforeSend,
+	}: Omit<UmamiAnalyticsOptions, 'scriptUrl'>): ResolvedManifest {
+		return getCompiledManifest(umamiAnalyticsManifest, {
+			autoTrackAttribute: booleanDataAttribute(autoTrack),
+			beforeSend,
+			domains: listDataAttribute(domains),
+			hostUrl,
+			tag,
+			websiteId,
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'umamiAnalytics',
+		{
+			autoTrack: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views and events',
+			},
+			domains: {
+				example: 'example.com',
+				kind: 'idList',
+				label: 'Only track on these domains',
+				maxItems: 20,
+				pattern: '^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$',
+				required: false,
+			},
+			websiteId: {
+				example: '94db1cb1-74f4-4a40-ad6c-962362670409',
+				kind: 'id',
+				label: 'Website ID',
+				pattern:
+					'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+				required: true,
+			},
+		},
+		resolveUmamiAnalyticsManifest
+	);
+
+/**
  * Creates an Umami Analytics script.
  *
  * @see https://umami.is/docs/tracker-config
@@ -117,9 +176,10 @@ export interface UmamiAnalyticsOptions {
  * });
  * ```
  */
-export const umamiAnalytics = function umamiAnalytics(
-	options: UmamiAnalyticsOptions
-): Script {
+export const umamiAnalytics = function umamiAnalytics({
+	scriptUrl,
+	...options
+}: UmamiAnalyticsOptions): Script {
 	const websiteId = readId(options.websiteId);
 	if (websiteId === undefined) {
 		return skipMissingId('umamiAnalytics', 'websiteId', {
@@ -128,18 +188,10 @@ export const umamiAnalytics = function umamiAnalytics(
 		});
 	}
 
-	const resolved = resolveManifest(umamiAnalyticsManifest, {
-		autoTrackAttribute: booleanDataAttribute(options.autoTrack),
-		beforeSend: options.beforeSend,
-		domains: listDataAttribute(options.domains),
-		hostUrl: options.hostUrl,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://cloud.umami.is/script.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveUmamiAnalyticsManifest({ ...options, websiteId })
 		),
-		tag: options.tag,
-		websiteId,
-	});
-
-	return resolved;
+		scriptUrl
+	);
 };

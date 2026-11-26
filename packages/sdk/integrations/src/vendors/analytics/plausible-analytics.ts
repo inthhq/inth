@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 export type PlausibleExtension =
 	| 'hash'
@@ -37,11 +39,11 @@ declare global {
 	}
 }
 
-const buildPlausibleScriptUrl = function buildPlausibleScriptUrl(
+const buildPlausibleScriptFile = function buildPlausibleScriptFile(
 	options: PlausibleAnalyticsOptions
 ): string {
 	if (options.scriptId) {
-		return `https://plausible.io/js/pa-${options.scriptId}.js`;
+		return `pa-${options.scriptId}`;
 	}
 
 	if (options.extension) {
@@ -52,10 +54,10 @@ const buildPlausibleScriptUrl = function buildPlausibleScriptUrl(
 			extensions = options.extension;
 		}
 
-		return `https://plausible.io/js/script.${extensions}.js`;
+		return `script.${extensions}`;
 	}
 
-	return 'https://plausible.io/js/script.js';
+	return 'script';
 };
 
 const buildPlausibleInitOptions = function buildPlausibleInitOptions(
@@ -125,8 +127,7 @@ export const plausibleAnalyticsManifest = {
 			},
 
 			defer: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://plausible.io/js/{{scriptFile}}.js',
 			type: 'loadScript',
 		},
 	],
@@ -194,6 +195,55 @@ export interface PlausibleAnalyticsOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link plausibleAnalytics}. Takes
+ * `scriptId` and `domain` already trimmed, with at least one set. `scriptId`
+ * wins and drops the `domain` and `endpoint` attributes.
+ */
+export const resolvePlausibleAnalyticsManifest =
+	function resolvePlausibleAnalyticsManifest(
+		options: Omit<PlausibleAnalyticsOptions, 'scriptUrl'>
+	): ResolvedManifest {
+		const { scriptId } = options;
+		return getCompiledManifest(plausibleAnalyticsManifest, {
+			apiAttribute: scriptId ? undefined : options.endpoint,
+			domain: scriptId ? undefined : options.domain,
+			initOptions: buildPlausibleInitOptions(options),
+			scriptFile: buildPlausibleScriptFile(options),
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'plausibleAnalytics',
+		{
+			autoCapturePageviews: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+			hashBasedRouting: {
+				default: false,
+				kind: 'boolean',
+				label: 'Hash-based routing',
+			},
+			scriptId: {
+				example: 'AbC123xYz',
+				kind: 'id',
+				label: 'Script ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolvePlausibleAnalyticsManifest
+	);
+
+/**
  * Creates a Plausible Analytics script.
  *
  * Models Plausible's queue bootstrap and loader attributes as an Inth-managed
@@ -216,12 +266,12 @@ export interface PlausibleAnalyticsOptions {
  * });
  * ```
  */
-export const plausibleAnalytics = function plausibleAnalytics(
-	options: PlausibleAnalyticsOptions
-): Script {
+export const plausibleAnalytics = function plausibleAnalytics({
+	scriptUrl,
+	...options
+}: PlausibleAnalyticsOptions): Script {
 	const scriptId = readId(options.scriptId);
 	const domain = readId(options.domain);
-
 	if (!scriptId && !domain) {
 		return skipScript('plausibleAnalytics: missing scriptId or domain', {
 			category: 'measurement',
@@ -229,37 +279,10 @@ export const plausibleAnalytics = function plausibleAnalytics(
 		});
 	}
 
-	const normalizedOptions: PlausibleAnalyticsOptions = { ...options };
-	if (scriptId) {
-		normalizedOptions.scriptId = scriptId;
-	} else {
-		delete normalizedOptions.scriptId;
-	}
-	if (domain) {
-		normalizedOptions.domain = domain;
-	} else {
-		delete normalizedOptions.domain;
-	}
-
-	const manifestOptions = {
-		apiAttribute: undefined as string | undefined,
-		domain: undefined as string | undefined,
-		initOptions: buildPlausibleInitOptions(normalizedOptions),
-		scriptUrl: resolveScriptUrl(
-			normalizedOptions.scriptUrl,
-			buildPlausibleScriptUrl(normalizedOptions)
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolvePlausibleAnalyticsManifest({ ...options, domain, scriptId })
 		),
-	};
-
-	if (scriptId) {
-		manifestOptions.domain = undefined;
-		manifestOptions.apiAttribute = undefined;
-	} else {
-		manifestOptions.domain = domain;
-		manifestOptions.apiAttribute = normalizedOptions.endpoint;
-	}
-
-	const resolved = resolveManifest(plausibleAnalyticsManifest, manifestOptions);
-
-	return resolved;
+		scriptUrl
+	);
 };

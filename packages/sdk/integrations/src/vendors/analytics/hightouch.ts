@@ -1,14 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
-
-const DEFAULT_HIGHTOUCH_SCRIPT_URL =
-	'https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
 export const HIGHTOUCH_QUEUE_METHODS = [
 	...ANALYTICS_JS_QUEUE_METHODS,
@@ -272,8 +271,7 @@ export const hightouchManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -323,6 +321,62 @@ const normalizeApiHost = function normalizeApiHost(
 };
 
 /**
+ * Builds the serializable manifest behind {@link hightouch}.
+ */
+export const resolveHightouchManifest = function resolveHightouchManifest({
+	writeKey,
+	apiHost,
+	trackPageView = true,
+}: Omit<HightouchOptions, 'scriptUrl'>): ResolvedManifest {
+	const normalizedApiHost = normalizeApiHost(apiHost);
+	// No `apiHost` key without a host, so the SDK keeps its default.
+	const loadOptions =
+		normalizedApiHost === undefined ? {} : { apiHost: normalizedApiHost };
+	let manifest: VendorManifest = hightouchManifest;
+	if (!trackPageView) {
+		manifest = {
+			...hightouchManifest,
+			install: hightouchManifest.install.filter(
+				(step) =>
+					!(
+						step.type === 'callGlobal' &&
+						step.global === 'htevents' &&
+						step.method === 'page'
+					)
+			),
+		} satisfies VendorManifest;
+	}
+
+	return getCompiledManifest(manifest, { loadOptions, writeKey });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'hightouch',
+		{
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+			writeKey: {
+				example: 'a1b2c3d4e5f6a7b8c9d0',
+				kind: 'id',
+				label: 'Write key',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveHightouchManifest
+	);
+
+/**
  * Creates a Hightouch Events browser SDK script.
  *
  * @see https://hightouch.com/docs/events/sdks/browser
@@ -347,42 +401,21 @@ const normalizeApiHost = function normalizeApiHost(
  * ```
  */
 export const hightouch = function hightouch({
-	writeKey,
-	apiHost,
-	trackPageView = true,
 	scriptUrl,
+	...options
 }: HightouchOptions): Script {
-	const normalizedWriteKey = readId(writeKey);
-	if (normalizedWriteKey === undefined) {
+	const writeKey = readId(options.writeKey);
+	if (writeKey === undefined) {
 		return skipMissingId('hightouch', 'writeKey', {
 			category: 'measurement',
 			manifest: hightouchManifest,
 		});
 	}
-	const normalizedApiHost = normalizeApiHost(apiHost);
-	// No `apiHost` key without a host, so the SDK keeps its default.
-	const loadOptions =
-		normalizedApiHost === undefined ? {} : { apiHost: normalizedApiHost };
 
-	let manifest: VendorManifest = hightouchManifest;
-
-	if (!trackPageView) {
-		manifest = {
-			...hightouchManifest,
-			install: hightouchManifest.install.filter(
-				(step) =>
-					!(
-						step.type === 'callGlobal' &&
-						step.global === 'htevents' &&
-						step.method === 'page'
-					)
-			),
-		} satisfies VendorManifest;
-	}
-
-	return resolveManifest(manifest, {
-		loadOptions,
-		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_HIGHTOUCH_SCRIPT_URL),
-		writeKey: normalizedWriteKey,
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveHightouchManifest({ ...options, writeKey })
+		),
+		scriptUrl
+	);
 };
