@@ -365,6 +365,66 @@ test('skips a nested call or write the parser would refuse', async () => {
 	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then'], ['defer']]);
 });
 
+test('skips a nested call to a native function, a browser object or a push set on the queue', async () => {
+	const sink: unknown[] = [];
+	const list: unknown[] = [];
+	// Own, native and not the realm's: the parser cannot see it.
+	list.push = Array.prototype.push.bind(sink);
+	win.__list = list;
+	// A vendor function on a browser object, so only the holder refuses it.
+	const onBody = vi.fn();
+	Object.assign(document.body, { vendorMark: onBody });
+	disposers.push(() => Reflect.deleteProperty(document.body, 'vendorMark'));
+	win.__api = {
+		body: document.body,
+		init: () => Promise.resolve(),
+		mark: Element.prototype.setAttribute.bind(document.body),
+	};
+	const refused = (label: string): unknown[] => [
+		{
+			args: ['data-native', label],
+			global: '__api',
+			method: 'mark',
+			type: 'callGlobal',
+		},
+		{
+			args: [label],
+			path: ['__api', 'body', 'vendorMark'],
+			type: 'callGlobal',
+		},
+		{ queue: '__list', type: 'pushToQueue', value: label },
+		recordStep(label),
+	];
+	mount([
+		build({
+			alwaysLoad: true,
+			setupSteps: [
+				ifStep({ not: { flag: 'x' } }, refused('if')),
+				{
+					event: 'vendor:ready',
+					steps: refused('listen'),
+					target: 'window',
+					type: 'listen',
+				},
+				{
+					global: '__api',
+					method: 'init',
+					then: refused('then'),
+					type: 'callGlobal',
+				},
+				{ steps: refused('defer'), type: 'defer' },
+			],
+		}),
+	]);
+	window.dispatchEvent(new Event('vendor:ready'));
+	await settle();
+
+	expect(document.body.getAttributeNames()).toEqual([]);
+	expect(onBody).not.toHaveBeenCalled();
+	expect(sink).toEqual([]);
+	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then'], ['defer']]);
+});
+
 test('removes a tag a nested step inserted when the script is disposed', () => {
 	const { loader } = mount([
 		build({
