@@ -83,3 +83,40 @@ test('isolates a throwing replacement effect and completes the next effect', () 
 		})
 	);
 });
+
+test('gives the effect consent as it is when it runs, against the outgoing condition', () => {
+	const kernel = createConsentKernel({
+		initialRecords: choiceRecords({ marketing: true, measurement: true }),
+	});
+	const effect = vi.fn();
+	const loader = createScriptLoader({
+		kernel,
+		scripts: [
+			script({
+				onDispose: (info) => {
+					expect(info.hasConsent).toBe(true);
+					info.afterReplacement?.(effect);
+				},
+			}),
+		],
+	});
+	disposers.push(kernel.dispose, loader.dispose);
+
+	// The incoming script needs marketing, which stays granted; the
+	// withdrawal it saves applies to the outgoing script's measurement.
+	loader.updateScripts([
+		script({
+			category: 'marketing',
+			onBeforeLoad: () => {
+				void kernel.commands.save({ marketing: true, measurement: false });
+			},
+		}),
+	]);
+
+	expect(effect).toHaveBeenCalledOnce();
+	expect(effect.mock.calls[0]?.[0]).toMatchObject({
+		consents: { marketing: true, measurement: false },
+		hasConsent: false,
+		id: 'replacement-completion',
+	});
+});

@@ -762,10 +762,32 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		);
 		if (info.replacing) {
 			Object.defineProperty(info, 'afterReplacement', {
-				value: (effect: () => void) =>
-					replacementEffects.add(() =>
-						invokeCallback(script, 'onDispose', info, emit, effect)
-					),
+				value: (effect: (current: ScriptCallbackInfo) => void) =>
+					replacementEffects.add(() => {
+						// This registration's reader froze when the replacement
+						// started, and the incoming one may have saved a choice
+						// since. Read the kernel now, against this script's own
+						// condition, which the incoming script may not share.
+						const now = kernel.getSnapshot();
+						const [entry] = normalizeScripts([script], isVendorId);
+						invokeCallback(
+							script,
+							'onDispose',
+							buildCallbackInfo(
+								callbackTools,
+								script,
+								now,
+								hasScriptConsent(
+									entry as NormalizedScript,
+									buildReconcilePass(now, tools)
+								),
+								info.elementId,
+								element
+							),
+							emit,
+							effect
+						);
+					}),
 			});
 		}
 		invokeCallback(script, 'onDispose', info, emit);

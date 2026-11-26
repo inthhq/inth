@@ -57,9 +57,13 @@ export interface ScriptCallbackInfo {
 	 * Run after the queued replacement has reconciled, or disposal aborts it.
 	 * Only present on an outgoing replacement's disposal info. Non-enumerable.
 	 * @param effect - Synchronous work that must wait for incoming membership.
+	 * It gets this script's consent as it is when the effect runs, read
+	 * against this script's own condition.
 	 * @internal
 	 */
-	readonly afterReplacement?: (effect: () => void) => void;
+	readonly afterReplacement?: (
+		effect: (current: ScriptCallbackInfo) => void
+	) => void;
 
 	/**
 	 * Report that a file a callback-only script inserted itself failed to
