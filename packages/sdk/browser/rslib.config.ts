@@ -91,6 +91,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-adobe-target',
 	'inth.adapter-amazon-ads',
 	'inth.adapter-cloudflare-zaraz',
+	'inth.adapter-default-com',
 	'inth.adapter-sentry',
 	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
@@ -294,6 +295,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-adobe-target',
 			'./src/entries/cdn-adapter-adobe-target.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-default-com',
+			'./src/entries/cdn-adapter-default-com.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(

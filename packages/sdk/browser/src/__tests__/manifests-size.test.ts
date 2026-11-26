@@ -53,6 +53,7 @@ import { expect, it } from 'vite-plus/test';
  * `inth.adapter-adobe-target.js`, Adobe's Web SDK consent: 836.
  * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
  * `inth.adapter-cloudflare-zaraz.js`, the Zaraz purpose sync: 1,232.
+ * `inth.adapter-default-com.js`, the Default Pixel and Forms SDK: 2,248.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
@@ -60,6 +61,7 @@ const BUDGETS = {
 	'inth.adapter-amazon-ads.js': 1550,
 	'inth.adapter-cloudflare-zaraz.js': 1270,
 	'inth.adapter-databuddy.js': 1240,
+	'inth.adapter-default-com.js': 2280,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-hubspot.js': 2830,
@@ -118,6 +120,7 @@ it.each([
 	['inth.adapter-adobe-target.js', 'Web SDK'],
 	['inth.adapter-amazon-ads.js', 'amzn-consent.js'],
 	['inth.adapter-cloudflare-zaraz.js', 'zarazConsentAPIReady'],
+	['inth.adapter-default-com.js', 'application/x-inth-default-conflict'],
 	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
 	['inth.adapter-oracle-eloqua.js', 'consent dispatch failed'],
 ])('keeps the code of %s in its own file', (file, message) => {

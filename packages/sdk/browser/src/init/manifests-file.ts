@@ -42,6 +42,7 @@ export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
 	'amazon-ads': '__inthAdapterAmazonAds',
 	'cloudflare-zaraz': '__inthAdapterCloudflareZaraz',
 	databuddy: '__inthAdapterDatabuddy',
+	'default-com': '__inthAdapterDefaultCom',
 	fullstory: '__inthAdapterFullstory',
 	'gainsight-px': '__inthAdapterGainsightPx',
 	hubspot: '__inthAdapterHubspot',

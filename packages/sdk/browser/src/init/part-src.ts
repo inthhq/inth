@@ -20,6 +20,7 @@ export type InitFile =
 	| 'adapter-cloudflare-zaraz'
 	| 'adapter-adobe-target'
 	| 'adapter-databuddy'
+	| 'adapter-default-com'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
 	| 'adapter-hubspot'
@@ -35,6 +36,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-cloudflare-zaraz': '__inthAdapterCloudflareZarazSrc',
 	'adapter-adobe-target': '__inthAdapterAdobeTargetSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
+	'adapter-default-com': '__inthAdapterDefaultComSrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',
 	'adapter-hubspot': '__inthAdapterHubspotSrc',

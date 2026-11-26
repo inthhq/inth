@@ -242,6 +242,7 @@ export const ADAPTER_LEVELS = {
 	'amazon-ads': 4,
 	'cloudflare-zaraz': 4,
 	databuddy: 4,
+	'default-com': 4,
 	fullstory: 4,
 	'gainsight-px': 4,
 	hubspot: 4,

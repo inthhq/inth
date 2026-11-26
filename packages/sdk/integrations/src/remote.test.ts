@@ -56,8 +56,16 @@ beforeAll(async () => {
 	]);
 });
 
-/** npm helpers not named after their registry key. */
-const helperNames: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
+/**
+ * npm helpers not named after their registry key, or picked by an option:
+ * Default's form sets the product, and a site calls the Pixel's or the
+ * Forms SDK's helper.
+ */
+const helperNames: Partial<
+	Record<BuiltInScriptIntegrationKey, string | ((options: Options) => string)>
+> = {
+	defaultComPixel: (options) =>
+		options.product === 'forms' ? 'defaultComFormsSdk' : 'defaultComPixel',
 	'microsoft-clarity': 'clarity',
 };
 
@@ -66,11 +74,13 @@ const helperNames: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
  * the same options, so a helper that stops matching its resolver fails.
  */
 const npmHelper = function npmHelper(
-	key: string
+	key: string,
+	options: Options = {}
 ): (options: Options) => Script {
 	const typedKey = key as BuiltInScriptIntegrationKey;
 	const module: Record<string, unknown> = vendorModules[typedKey];
-	const name = helperNames[typedKey] ?? key;
+	const named = helperNames[typedKey] ?? key;
+	const name = typeof named === 'function' ? named(options) : named;
 	const helper = module[name];
 	if (typeof helper !== 'function') {
 		throw new TypeError(`${key} has no npm helper named ${name}`);
@@ -131,6 +141,32 @@ const dashboardToNpm: Partial<
 			(byCategory[category] ??= []).push(purpose);
 		}
 		return { ...rest, purposes: byCategory };
+	},
+	// Default's form takes scheduler domains and a display enum; a site
+	// passes origins and a boolean, and loadMode only to the Pixel.
+	defaultComPixel: ({
+		autoDisplayScheduler,
+		loadMode,
+		product,
+		schedulerDomains,
+		...rest
+	}) => {
+		const input: Options = { ...rest };
+		if (
+			autoDisplayScheduler !== undefined &&
+			autoDisplayScheduler !== 'default'
+		) {
+			input.autoDisplayScheduler = autoDisplayScheduler === 'modal';
+		}
+		if (product !== 'forms' && loadMode !== undefined) {
+			input.loadMode = loadMode;
+		}
+		if (schedulerDomains !== undefined) {
+			input.schedulerOrigins = (schedulerDomains as string[]).map(
+				(domain) => `https://${domain}`
+			);
+		}
+		return input;
 	},
 	// The remote form defaults to classic mode, the helper to consent mode.
 	// The helper's consent mode takes the tracker hostname as piDomain.
@@ -202,6 +238,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	crisp: ['client.crisp.chat'],
 	customerIo: ['cdp.customer.io', 'cdp-eu.customer.io'],
 	databuddy: ['cdn.databuddy.cc'],
+	defaultComPixel: ['handshake.default.com'],
 	eloquaTracking: ['img.en25.com'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
@@ -275,6 +312,7 @@ const vendorLevels: Partial<
 	customerIo: 3,
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),
+	defaultComPixel: 4,
 	eloquaTracking: 4,
 	fullStory: 4,
 	gainsightPx: 4,
@@ -604,7 +642,7 @@ describe('remoteIntegrations', () => {
 		'%s %s builds the same script as the npm helper',
 		(key, _label, options) => {
 			// A site passes the options as they are; it gets no remote default.
-			const fromNpm = npmHelper(key)(npmInput(key, options));
+			const fromNpm = npmHelper(key, options)(npmInput(key, options));
 			const fromRemote = remoteScript(key, options);
 
 			expect(withoutFunctions(fromRemote)).toEqual(withoutFunctions(fromNpm));

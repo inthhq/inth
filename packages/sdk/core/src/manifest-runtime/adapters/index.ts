@@ -17,6 +17,7 @@ const ADAPTER_MODULES: Record<
 	'cloudflare-zaraz': async () =>
 		(await import('./cloudflare-zaraz')).cloudflareZarazAdapter,
 	databuddy: async () => (await import('./databuddy')).databuddyAdapter,
+	'default-com': async () => (await import('./default-com')).defaultComAdapter,
 	fullstory: async () => (await import('./fullstory')).fullStoryAdapter,
 	'gainsight-px': async () =>
 		(await import('./gainsight-px')).gainsightPxAdapter,

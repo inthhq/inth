@@ -383,6 +383,7 @@ describe('on-demand chunks', () => {
 			'manifest-runtime/adapters/amazon-ads',
 			'manifest-runtime/adapters/cloudflare-zaraz',
 			'manifest-runtime/adapters/databuddy',
+			'manifest-runtime/adapters/default-com',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',
 			'manifest-runtime/adapters/hubspot',

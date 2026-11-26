@@ -1,22 +1,31 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import {
+	defaultComFormsScript,
+	defaultComPixelScript,
+} from '@inth/sdk/manifest-runtime/adapters/default-com';
+import type {
+	DefaultComAdapterOptions,
+	DefaultComAutoDisplayScheduler,
+	DefaultComExtras,
+	DefaultComFormsAdapterOptions,
+	DefaultComFormsSdkInitOptions,
+	DefaultComPixelAdapterOptions,
+} from '@inth/sdk/manifest-runtime/adapters/default-com';
 
+import { resolvedManifestToScript } from '../../engine/runtime';
 import type { IntegrationConsentCondition } from '../../registry';
-import { resolveManifest } from '../../resolve';
+import { defineRemote } from '../../remote-define';
+import type { RemoteOptionValues } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { permitted } from '../_shared/permitted';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { trimToUndefined, withScriptUrl } from '../_shared/script-url';
 
-/** Default's scheduler display configuration. */
-export type DefaultComAutoDisplayScheduler =
-	| boolean
-	| {
-			/** Show Default's loading indicator while opening the scheduler. */
-			loader?: boolean;
-			/** CSS selector or element for the scheduler container. */
-			target: string | HTMLElement;
-	  };
+export type {
+	DefaultComAutoDisplayScheduler,
+	DefaultComFormsSdkInitOptions,
+} from '@inth/sdk/manifest-runtime/adapters/default-com';
 
 /** Options for the current Default Pixel. */
 export interface DefaultComPixelOptions {
@@ -79,14 +88,6 @@ interface DefaultComPixelBootstrap {
 	schedulerOrigins?: string[];
 	/** Update either or both permissions. Omitted fields retain their value. */
 	setConsent?: (consent: Partial<DefaultComConsent>) => void;
-}
-
-/** Configuration accepted by DefaultPixelSDK.init(). */
-export interface DefaultComFormsSdkInitOptions {
-	autoDisplayScheduler?: DefaultComAutoDisplayScheduler;
-	endpoint?: string;
-	publicKey: string;
-	schedulerOrigins?: string[];
 }
 
 /** Field values accepted by Default's manual form submission API. */
@@ -215,261 +216,193 @@ const vendorDetails = {
 	privacyPolicyUrl: 'https://www.default.com/legal/privacy',
 };
 
-/** Current Default Pixel loader. The helper supplies its runtime bootstrap. */
+/**
+ * Current Default Pixel loader. The Default adapter in `@inth/sdk` queues
+ * its configuration and consent before it runs.
+ */
 export const defaultComPixelManifest = {
 	...vendorManifestContract,
 	category: '{{category}}',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			async: true,
+			src: 'https://handshake.default.com/index.js',
+			type: 'loadScript',
+		},
+	],
 	persistAfterConsentRevoked: true,
 	vendor: 'default-com',
 	vendorDetails,
-} satisfies VendorManifest;
+} as const satisfies VendorManifest;
 
-/** Standalone Forms SDK loader. Shares the Pixel's preference-center vendor. */
+/**
+ * Standalone Forms SDK loader. Shares the Pixel's preference-center vendor.
+ * Initially denied owners still gate the shared SDK, and sdk.js keeps
+ * document listeners and a page-level module, so running it again on
+ * remount would leave capture bound to the disposed client.
+ */
 export const defaultComFormsSdkManifest = {
 	...vendorManifestContract,
 	category: '{{category}}',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			async: true,
+			src: 'https://handshake.default.com/sdk.js',
+			type: 'loadScript',
+		},
+	],
+	observeConsentBeforeLoad: true,
 	persistAfterConsentRevoked: true,
+	persistAfterDispose: true,
 	vendor: 'default-com',
 	vendorDetails,
-} satisfies VendorManifest;
+} as const satisfies VendorManifest;
 
-type SdkRegistration = symbol | HTMLScriptElement;
-interface SdkState {
-	options?: DefaultComFormsSdkInitOptions;
-	registrations: Map<SdkRegistration, DefaultComConsent>;
-}
-const sdkStates = new WeakMap<DefaultComFormsSdkClient, SdkState>();
-const sdkOwners = new Map<SdkRegistration, DefaultComFormsSdkClient>();
-// Owners observed before their element mounted, such as an initially denied
-// loader. They still gate the shared SDK once another owner loads it.
-const preloadOwners = new Map<SdkRegistration, DefaultComConsent>();
-const formsElements = new WeakSet<HTMLScriptElement>();
-const loadedFormsElements = new WeakSet<HTMLScriptElement>();
-// sdk.js runs once per document, so its first inserted URL stays for the page.
-const formsSdkSources = new WeakMap<Document, string>();
-const formsSdkSourceError =
-	'defaultComFormsSdk: Reload the page to change the Forms SDK URL.';
-
-const registrationOf = (
-	info: ScriptCallbackInfo
-): SdkRegistration | undefined => info.registration ?? info.element;
-
-const forwardSdkConsent = (sdk: DefaultComFormsSdkClient): void => {
-	const states = [...(sdkStates.get(sdk)?.registrations.values() ?? [])];
-	sdk.setConsent({
-		analytics: states.length > 0 && states.every((state) => state.analytics),
-		marketing: states.length > 0 && states.every((state) => state.marketing),
-	});
-};
-
-// Stable identity lets core retain the resource across configuration updates.
-const observePreloadOwner = (
-	registration: SdkRegistration,
-	consent: DefaultComConsent
-): void => {
-	preloadOwners.set(registration, consent);
-	const sdk =
-		typeof window === 'undefined' ? undefined : window.DefaultPixelSDK;
-	const state = sdk ? sdkStates.get(sdk) : undefined;
-	if (sdk && state) {
-		state.registrations.set(registration, consent);
-		forwardSdkConsent(sdk);
-	}
-};
-
-const joinPreloadOwners = (state: SdkState): void => {
-	for (const [owner, consent] of preloadOwners) {
-		if (!state.registrations.has(owner)) {
-			state.registrations.set(owner, consent);
-		}
-	}
-};
-
-const disposeFormsSdk = (info: ScriptCallbackInfo): void => {
-	const registration = registrationOf(info);
-	if (registration !== undefined && preloadOwners.delete(registration)) {
-		const sdk =
-			typeof window === 'undefined' ? undefined : window.DefaultPixelSDK;
-		const state = sdk ? sdkStates.get(sdk) : undefined;
-		if (sdk && state?.registrations.delete(registration)) {
-			forwardSdkConsent(sdk);
-		}
-	}
-	const sdk =
-		registration === undefined ? undefined : sdkOwners.get(registration);
-	if (registration !== undefined && sdk) {
-		sdkOwners.delete(registration);
-		sdkStates.get(sdk)?.registrations.delete(registration);
-		forwardSdkConsent(sdk);
-	}
-};
-
-const denyDetachedFormsSdk = (info: ScriptCallbackInfo): void => {
-	const registration = registrationOf(info);
-	if (registration === undefined) {
-		return;
-	}
-	const sdk = sdkOwners.get(registration);
-	if (sdk) {
-		sdkStates.get(sdk)?.registrations.set(registration, {
-			analytics: false,
-			marketing: false,
-		});
-		forwardSdkConsent(sdk);
-	}
-};
-
-const snapshotSdkOptions = (
-	options: DefaultComFormsSdkInitOptions
-): DefaultComFormsSdkInitOptions => ({
-	...options,
-	autoDisplayScheduler:
-		typeof options.autoDisplayScheduler === 'object'
-			? { ...options.autoDisplayScheduler }
-			: (options.autoDisplayScheduler ?? true),
-	schedulerOrigins: options.schedulerOrigins?.slice(),
+/** The adapter field for `options`, as a manifest carries it. */
+const adapterField = (
+	options: DefaultComAdapterOptions
+): NonNullable<ResolvedManifest['adapter']> => ({
+	id: 'default-com',
+	options: JSON.parse(JSON.stringify(options)) as NonNullable<
+		ResolvedManifest['adapter']
+	>['options'],
 });
 
-const sameSdkOptions = (
-	previous: DefaultComFormsSdkInitOptions | undefined,
-	next: DefaultComFormsSdkInitOptions
-): boolean => {
-	if (!previous) {
-		return false;
-	}
-	const previousDisplay = previous.autoDisplayScheduler;
-	const nextDisplay = next.autoDisplayScheduler;
-	return (
-		previous.publicKey === next.publicKey &&
-		(previous.endpoint ?? 'https://api.default.com') ===
-			(next.endpoint ?? 'https://api.default.com') &&
-		previous.schedulerOrigins?.length === next.schedulerOrigins?.length &&
-		(previous.schedulerOrigins?.every(
-			(origin, index) => origin === next.schedulerOrigins?.[index]
-		) ??
-			true) &&
-		(previousDisplay === nextDisplay ||
-			(typeof previousDisplay === 'object' &&
-				typeof nextDisplay === 'object' &&
-				previousDisplay.target === nextDisplay.target &&
-				(previousDisplay.loader ?? false) === (nextDisplay.loader ?? false)))
-	);
-};
-type DefaultComLoader = 'defaultComPixel' | 'defaultComFormsSdk';
-const pageLoaders = new WeakMap<Document, DefaultComLoader>();
-const blockedLoaderType = 'application/x-inth-default-conflict';
-interface PixelConfiguration extends DefaultComFormsSdkInitOptions {
-	scriptUrl: string;
-}
-const pixelConfigurations = new WeakMap<Document, PixelConfiguration>();
-const conflictsWithPixel = (options: PixelConfiguration): boolean => {
-	const previous =
-		typeof document === 'undefined'
-			? undefined
-			: pixelConfigurations.get(document);
-	return (
-		previous !== undefined &&
-		(previous.scriptUrl !== options.scriptUrl ||
-			!sameSdkOptions(previous, options))
-	);
-};
-const assertPixelConfiguration = (options: PixelConfiguration): void => {
-	if (conflictsWithPixel(options)) {
-		throw new Error(
-			'defaultComPixel: Reload the page to change Default Pixel configuration.'
-		);
-	}
-};
+/** The scheduler switch a manifest carries; a container is npm-only. */
+const displaySwitch = (
+	display: DefaultComAutoDisplayScheduler | undefined
+): boolean | undefined => (typeof display === 'boolean' ? display : undefined);
 
-const claimLoader = function claimLoader(
-	info: ScriptCallbackInfo,
-	helper: DefaultComLoader,
-	alwaysLoad = false
-): boolean {
-	if (
-		typeof document === 'undefined' ||
-		!info.element ||
-		(!alwaysLoad && !permitted(info))
-	) {
-		return false;
-	}
-	const existing = pageLoaders.get(document);
-	const conflictingGlobal =
-		helper === 'defaultComPixel'
-			? window.DefaultPixelSDK !== undefined
-			: window.__defaultPixel__?.key !== undefined;
-	if ((existing !== undefined && existing !== helper) || conflictingGlobal) {
-		// Core catches callback errors, so throwing would still insert the loader.
-		// Disable the element itself before core appends it.
-		info.element.removeAttribute('src');
-		info.element.type = blockedLoaderType;
-		console.error(
-			`${helper}: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run.`
-		);
-		return false;
-	}
-	pageLoaders.set(document, helper);
-	return true;
-};
-
-const ownsLoader = function ownsLoader(
-	info: ScriptCallbackInfo,
-	helper: DefaultComLoader
-): boolean {
-	return (
-		typeof document !== 'undefined' &&
-		pageLoaders.get(document) === helper &&
-		info.element?.type !== blockedLoaderType
-	);
-};
-
-const mapConsent = function mapConsent(
-	info: ScriptCallbackInfo
-): DefaultComConsent {
-	const allowed = permitted(info);
-	return {
-		analytics: allowed && info.consents.measurement === true,
-		marketing: allowed && info.consents.marketing === true,
+/**
+ * The manifest for the Default Pixel: index.js from Default's host, and the
+ * Default adapter with the workspace key, load mode and scheduler settings.
+ * The npm helper and the Inth server both build it here.
+ */
+export const resolveDefaultComPixelManifest =
+	function resolveDefaultComPixelManifest(
+		options: Omit<DefaultComPixelOptions, 'scriptUrl'>
+	): ResolvedManifest {
+		const settings: DefaultComPixelAdapterOptions = {
+			autoDisplayScheduler: displaySwitch(options.autoDisplayScheduler),
+			loadMode: options.loadMode ?? 'after-consent',
+			product: 'pixel',
+			publicKey: options.publicKey,
+			schedulerOrigins: options.schedulerOrigins?.slice(),
+		};
+		return {
+			...getCompiledManifest(defaultComPixelManifest, {
+				category: options.category ?? 'measurement',
+			}),
+			adapter: adapterField(settings),
+			requires: 4,
+		};
 	};
+
+/**
+ * The manifest for the standalone Forms SDK: sdk.js from Default's host,
+ * and the Default adapter with the workspace key and scheduler settings.
+ */
+export const resolveDefaultComFormsSdkManifest =
+	function resolveDefaultComFormsSdkManifest(
+		options: Omit<DefaultComFormsSdkOptions, 'endpoint' | 'scriptUrl'>
+	): ResolvedManifest {
+		const settings: DefaultComFormsAdapterOptions = {
+			autoDisplayScheduler: displaySwitch(options.autoDisplayScheduler),
+			product: 'forms',
+			publicKey: options.publicKey,
+			schedulerOrigins: options.schedulerOrigins?.slice(),
+		};
+		return {
+			...getCompiledManifest(defaultComFormsSdkManifest, {
+				category: options.category ?? 'functionality',
+			}),
+			adapter: adapterField(settings),
+			requires: 4,
+		};
+	};
+
+const defaultComRemoteOptions = {
+	autoDisplayScheduler: {
+		default: 'default',
+		kind: 'enum',
+		label:
+			"Show Default's scheduler: Default's own setting, as a modal, or not",
+		values: ['default', 'modal', 'off'],
+	},
+	loadMode: {
+		default: 'after-consent',
+		kind: 'enum',
+		label: 'When the Pixel loads',
+		values: ['after-consent', 'always'],
+	},
+	product: {
+		default: 'pixel',
+		kind: 'enum',
+		label: 'Product',
+		values: ['pixel', 'forms'],
+	},
+	publicKey: {
+		example: 'pk_abc123',
+		kind: 'id',
+		label: 'Public key',
+		pattern: '^[0-9A-Za-z_-]{1,128}$',
+		required: true,
+	},
+	schedulerDomains: {
+		example: 'example.com',
+		kind: 'idList',
+		label: 'Scheduler domains, served over https',
+		maxItems: 10,
+		pattern:
+			'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$',
+		required: false,
+	},
+} as const;
+
+/**
+ * The manifest for options a dashboard set. Scheduler origins arrive as
+ * domain names, so no option holds a URL; `loadMode` is the Pixel's only.
+ */
+const resolveDefaultComRemote = ({
+	autoDisplayScheduler,
+	loadMode,
+	product,
+	publicKey,
+	schedulerDomains,
+}: RemoteOptionValues<typeof defaultComRemoteOptions>): ResolvedManifest => {
+	const shared = {
+		autoDisplayScheduler:
+			autoDisplayScheduler === 'default'
+				? undefined
+				: autoDisplayScheduler === 'modal',
+		publicKey,
+		schedulerOrigins: schedulerDomains?.map((domain) => `https://${domain}`),
+	};
+	return product === 'pixel'
+		? resolveDefaultComPixelManifest({ ...shared, loadMode })
+		: resolveDefaultComFormsSdkManifest(shared);
 };
 
 /**
- * Handle a callback for an owner without a connected element. A no-element
- * callback is a consent update for a pending or retained owner; only
- * `onDispose` removes an owner from the SDK aggregate.
+ * What the Inth server may set for Default: the Pixel or the Forms SDK,
+ * with the workspace key and scheduler settings. Script URLs, the Forms
+ * SDK's endpoint, a scheduler container and the consent condition are
+ * npm-only. Marked pure so a bundler drops it from an npm bundle that never
+ * reads it.
  */
-const releaseUnmountedFormsSdk = (
-	info: ScriptCallbackInfo,
-	registration: SdkRegistration | undefined
-): void => {
-	if (info.element) {
-		denyDetachedFormsSdk(info);
-		return;
-	}
-	if (registration === undefined) {
-		return;
-	}
-	const sdk = sdkOwners.get(registration);
-	const state = sdk ? sdkStates.get(sdk) : undefined;
-	if (sdk && state) {
-		state.registrations.set(registration, mapConsent(info));
-		forwardSdkConsent(sdk);
-		return;
-	}
-	observePreloadOwner(registration, mapConsent(info));
-};
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'defaultComPixel',
+		defaultComRemoteOptions,
+		resolveDefaultComRemote
+	);
 
-const forwardPixelConsent = function forwardPixelConsent(
-	info: ScriptCallbackInfo
-): void {
-	if (typeof window !== 'undefined' && ownsLoader(info, 'defaultComPixel')) {
-		window.__defaultPixel__?.setConsent?.(mapConsent(info));
-	}
-};
+/** What only the site's code can pass: a scheduler container. */
+const extrasOf = (
+	display: DefaultComAutoDisplayScheduler | undefined
+): DefaultComExtras =>
+	typeof display === 'object' ? { autoDisplayScheduler: display } : {};
 
 /**
  * Loads the current Default Pixel after measurement consent by default.
@@ -501,82 +434,30 @@ const forwardPixelConsent = function forwardPixelConsent(
 export const defaultComPixel = function defaultComPixel(
 	options: DefaultComPixelOptions
 ): Script {
-	const category = options?.category ?? 'measurement';
-	const alwaysLoad = options?.loadMode === 'always';
-	const script = resolveManifest(defaultComPixelManifest, {
-		category,
-		scriptUrl: resolveScriptUrl(
-			options?.scriptUrl,
-			'https://handshake.default.com/index.js'
-		),
-	});
 	const publicKey = readId(
 		typeof options?.publicKey === 'string' ? options.publicKey : undefined
 	);
 	if (publicKey === undefined) {
 		return skipMissingId('defaultComPixel', 'publicKey', {
-			category: script.category,
+			category: getCompiledManifest(defaultComPixelManifest, {
+				category: options?.category ?? 'measurement',
+			}).category,
 			manifest: defaultComPixelManifest,
 		});
 	}
-	const configuration: PixelConfiguration = {
-		autoDisplayScheduler:
-			typeof options.autoDisplayScheduler === 'object'
-				? { ...options.autoDisplayScheduler }
-				: options.autoDisplayScheduler,
+	const { adapter, ...manifest } = resolveDefaultComPixelManifest({
+		...options,
 		publicKey,
-		schedulerOrigins: options.schedulerOrigins?.slice(),
-		scriptUrl: script.src ?? '',
-	};
-	assertPixelConfiguration(configuration);
-	return {
-		...script,
-		alwaysLoad: alwaysLoad || undefined,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			if (conflictsWithPixel(configuration)) {
-				if (info.element) {
-					info.element.removeAttribute('src');
-					info.element.type = blockedLoaderType;
-				}
-				console.error(
-					'defaultComPixel: Reload the page to change Default Pixel configuration.'
-				);
-				return;
-			}
-			if (!claimLoader(info, 'defaultComPixel', alwaysLoad)) {
-				return;
-			}
-			pixelConfigurations.set(document, configuration);
-			window.__defaultPixel__ ??= {};
-			const config = window.__defaultPixel__;
-			config.key = publicKey;
-			if (configuration.schedulerOrigins !== undefined) {
-				config.schedulerOrigins = configuration.schedulerOrigins?.slice();
-			}
-			if (configuration.autoDisplayScheduler !== undefined) {
-				config.autoDisplayScheduler =
-					typeof configuration.autoDisplayScheduler === 'object'
-						? { ...configuration.autoDisplayScheduler }
-						: configuration.autoDisplayScheduler;
-			}
-			config.q ??= [];
-			config.setConsent ??= (consent) => {
-				config.q?.push(['setConsent', consent]);
-			};
-			config.setConsent(mapConsent(info));
-		},
-		onConsentChange(info) {
-			assertPixelConfiguration(configuration);
-			forwardPixelConsent(info);
-		},
-		onLoad(info) {
-			if (info.element?.isConnected) {
-				forwardPixelConsent(info);
-			}
-		},
-		validate: () => assertPixelConfiguration(configuration),
-	};
+	});
+	const script = defaultComPixelScript(
+		// The site's own index.js URL is npm-only.
+		withScriptUrl(resolvedManifestToScript(manifest), options.scriptUrl),
+		adapter?.options as unknown as DefaultComPixelAdapterOptions,
+		extrasOf(options.autoDisplayScheduler)
+	);
+	// Another Pixel on the page started with other settings.
+	script.validate?.(script);
+	return script;
 };
 
 /**
@@ -612,127 +493,34 @@ export const defaultComPixel = function defaultComPixel(
 export const defaultComFormsSdk = function defaultComFormsSdk(
 	options: DefaultComFormsSdkOptions
 ): Script {
-	const category = options?.category ?? 'functionality';
-	const script = resolveManifest(defaultComFormsSdkManifest, {
-		category,
-		scriptUrl: resolveScriptUrl(
-			options?.scriptUrl,
-			'https://handshake.default.com/sdk.js'
-		),
-	});
 	const publicKey = readId(
 		typeof options?.publicKey === 'string' ? options.publicKey : undefined
 	);
 	if (publicKey === undefined) {
 		return {
 			...skipMissingId('defaultComFormsSdk', 'publicKey', {
-				category: script.category,
+				category: getCompiledManifest(defaultComFormsSdkManifest, {
+					category: options?.category ?? 'functionality',
+				}).category,
 				manifest: defaultComFormsSdkManifest,
 			}),
 			id: 'default-com-forms-sdk',
 		};
 	}
-	const initOptions: DefaultComFormsSdkInitOptions = {
-		autoDisplayScheduler:
-			typeof options.autoDisplayScheduler === 'object'
-				? { ...options.autoDisplayScheduler }
-				: (options.autoDisplayScheduler ?? true),
+	const { adapter, ...manifest } = resolveDefaultComFormsSdkManifest({
+		...options,
 		publicKey,
-	};
+	});
+	const extras = extrasOf(options.autoDisplayScheduler);
+	// The API endpoint, such as a same-origin proxy, is npm-only.
 	const endpoint = trimToUndefined(options.endpoint);
 	if (endpoint !== undefined) {
-		initOptions.endpoint = endpoint;
+		extras.endpoint = endpoint;
 	}
-	if (options.schedulerOrigins !== undefined) {
-		// Initialization is asynchronous; snapshot caller-owned settings now.
-		initOptions.schedulerOrigins = options.schedulerOrigins.slice();
-	}
-	const scriptUrl = script.src ?? '';
-	// The URL `scriptLoader.sources` or the script registry chose, if any
-	const loadUrl = (info: ScriptCallbackInfo): string =>
-		info.source?.src ?? scriptUrl;
-	let reportedSource = false;
-	const reportSource = (): void => {
-		if (!reportedSource) {
-			reportedSource = true;
-			console.error(formsSdkSourceError);
-		}
-	};
-	const synchronize = (info: ScriptCallbackInfo): void => {
-		const registration = registrationOf(info);
-		if (!info.element?.isConnected) {
-			releaseUnmountedFormsSdk(info, registration);
-			return;
-		}
-		if (
-			typeof window === 'undefined' ||
-			!ownsLoader(info, 'defaultComFormsSdk') ||
-			!formsElements.has(info.element) ||
-			!loadedFormsElements.has(info.element) ||
-			registration === undefined
-		) {
-			return;
-		}
-		// Core adopts a retained element by id; it keeps the original source.
-		if (info.element.getAttribute('src') !== loadUrl(info)) {
-			reportSource();
-			return;
-		}
-		const previous = sdkOwners.get(registration);
-		const allowed = permitted(info);
-		const sdk = !allowed && previous ? previous : window.DefaultPixelSDK;
-		if (!sdk) {
-			return;
-		}
-		if (previous && previous !== sdk) {
-			disposeFormsSdk(info);
-		}
-		let state = sdkStates.get(sdk);
-		if (!state) {
-			state = { registrations: new Map() };
-			sdkStates.set(sdk, state);
-		}
-		sdkOwners.set(registration, sdk);
-		preloadOwners.delete(registration);
-		state.registrations.set(registration, mapConsent(info));
-		joinPreloadOwners(state);
-		forwardSdkConsent(sdk);
-		if (allowed && !sameSdkOptions(state.options, initOptions)) {
-			const applied = snapshotSdkOptions(initOptions);
-			sdk.init(applied);
-			state.options = snapshotSdkOptions(applied);
-		}
-	};
-	return {
-		...script,
-		id: 'default-com-forms-sdk',
-		// Initially denied owners still gate the shared SDK.
-		observeConsentBeforeLoad: true,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad(info) {
-			if (!claimLoader(info, 'defaultComFormsSdk') || !info.element) {
-				return;
-			}
-			const source = formsSdkSources.get(document);
-			if (source !== undefined && source !== loadUrl(info)) {
-				info.element.removeAttribute('src');
-				info.element.type = blockedLoaderType;
-				reportSource();
-				return;
-			}
-			formsSdkSources.set(document, loadUrl(info));
-			formsElements.add(info.element);
-		},
-		onConsentChange: synchronize,
-		onDispose: disposeFormsSdk,
-		onLoad(info) {
-			if (info.element?.isConnected && formsElements.has(info.element)) {
-				loadedFormsElements.add(info.element);
-				synchronize(info);
-			}
-		},
-		// sdk.js keeps document listeners and a page-level module; running it
-		// again on remount would leave capture bound to the disposed client.
-		persistAfterDispose: true,
-	};
+	return defaultComFormsScript(
+		// The site's own sdk.js URL is npm-only.
+		withScriptUrl(resolvedManifestToScript(manifest), options.scriptUrl),
+		adapter?.options as unknown as DefaultComFormsAdapterOptions,
+		extras
+	);
 };
