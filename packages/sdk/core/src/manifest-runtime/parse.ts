@@ -37,7 +37,15 @@ import type { ResolvedManifest } from './types';
 /** A manifest that passed {@link parseResolvedManifest}, or why it failed. */
 export type ParsedManifest =
 	| { ok: true; manifest: ResolvedManifest }
-	| { ok: false; reason: string };
+	| {
+			ok: false;
+			reason: string;
+			/**
+			 * The manifest needs code this runtime has not loaded, such as the
+			 * level 3 part, so a later parse, once it loads, may accept it.
+			 */
+			needsCode?: true;
+	  };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -471,7 +479,10 @@ export const parseResolvedManifest = function parseResolvedManifest(
 		return { ok: false, reason: 'it is not an object' };
 	}
 	const problem = manifestProblem(value);
-	return problem === undefined
-		? { manifest: value as unknown as ResolvedManifest, ok: true }
+	if (problem === undefined) {
+		return { manifest: value as unknown as ResolvedManifest, ok: true };
+	}
+	return (value.requires as number) >= 3 && !levelThree()
+		? { needsCode: true, ok: false, reason: problem }
 		: { ok: false, reason: problem };
 };

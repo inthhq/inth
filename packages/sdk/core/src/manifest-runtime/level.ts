@@ -48,6 +48,8 @@ export const withLevelThreePart = function withLevelThreePart(
 	load: () => Promise<{ levelThreePart: LevelThreePart }>
 ): RemoteManifestRuntime {
 	let installed = false;
+	/** The download running now, which every list asking for the part shares. */
+	let installing: Promise<undefined> | undefined;
 	return {
 		...runtime,
 		prepare: (manifests) => {
@@ -55,12 +57,18 @@ export const withLevelThreePart = function withLevelThreePart(
 				return undefined;
 			}
 			const install = async () => {
-				const { levelThreePart } = await load();
-				runtime.installLevelThree(levelThreePart);
-				installed = true;
-				return undefined;
+				try {
+					const { levelThreePart } = await load();
+					runtime.installLevelThree(levelThreePart);
+					installed = true;
+					return undefined;
+				} finally {
+					// A failed download is tried again for a later list.
+					installing = undefined;
+				}
 			};
-			return install();
+			installing ??= install();
+			return installing;
 		},
 	};
 };

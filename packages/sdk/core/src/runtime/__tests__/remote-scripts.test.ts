@@ -25,6 +25,7 @@ import type {
 	ScriptCallbackInfo,
 } from '../../libs/script-loader/types';
 import { MANIFEST_RUNTIME_LEVEL } from '../../manifest-runtime/level';
+import type { LevelThreePart } from '../../manifest-runtime/part';
 import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
 import { rootNeedsEngine } from '../../surface-actions/plain-scripts';
 import type { ProviderTransportFactory } from '../../transports/mode';
@@ -37,6 +38,7 @@ import { createConsentRuntimeWith as createRuntimeWith } from '../runtime-with-m
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 const ACME_SRC = 'https://cdn.acme.example/pixel.js';
+const OTHER_SRC = 'https://cdn.other.example/pixel.js';
 
 /** A resolved manifest as the Inth server sends it. */
 const acmeManifest = (overrides: Record<string, unknown> = {}) => ({
@@ -592,6 +594,64 @@ describe('remoteScripts', () => {
 				scriptId: 'other',
 			})
 		);
+		runtime.dispose();
+	});
+
+	test('builds a level 3 entry once its part loads for a later list, after the first download failed', async () => {
+		// A fresh manifest runtime: an earlier test installed the level 3 part.
+		vi.resetModules();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const base = await import('../../manifest-runtime/index');
+		const part = vi
+			.fn<() => Promise<{ levelThreePart: LevelThreePart }>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockImplementation(() => import('../../manifest-runtime/level-three'));
+		const other = {
+			id: 'other',
+			integration: 'other',
+			manifest: acmeManifest({
+				alwaysLoad: true,
+				loadScript: { async: true, src: OTHER_SRC, type: 'loadScript' },
+				vendor: 'other',
+			}),
+		};
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: { load: load(levelThree('ACME-3')) },
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve(base.withLevelThreePart(base, part)),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(part).toHaveBeenCalledOnce());
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		expect(tags()).toHaveLength(0);
+
+		answer.resolve({
+			scriptRegistry: { load: [...load(levelThree('ACME-3')), other] },
+		});
+
+		await vi.waitFor(() => expect(tags(OTHER_SRC)).toHaveLength(1));
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		expect((window as { acmeQueue?: unknown[] }).acmeQueue).toContainEqual([
+			'init',
+			'ACME-3',
+		]);
 		runtime.dispose();
 	});
 

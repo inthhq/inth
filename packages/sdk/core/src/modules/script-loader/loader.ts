@@ -1077,6 +1077,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 						entry.id,
 						`Remote script ${entry.id} (${entry.integration}) does not load: ${parsed.reason}.`
 					);
+					// Parse it again for a later list, once the code it needs
+					// may have loaded.
+					if (parsed.needsCode) {
+						continue;
+					}
 				}
 			}
 			next.set(entry.id, { manifest, script });
