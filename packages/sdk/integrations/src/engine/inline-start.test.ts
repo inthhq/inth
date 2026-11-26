@@ -4,10 +4,7 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
-import {
-	installLevelThree,
-	manifestRoots,
-} from '@inth/sdk/manifest-runtime';
+import { installLevelThree, manifestRoots } from '@inth/sdk/manifest-runtime';
 import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
 import {
 	afterEach,
@@ -1161,8 +1158,8 @@ describe('inlineStepsStart', () => {
 	});
 
 	describe('level 3 manifests', () => {
-		const level3 = (fields: Partial<ResolvedManifest>): Script =>
-			resolvedManifestToScript({
+		const level3 = (fields: Partial<ResolvedManifest>): Script => {
+			const manifest: Omit<ResolvedManifest, 'globals'> = {
 				...vendorManifestContract,
 				afterLoadSteps: [],
 				bootstrapSteps: [],
@@ -1182,7 +1179,12 @@ describe('inlineStepsStart', () => {
 				setupSteps: [],
 				vendor: 'level-three',
 				...fields,
+			};
+			return resolvedManifestToScript({
+				...manifest,
+				globals: manifestRoots(manifest) as string[],
 			});
+		};
 		const info = {
 			consents: granted,
 			hasConsent: true,

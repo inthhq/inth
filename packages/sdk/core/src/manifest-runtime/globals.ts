@@ -11,6 +11,7 @@
  * this repo's vendor files; the allowlist keeps each manifest to its
  * vendor's globals and away from browser objects and native functions.
  */
+import { someStep } from './features';
 import { PLATFORM_GLOBALS } from './platform-globals';
 import type { ManifestStep, ResolvedManifest } from './types';
 
@@ -114,10 +115,27 @@ const queueRoot = (queue: unknown): unknown[] => {
 	return queue === undefined ? [] : [queue];
 };
 
+const MAX_DEPTH = 32;
+
+/** The roots an `if` condition reads, in `{ global }` and inside `not` and `all`. */
+const conditionRoots = (condition: unknown, depth = 0): unknown[] => {
+	if (!isRecord(condition) || depth > MAX_DEPTH) {
+		return [];
+	}
+	return [
+		...(condition.global === undefined ? [] : [first(condition.global)]),
+		...conditionRoots(condition.not, depth + 1),
+		...(Array.isArray(condition.all)
+			? condition.all.flatMap((entry) => conditionRoots(entry, depth + 1))
+			: []),
+	];
+};
+
 /**
  * Every window root `step` reads, writes or calls through, from a step
  * that may not have passed the parser. A name the step puts on another
- * object (a method, a property, a queue property) is not a root.
+ * object (a method, a property, a queue property) is not a root, and nor
+ * are the roots of the steps nested in it, which are steps of their own.
  *
  * @internal
  */
@@ -160,6 +178,9 @@ export const stepRoots = function stepRoots(
 		case 'loadScriptStep': {
 			return step.unlessGlobal === undefined ? [] : [first(step.unlessGlobal)];
 		}
+		case 'if': {
+			return conditionRoots(step.when);
+		}
 		default: {
 			return [];
 		}
@@ -189,8 +210,9 @@ export const MANIFEST_STEP_LISTS = [
 ] as const satisfies readonly (keyof ResolvedManifest)[];
 
 /**
- * Every root `manifest` touches, in its steps and in the consent signal it
- * sends, without duplicates. `compileManifest` stores this as `globals`.
+ * Every root `manifest` touches, in its steps, the steps nested in them,
+ * and the consent signal it sends, without duplicates. `compileManifest`
+ * stores this as `globals`.
  *
  * @internal
  */
@@ -199,13 +221,12 @@ export const manifestRoots = function manifestRoots(
 ): unknown[] {
 	const roots = new Set<unknown>();
 	for (const list of MANIFEST_STEP_LISTS) {
-		for (const step of manifest[list] ?? []) {
-			for (const root of stepRoots(
-				step as unknown as Readonly<Record<string, unknown>>
-			)) {
+		someStep(manifest[list], (step) => {
+			for (const root of stepRoots(step)) {
 				roots.add(root);
 			}
-		}
+			return false;
+		});
 	}
 	if (
 		manifest.consentMapping &&

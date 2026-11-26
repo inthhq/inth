@@ -16,6 +16,7 @@ import {
 	RUNTIME_VALUE_LEVELS,
 	EARLIER_STEP_FIELD_LEVELS,
 	SCRIPT_ATTRIBUTE_LEVELS,
+	someStep,
 } from './features';
 import {
 	isDeclarableGlobal,
@@ -206,6 +207,7 @@ let stepCount = 0;
 
 /** The `globals` of the manifest being parsed. */
 let declaredGlobals: readonly unknown[] = [];
+
 /** The level the manifest being parsed requires. */
 let required = 1;
 
@@ -261,9 +263,7 @@ const stepProblem: StepCheck = (step, list, depth) => {
 		return `${list} has a ${type} step that writes ${writtenNames(step).join(', ')}`;
 	}
 	const roots = stepRoots(step);
-	const undeclared = roots.findIndex(
-		(root) => !declaredGlobals.includes(root)
-	);
+	const undeclared = roots.findIndex((root) => !declaredGlobals.includes(root));
 	if (undeclared !== -1) {
 		return `${list} has a ${type} step that uses the global ${String(roots[undeclared])}, which globals does not declare`;
 	}
@@ -280,19 +280,22 @@ const stepProblem: StepCheck = (step, list, depth) => {
 	return undefined;
 };
 
-/** The ids of the tags `manifest` inserts. */
-const tagIds = (manifest: Record<string, unknown>): unknown[] => [
-	...(isRecord(manifest.loadScript) && isRecord(manifest.loadScript.attributes)
-		? [manifest.loadScript.attributes.id]
-		: []),
-	...STEP_LISTS.flatMap((list) =>
-		Array.isArray(manifest[list])
-			? (manifest[list] as unknown[]).flatMap((step) =>
-					isRecord(step) && step.type === 'loadScriptStep' ? [step.id] : []
-				)
-			: []
-	),
-];
+/** The ids of the tags `manifest` inserts, nested steps included. */
+const tagIds = (manifest: Record<string, unknown>): unknown[] => {
+	const ids: unknown[] =
+		isRecord(manifest.loadScript) && isRecord(manifest.loadScript.attributes)
+			? [manifest.loadScript.attributes.id]
+			: [];
+	for (const list of STEP_LISTS) {
+		someStep(manifest[list], (step) => {
+			if (step.type === 'loadScriptStep') {
+				ids.push(step.id);
+			}
+			return false;
+		});
+	}
+	return ids;
+};
 
 /**
  * Why `globals` is wrong, or `undefined`. It lists the window roots the

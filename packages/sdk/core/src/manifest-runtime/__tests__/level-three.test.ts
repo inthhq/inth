@@ -21,6 +21,7 @@ import { subscribeToScriptDebugEvents } from '../../libs/script-loader/debug';
 import { createScriptLoader } from '../../modules/script-loader';
 import type { Script } from '../../modules/script-loader';
 import type { HydrationRecords } from '../../types';
+import { manifestRoots } from '../globals';
 import { levelThreePart } from '../level-three';
 import { parseResolvedManifest } from '../parse';
 import { installLevelThree } from '../part';
@@ -47,7 +48,7 @@ afterEach(() => {
 	}
 	document.head.replaceChildren();
 	document.body.replaceChildren();
-	for (const name of ['__record', '__api', '__list']) {
+	for (const name of ['__record', '__api', '__list', '__hidden']) {
 		Reflect.deleteProperty(win, name);
 	}
 });
@@ -74,25 +75,30 @@ const ifStep = (
 
 /** A manifest built from JSON and checked by the parser. */
 const fromJSON = (fields: Record<string, unknown>): ResolvedManifest => {
+	const manifest = {
+		afterLoadSteps: [],
+		bootstrapSteps: [],
+		category: 'measurement',
+		kind: 'inth.vendor-manifest',
+		onBeforeLoadDeniedSteps: [],
+		onBeforeLoadGrantedSteps: [],
+		onConsentChangeSteps: [],
+		onConsentDeniedSteps: [],
+		onConsentGrantedSteps: [],
+		onLoadDeniedSteps: [],
+		onLoadGrantedSteps: [],
+		requires: 3,
+		schemaVersion: 1,
+		setupSteps: [],
+		vendor: 'level-three',
+		...fields,
+	};
 	const parsed = parseResolvedManifest(
 		JSON.parse(
 			JSON.stringify({
-				afterLoadSteps: [],
-				bootstrapSteps: [],
-				category: 'measurement',
-				kind: 'inth.vendor-manifest',
-				onBeforeLoadDeniedSteps: [],
-				onBeforeLoadGrantedSteps: [],
-				onConsentChangeSteps: [],
-				onConsentDeniedSteps: [],
-				onConsentGrantedSteps: [],
-				onLoadDeniedSteps: [],
-				onLoadGrantedSteps: [],
-				requires: 3,
-				schemaVersion: 1,
-				setupSteps: [],
-				vendor: 'level-three',
-				...fields,
+				// Every root the steps use, as `compileManifest` lists them.
+				globals: manifestRoots(manifest as never),
+				...manifest,
 			})
 		)
 	);
@@ -274,6 +280,45 @@ describe('if', () => {
 	});
 });
 
+test('skips a nested step or condition whose root globals does not declare', async () => {
+	win.__api = { init: () => Promise.resolve() };
+	const hidden = vi.fn();
+	win.__hidden = hidden;
+	const callHidden = { global: '__hidden', type: 'callGlobal' };
+	// Built without the parser, as a manifest that slipped past it would be.
+	mount([
+		resolvedManifestToScript({
+			...fromJSON({ alwaysLoad: true }),
+			globals: ['__api', '__record'],
+			setupSteps: [
+				ifStep({ not: { flag: 'x' } }, [callHidden, recordStep('if')]),
+				ifStep(
+					{ global: ['__hidden'], is: 'function' },
+					[recordStep('read')],
+					[recordStep('read')]
+				),
+				{
+					event: 'vendor:ready',
+					steps: [callHidden, recordStep('listen')],
+					target: 'window',
+					type: 'listen',
+				},
+				{
+					global: '__api',
+					method: 'init',
+					then: [callHidden, recordStep('then')],
+					type: 'callGlobal',
+				},
+			] as never,
+		}),
+	]);
+	window.dispatchEvent(new Event('vendor:ready'));
+	await settle();
+
+	expect(hidden).not.toHaveBeenCalled();
+	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then']]);
+});
+
 test('skips a nested call or write the parser would refuse', async () => {
 	win.__api = { init: () => Promise.resolve() };
 	const write = {
@@ -285,6 +330,9 @@ test('skips a nested call or write the parser would refuse', async () => {
 	mount([
 		resolvedManifestToScript({
 			...fromJSON({ alwaysLoad: true }),
+			// The roots the parser would want declared, so only the block
+			// lists stop the writes.
+			globals: ['__api', '__record', 'document'],
 			setupSteps: [
 				ifStep({ flag: 'x' }, [], [write]),
 				ifStep({ not: { flag: 'x' } }, [

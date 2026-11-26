@@ -157,7 +157,8 @@ const runLater = (
 	steps: ManifestStep[],
 	phase: string,
 	callback: ScriptLifecycleCallback,
-	runtime: RuntimeAccess
+	runtime: RuntimeAccess,
+	globals: StepValues['globals']
 ): void => {
 	if (!load.live || state.disposed) {
 		return;
@@ -179,7 +180,7 @@ const runLater = (
 			hasConsent: info.hasConsent,
 			phase,
 			scriptId: info.id,
-			values: { info, state },
+			values: { globals, info, state },
 		});
 	} catch {
 		// `phase` reported the failed step; nothing called this to tell.
@@ -217,7 +218,15 @@ const run: LevelThreePart['run'] = (step, values, runtime) => {
 			const target = step.target === 'document' ? document : window;
 			const { callback } = own;
 			const listener = () =>
-				runLater(state, load, step.steps, 'listen', callback, runtime);
+				runLater(
+					state,
+					load,
+					step.steps,
+					'listen',
+					callback,
+					runtime,
+					values.globals
+				);
 			target.addEventListener(step.event, listener, { once: !!step.once });
 			load.cleanups.push(() =>
 				target.removeEventListener(step.event, listener)
@@ -258,7 +267,7 @@ const settle: LevelThreePart['settle'] = (steps, values, runtime) => {
 			});
 			return;
 		}
-		runLater(state, load, steps, 'then', callback, runtime);
+		runLater(state, load, steps, 'then', callback, runtime, values.globals);
 	};
 	return (result) => {
 		void wait(result);

@@ -5,6 +5,7 @@
  */
 import { beforeAll, describe, expect, it } from 'vite-plus/test';
 
+import { manifestRoots } from '../globals';
 import { levelThreePart } from '../level-three';
 import { parseResolvedManifest } from '../parse';
 import { installLevelThree } from '../part';
@@ -13,24 +14,28 @@ beforeAll(() => {
 	installLevelThree(levelThreePart);
 });
 
-const manifest = (fields: Record<string, unknown> = {}) => ({
-	afterLoadSteps: [],
-	bootstrapSteps: [],
-	category: 'measurement',
-	kind: 'inth.vendor-manifest',
-	onBeforeLoadDeniedSteps: [],
-	onBeforeLoadGrantedSteps: [],
-	onConsentChangeSteps: [],
-	onConsentDeniedSteps: [],
-	onConsentGrantedSteps: [],
-	onLoadDeniedSteps: [],
-	onLoadGrantedSteps: [],
-	requires: 3,
-	schemaVersion: 1,
-	setupSteps: [],
-	vendor: 'vendor',
-	...fields,
-});
+/** A manifest whose `globals` holds every root its steps use, as `compileManifest` builds it. */
+const manifest = (fields: Record<string, unknown> = {}) => {
+	const input = {
+		afterLoadSteps: [],
+		bootstrapSteps: [],
+		category: 'measurement',
+		kind: 'inth.vendor-manifest',
+		onBeforeLoadDeniedSteps: [],
+		onBeforeLoadGrantedSteps: [],
+		onConsentChangeSteps: [],
+		onConsentDeniedSteps: [],
+		onConsentGrantedSteps: [],
+		onLoadDeniedSteps: [],
+		onLoadGrantedSteps: [],
+		requires: 3,
+		schemaVersion: 1,
+		setupSteps: [],
+		vendor: 'vendor',
+		...fields,
+	};
+	return { globals: manifestRoots(input as never), ...input };
+};
 
 const withSetup = (...steps: unknown[]) => manifest({ setupSteps: steps });
 
@@ -330,6 +335,103 @@ describe('level 3', () => {
 		expect(parseResolvedManifest(withSetup(nested(5, call)))).toEqual({
 			ok: false,
 			reason: 'setupSteps nests steps more than 4 deep',
+		});
+	});
+
+	describe('globals', () => {
+		it('lists the roots of conditions and nested steps', () => {
+			expect(
+				manifest({
+					setupSteps: [
+						ifStep(
+							{
+								all: [
+									{ global: ['condition', 'ready'], is: 'defined' },
+									{ not: { global: ['negated'], is: 'function' } },
+								],
+							},
+							[{ ...call, global: 'inIf' }],
+							{ else: [{ name: 'inElse', type: 'setGlobal', value: 1 }] }
+						),
+						listen({
+							steps: [{ queue: 'inListen', type: 'pushToQueue', value: 1 }],
+						}),
+						{
+							...call,
+							then: [
+								{ path: ['inThen', 'x'], type: 'setGlobalPath', value: 1 },
+							],
+						},
+					],
+				}).globals
+			).toEqual([
+				'condition',
+				'negated',
+				'inIf',
+				'inElse',
+				'inListen',
+				'vendor',
+				'inThen',
+			]);
+		});
+
+		it.each<[string, unknown]>([
+			['a condition', ifStep({ global: ['hidden', 'x'], is: 'defined' })],
+			[
+				'a condition inside not',
+				ifStep({ not: { global: ['hidden'], is: 'array' } }),
+			],
+			[
+				'a step in then',
+				ifStep({ loaded: true }, [{ ...call, global: 'hidden' }]),
+			],
+			[
+				'a step in else',
+				ifStep({ loaded: true }, [], { else: [{ ...call, global: 'hidden' }] }),
+			],
+			[
+				'a step a listener runs',
+				listen({ steps: [{ ...call, global: 'hidden' }] }),
+			],
+			[
+				'a step after a call settles',
+				{ ...call, then: [{ ...call, global: 'hidden' }] },
+			],
+			['a step nested 3 deep', nested(3, { ...call, global: 'hidden' })],
+		])(
+			'refuses %s that uses a global globals does not declare',
+			(_label, step) => {
+				const input = withSetup(step);
+
+				expect(
+					parseResolvedManifest({
+						...input,
+						globals: input.globals.filter((name) => name !== 'hidden'),
+					})
+				).toEqual({
+					ok: false,
+					reason: expect.stringContaining('uses the global hidden'),
+				});
+			}
+		);
+
+		it('refuses declaring the id of a tag a nested step inserts', () => {
+			const input = withSetup(
+				ifStep({ loaded: true }, [
+					{
+						id: 'inthTag',
+						src: 'https://cdn.example/a.js',
+						type: 'loadScriptStep',
+					},
+				])
+			);
+
+			expect(parseResolvedManifest({ ...input, globals: ['inthTag'] })).toEqual(
+				{
+					ok: false,
+					reason: expect.stringContaining('the id of a tag'),
+				}
+			);
 		});
 	});
 });

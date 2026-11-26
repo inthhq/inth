@@ -234,7 +234,11 @@ describe('manifestFeatureLevel', () => {
 		).toEqual(Object.keys(CONDITION_LEVELS).toSorted());
 		for (const condition of conditions) {
 			expect(
-				parseResolvedManifest({ ...withSetup(ifStep(condition)), requires: 3 }),
+				parseResolvedManifest({
+					...withSetup(ifStep(condition)),
+					globals: manifestRoots(withSetup(ifStep(condition))) as string[],
+					requires: 3,
+				}),
 				JSON.stringify(condition)
 			).toMatchObject({ ok: true });
 		}
