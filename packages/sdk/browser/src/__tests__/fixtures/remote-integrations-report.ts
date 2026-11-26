@@ -122,8 +122,19 @@ const pinsIntegrity = (entry: ListedIntegration): boolean => {
 };
 
 /**
- * The `error` and `skipped` events the loader reported for `entry`, and an
- * error for every entry when the runtime failed to load. The empty body the
+ * The debug events that mean an entry did not do what its manifest says:
+ * the loader's errors and refusals, and each manifest step that threw or
+ * whose call the runtime refused. A failed step does not stop the tag, so
+ * without these a vendor whose setup broke still reads as loaded.
+ */
+const problemActions: Record<string, readonly string[]> = {
+	'manifest-runtime': ['step_error', 'skipped'],
+	'script-loader': ['error', 'skipped'],
+};
+
+/**
+ * The problem events reported for `entry`, and an error for every entry
+ * when the runtime failed to load. The empty body the
  * test answers a vendor host with fails an `integrity` hash, so for a tag
  * that pins one, its load error is a note, not a problem.
  */
@@ -135,8 +146,7 @@ const loaderEvents = function loaderEvents(
 	const problems: string[] = [];
 	for (const event of debug) {
 		if (
-			event.source !== 'script-loader' ||
-			!(event.action === 'error' || event.action === 'skipped') ||
+			!problemActions[event.source]?.includes(event.action) ||
 			!(
 				event.scriptId === entry.id ||
 				(event.scriptId === '' && event.message.includes('remote scripts'))
