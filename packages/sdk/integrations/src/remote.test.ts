@@ -99,8 +99,18 @@ const sharedRegistrationCallbacks: Partial<
 	Record<BuiltInScriptIntegrationKey, string[]>
 > = {
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
+	gainsightPx: ['onDispose', 'onLoad'],
 	luckyOrange: ['onLoad'],
 };
+
+/**
+ * Adapter vendors whose npm helper keeps the inline start a site's server
+ * render writes. The runtime leaves a script built with an adapter to the
+ * browser, so the remote script has none.
+ */
+const npmOnlyServerStart: ReadonlySet<BuiltInScriptIntegrationKey> = new Set([
+	'gainsightPx',
+]);
 
 /**
  * Options a dashboard sets in another shape than the npm helper takes them.
@@ -156,6 +166,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	databuddy: ['cdn.databuddy.cc'],
 	fathomAnalytics: ['cdn.usefathom.com'],
 	frontChat: ['chat-assets.frontapp.com'],
+	gainsightPx: ['web-sdk.aptrinsic.com'],
 	googleTagManager: ['www.googletagmanager.com'],
 	gtag: ['www.googletagmanager.com'],
 	heap: ['cdn.us.heap-api.com'],
@@ -209,6 +220,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	customerIo: 3,
+	gainsightPx: 4,
 	luckyOrange: 4,
 	pendo: 3,
 	pirsch: 3,
@@ -495,13 +507,22 @@ describe('remoteIntegrations', () => {
 			expect(withoutFunctions(fromRemote)).toEqual(withoutFunctions(fromNpm));
 			const shared =
 				sharedRegistrationCallbacks[key as BuiltInScriptIntegrationKey] ?? [];
+			const npmServerStart = npmOnlyServerStart.has(
+				key as BuiltInScriptIntegrationKey
+			);
 			const own = (script: Script) =>
-				functionNames(script).filter((name) => !shared.includes(name));
+				functionNames(script).filter(
+					(name) =>
+						!(
+							shared.includes(name) ||
+							(npmServerStart && name === 'serverStart')
+						)
+				);
 			expect(own(fromRemote)).toEqual(own(fromNpm));
 			// The inline start a server render writes covers every step the
 			// script runs before its file loads.
 			expect(grantedServerStart(fromRemote)).toEqual(
-				grantedServerStart(fromNpm)
+				npmServerStart ? undefined : grantedServerStart(fromNpm)
 			);
 		}
 	);

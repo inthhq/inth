@@ -211,6 +211,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/sentry.js"
 		},
+		"./manifest-runtime/adapters/gainsight-px": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/gainsight-px.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/gainsight-px.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/gainsight-px.js"
+		},
 		"./manifest-runtime/adapters/lucky-orange": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/lucky-orange.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/lucky-orange.js",

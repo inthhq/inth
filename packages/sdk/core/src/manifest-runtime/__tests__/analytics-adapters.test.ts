@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import type { RemoteManifestRuntime } from '../../modules/script-loader/types';
+import * as gainsightPx from '../adapters/gainsight-px';
 import { importAdapter } from '../adapters/index';
 import * as luckyOrange from '../adapters/lucky-orange';
 import * as runtime from '../index';
@@ -82,5 +83,52 @@ describe('the Lucky Orange adapter', () => {
 		expect(script.src).toBe(
 			'https://tools.luckyorange.com/core/lo.js?site-id=a'
 		);
+	});
+});
+
+describe('the Gainsight PX adapter', () => {
+	it('takes a product key and nothing else', async () => {
+		expect(
+			await reasonFor(
+				'gainsight-px',
+				{ productKey: 'AP-KEY-2' },
+				'gainsight-px'
+			)
+		).toBeUndefined();
+		expect(
+			await reasonFor(
+				'gainsight-px',
+				{ config: {}, productKey: 'AP-KEY-2' },
+				'gainsight-px'
+			)
+		).toBe(
+			'its gainsight-px adapter options are wrong: it has the unknown option config'
+		);
+		expect(
+			await reasonFor('gainsight-px', { productKey: 'AP/../x' }, 'gainsight-px')
+		).toBe(
+			'its gainsight-px adapter options are wrong: its productKey is not a product key'
+		);
+	});
+
+	it('refuses to start once another PX installation has started', () => {
+		const script = gainsightPx.gainsightPxScript(
+			{ category: 'measurement', id: 'gainsight-px' },
+			{ productKey: 'AP-KEY-2' }
+		);
+		Reflect.set(
+			window,
+			'aptrinsic',
+			Object.assign(() => undefined, { __sdkBundleStarted: true })
+		);
+		try {
+			expect(() => script.validate?.(script)).toThrow(
+				/another Gainsight PX installation/u
+			);
+			expect(script.callbackOnly).toBeTypeOf('function');
+			expect(script.serverStart).toBeUndefined();
+		} finally {
+			Reflect.deleteProperty(window, 'aptrinsic');
+		}
 	});
 });

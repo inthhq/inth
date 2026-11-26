@@ -1,11 +1,22 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
+import {
+	assertGainsightPxSetup,
+	gainsightPxScript,
+} from '@inth/sdk/manifest-runtime/adapters/gainsight-px';
+import type { GainsightPxAdapterOptions } from '@inth/sdk/manifest-runtime/adapters/gainsight-px';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type {
+	ManifestStep,
+	ResolvedManifest,
+	VendorManifest,
+} from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { createScriptReuse, equalConfig } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { createScriptReuse } from '../_shared/reuse-script';
+import { withScriptUrl } from '../_shared/script-url';
 
 /** JSON values accepted by the Gainsight PX configuration and identify APIs. */
 export type GainsightPxValue =
@@ -73,7 +84,10 @@ const productKeyGlobal = '__inthGainsightPxProductKey';
 // PX may replace its stub and discard its queue before client hydration.
 const setupGlobal = '__inthGainsightPxSetup';
 
-/** PX's official snippet queue, created only after mapped consent. */
+/**
+ * PX's official snippet queue, created only after mapped consent. The
+ * Gainsight PX adapter in `@inth/sdk` keeps one PX installation per page.
+ */
 export const gainsightPxManifest = {
 	...vendorManifestContract,
 	category: '{{category}}',
@@ -102,8 +116,11 @@ export const gainsightPxManifest = {
 				user: '{{user}}',
 			},
 		},
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
+		{
+			async: true,
+			src: 'https://web-sdk.aptrinsic.com/api/aptrinsic.js?a={{productKeyParam}}',
+			type: 'loadScript',
+		},
 	],
 	// A shared mount can start under another owner's denial; the stub's config
 	// enables the tag, so disable it before the SDK reads the queue.
@@ -147,258 +164,110 @@ export const gainsightPxManifest = {
 	},
 } as const satisfies VendorManifest;
 
-const reuseGainsightPxScript = createScriptReuse<GainsightPxOptions>();
+/** The identify call for a site's user, and its account when it has one. */
+const identifyStep = (options: GainsightPxOptions): ManifestStep => ({
+	args: options.account
+		? ['identify', '{{user}}', '{{account}}']
+		: ['identify', '{{user}}'],
+	global: 'aptrinsic',
+	type: 'callGlobal',
+});
 
-const hasStartedGainsightPx = (): boolean => {
-	if (typeof window === 'undefined' || !('aptrinsic' in window)) {
-		return false;
-	}
-	const { aptrinsic } = window;
-	// PX sets this before initialization and checks it to reject a second bundle.
-	return (
-		typeof aptrinsic === 'function' &&
-		'__sdkBundleStarted' in aptrinsic &&
-		aptrinsic.__sdkBundleStarted === true
-	);
-};
-
-const clearPendingGainsightPx = (): void => {
-	if (typeof window === 'undefined' || !('aptrinsic' in window)) {
-		return;
-	}
-	const { aptrinsic } = window;
-	if (
-		typeof aptrinsic === 'function' &&
-		'q' in aptrinsic &&
-		Array.isArray(aptrinsic.q) &&
-		!(
-			'__sdkBundleStarted' in aptrinsic && aptrinsic.__sdkBundleStarted === true
-		)
-	) {
-		Reflect.deleteProperty(window, 'aptrinsic');
-		Reflect.deleteProperty(window, '__inthGainsightPxProductKey');
-	}
-};
-
-// Match clearPendingGainsightPx without serializing instrumented or bundled code.
-const clearPendingGainsightPxSource = `(function(){if(typeof window==='undefined')return;var px=window.aptrinsic;if(typeof px==='function'&&Array.isArray(px.q)&&px.__sdkBundleStarted!==true){Reflect.deleteProperty(window,'aptrinsic');Reflect.deleteProperty(window,'__inthGainsightPxProductKey')}})();`;
-
-const assertProductKey = (productKey: string): void => {
-	if (typeof window === 'undefined') {
-		return;
-	}
-	const previous =
-		productKeyGlobal in window ? window[productKeyGlobal] : undefined;
-	if (!hasStartedGainsightPx()) {
-		return;
-	}
-	// Inth's bootstrap always records its product key, including server starts.
-	if (typeof previous !== 'string') {
-		throw new Error(
-			'gainsightPx: another Gainsight PX installation is already running. Remove the other PX snippet and reload the page.'
-		);
-	}
-	if (previous !== productKey) {
-		throw new Error(
-			'gainsightPx: cannot change productKey after the SDK has started. Reload the page to switch PX products.'
-		);
-	}
-};
-
-const assertStartupConfig = (config: GainsightPxConfig | undefined): void => {
-	if (typeof window === 'undefined' || !hasStartedGainsightPx()) {
-		return;
-	}
-	const previous = setupGlobal in window ? window[setupGlobal] : undefined;
-	if (
-		typeof previous === 'object' &&
-		previous !== null &&
-		'config' in previous &&
-		!equalConfig(previous.config, { ...config, enableTag: true })
-	) {
-		throw new Error(
-			'gainsightPx: cannot change config after the SDK has started. Reload the page to change PX configuration.'
-		);
-	}
-};
-
-const unadoptedServerElement = (): HTMLScriptElement | undefined => {
-	const scope: object = globalThis;
-	const started = '__inthStarted' in scope ? scope.__inthStarted : undefined;
-	if (typeof started !== 'object' || started === null) {
-		return;
-	}
-	// Server starts key elements by `resourceKey ?? id` and record the script id.
-	const element = Object.values(started).find(
-		(candidate): candidate is HTMLScriptElement =>
-			candidate instanceof HTMLScriptElement &&
-			'__inthScript' in candidate &&
-			candidate.__inthScript === 'gainsight-px'
-	);
-	if (
-		!element ||
-		('__inthAdopted' in element && element.__inthAdopted) ||
-		!(
-			element.isConnected ||
-			('__inthInsert' in element && element.__inthInsert) ||
-			('__inthHeld' in element && element.__inthHeld)
-		)
-	) {
-		return;
-	}
-	return element;
-};
-
-const isGainsightPxCallbackOnly = (): boolean =>
-	hasStartedGainsightPx() && !unadoptedServerElement();
-
-const matchesPendingServerSetup = (options: GainsightPxOptions): boolean => {
-	const pending = 'aptrinsic' in window ? window.aptrinsic : undefined;
-	if (
-		typeof pending !== 'function' ||
-		!('q' in pending) ||
-		!Array.isArray(pending.q)
-	) {
-		return false;
-	}
-	const identities = pending.q
-		.filter(
-			(entry: unknown): entry is { 0: 'identify'; 1?: unknown; 2?: unknown } =>
-				typeof entry === 'object' &&
-				entry !== null &&
-				'0' in entry &&
-				entry[0] === 'identify'
-		)
-		.map((entry) => ({
-			account: entry[2],
-			user: entry[1],
-		}));
-	return (
-		'p' in pending &&
-		pending.p === options.productKey &&
-		'c' in pending &&
-		equalConfig(pending.c, { ...options.config, enableTag: true }) &&
-		equalConfig(
-			identities,
-			options.user ? [{ account: options.account, user: options.user }] : []
-		)
-	);
-};
-
-const assertServerSetup = (
-	options: GainsightPxOptions,
-	script: Script
-): void => {
-	if (typeof window === 'undefined') {
-		return;
-	}
-	const element = unadoptedServerElement();
-	if (!element) {
-		return;
-	}
-	const matches = hasStartedGainsightPx()
-		? equalConfig(setupGlobal in window ? window[setupGlobal] : undefined, {
-				account: options.account,
-				config: { ...options.config, enableTag: true },
-				productKey: options.productKey,
-				user: options.user,
-			})
-		: matchesPendingServerSetup(options);
-	if (
-		!matches ||
-		element.src !== new URL(script.src ?? '', document.baseURI).href
-	) {
-		throw new Error(
-			'gainsightPx: server and client options must match when hydrating a server-started SDK. Render the same productKey, config, user, account and scriptUrl on both sides, or reload the page with the current options.'
-		);
-	}
-};
-
-const createGainsightPxScript = function createGainsightPxScript(
+/**
+ * The manifest for a PX product: the official queue stub and loader, and
+ * the Gainsight PX adapter with the product key. The npm helper and the
+ * Inth server both build it here. A site's own user identify call is a
+ * per-visitor npm-only extra, added as two more steps. `productKey` must
+ * already be trimmed and non-empty.
+ */
+export const resolveGainsightPxManifest = function resolveGainsightPxManifest(
 	options: GainsightPxOptions
-): Script {
-	const category = options.category ?? 'measurement';
+): ResolvedManifest {
 	const { productKey } = options;
-
 	const manifest: VendorManifest = options.user
 		? {
 				...gainsightPxManifest,
 				onBeforeLoadGranted: [
 					...gainsightPxManifest.onBeforeLoadGranted,
-					{
-						args: options.account
-							? ['identify', '{{user}}', '{{account}}']
-							: ['identify', '{{user}}'],
-						global: 'aptrinsic',
-						type: 'callGlobal',
-					},
+					identifyStep(options),
 				],
 				onConsentGranted: [
 					...gainsightPxManifest.onConsentGranted,
-					{
-						args: options.account
-							? ['identify', '{{user}}', '{{account}}']
-							: ['identify', '{{user}}'],
-						global: 'aptrinsic',
-						type: 'callGlobal',
-					},
+					identifyStep(options),
 				],
 			}
 		: gainsightPxManifest;
+	return {
+		...getCompiledManifest(manifest, {
+			account: options.account,
+			category: options.category ?? 'measurement',
+			config: { ...options.config, enableTag: true },
+			productKey,
+			productKeyParam: encodeURIComponent(productKey),
+			user: options.user,
+		}),
+		adapter: { id: 'gainsight-px', options: { productKey } },
+		requires: 4,
+	};
+};
 
-	const script = resolveManifest(manifest, {
-		account: options.account,
-		category,
-		config: { ...options.config, enableTag: true },
-		productKey,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=${encodeURIComponent(productKey)}`
-		),
-		user: options.user,
-	});
-	const originalBeforeLoad = script.onBeforeLoad;
-	const originalServerStart = script.serverStart;
-	const onBeforeLoad: Script['onBeforeLoad'] = (info) => {
-		assertProductKey(productKey);
-		if (info.hasConsent) {
-			assertStartupConfig(options.config);
-		}
-		if (info.hasConsent && !info.startedOnServer) {
-			clearPendingGainsightPx();
-		}
-		originalBeforeLoad?.(info);
-	};
-	// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-	script.onBeforeLoad = onBeforeLoad;
-	script.serverStart = (info, started) => {
-		if (started.onBeforeLoad !== onBeforeLoad) {
-			return;
-		}
-		const start = originalServerStart?.(info, {
-			...started,
-			onBeforeLoad: originalBeforeLoad,
-		});
-		return start
-			? {
-					...start,
-					code: `${info.hasConsent ? clearPendingGainsightPxSource : ''}${start.code}`,
-				}
-			: undefined;
-	};
-	const { onConsentChange } = script;
-	script.onConsentChange = (info) => {
-		if (info.hasConsent) {
-			assertProductKey(productKey);
-			assertStartupConfig(options.config);
-		}
-		onConsentChange?.(info);
-	};
-	script.validate = (resolved) => {
-		assertProductKey(productKey);
-		assertServerSetup(options, resolved);
-		assertStartupConfig(options.config);
-	};
+/**
+ * What the Inth server may set for Gainsight PX: the product key. PX
+ * config, the user and account identity, the category and a loader URL of
+ * the site's own stay in the site's code, with the npm helper.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'gainsightPx',
+		{
+			productKey: {
+				example: 'AP-PRODUCT-KEY-2',
+				kind: 'id',
+				label: 'Product key',
+				pattern: '^[A-Za-z0-9-]{1,64}$',
+				required: true,
+			},
+		},
+		resolveGainsightPxManifest
+	);
+
+const reuseGainsightPxScript = createScriptReuse<GainsightPxOptions>();
+
+// Match the manifest's own pending-stub check without serializing
+// instrumented or bundled code.
+const clearPendingGainsightPxSource = `(function(){if(typeof window==='undefined')return;var px=window.aptrinsic;if(typeof px==='function'&&Array.isArray(px.q)&&px.__sdkBundleStarted!==true){Reflect.deleteProperty(window,'aptrinsic');Reflect.deleteProperty(window,'__inthGainsightPxProductKey')}})();`;
+
+const createGainsightPxScript = function createGainsightPxScript(
+	options: GainsightPxOptions
+): Script {
+	const { adapter, ...manifest } = resolveGainsightPxManifest(options);
+	const base = withScriptUrl(
+		resolvedManifestToScript(manifest),
+		options.scriptUrl
+	);
+	const script = gainsightPxScript(
+		base,
+		adapter?.options as unknown as GainsightPxAdapterOptions,
+		{ account: options.account, config: options.config, user: options.user }
+	);
+	const { onBeforeLoad, serverStart } = base;
+	if (serverStart) {
+		// oxlint-disable-next-line integrations/no-vendor-callbacks -- npm-only: a site's server render starts PX from the HTML with its config and identity; the Inth server's adapter scripts start in the browser
+		script.serverStart = (info, started) => {
+			if (started.onBeforeLoad !== script.onBeforeLoad) {
+				return;
+			}
+			const start = serverStart(info, { ...started, onBeforeLoad });
+			return start
+				? {
+						...start,
+						code: `${info.hasConsent ? clearPendingGainsightPxSource : ''}${start.code}`,
+					}
+				: undefined;
+		};
+	}
 	return script;
 };
 
@@ -443,19 +312,9 @@ export const gainsightPx = function gainsightPx(
 			manifest: gainsightPxManifest,
 		});
 	}
-	if (typeof window !== 'undefined' && !('aptrinsic' in window)) {
-		Reflect.deleteProperty(window, productKeyGlobal);
-	}
-	assertProductKey(productKey);
-	assertStartupConfig(options.config);
-	const script = reuseGainsightPxScript(
+	assertGainsightPxSetup(productKey, options);
+	return reuseGainsightPxScript(
 		{ ...options, productKey },
 		createGainsightPxScript
 	);
-	// Reuse resets its callbacks after final disposal, but cannot unload PX.
-	// Keep the runtime check intact when callers customize the script with spread.
-	// Let core adopt and own the server element before later API-only mounts.
-	script.callbackOnly = isGainsightPxCallbackOnly;
-	script.observeConsentBeforeLoad = true;
-	return script;
 };

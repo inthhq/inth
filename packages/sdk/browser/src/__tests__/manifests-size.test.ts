@@ -36,8 +36,10 @@ import { expect, it } from 'vite-plus/test';
  * 6,215, then 6,268 with a type check on every option and the sentry.io
  * DSN pattern.
  * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 441.
+ * `inth.adapter-gainsight-px.js`, the Gainsight PX installation checks: 1,482.
  */
 const BUDGETS = {
+	'inth.adapter-gainsight-px.js': 1510,
 	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,

@@ -13,12 +13,14 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { fromRemote, npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { gainsightPx } from './vendors/analytics/gainsight-px';
@@ -1194,5 +1196,74 @@ describe('Gainsight PX production loader contract', () => {
 		updateScripts(scripts, grantedConsents);
 		expect(runtime).toHaveBeenCalledWith('config', 'enableTag', false);
 		expect(document.head.querySelector('script')).toBeNull();
+	});
+});
+
+describe.each(npmAndRemote('gainsightPx', gainsightPx))(
+	'Gainsight PX dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			Reflect.deleteProperty(window, 'aptrinsic');
+			Reflect.deleteProperty(window, '__inthGainsightPxProductKey');
+			Reflect.deleteProperty(window, '__inthGainsightPxSetup');
+		});
+
+		it('queues the product after measurement, then disables and resets PX on withdrawal', async () => {
+			const scripts = [build({ productKey: 'AP-PRODUCT-KEY-2' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect('aptrinsic' in window).toBe(false);
+
+			updateScripts(scripts, grantedConsents);
+			expect(document.head.querySelector('script')?.src).toBe(
+				'https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY-2'
+			);
+			const stub = getAptrinsic();
+			expect(stub.p).toBe('AP-PRODUCT-KEY-2');
+			expect(stub.c).toEqual({ enableTag: true });
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(stub.q.map((call) => [...call])).toEqual([
+				['config', 'enableTag', true],
+				['config', 'enableTag', false],
+				['reset'],
+			]);
+		});
+
+		it('clears a pending stub that never started before a grant queues again', async () => {
+			const stale = Object.assign(vi.fn(), { c: {}, p: 'AP-OLD-2', q: [] });
+			Reflect.set(window, 'aptrinsic', stale);
+			const scripts = [build({ productKey: 'AP-PRODUCT-KEY-2' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+
+			updateScripts(scripts, grantedConsents);
+			expect(getAptrinsic()).not.toBe(stale);
+			expect(getAptrinsic().p).toBe('AP-PRODUCT-KEY-2');
+		});
+	}
+);
+
+describe('Gainsight PX from the Inth server', () => {
+	registerVendorContractCleanup();
+	afterEach(() => {
+		Reflect.deleteProperty(window, 'aptrinsic');
+		Reflect.deleteProperty(window, '__inthGainsightPxProductKey');
+		vi.restoreAllMocks();
+	});
+
+	it('loads nothing once another PX installation has started', async () => {
+		const external = Object.assign(vi.fn(), { __sdkBundleStarted: true });
+		Reflect.set(window, 'aptrinsic', external);
+		const append = vi.spyOn(document.head, 'appendChild');
+		const scripts = [fromRemote('gainsightPx', { productKey: 'AP-OWN-2' })];
+
+		loadScripts(scripts, grantedConsents);
+		await settleScripts();
+
+		expect(append).not.toHaveBeenCalled();
+		expect(external).not.toHaveBeenCalled();
+		expect(getAptrinsic()).toBe(external);
 	});
 });

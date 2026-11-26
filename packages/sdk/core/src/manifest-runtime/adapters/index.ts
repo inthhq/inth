@@ -9,6 +9,8 @@ const ADAPTER_MODULES: Record<
 	AdapterId,
 	() => Promise<ManifestAdapter<never>>
 > = {
+	'gainsight-px': async () =>
+		(await import('./gainsight-px')).gainsightPxAdapter,
 	'lucky-orange': async () =>
 		(await import('./lucky-orange')).luckyOrangeAdapter,
 	sentry: async () => (await import('./sentry')).sentryAdapter,
