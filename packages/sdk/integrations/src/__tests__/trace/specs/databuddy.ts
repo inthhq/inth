@@ -52,6 +52,18 @@ export const databuddyReplayTrace: TraceSpec = {
 		}),
 };
 
+/** With session replay as a dashboard form sends it, every switch set. */
+export const databuddyReplayDashboardTrace: TraceSpec = {
+	...databuddyReplayTrace,
+	name: 'databuddy.replay-dashboard',
+	script: () =>
+		databuddy({
+			clientId: 'client-id',
+			replay: { maskText: true, recordIframes: false },
+			version: '2026-10-30.1',
+		}),
+};
+
 /** With every feature switch set, as a dashboard form sends them. */
 export const databuddyDashboardTrace: TraceSpec = {
 	...databuddyTrace,
@@ -79,6 +91,7 @@ export const databuddyAlwaysTrace: TraceSpec = {
 export const traces = [
 	databuddyTrace,
 	databuddyReplayTrace,
+	databuddyReplayDashboardTrace,
 	databuddyDashboardTrace,
 	databuddyAlwaysTrace,
 ];

@@ -21,4 +21,11 @@ export const gainsightPxTrace: TraceSpec = {
 		}),
 };
 
-export const traces = [gainsightPxTrace];
+/** With only the product key, as a dashboard sets it. */
+export const gainsightPxDashboardTrace: TraceSpec = {
+	...gainsightPxTrace,
+	name: 'gainsight-px.dashboard',
+	script: () => gainsightPx({ productKey: 'AP-PRODUCT-KEY' }),
+};
+
+export const traces = [gainsightPxTrace, gainsightPxDashboardTrace];

@@ -1,0 +1,519 @@
+{
+	"name": "databuddy.replay-dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"data-mask-text": "true",
+					"data-record-iframes": "false",
+					"integrity": "sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/replay.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{ "load": "https://cdn.databuddy.cc/replay.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyReplay",
+				"value": { "stop": "[stub databuddyReplay.stop]" }
+			},
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			},
+			{
+				"remove": "[<script> https://cdn.databuddy.cc/replay.2026-10-30.1.js]"
+			},
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"data-mask-text": "true",
+					"data-record-iframes": "false",
+					"integrity": "sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/replay.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{ "load": "https://cdn.databuddy.cc/replay.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyReplay",
+				"value": { "stop": "[stub databuddyReplay.stop]" }
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn.databuddy.cc/replay.2026-10-30.1.js]"
+			},
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"data-mask-text": "true",
+					"data-record-iframes": "false",
+					"integrity": "sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/replay.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{ "load": "https://cdn.databuddy.cc/replay.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyReplay",
+				"value": { "stop": "[stub databuddyReplay.stop]" }
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn.databuddy.cc/replay.2026-10-30.1.js]"
+			},
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"data-mask-text": "true",
+					"data-record-iframes": "false",
+					"integrity": "sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/replay.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{ "load": "https://cdn.databuddy.cc/replay.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyReplay",
+				"value": { "stop": "[stub databuddyReplay.stop]" }
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			},
+			{
+				"remove": "[<script> https://cdn.databuddy.cc/replay.2026-10-30.1.js]"
+			},
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"integrity": "sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.2026-10-30.1.js" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"data-mask-text": "true",
+					"data-record-iframes": "false",
+					"integrity": "sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/replay.2026-10-30.1.js"
+				},
+				"async": true
+			},
+			{ "load": "https://cdn.databuddy.cc/replay.2026-10-30.1.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyReplay",
+				"value": { "stop": "[stub databuddyReplay.stop]" }
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> https://cdn.databuddy.cc/replay.2026-10-30.1.js]"
+			},
+			{ "call": "databuddyReplay.stop", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.2026-10-30.1.js]"
+			}
+		]
+	}
+}

@@ -1,0 +1,257 @@
+{
+	"name": "gainsight-px.dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [{ "[Arguments]": ["config", "enableTag", true] }]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "deny" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", false] },
+			{ "call": "aptrinsic", "args": ["reset"] },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [{ "[Arguments]": ["config", "enableTag", true] }]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [{ "[Arguments]": ["config", "enableTag", true] }]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [{ "[Arguments]": ["config", "enableTag", true] }]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", false] },
+			{ "call": "aptrinsic", "args": ["reset"] },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [{ "[Arguments]": ["config", "enableTag", true] }]
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"config": { "enableTag": true },
+					"productKey": "AP-PRODUCT-KEY"
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{ "[Arguments]": ["config", "enableTag", false] },
+						{ "[Arguments]": ["reset"] }
+					]
+				}
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		]
+	}
+}
