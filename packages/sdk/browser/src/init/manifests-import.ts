@@ -28,8 +28,9 @@ const own =
  * one. When one of `manifests` requires level 3 it is
  * `inth.manifests3.js`, the same runtime with level 3, from the same place
  * with the same nonce; a later list that needs level 3 moves to it
- * through `prepare`. The `loadManifestRuntime` runtime module of the
- * script-tag engines.
+ * through `prepare`. When `inth.manifests3.js` fails for the first list,
+ * it is `inth.manifests.js`. The `loadManifestRuntime` runtime module of
+ * the script-tag engines.
  *
  * @throws {Error} When the file has no URL, fails to load, or is from
  * another release; the loader then reports that remote scripts do not load.
@@ -66,12 +67,28 @@ export const loadManifestsFile = async function loadManifestsFile(
 		}
 		return loaded;
 	};
+	const levelTwo = async (
+		failed: readonly unknown[] = []
+	): Promise<RemoteManifestRuntime> => ({
+		...(await load(false)),
+		prepare: (later) =>
+			requiresLevelThree(later) &&
+			!(
+				later.length === failed.length &&
+				later.every((manifest, index) => manifest === failed[index])
+			)
+				? load(true)
+				: undefined,
+	});
 	if (requiresLevelThree(manifests)) {
-		return load(true);
+		try {
+			return await load(true);
+		} catch {
+			// The list's level 1 and 2 entries still run. The parser refuses,
+			// and the loader reports, each entry that needs level 3. A later
+			// list tries the file again; this one does not wait for it twice.
+			return levelTwo(manifests);
+		}
 	}
-	const file = await load(false);
-	return {
-		...file,
-		prepare: (later) => (requiresLevelThree(later) ? load(true) : undefined),
-	};
+	return levelTwo();
 };

@@ -89,6 +89,29 @@ describe('loadManifestsFile', () => {
 		expect(runtime).toEqual({ key: '__inthManifests3' });
 	});
 
+	test('falls back to inth.manifests.js for the first list when inth.manifests3.js fails', async () => {
+		initTag();
+		loadPartFile.mockImplementationOnce(() =>
+			Promise.resolve(undefined as never)
+		);
+
+		const first = [{ requires: 2 }, ...levelThree];
+		const runtime = await loadManifestsFile(first);
+
+		// The level 1 and 2 entries run; the parser refuses each level 3 one.
+		expect(loadPartFile).toHaveBeenLastCalledWith(
+			'__inthManifests',
+			expect.stringMatching(/\/sdk\/inth\.manifests\.js\?v=/u),
+			undefined
+		);
+		expect(runtime).toMatchObject({ key: '__inthManifests' });
+		expect(runtime.prepare?.([...first])).toBeUndefined();
+		// A later list that needs level 3 tries the file again.
+		await expect(runtime.prepare?.([{ requires: 3 }])).resolves.toEqual({
+			key: '__inthManifests3',
+		});
+	});
+
 	test('uses data-manifests3-src from the init tag', async () => {
 		initTag({ 'data-manifests3-src': '/files/manifests3.js' });
 
