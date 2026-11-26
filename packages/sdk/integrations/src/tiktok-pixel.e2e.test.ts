@@ -4,11 +4,17 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
+
 import {
+	ALL_DENIED,
 	grantedMarketingConsents,
+	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import type { TikTokQueue } from './e2e-test-utils';
 import { tiktokPixel } from './vendors/ads-and-pixels/tiktok-pixel';
@@ -130,3 +136,35 @@ describe('tiktokPixel contract', () => {
 		expect(runtimeCalls).toEqual(['grantConsent', 'page']);
 	});
 });
+
+describe.each(npmAndRemote('tiktokPixel', tiktokPixel))(
+	'TikTok Pixel dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for marketing, then queues the consent grant and page view before the file runs', async () => {
+			let queueSnapshot: unknown[] | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('analytics.tiktok.com/i18n/pixel/events.js')) {
+					return;
+				}
+				queueSnapshot = Array.isArray(win.ttq) ? [...win.ttq] : undefined;
+			});
+			const win = window as unknown as { ttq?: unknown };
+			const scripts = [build({ pixelId: 'C4ABCDEF1234567890' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(document.querySelector('script[src*="tiktok"]')).toBeNull();
+			expect(win.ttq).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
+			expect(queueSnapshot).toEqual([['grantConsent'], ['page']]);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect((win.ttq as unknown[]).at(-1)).toEqual(['revokeConsent']);
+		});
+	}
+);

@@ -4,6 +4,8 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
+
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -12,6 +14,7 @@ import {
 	isArgumentsPayload,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	toArgs,
 	updateScripts,
 } from './e2e-test-utils';
@@ -240,3 +243,78 @@ describe('googleTagManager loadMode after-consent', () => {
 		expect(requests).toHaveLength(1);
 	});
 });
+
+describe.each(npmAndRemote('googleTagManager', googleTagManager))(
+	'Google Tag Manager dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		const recordGoogleRequests = function recordGoogleRequests() {
+			const requests: { src: string; queue: unknown[][] }[] = [];
+			installHeadProbe((node, win) => {
+				if (node.src.includes('googletagmanager.com')) {
+					requests.push({
+						queue: (win.dataLayer ?? []).map((entry) => toArgs(entry)),
+						src: node.src,
+					});
+				}
+			});
+			return requests;
+		};
+		const deniedDefault = {
+			ad_personalization: 'denied',
+			ad_storage: 'denied',
+			ad_user_data: 'denied',
+			analytics_storage: 'denied',
+			functionality_storage: 'denied',
+			personalization_storage: 'denied',
+			security_storage: 'granted',
+		};
+
+		it('loads before a choice by default, with every type denied before gtm.js starts', async () => {
+			const requests = recordGoogleRequests();
+
+			loadScripts([build({ id: 'GTM-DASH1' })], ALL_DENIED);
+			await settleScripts();
+
+			expect(requests.map(({ src }) => src)).toEqual([
+				'https://www.googletagmanager.com/gtm.js?id=GTM-DASH1',
+			]);
+			expect(requests[0]?.queue[0]).toEqual(['consent', 'default', deniedDefault]);
+			expect((window as TestWindow).dataLayer).toContainEqual(
+				expect.objectContaining({ event: 'gtm.js' })
+			);
+		});
+
+		it('with after-consent, waits for measurement or marketing, then loads once', async () => {
+			const requests = recordGoogleRequests();
+			const win = window as TestWindow;
+			const scripts = [build({ id: 'GTM-DASH1', loadMode: 'after-consent' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, { ...ALL_DENIED, functionality: true });
+			expect(requests).toEqual([]);
+			expect(win.dataLayer).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
+			updateScripts(scripts, {
+				...grantedMarketingConsents,
+				measurement: true,
+			});
+			expect(requests.map(({ src }) => src)).toEqual([
+				'https://www.googletagmanager.com/gtm.js?id=GTM-DASH1',
+			]);
+			expect(requests[0]?.queue[0]).toEqual([
+				'consent',
+				'default',
+				{
+					...deniedDefault,
+					ad_personalization: 'granted',
+					ad_storage: 'granted',
+					ad_user_data: 'granted',
+				},
+			]);
+		});
+	}
+);

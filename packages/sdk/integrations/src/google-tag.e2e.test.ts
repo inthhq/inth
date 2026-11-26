@@ -4,6 +4,8 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
+
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -12,6 +14,7 @@ import {
 	isArgumentsPayload,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	toArgs,
 	updateScripts,
 } from './e2e-test-utils';
@@ -212,3 +215,81 @@ describe('gtag loadMode after-consent', () => {
 		]);
 	});
 });
+
+describe.each(npmAndRemote('gtag', gtag))(
+	'gtag dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		const recordGoogleRequests = function recordGoogleRequests() {
+			const requests: { src: string; queue: unknown[][] }[] = [];
+			installHeadProbe((node, win) => {
+				if (node.src.includes('googletagmanager.com')) {
+					requests.push({
+						queue: (win.dataLayer ?? []).map((entry) => toArgs(entry)),
+						src: node.src,
+					});
+				}
+			});
+			return requests;
+		};
+		const deniedDefault = {
+			ad_personalization: 'denied',
+			ad_storage: 'denied',
+			ad_user_data: 'denied',
+			analytics_storage: 'denied',
+			functionality_storage: 'denied',
+			personalization_storage: 'denied',
+			security_storage: 'granted',
+		};
+
+		it('loads before a choice by default, with every type denied before config', async () => {
+			const requests = recordGoogleRequests();
+
+			loadScripts([build({ category: 'measurement', id: 'G-DASH1' })], ALL_DENIED);
+			await settleScripts();
+
+			expect(requests.map(({ src }) => src)).toEqual([
+				'https://www.googletagmanager.com/gtag/js?id=G-DASH1',
+			]);
+			expect(requests[0]?.queue[0]).toEqual(['consent', 'default', deniedDefault]);
+			expect(requests[0]?.queue[2]).toEqual(['config', 'G-DASH1']);
+		});
+
+		it('with after-consent, waits for its category, loads once, then denies on withdrawal', async () => {
+			const requests = recordGoogleRequests();
+			const win = window as TestWindow;
+			const scripts = [
+				build({
+					category: 'measurement',
+					id: 'G-DASH1',
+					loadMode: 'after-consent',
+				}),
+			];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(requests).toEqual([]);
+			expect(win.dataLayer).toBeUndefined();
+			expect(win.gtag).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			await settleScripts();
+			expect(requests).toHaveLength(1);
+			expect(requests[0]?.queue[0]).toEqual([
+				'consent',
+				'default',
+				{ ...deniedDefault, analytics_storage: 'granted' },
+			]);
+			expect(requests[0]?.queue[2]).toEqual(['config', 'G-DASH1']);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(toArgs(win.dataLayer?.at(-1))).toEqual([
+				'consent',
+				'update',
+				expect.objectContaining({ analytics_storage: 'denied' }),
+			]);
+			expect(requests).toHaveLength(1);
+		});
+	}
+);
