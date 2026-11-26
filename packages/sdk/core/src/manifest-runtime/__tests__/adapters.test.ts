@@ -162,6 +162,18 @@ describe('parsing a manifest that names an adapter', () => {
 		);
 	});
 
+	it("refuses a manifest that requires less than its adapter's level", async () => {
+		const adapted = await adapterRuntime();
+		const { requires: _requires, ...unleveled } = sentryManifest();
+
+		expect(reasonFrom(adapted, { ...sentryManifest(), requires: 2 })).toBe(
+			'its sentry adapter needs manifest runtime level 4, and the manifest requires level 2'
+		);
+		expect(reasonFrom(adapted, unleveled)).toBe(
+			'its sentry adapter needs manifest runtime level 4, and the manifest requires level 1'
+		);
+	});
+
 	it('checks the roots of its own steps against its globals', async () => {
 		const adapted = await adapterRuntime();
 		const queue = { name: 'sentryQueue', type: 'setGlobal', value: [] };

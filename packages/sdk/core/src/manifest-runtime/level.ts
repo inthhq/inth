@@ -165,6 +165,17 @@ export const withAdapters = function withAdapters(
 					? { needsCode: true, ok: false, reason }
 					: { ok: false, reason };
 			}
+			// The parser below never sees the adapter, so its level check
+			// cannot count it.
+			const { id } = adapter as ManifestAdapterField;
+			const level = levelOf(ADAPTER_LEVELS, id) as number;
+			const required = rest.requires ?? 1;
+			if (typeof required === 'number' && required < level) {
+				return {
+					ok: false,
+					reason: `its ${id} adapter needs manifest runtime level ${String(level)}, and the manifest requires level ${String(required)}`,
+				};
+			}
 			const parsed = runtime.parseResolvedManifest(rest);
 			return parsed.ok
 				? {
