@@ -1,0 +1,344 @@
+{
+	"name": "zendesk",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225601000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225601000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			},
+			{ "call": "zE", "args": ["messenger:set", "cookies", "none"] },
+			{ "step": "grant" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "replace" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			},
+			{ "call": "zE", "args": ["messenger:set", "cookies", "none"] },
+			{ "step": "grant" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [
+						{ "[Arguments]": ["messenger:set", "cookies", "functional"] },
+						{ "[Arguments]": ["messenger:set", "cookies", "none"] }
+					],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225601000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [
+						{ "[Arguments]": ["messenger:set", "cookies", "functional"] },
+						{ "[Arguments]": ["messenger:set", "cookies", "none"] }
+					],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225601000
+				}
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "grant" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		],
+		"measurement changes the cookie range": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://static.zdassets.com/ekr/snippet.js?key=widget-key"
+				},
+				"async": true
+			},
+			{
+				"global": "zE",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{
+				"global": "zEmbed",
+				"value": {
+					"[Function]": true,
+					"_": [{ "[Arguments]": ["messenger:set", "cookies", "functional"] }],
+					"s": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]",
+					"t": 1767225600000
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://static.zdassets.com/ekr/snippet.js?key=widget-key" },
+			{ "global": "zE", "value": "[stub zE]" },
+			{ "step": "grant measurement" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "all"] },
+			{ "step": "revoke measurement" },
+			{ "call": "zE", "args": ["messenger:set", "cookies", "functional"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://static.zdassets.com/ekr/snippet.js?key=widget-key]"
+			}
+		]
+	}
+}

@@ -1,0 +1,257 @@
+{
+	"name": "front-chat",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{ "global": "FrontChat", "value": "[stub FrontChat]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "body",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://chat-assets.frontapp.com/v1/chat.bundle.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://chat-assets.frontapp.com/v1/chat.bundle.js" },
+			{
+				"call": "FrontChat",
+				"args": [
+					"init",
+					{
+						"chatId": "chat-id",
+						"nonce": "trace-nonce",
+						"useDefaultLauncher": true
+					}
+				]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://chat-assets.frontapp.com/v1/chat.bundle.js]"
+			}
+		]
+	}
+}

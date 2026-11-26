@@ -1,0 +1,298 @@
+{
+	"name": "wisepops",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225601000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			},
+			{ "step": "grant" },
+			{
+				"call": "wisepops",
+				"args": [
+					"options",
+					{ "autoPageview": "url", "defaultConsent": "denied" }
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			},
+			{ "step": "grant" },
+			{
+				"call": "wisepops",
+				"args": [
+					"options",
+					{ "autoPageview": "url", "defaultConsent": "denied" }
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			},
+			{
+				"global": "wisepops",
+				"value": {
+					"[Function]": true,
+					"l": 1767225601000,
+					"q": [
+						{
+							"[Arguments]": [
+								"options",
+								{ "autoPageview": "url", "defaultConsent": "denied" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "global": "wisepops", "value": "[stub wisepops]" },
+			{ "step": "grant" },
+			{
+				"call": "wisepops",
+				"args": [
+					"options",
+					{ "autoPageview": "url", "defaultConsent": "denied" }
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://wisepops.net/loader.js?v=3&h=site-id"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://wisepops.net/loader.js?v=3&h=site-id" },
+			{ "call": "wisepops", "args": ["consent", "granted"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://wisepops.net/loader.js?v=3&h=site-id]"
+			}
+		]
+	}
+}

@@ -1,0 +1,264 @@
+{
+	"name": "lucky-orange",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "deny" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{ "step": "grant" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{ "step": "grant" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "load-detached" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "grant" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		],
+		"revoke before the ready callback": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://tools.luckyorange.com/core/lo.js?site-id=site-id"
+				},
+				"async": true
+			},
+			{ "global": "LOQ", "value": [["ready", "[Function]"]] },
+			{ "step": "deny" },
+			{ "step": "load" },
+			{ "load": "https://tools.luckyorange.com/core/lo.js?site-id=site-id" },
+			{ "call": "LO.$internal.ready", "args": ["privacy"] },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"global": "LO",
+				"value": {
+					"$internal": { "ready": "[stub LO.$internal.ready]" },
+					"privacy": {
+						"setConsentStatus": "[stub LO.privacy.setConsentStatus]"
+					}
+				}
+			},
+			{ "global": "LOQ", "value": { "push": "[stub LOQ.push]" } },
+			{ "step": "grant" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [true] },
+			{ "step": "dispose" },
+			{ "call": "LO.privacy.setConsentStatus", "args": [false] },
+			{
+				"remove": "[<script> #inth-#1 https://tools.luckyorange.com/core/lo.js?site-id=site-id]"
+			}
+		]
+	}
+}

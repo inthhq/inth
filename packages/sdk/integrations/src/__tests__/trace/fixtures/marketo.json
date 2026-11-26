@@ -1,0 +1,208 @@
+{
+	"name": "marketo",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{ "global": "Munchkin", "value": { "init": "[stub Munchkin.init]" } },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://munchkin.marketo.net/munchkin.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://munchkin.marketo.net/munchkin.js" },
+			{
+				"call": "Munchkin.init",
+				"args": ["123-ABC-456", { "asyncOnly": true }]
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://munchkin.marketo.net/munchkin.js]"
+			}
+		]
+	}
+}

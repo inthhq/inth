@@ -1,0 +1,174 @@
+{
+	"name": "salesforce-pardot.classic",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "deny" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" },
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piHostname", "value": "pi.pardot.com" },
+			{ "step": "load-detached" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://pi.pardot.com/pd.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://pi.pardot.com/pd.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://pi.pardot.com/pd.js]" }
+		]
+	}
+}

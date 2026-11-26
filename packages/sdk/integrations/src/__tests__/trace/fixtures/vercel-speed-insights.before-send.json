@@ -1,0 +1,450 @@
+{
+	"name": "vercel-speed-insights.before-send",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "step": "grant" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "replace" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "step": "grant" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "global": "si", "value": "[Function]" },
+			{
+				"global": "siq",
+				"value": [
+					["beforeSend", "[Function]"],
+					["beforeSend", "[Function]"]
+				]
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "grant" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"reports follow consent": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "collector sends a vital" },
+			{
+				"call": "beforeSend",
+				"args": [{ "type": "vital", "url": "https://example.com/" }]
+			},
+			{
+				"vital": {
+					"route": "/[slug]",
+					"type": "vital",
+					"url": "https://example.com/"
+				}
+			},
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "step": "collector sends a vital" },
+			{ "vital": null },
+			{ "step": "grant" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "collector sends a vital" },
+			{
+				"call": "beforeSend",
+				"args": [{ "type": "vital", "url": "https://example.com/" }]
+			},
+			{
+				"vital": {
+					"route": "/[slug]",
+					"type": "vital",
+					"url": "https://example.com/"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "step": "collector sends a vital" },
+			{ "vital": null }
+		],
+		"revoke before the collector starts": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "deny" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{
+				"global": "siq",
+				"value": [
+					["beforeSend", "[Function]"],
+					["beforeSend", "[Function]"]
+				]
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "collector sends a vital" },
+			{ "vital": null },
+			{ "step": "grant" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "collector sends a vital" },
+			{
+				"call": "beforeSend",
+				"args": [{ "type": "vital", "url": "https://example.com/" }]
+			},
+			{
+				"vital": {
+					"route": "/[slug]",
+					"type": "vital",
+					"url": "https://example.com/"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		],
+		"replacement keeps reporting": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "global": "si", "value": "[Function]" },
+			{ "global": "siq", "value": [["beforeSend", "[Function]"]] },
+			{ "step": "load" },
+			{ "load": "https://va.vercel-scripts.com/v1/speed-insights/script.js" },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "global": "si", "value": "[stub si]" },
+			{ "global": "sil", "value": true },
+			{ "step": "replace" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			},
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{ "call": "si", "args": ["beforeSend", "[Function]"] },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-sample-rate": "0.5",
+					"data-sdkn": "inth",
+					"defer": "",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://va.vercel-scripts.com/v1/speed-insights/script.js"
+				}
+			},
+			{ "step": "collector sends a vital" },
+			{
+				"call": "beforeSend",
+				"args": [{ "type": "vital", "url": "https://example.com/" }]
+			},
+			{
+				"vital": {
+					"route": "/[slug]",
+					"type": "vital",
+					"url": "https://example.com/"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://va.vercel-scripts.com/v1/speed-insights/script.js]"
+			}
+		]
+	}
+}

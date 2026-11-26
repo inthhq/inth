@@ -1,0 +1,243 @@
+{
+	"name": "appcues.on-ready",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "deny" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" },
+			{ "call": "Appcues.reset", "args": [] },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" },
+			{ "call": "Appcues.reset", "args": [] },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" },
+			{
+				"global": "AppcuesSettings",
+				"value": { "enableURLDetection": true, "skipAMD": true }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{
+				"global": "Appcues",
+				"value": {
+					"anonymous": "[stub Appcues.anonymous]",
+					"identify": "[stub Appcues.identify]",
+					"page": "[stub Appcues.page]",
+					"reset": "[stub Appcues.reset]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://fast.appcues.com/12345.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://fast.appcues.com/12345.js" },
+			{ "call": "onReady", "args": [] },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://fast.appcues.com/12345.js]" }
+		]
+	}
+}

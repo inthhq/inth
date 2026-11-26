@@ -1,0 +1,195 @@
+{
+	"name": "pirsch",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "deny" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "global": "pirsch", "value": "[stub pirsch]" },
+			{ "global": "pirschInit", "value": "[stub pirschInit]" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-code": "pirsch-code",
+					"data-disable-page-views": "",
+					"data-domain": "example.com,www.example.com",
+					"defer": "",
+					"id": "pianjs",
+					"nonce": "trace-nonce",
+					"src": "https://api.pirsch.io/pa.js"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
+		]
+	}
+}

@@ -1,0 +1,345 @@
+{
+	"name": "gainsight-px",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "deny" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", false] },
+			{ "call": "aptrinsic", "args": ["reset"] },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{
+				"call": "aptrinsic",
+				"args": [
+					"identify",
+					{ "email": "user@example.com", "id": "user-1" },
+					{ "id": "account-1" }
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", false] },
+			{ "call": "aptrinsic", "args": ["reset"] },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{
+				"call": "aptrinsic",
+				"args": [
+					"identify",
+					{ "email": "user@example.com", "id": "user-1" },
+					{ "id": "account-1" }
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						}
+					]
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+				},
+				"async": true
+			},
+			{
+				"remove": "[<script> #inth-#1 https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY]"
+			},
+			{ "global": "__inthGainsightPxProductKey", "value": "AP-PRODUCT-KEY" },
+			{
+				"global": "__inthGainsightPxSetup",
+				"value": {
+					"account": { "id": "account-1" },
+					"config": { "enableTag": true, "usePOST": true },
+					"productKey": "AP-PRODUCT-KEY",
+					"user": { "email": "user@example.com", "id": "user-1" }
+				}
+			},
+			{
+				"global": "aptrinsic",
+				"value": {
+					"[Function]": true,
+					"c": { "enableTag": true, "usePOST": true },
+					"p": "AP-PRODUCT-KEY",
+					"q": [
+						{ "[Arguments]": ["config", "enableTag", true] },
+						{
+							"[Arguments]": [
+								"identify",
+								{ "email": "user@example.com", "id": "user-1" },
+								{ "id": "account-1" }
+							]
+						},
+						{ "[Arguments]": ["config", "enableTag", false] },
+						{ "[Arguments]": ["reset"] }
+					]
+				}
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=AP-PRODUCT-KEY"
+			},
+			{ "global": "aptrinsic", "value": "[stub aptrinsic]" },
+			{ "step": "grant" },
+			{ "call": "aptrinsic", "args": ["config", "enableTag", true] },
+			{
+				"call": "aptrinsic",
+				"args": [
+					"identify",
+					{ "email": "user@example.com", "id": "user-1" },
+					{ "id": "account-1" }
+				]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
+		]
+	}
+}

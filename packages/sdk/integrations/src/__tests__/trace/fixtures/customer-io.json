@@ -1,0 +1,393 @@
+{
+	"name": "customer-io",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{ "call": "cioanalytics.page", "args": [] },
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "deny" },
+			{ "call": "cioanalytics.reset", "args": [] },
+			{ "step": "grant" },
+			{ "call": "cioanalytics.page", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{ "call": "cioanalytics.page", "args": [] },
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{ "call": "cioanalytics.page", "args": [] },
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "load" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{ "call": "cioanalytics.page", "args": [] },
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "cioanalytics.reset", "args": [] },
+			{ "step": "grant" },
+			{ "call": "cioanalytics.page", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"data-global-customerio-analytics-key": "cioanalytics",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+				},
+				"async": true
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"[Array]": [["reset"]],
+					"SNIPPET_VERSION": "4.15.3",
+					"_cdn": "https://cdp.customer.io",
+					"_loadOptions": { "initialPageview": false, "integrations": {} },
+					"_writeKey": "write-key",
+					"addDestinationMiddleware": "[Function]",
+					"addIntegrationMiddleware": "[Function]",
+					"addSourceMiddleware": "[Function]",
+					"alias": "[Function]",
+					"debug": "[Function]",
+					"group": "[Function]",
+					"identify": "[Function]",
+					"off": "[Function]",
+					"on": "[Function]",
+					"once": "[Function]",
+					"page": "[Function]",
+					"pageview": "[Function]",
+					"ready": "[Function]",
+					"reset": "[Function]",
+					"setAnonymousId": "[Function]",
+					"track": "[Function]",
+					"trackClick": "[Function]",
+					"trackForm": "[Function]",
+					"trackLink": "[Function]",
+					"trackSubmit": "[Function]"
+				}
+			},
+			{ "step": "load-detached" },
+			{
+				"load": "https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js"
+			},
+			{
+				"global": "cioanalytics",
+				"value": {
+					"identify": "[stub cioanalytics.identify]",
+					"page": "[stub cioanalytics.page]",
+					"reset": "[stub cioanalytics.reset]",
+					"track": "[stub cioanalytics.track]"
+				}
+			},
+			{ "step": "grant" },
+			{ "call": "cioanalytics.page", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdp.customer.io/v1/analytics-js/snippet/write-key/analytics.min.js]"
+			}
+		]
+	}
+}

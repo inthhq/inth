@@ -1,0 +1,493 @@
+{
+	"name": "salesforce-pardot",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "deny" },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] },
+						{ "[Arguments]": ["revokeConsent"] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "load-detached" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"in-flight download completes after withdrawal, then regrant": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "deny" },
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] },
+						{ "[Arguments]": ["revokeConsent"] }
+					]
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"in-flight download completes after regrant": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "deny" },
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] },
+						{ "[Arguments]": ["revokeConsent"] }
+					]
+				}
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"overlapping downloads: the new one completes first": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "remount" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "load-detached" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "step": "deny" },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		],
+		"overlapping downloads: the disposed one completes first": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{
+				"global": "pdt",
+				"value": {
+					"[Function]": true,
+					"cq": [
+						{ "[Arguments]": ["create", 123456, 654321, "go.example.com"] },
+						{ "[Arguments]": ["hideConsentBanner", null] },
+						{ "[Arguments]": ["setOptIn", false] }
+					]
+				}
+			},
+			{ "global": "piAId", "value": 123456 },
+			{ "global": "piCId", "value": 654321 },
+			{ "global": "piDomain", "value": "go.example.com" },
+			{ "step": "remount" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://go.example.com/pdt.js?aid=123456"
+				},
+				"async": true
+			},
+			{ "step": "the disposed download completes" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "global": "pdt", "value": "[stub pdt]" },
+			{ "step": "load" },
+			{ "load": "https://go.example.com/pdt.js?aid=123456" },
+			{ "call": "pdt", "args": ["create", 123456, 654321, "go.example.com"] },
+			{ "call": "pdt", "args": ["hideConsentBanner", null] },
+			{ "call": "pdt", "args": ["setOptIn", false] },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "deny" },
+			{ "call": "pdt", "args": ["revokeConsent"] },
+			{ "step": "grant" },
+			{ "call": "pdt", "args": ["setOptIn", true] },
+			{ "call": "pdt", "args": ["sendPageView"] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://go.example.com/pdt.js?aid=123456]"
+			}
+		]
+	}
+}
