@@ -43,7 +43,13 @@ export const remoteStatus = {
 	// started it skips the loader through a callbackOnly function. A manifest
 	// can neither refuse a load nor make loading depend on page state.
 	gainsightPx: adapter,
-	gorgiasChat: level3,
+	// Before init() resolves, the chat's API is a Proxy that throws on every
+	// read but init, also on the Symbol.toStringTag read the manifest
+	// runtime makes to tell a vendor object from a browser one. The runtime
+	// reads a throw as a browser object and skips GorgiasChat.init(), so a
+	// manifest never reaches the init() path (gorgias.test.ts, "waits for the
+	// real loader proxy contract").
+	gorgiasChat: adapter,
 	hubspot: adapter,
 	luckyOrange: adapter,
 	sentry: adapterSentry,
