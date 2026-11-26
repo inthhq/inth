@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
 // @vitest-environment node
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
@@ -331,6 +332,33 @@ describe('remoteIntegrations', () => {
 			})
 		).toBe(2);
 		expect(manifestLevel({ ...manifest, requires: 3, target: 'body' })).toBe(3);
+	});
+
+	it('reads a manifest that uses a level 3 feature, nested or not, as level 3', () => {
+		const manifest = remoteIntegrations.metaPixel?.resolveRemote({
+			pixelId: '123',
+		}) as NonNullable<ReturnType<RemoteIntegration['resolveRemote']>>;
+
+		expect(
+			manifestLevel({
+				...manifest,
+				onLoadGrantedSteps: [
+					{ then: [], type: 'if', when: { documentReady: true } },
+				],
+			})
+		).toBe(3);
+		expect(
+			manifestLevel({
+				...manifest,
+				onLoadGrantedSteps: [
+					{
+						global: 'fbq',
+						then: [{ name: 'ready', type: 'setFlag', value: true }],
+						type: 'callGlobal',
+					},
+				],
+			})
+		).toBe(3);
 	});
 
 	it.each(cases)(

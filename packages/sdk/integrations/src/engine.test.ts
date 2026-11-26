@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
 import { subscribeToScriptDebugEvents } from '@inth/sdk/engine';
 import type { ScriptDebugEvent } from '@inth/sdk/engine';
 import {
@@ -1269,6 +1270,66 @@ describe('scripts engine', () => {
 			resourceKey: 'vendor-main',
 			target: 'body',
 		});
+	});
+
+	it('carries level 3 steps, interpolating the steps nested in them', () => {
+		const compiled = compileManifest(
+			{
+				...vendorManifestContract,
+				category: 'measurement',
+				install: [{ src: 'https://cdn.example/{{id}}.js', type: 'loadScript' }],
+				onLoadGranted: [
+					{
+						else: [{ name: 'ready', type: 'setFlag', value: false }],
+						then: [{ global: '{{api}}', method: 'start', type: 'callGlobal' }],
+						type: 'if',
+						when: { global: ['{{api}}', 'start'], is: 'function' },
+					},
+					{
+						event: '{{api}}:ready',
+						steps: [
+							{
+								global: '{{api}}',
+								method: 'init',
+								then: [
+									{ args: ['{{id}}'], global: '{{api}}', type: 'callGlobal' },
+								],
+								type: 'callGlobal',
+							},
+						],
+						target: 'window',
+						type: 'listen',
+					},
+				],
+				vendor: 'level-three',
+			},
+			{ api: 'vendor', id: 'site-1' }
+		);
+
+		expect(compiled.onLoadGrantedSteps).toEqual([
+			{
+				else: [{ name: 'ready', type: 'setFlag', value: false }],
+				then: [{ global: 'vendor', method: 'start', type: 'callGlobal' }],
+				type: 'if',
+				when: { global: ['vendor', 'start'], is: 'function' },
+			},
+			{
+				event: 'vendor:ready',
+				steps: [
+					{
+						global: 'vendor',
+						method: 'init',
+						then: [{ args: ['site-1'], global: 'vendor', type: 'callGlobal' }],
+						type: 'callGlobal',
+					},
+				],
+				target: 'window',
+				type: 'listen',
+			},
+		]);
+		// No level 3 step lands anywhere the manifest did not put one.
+		expect(compiled.setupSteps).toEqual([]);
+		expect(compiled.onConsentChangeSteps).toEqual([]);
 	});
 
 	it('rejects manifests with an unsupported contract', () => {

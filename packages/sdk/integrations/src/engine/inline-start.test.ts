@@ -1,12 +1,18 @@
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
 import type {
 	ConsentState,
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
-import { manifestRoots } from '@inth/sdk/manifest-runtime';
+import {
+	installLevelThree,
+	manifestRoots,
+} from '@inth/sdk/manifest-runtime';
+import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
 import {
 	afterEach,
 	assert,
+	beforeAll,
 	beforeEach,
 	describe,
 	expect,
@@ -1151,6 +1157,107 @@ describe('inlineStepsStart', () => {
 			} as ScriptCallbackInfo);
 			expect(queue).toEqual(['started', 'beforeSend', expect.any(Function)]);
 			expect((queue[2] as (event: unknown) => unknown)('event')).toBe('event');
+		});
+	});
+
+	describe('level 3 manifests', () => {
+		const level3 = (fields: Partial<ResolvedManifest>): Script =>
+			resolvedManifestToScript({
+				...vendorManifestContract,
+				afterLoadSteps: [],
+				bootstrapSteps: [],
+				category: 'measurement',
+				loadScript: {
+					src: 'https://cdn.example/vendor.js',
+					type: 'loadScript',
+				},
+				onBeforeLoadDeniedSteps: [],
+				onBeforeLoadGrantedSteps: [],
+				onConsentChangeSteps: [],
+				onConsentDeniedSteps: [],
+				onConsentGrantedSteps: [],
+				onLoadDeniedSteps: [],
+				onLoadGrantedSteps: [],
+				requires: 3,
+				setupSteps: [],
+				vendor: 'level-three',
+				...fields,
+			});
+		const info = {
+			consents: granted,
+			hasConsent: true,
+			id: 'level-three',
+			vendor: { granted: true, id: 'level-three' },
+		};
+		const queue: ManifestStep = {
+			name: 'vendorQueue',
+			type: 'setGlobal',
+			value: [],
+		};
+
+		beforeAll(() => {
+			installLevelThree(levelThreePart);
+		});
+
+		it.each<[string, Partial<ResolvedManifest>]>([
+			[
+				'an if step',
+				{
+					setupSteps: [
+						{ then: [queue], type: 'if', when: { documentReady: true } },
+					],
+				},
+			],
+			[
+				'a setFlag step',
+				{ bootstrapSteps: [{ name: 'started', type: 'setFlag', value: true }] },
+			],
+			[
+				'a listen step',
+				{
+					onBeforeLoadGrantedSteps: [
+						{
+							event: 'vendor:ready',
+							steps: [queue],
+							target: 'window',
+							type: 'listen',
+						},
+					],
+				},
+			],
+			[
+				'callGlobal.then',
+				{
+					setupSteps: [
+						queue,
+						{ global: 'vendor', then: [queue], type: 'callGlobal' },
+					],
+				},
+			],
+		])(
+			'leaves a manifest with %s before load to the browser',
+			(_label, fields) => {
+				const script = level3(fields);
+
+				expect(script.serverStart?.(info, script)).toBeUndefined();
+			}
+		);
+
+		it('starts from the HTML when the level 3 steps run only after load', () => {
+			const script = level3({
+				onLoadGrantedSteps: [
+					{
+						then: [{ global: 'vendor', method: 'start', type: 'callGlobal' }],
+						type: 'if',
+						when: { flag: 'started' },
+					},
+				],
+				setupSteps: [queue],
+			});
+			const [fromCallback, fromInline] = runBoth(script, info);
+
+			expect(fromInline).toStrictEqual(fromCallback);
+			expect(JSON.stringify(fromInline)).toContain('vendorQueue');
 		});
 	});
 });
