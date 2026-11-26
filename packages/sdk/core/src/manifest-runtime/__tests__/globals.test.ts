@@ -774,3 +774,91 @@ describe('calls made after the steps ran', () => {
 		expect(element.isConnected).toBe(true);
 	});
 });
+
+describe("an array's push", () => {
+	const mountSteps = (steps: Record<string, unknown>[]) => {
+		const parsed = parse(withRoots({ alwaysLoad: true, setupSteps: steps }));
+		if (!parsed.ok) {
+			throw new Error(parsed.reason);
+		}
+		const kernel = createConsentKernel({
+			initialRecords: choiceRecords({ measurement: true }),
+			now: NOW,
+		});
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [resolvedManifestToScript(parsed.manifest)],
+		});
+		disposers.push(kernel.dispose, loader.dispose);
+	};
+
+	/** An array whose own `push` and `unshift` are a native element method. */
+	const pageArray = () => {
+		const element = document.createElement('div');
+		document.body.append(element);
+		const array: unknown[] = [];
+		Object.assign(array, {
+			push: element.remove.bind(element),
+			unshift: element.remove.bind(element),
+		});
+		win.vendor = array;
+		return element;
+	};
+
+	it.each<[string, Record<string, unknown>]>([
+		[
+			'a call',
+			{ args: [1], global: 'vendor', method: 'push', type: 'callGlobal' },
+		],
+		[
+			'a call path',
+			{ args: [1], path: ['vendor', 'unshift'], type: 'callGlobal' },
+		],
+		['pushToQueue', { queue: 'vendor', type: 'pushToQueue', value: 1 }],
+	])(
+		'%s calls no native function an array holds as its own push',
+		(_label, step) => {
+			const element = pageArray();
+
+			mountSteps([step]);
+
+			expect(element.isConnected).toBe(true);
+		}
+	);
+
+	it('pushToQueue pushes no browser object', () => {
+		win.vendor = [];
+
+		mountSteps([
+			{ queue: 'vendor', type: 'pushToQueue', value: { el: scriptElement } },
+		]);
+
+		expect(win.vendor).toEqual([]);
+	});
+
+	it("pushToQueue still calls a vendor's own push", () => {
+		const push = vi.fn();
+		win.vendor = Object.assign([], { push });
+
+		mountSteps([{ queue: 'vendor', type: 'pushToQueue', value: { a: 1 } }]);
+
+		expect(push).toHaveBeenCalledWith({ a: 1 });
+	});
+
+	it('calls push on an array from another realm', () => {
+		const frame = document.createElement('iframe');
+		document.body.append(frame);
+		const FrameArray = (
+			frame.contentWindow as unknown as { Array: ArrayConstructor }
+		).Array;
+		const array = new FrameArray<unknown>();
+		win.vendor = array;
+
+		mountSteps([
+			{ args: [1], global: 'vendor', method: 'push', type: 'callGlobal' },
+			{ queue: 'vendor', type: 'pushToQueue', value: 2 },
+		]);
+
+		expect([...array]).toEqual([1, 2]);
+	});
+});

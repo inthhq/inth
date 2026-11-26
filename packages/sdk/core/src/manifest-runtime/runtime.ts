@@ -239,6 +239,32 @@ const holdsPlatformObject = (value: unknown, depth = 0): boolean =>
 const ARRAY_METHODS: ReadonlySet<unknown> = new Set(['push', 'unshift']);
 
 /**
+ * Whether `fn` is the `push` or `unshift` that `holder`, an array, gets from
+ * its realm's `Array.prototype`, and not one set on the array itself. An
+ * array from a frame inherits its frame's. A realm's `Array.prototype` is
+ * an array whose own prototype is not one.
+ */
+const isArrayMethod = (
+	fn: unknown,
+	holder: unknown,
+	method: unknown
+): boolean => {
+	if (
+		!(Array.isArray(holder) && ARRAY_METHODS.has(method)) ||
+		Object.hasOwn(holder, method as string)
+	) {
+		return false;
+	}
+	const prototype: unknown = Object.getPrototypeOf(holder);
+	return (
+		Array.isArray(prototype) &&
+		!Array.isArray(Object.getPrototypeOf(prototype)) &&
+		Object.hasOwn(prototype, method as string) &&
+		(prototype as unknown as Record<string, unknown>)[method as string] === fn
+	);
+};
+
+/**
  * Whether a manifest may call `fn` on `holder` with `args`: a vendor's
  * function, or `push` or `unshift` of an array (a vendor's queue) given no
  * browser object. Every other native function is refused, so a declared
@@ -251,9 +277,7 @@ const mayCall = (
 	args: () => unknown[]
 ): boolean =>
 	!isNativeFunction(fn) ||
-	(Array.isArray(holder) &&
-		ARRAY_METHODS.has(method) &&
-		!holdsPlatformObject(args()));
+	(isArrayMethod(fn, holder, method) && !holdsPlatformObject(args()));
 
 /**
  * Reports a call that a function the manifest defined refused when it was
@@ -532,8 +556,13 @@ const executeStep = function executeStep(
 
 		case 'pushToQueue': {
 			const queueTarget = win[step.queue];
-			if (Array.isArray(queueTarget)) {
-				queueTarget.push(cloneStepValue(step.value, values));
+			if (!Array.isArray(queueTarget)) {
+				break;
+			}
+			const item = cloneStepValue(step.value, values);
+			const { push } = queueTarget;
+			if (mayCall(push, queueTarget, 'push', () => [item])) {
+				push.call(queueTarget, item);
 			}
 			break;
 		}

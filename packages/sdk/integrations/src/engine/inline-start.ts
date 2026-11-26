@@ -37,14 +37,15 @@ const RUNNER = '__inthRunSteps';
 /**
  * `executeStep` for every step type except constructGlobal, which only runs
  * after a vendor's script loads. Keep it in step with `runtime.ts`: `P` is
- * its `isPlatformObject` and `M` its `mayCall`.
+ * its `isPlatformObject`, `R` its `isArrayMethod` and `M` its `mayCall`.
  * `M` leaves out the check for a browser object among the arguments: a
  * step's arguments arrive as JSON, and a stub or queued method only
  * passes on what the page called it with.
  */
 const RUNNER_SOURCE = `function(steps){var w=window,K=${inlineJSON(RUNTIME_VALUE_KIND)},T=Object.prototype.toString,S=Function.prototype.toString;
 function P(o){if(o===null||typeof o!=='object')return false;try{var t=T.call(o);return t!=='[object Object]'&&t!=='[object Array]'&&t!=='[object Arguments]'&&t!=='[object Date]'}catch(e){return true}}
-function M(f,h,m){var n;try{n=S.call(f).indexOf('[native code]')>=0}catch(e){n=true}return !n||(Array.isArray(h)&&(m==='push'||m==='unshift'))}
+function R(f,h,m){var H=Object.prototype.hasOwnProperty,p;if(!Array.isArray(h)||(m!=='push'&&m!=='unshift')||H.call(h,m))return false;p=Object.getPrototypeOf(h);return Array.isArray(p)&&!Array.isArray(Object.getPrototypeOf(p))&&H.call(p,m)&&p[m]===f}
+function M(f,h,m){var n;try{n=S.call(f).indexOf('[native code]')>=0}catch(e){n=true}return !n||R(f,h,m)}
 function c(v){if(v&&typeof v==='object'){if(!Array.isArray(v)&&v.kind===K&&(v.value==='date'||v.value==='timestamp'))return v.value==='date'?new Date():Date.now();if(Array.isArray(v))return v.map(c);var o={};for(var k in v)o[k]=c(v[k]);return o}return v}
 function q(queue,owner){var t='global' in queue&&typeof queue.global==='string'?w[queue.global]:owner?owner[queue.property]:undefined;return Array.isArray(t)?t:undefined}
 for(var i=0;i<steps.length;i++){var s=steps[i];(function(s){switch(s.type){
@@ -53,7 +54,7 @@ case 'defineQueueFunction':if(s.ifUndefined!==false&&w[s.name]!==undefined)retur
 case 'defineStubFunction':if(s.ifUndefined!==false&&w[s.name]!==undefined)return;var f=function(){var self=w[s.name];if(P(self))self=undefined;var d=self&&s.dispatchProperty?self[s.dispatchProperty]:undefined,a=Array.prototype.slice.call(arguments);if(typeof d==='function'&&M(d,self,s.dispatchProperty)){d.apply(self,a);return}var t=q(s.queue,self);if(!t)return;t.push(s.queueFormat==='array'?a:arguments)};w[s.name]=f;
 if('property' in s.queue&&typeof s.queue.property==='string'&&f[s.queue.property]===undefined)f[s.queue.property]=[];(s.aliases||[]).forEach(function(n){w[n]=f});(s.selfReferences||[]).forEach(function(n){f[n]=f});for(var p in s.properties||{})f[p]=c(s.properties[p]);return;
 case 'callGlobal':var A=function(){return s.literalArgs?JSON.parse(JSON.stringify(s.args||[])):(s.args||[]).map(c)};if(s.path){var o=w;for(var j=0;j<s.path.length-1;j++){o=o[s.path[j]];if(o===null||(typeof o!=='object'&&typeof o!=='function')||P(o))return}var h=o[s.path[s.path.length-1]];if(typeof h==='function'&&M(h,o,s.path[s.path.length-1]))h.apply(o,A());return}var g=w[s.global];if(!g||P(g))return;if(s.method){if(typeof g[s.method]==='function'&&M(g[s.method],g,s.method))g[s.method].apply(g,A())}else if(typeof g==='function'&&M(g))g.apply(undefined,A());return;
-case 'pushToQueue':if(Array.isArray(w[s.queue]))w[s.queue].push(c(s.value));return;
+case 'pushToQueue':var t=w[s.queue];if(!Array.isArray(t))return;var g=t.push;if(M(g,t,'push'))g.call(t,c(s.value));return;
 case 'setGlobalPath':var r=s.path[0];if(s.ifGlobalIsQueue&&(!r||!Array.isArray(w[r])))return;if(s.path.length===0)return;var o=w;for(var j=0;j<s.path.length-1;j++){o=o[s.path[j]];if(o===null||typeof o!=='object'||P(o))return}var k=s.path[s.path.length-1];if(s.ifUndefined&&o[k]!==undefined)return;o[k]=c(s.value);return;
 case 'defineQueueMethods':var t=w[s.target];if(t===null||(typeof t!=='object'&&typeof t!=='function')||P(t))return;if(!s.queue&&!Array.isArray(t))return;var F=s.queueFormat;s.methods.forEach(function(m){if(s.preserveExisting&&typeof t[m]==='function')return;t[m]=function(){var u=q(s.queue||{global:s.target},t);if(!u)return;var a=Array.prototype.slice.call(arguments);if(F==='methodCall'||F==='wrappedMethodCall'||F==='voidMethodCall'){var p=new Promise(function(r){u.push({args:a,name:m,resolve:r})});return F==='wrappedMethodCall'?{promise:p}:F==='voidMethodCall'?undefined:p}if(F==='callback'){u.push({fn:function(){var l=w[s.target];if(l===null||(typeof l!=='object'&&typeof l!=='function')||P(l))return;var g=l[m];if(typeof g==='function'&&M(g,l,m))g.apply(l,a)},name:m});return}u.push(F==='nameAndArgs'?[m,a]:F==='nameAndArguments'?[m,arguments]:[m].concat(a));return s.returnTarget?t:undefined}});return;
 case 'defineQueueClass':var t=w[s.target];if(t===null||(typeof t!=='object'&&typeof t!=='function')||P(t))return;var Q=s.queueProperty==null?'_q':s.queueProperty,C=function(){this[Q]=[]};s.methods.forEach(function(m){C.prototype[m]=function(){var u=this[Q];if(Array.isArray(u))u.push({args:Array.prototype.slice.call(arguments),name:m});return this}});t[s.name]=C;return;

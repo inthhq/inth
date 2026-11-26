@@ -1073,6 +1073,50 @@ describe('inlineStepsStart', () => {
 			]);
 		});
 
+		it("calls only an array's inherited push, from the HTML as in the browser", () => {
+			const page = getTestGlobal() as unknown as Record<string, unknown>;
+			const script = level2({
+				setupSteps: [
+					{
+						args: [1],
+						global: 'vendorList',
+						method: 'push',
+						type: 'callGlobal',
+					},
+					{ args: [2], path: ['vendorList', 'unshift'], type: 'callGlobal' },
+					{ queue: 'vendorList', type: 'pushToQueue', value: 3 },
+					{ queue: 'vendorArray', type: 'pushToQueue', value: 4 },
+				],
+			});
+			const pages = [];
+			for (const run of ['callback', 'inline']) {
+				const held = ['kept'];
+				// Own `push` and `unshift` set to a native function.
+				page.vendorList = Object.assign([], {
+					push: Array.prototype.pop.bind(held),
+					unshift: Array.prototype.pop.bind(held),
+				});
+				page.vendorArray = [];
+				if (run === 'callback') {
+					script.onBeforeLoad?.(createCallbackInfo(info));
+				} else {
+					const start = script.serverStart?.(info, script);
+					assert(start);
+					// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+					new Function(`${start.prelude ?? ''};${start.code}`)();
+				}
+				pages.push({ array: page.vendorArray, held });
+			}
+
+			Reflect.deleteProperty(page, 'vendorList');
+			Reflect.deleteProperty(page, 'vendorArray');
+
+			expect(pages).toEqual([
+				{ array: [4], held: ['kept'] },
+				{ array: [4], held: ['kept'] },
+			]);
+		});
+
 		it('starts the rest from the HTML and hands over the consent gate on hydration', () => {
 			const script = level2({
 				setupSteps: [
