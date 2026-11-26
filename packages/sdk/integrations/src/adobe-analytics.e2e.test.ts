@@ -4,12 +4,15 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { adobeAnalytics } from './vendors/analytics/adobe-analytics';
 
@@ -108,3 +111,41 @@ describe('adobeAnalytics contract', () => {
 		expect(window.adobeDataLayer).toBeUndefined();
 	});
 });
+
+describe.each(npmAndRemote('adobeAnalytics', adobeAnalytics))(
+	'adobeAnalytics dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for measurement consent, then seeds adobeDataLayer and loads the property from Adobe', async () => {
+			let scriptSrc: string | undefined;
+			let seededBeforeAppend = false;
+			installHeadProbe((node) => {
+				if (!node.src.startsWith('https://assets.adobedtm.com/')) {
+					return;
+				}
+				scriptSrc = node.src;
+				seededBeforeAppend = Array.isArray(window.adobeDataLayer);
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [
+				build({
+					companyId: 'a7d65461e54e',
+					environmentId: 'f3a2b1c0d9e8',
+					propertyId: '01d650ac6ffb',
+				}),
+			];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(scriptSrc).toBeUndefined();
+			expect(window.adobeDataLayer).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(scriptSrc).toBe(
+				'https://assets.adobedtm.com/a7d65461e54e/01d650ac6ffb/launch-f3a2b1c0d9e8.min.js'
+			);
+			expect(seededBeforeAppend).toBe(true);
+		});
+	}
+);

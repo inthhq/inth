@@ -6,11 +6,13 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import { npmAndRemote } from './__tests__/remote-path';
 import {
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
 	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { ahrefsAnalytics } from './vendors/analytics/ahrefs-analytics';
 import { cloudflareWebAnalytics } from './vendors/analytics/cloudflare-web-analytics';
@@ -251,6 +253,69 @@ describe('analytics loader contracts', () => {
 			defer: true,
 		});
 	});
+
+	it.each(npmAndRemote('rybbitAnalytics', rybbitAnalytics))(
+		'waits for measurement consent and sets only the Rybbit site ID through the %s',
+		async (_label, build) => {
+			let attributes: string[][] | undefined;
+			installHeadProbe((node) => {
+				if (!node.src.includes('app.rybbit.io/api/script.js')) {
+					return;
+				}
+				attributes = node
+					.getAttributeNames()
+					.filter((name) => name.startsWith('data-'))
+					.map((name) => [name, node.getAttribute(name) ?? '']);
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [build({ siteId: '123' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(attributes).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			// Rybbit's own site settings decide replay, errors and Web Vitals.
+			expect(attributes).toEqual([['data-site-id', '123']]);
+		}
+	);
+
+	it.each(npmAndRemote('umamiAnalytics', umamiAnalytics))(
+		'waits for measurement consent and exposes Umami dashboard settings through the %s',
+		async (_label, build) => {
+			let attributes: Record<string, string | null> | undefined;
+			installHeadProbe((node) => {
+				if (!node.src.includes('cloud.umami.is/script.js')) {
+					return;
+				}
+				attributes = {
+					dataAutoTrack: node.getAttribute('data-auto-track'),
+					dataDomains: node.getAttribute('data-domains'),
+					dataWebsiteId: node.getAttribute('data-website-id'),
+				};
+				node.dispatchEvent(new Event('load'));
+			});
+			const websiteId = '94db1cb1-74f4-4a40-ad6c-962362670409';
+			const scripts = [
+				build({
+					autoTrack: false,
+					domains: ['example.com', 'www.example.com'],
+					websiteId,
+				}),
+			];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(attributes).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(attributes).toEqual({
+				dataAutoTrack: 'false',
+				dataDomains: 'example.com,www.example.com',
+				dataWebsiteId: websiteId,
+			});
+		}
+	);
 
 	it('exposes Umami loader configuration before append', () => {
 		let attributes: Record<string, string | boolean | null> | undefined;

@@ -4,6 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -11,6 +12,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { liveIntentTag } from './vendors/ads-and-pixels/liveintent';
@@ -75,15 +77,6 @@ describe('LiveIntent production core loader contract', () => {
 		);
 		expect(Array.isArray(atAppend)).toBe(true);
 		expect(atAppend).toEqual([conversion, second]);
-		expect(window.LI).toBeUndefined();
-	});
-
-	it('creates an empty event array when no initial events are configured', () => {
-		loadScripts(
-			[liveIntentTag({ tagId: 'inth-tag' })],
-			grantedMarketingConsents
-		);
-		expect(window.liQ).toEqual([]);
 		expect(window.LI).toBeUndefined();
 	});
 
@@ -176,3 +169,57 @@ describe('LiveIntent production core loader contract', () => {
 		expect(document.querySelector('script')).toBe(element);
 	});
 });
+
+describe.each(npmAndRemote('liveIntentTag', liveIntentTag))(
+	'LiveIntent dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			for (const key of ['lc2', 'liQHub', 'liQ_instances']) {
+				Reflect.deleteProperty(window, key);
+			}
+		});
+
+		it('waits for marketing consent, then creates an empty event array before the account script', async () => {
+			const sources: string[] = [];
+			let atAppend: unknown;
+			installHeadProbe((node) => {
+				atAppend = window.liQ;
+				sources.push(node.src);
+			});
+			const scripts = [build({ tagId: 'inth-tag' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, grantedMeasurementConsents);
+			for (const key of vendorGlobals) {
+				expect(key in window).toBe(false);
+			}
+			expect(sources).toEqual([]);
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(sources).toEqual(['https://b-code.liadm.com/inth-tag.min.js']);
+			expect(atAppend).toEqual([]);
+			expect(window.LI).toBeUndefined();
+		});
+
+		it('keeps vendor replacement globals and sends no invented withdrawal event', async () => {
+			const scripts = [build({ tagId: 'inth-tag' })];
+			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
+			const element = document.querySelector('script');
+			expect(element).not.toBeNull();
+			const runtime = { push: vi.fn() };
+			const config = { appId: 'inth-tag' };
+			window.liQ = runtime;
+			window.LI = config;
+			updateScripts(scripts, ALL_DENIED);
+			element?.dispatchEvent(new Event('load'));
+			updateScripts([build({ tagId: 'inth-tag' })], grantedMarketingConsents);
+			expect(window.liQ).toBe(runtime);
+			expect(window.LI).toBe(config);
+			expect(runtime.push).not.toHaveBeenCalled();
+			expect(document.querySelector('script')).toBe(element);
+		});
+	}
+);

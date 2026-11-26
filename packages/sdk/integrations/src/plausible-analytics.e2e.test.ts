@@ -4,11 +4,15 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { plausibleAnalytics } from './vendors/analytics/plausible-analytics';
 
@@ -72,3 +76,41 @@ describe('plausible analytics contract', () => {
 		expect(queueSnapshot).toEqual([['Signup', { props: { plan: 'pro' } }]]);
 	});
 });
+
+describe.each(npmAndRemote('plausibleAnalytics', plausibleAnalytics))(
+	'plausible analytics dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for measurement consent, then exposes init options before the site script appends', async () => {
+			let initOptions: Record<string, unknown> | undefined;
+			let scriptSrc: string | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('plausible.io/js/')) {
+					return;
+				}
+				initOptions = (win.plausible as PlausibleStub | undefined)?.o;
+				scriptSrc = node.src;
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [
+				build({
+					autoCapturePageviews: false,
+					hashBasedRouting: true,
+					scriptId: 'AbC123xYz',
+				}),
+			];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(scriptSrc).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(scriptSrc).toBe('https://plausible.io/js/pa-AbC123xYz.js');
+			expect(initOptions).toEqual({
+				autoCapturePageviews: false,
+				hashBasedRouting: true,
+			});
+		});
+	}
+);

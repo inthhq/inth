@@ -4,11 +4,15 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
+	ALL_DENIED,
 	grantedMarketingConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { pinterestTag } from './vendors/ads-and-pixels/pinterest-tag';
 import { redditPixel } from './vendors/ads-and-pixels/reddit-pixel';
@@ -158,3 +162,94 @@ describe('ads pixel queue contracts', () => {
 		]);
 	});
 });
+
+describe.each(npmAndRemote('redditPixel', redditPixel))(
+	'Reddit Pixel dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for marketing consent, then boots the queue before append', async () => {
+			let queueSnapshot: unknown[][] | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('redditstatic.com/ads/pixel.js')) {
+					return;
+				}
+				queueSnapshot = win.rdt?.callQueue?.map((entry) => [...entry]);
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [
+				build({ disableFirstPartyCookies: true, pixelId: 'a2_abcdef123456' }),
+			];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.rdt).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(queueSnapshot).toEqual([
+				['init', 'a2_abcdef123456', { disableFirstPartyCookies: true }],
+				['track', 'PageVisit'],
+			]);
+		});
+	}
+);
+
+describe.each(npmAndRemote('snapchatPixel', snapchatPixel))(
+	'Snap Pixel dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for marketing consent, then boots the queue before append', async () => {
+			let queueSnapshot: unknown[][] | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('sc-static.net/scevent.min.js')) {
+					return;
+				}
+				queueSnapshot = win.snaptr?.queue?.map((entry) => [...entry]);
+				node.dispatchEvent(new Event('load'));
+			});
+			const pixelId = '0b5d6a3e-2f1c-4e8a-9d7b-1a2b3c4d5e6f';
+			const scripts = [build({ pixelId, trackPageView: false })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.snaptr).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(queueSnapshot).toEqual([['init', pixelId]]);
+		});
+	}
+);
+
+describe.each(npmAndRemote('pinterestTag', pinterestTag))(
+	'Pinterest Tag dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for marketing consent, then boots the queue before append', async () => {
+			let queueSnapshot: unknown[][] | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('s.pinimg.com/ct/core.js')) {
+					return;
+				}
+				queueSnapshot = win.pintrk?.queue?.map((entry) => [...entry]);
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [build({ tagId: '2613654212508' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect(window.pintrk).toBeUndefined();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(queueSnapshot).toEqual([
+				['load', '2613654212508'],
+				['setconsent', true],
+				['page'],
+			]);
+		});
+	}
+);

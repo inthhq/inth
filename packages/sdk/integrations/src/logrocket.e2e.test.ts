@@ -4,12 +4,14 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { logRocket } from './vendors/analytics/logrocket';
@@ -75,3 +77,34 @@ describe('logRocket contract', () => {
 		).toBeNull();
 	});
 });
+
+describe.each(npmAndRemote('logRocket', logRocket))(
+	'logRocket dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for measurement consent, initializes after load, and unloads on revoke', async () => {
+			const init = vi.fn();
+			let initBeforeLoad = false;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('cdn.logrocket.io/LogRocket.min.js')) {
+					return;
+				}
+				win.LogRocket = { init };
+				initBeforeLoad = init.mock.calls.length > 0;
+				node.dispatchEvent(new Event('load'));
+			});
+			const script = build({ appId: 'abc123/my-app' });
+
+			loadScripts([script], ALL_DENIED);
+			await settleScripts();
+			expect(init).not.toHaveBeenCalled();
+
+			updateScripts([script], grantedMeasurementConsents);
+			expect(initBeforeLoad).toBe(false);
+			expect(init.mock.calls).toEqual([['abc123/my-app', {}]]);
+
+			expect(updateScripts([script], ALL_DENIED).unloaded).toEqual([script.id]);
+		});
+	}
+);
