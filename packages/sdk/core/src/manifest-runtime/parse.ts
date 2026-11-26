@@ -267,6 +267,8 @@ const globalsProblem = (
 	}
 	return undefined;
 };
+/** The most steps a manifest may have. */
+const MAX_STEPS = 200;
 
 /** Why `manifest` cannot run, or `undefined` when it can. */
 // oxlint-disable-next-line complexity -- One check per manifest field.
@@ -310,6 +312,7 @@ const manifestProblem = (
 		return 'its globals is not a list of names';
 	}
 	const declared: readonly unknown[] = globals;
+	let stepCount = 0;
 	for (const list of STEP_LISTS) {
 		const steps = manifest[list];
 		if (steps === undefined && OPTIONAL_STEP_LISTS.has(list)) {
@@ -319,6 +322,10 @@ const manifestProblem = (
 			return `${list} is not a list`;
 		}
 		for (const step of steps) {
+			stepCount += 1;
+			if (stepCount > MAX_STEPS) {
+				return `it has more than ${MAX_STEPS} steps`;
+			}
 			if (
 				!(
 					isRecord(step) &&

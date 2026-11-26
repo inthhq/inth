@@ -257,6 +257,24 @@ describe('parseResolvedManifest', () => {
 			reason: 'its requires is not a whole number from 1',
 		});
 	});
+	it('refuses a manifest of more than 200 steps', () => {
+		const [step] = manifest().bootstrapSteps;
+		const input = {
+			...manifest(),
+			bootstrapSteps: Array.from({ length: 100 }, () => step),
+			loadScript: undefined,
+			setupSteps: Array.from({ length: 101 }, () => step),
+		};
+
+		expect(parseResolvedManifest(input)).toEqual({
+			ok: false,
+			reason: 'it has more than 200 steps',
+		});
+		expect(
+			parseResolvedManifest({ ...input, setupSteps: input.bootstrapSteps }).ok
+		).toBe(true);
+	});
+
 	describe('level 2', () => {
 		const runtimeValue = (value: string, fields = {}) => ({
 			kind: 'inth.runtime-value',
@@ -483,6 +501,55 @@ describe('parseResolvedManifest', () => {
 		])('refuses a code name under a vendor global: %j', (step) => {
 			expect(parseResolvedManifest(withSetup(step)).ok).toBe(false);
 		});
+
+		it.each<Record<string, unknown>>([
+			{ ifUndefined: false, name: 'location', type: 'setGlobal', value: '/' },
+			{ path: ['location'], type: 'setGlobalPath', value: '/' },
+			{ path: ['window', 'location'], type: 'setGlobalPath', value: '/' },
+			{ path: ['top', 'location', 'href'], type: 'setGlobalPath', value: '/' },
+			{ path: ['document', 'location'], type: 'setGlobalPath', value: '/' },
+			{ assignTo: 'location', constructor: 'URL', type: 'constructGlobal' },
+			{
+				ifUndefined: false,
+				name: 'location',
+				queue: 'q',
+				type: 'defineQueueFunction',
+			},
+			{
+				aliases: ['location'],
+				name: 'vendor',
+				queue: { property: 'q' },
+				type: 'defineStubFunction',
+			},
+			{
+				methods: ['location'],
+				queue: { global: 'q' },
+				target: 'window',
+				type: 'defineQueueMethods',
+			},
+			{
+				methods: [{ behavior: 'noop', name: 'location' }],
+				target: 'document',
+				type: 'defineGlobalMethods',
+			},
+			{
+				methods: [],
+				name: 'location',
+				target: 'window',
+				type: 'defineQueueClass',
+			},
+			{ path: ['document', 'location', 'assign'], type: 'callGlobal' },
+		])(
+			'refuses a step that calls or writes location, at level 1: %j',
+			(step) => {
+				expect(
+					parseResolvedManifest({ ...manifest(), setupSteps: [step] })
+				).toEqual({
+					ok: false,
+					reason: expect.stringMatching(/calls|writes/u),
+				});
+			}
+		);
 
 		it('accepts calls on vendor objects', () => {
 			expect(
