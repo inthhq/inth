@@ -1,0 +1,268 @@
+{
+	"name": "pendo.dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "deny" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{ "step": "grant" },
+			{ "call": "pendo.startSendingEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{ "step": "grant" },
+			{ "call": "pendo.startSendingEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "grant" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{ "call": "pendo.startSendingEvents", "args": [] },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"consent withdrawn inside initialize on the first regrant": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "deny" },
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "arm a withdrawal inside initialize" },
+			{ "step": "grant" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		],
+		"grant then revoke in the same tick after load": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.pendo.io/agent/static/api-key/pendo.js"
+				},
+				"async": true
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.pendo.io/agent/static/api-key/pendo.js" },
+			{ "call": "pendo.initialize", "args": [{}] },
+			{
+				"global": "pendo",
+				"value": {
+					"initialize": "[stub pendo.initialize]",
+					"isSendingEvents": "[stub pendo.isSendingEvents]",
+					"startSendingEvents": "[stub pendo.startSendingEvents]",
+					"stopSendingEvents": "[stub pendo.stopSendingEvents]"
+				}
+			},
+			{ "step": "deny" },
+			{ "call": "pendo.stopSendingEvents", "args": [] },
+			{ "step": "grant-then-deny" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://cdn.pendo.io/agent/static/api-key/pendo.js]"
+			}
+		]
+	}
+}

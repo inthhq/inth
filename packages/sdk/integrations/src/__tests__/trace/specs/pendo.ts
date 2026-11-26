@@ -42,6 +42,13 @@ export const pendoTrace: TraceSpec = {
 				'dispose',
 			],
 		},
+		{
+			// Activation waits a microtask, so a grant withdrawn in the same
+			// task never starts sending events.
+			name: 'grant then revoke in the same tick after load',
+			start: 'granted',
+			steps: ['load', 'deny', 'grant-then-deny', 'dispose'],
+		},
 	],
 	script: () =>
 		pendo({
@@ -54,4 +61,14 @@ export const pendoTrace: TraceSpec = {
 	},
 };
 
-export const traces = [pendoTrace];
+/**
+ * Only options a dashboard can set, for the server path's run. Visitor and
+ * account identity stay in the site's code.
+ */
+export const pendoDashboardTrace: TraceSpec = {
+	...pendoTrace,
+	name: 'pendo.dashboard',
+	script: () => pendo({ apiKey: 'api-key' }),
+};
+
+export const traces = [pendoTrace, pendoDashboardTrace];

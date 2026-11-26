@@ -22,4 +22,11 @@ export const customerIoTrace: TraceSpec = {
 		customerIo({ loadOptions: { integrations: {} }, writeKey: 'write-key' }),
 };
 
-export const traces = [customerIoTrace];
+/** Only options a dashboard can set, for the server path's run. */
+export const customerIoDashboardTrace: TraceSpec = {
+	...customerIoTrace,
+	name: 'customer-io.dashboard',
+	script: () => customerIo({ writeKey: 'write-key' }),
+};
+
+export const traces = [customerIoTrace, customerIoDashboardTrace];
