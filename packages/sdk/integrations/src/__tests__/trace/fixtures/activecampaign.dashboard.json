@@ -1,0 +1,222 @@
+{
+	"name": "activecampaign.dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225601000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "load" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "call": "pgo", "args": ["process", "allowTracking"] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "deny" },
+			{
+				"consoleError": [
+					"activeCampaignTracking: tracking permission was lost; reload the page to stop the running SDK"
+				]
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "load" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "call": "pgo", "args": ["process", "allowTracking"] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "dispose" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "load" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "call": "pgo", "args": ["process", "allowTracking"] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "load" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "call": "pgo", "args": ["process", "allowTracking"] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"consoleError": [
+					"activeCampaignTracking: tracking permission was lost; reload the page to stop the running SDK"
+				]
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225600000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://diffuser-cdn.app-us1.com/diffuser/diffuser.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js"
+				},
+				"async": true
+			},
+			{
+				"global": "pgo",
+				"value": {
+					"[Function]": true,
+					"l": 1767225601000,
+					"q": [
+						{ "[Arguments]": ["setAccount", "12345"] },
+						{ "[Arguments]": ["setTrackByDefault", false] }
+					]
+				}
+			},
+			{ "global": "prismGlobalObjectAlias", "value": "pgo" },
+			{ "step": "load-detached" },
+			{ "load": "https://diffuser-cdn.app-us1.com/diffuser/diffuser.js" },
+			{ "call": "pgo", "args": ["setAccount", "12345"] },
+			{ "call": "pgo", "args": ["setTrackByDefault", false] },
+			{ "global": "pgo", "value": "[stub pgo]" },
+			{ "step": "grant" },
+			{ "call": "pgo", "args": ["process", "allowTracking"] },
+			{ "step": "load" },
+			{ "step": "dispose" }
+		]
+	}
+}

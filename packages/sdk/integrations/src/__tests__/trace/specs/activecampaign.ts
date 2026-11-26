@@ -37,4 +37,18 @@ export const activeCampaignUnmanagedTrace: TraceSpec = {
 	standardScenarios: false,
 };
 
-export const traces = [activeCampaignTrace, activeCampaignUnmanagedTrace];
+/**
+ * Only options a dashboard can set, for the server path's run: a visitor's
+ * email stays in the site's own code.
+ */
+export const activeCampaignDashboardTrace: TraceSpec = {
+	...activeCampaignTrace,
+	name: 'activecampaign.dashboard',
+	script: () => activeCampaignTracking({ accountId: '12345' }),
+};
+
+export const traces = [
+	activeCampaignTrace,
+	activeCampaignUnmanagedTrace,
+	activeCampaignDashboardTrace,
+];
