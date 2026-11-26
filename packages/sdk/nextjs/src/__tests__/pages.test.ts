@@ -499,7 +499,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 		// reads at.
 		const sink = await callRoute(route, {
 			headers: { host: 'app.example.com' },
-			url: '/api/consent/v1/consent/manifest?manifestLevel=2',
+			url: '/api/consent/v1/consent/manifest?manifestLevel=4',
 		});
 		const config = await resolveConsent({
 			config: consentConfig,
