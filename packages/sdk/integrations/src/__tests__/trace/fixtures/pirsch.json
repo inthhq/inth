@@ -19,6 +19,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "global": "pirsch", "value": "[stub pirsch]" },
 			{ "global": "pirschInit", "value": "[stub pirschInit]" },
 			{ "step": "deny" },
@@ -39,6 +40,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "step": "dispose" },
 			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
 		],
@@ -59,6 +61,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "global": "pirsch", "value": "[stub pirsch]" },
 			{ "global": "pirschInit", "value": "[stub pirschInit]" },
 			{ "step": "dispose" },
@@ -81,6 +84,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "global": "pirsch", "value": "[stub pirsch]" },
 			{ "global": "pirschInit", "value": "[stub pirschInit]" },
 			{ "step": "replace" },
@@ -105,6 +109,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "global": "pirsch", "value": "[stub pirsch]" },
 			{ "global": "pirschInit", "value": "[stub pirschInit]" },
 			{ "step": "replace-while-revoke-pending" },
@@ -125,6 +130,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "step": "dispose" },
 			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
 		],
@@ -188,6 +194,7 @@
 			},
 			{ "step": "load" },
 			{ "load": "https://api.pirsch.io/pa.js" },
+			{ "call": "pirschInit", "args": [] },
 			{ "step": "dispose" },
 			{ "remove": "[<script> #pianjs https://api.pirsch.io/pa.js]" }
 		]
