@@ -83,6 +83,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	heap: ['cdn.us.heap-api.com'],
 	hightouch: ['cdn.hightouch-events.com'],
 	hotjar: ['static.hotjar.com'],
+	insiderTag: ['acmestore.api.useinsider.com'],
 	intercom: ['widget.intercom.io'],
 	klaviyo: ['static.klaviyo.com'],
 	linkedinInsights: ['snap.licdn.com'],

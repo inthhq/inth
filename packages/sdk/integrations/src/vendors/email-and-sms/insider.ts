@@ -2,8 +2,9 @@ import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { compileManifest } from '../../engine/compile';
 import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 
 /** Product data required by Insider's product page push. */
@@ -130,8 +131,7 @@ export const insiderManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- npm-only: the host is the partner's useinsider.com subdomain, which the rule allows only for a hostname option
-			src: '{{scriptSrc}}',
+			src: 'https://{{partnerName}}.api.useinsider.com/ins.js?id={{partnerId}}',
 			type: 'loadScript',
 		},
 	],
@@ -216,7 +216,69 @@ export interface InsiderTagOptions {
 	category?: HasCondition<AllConsentNames>;
 }
 
-const PARTNER_NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u;
+/**
+ * One DNS label, lowercase. A string so the remote option can declare it;
+ * fixed-script-host proves from it that the partner name stays one label
+ * under useinsider.com.
+ */
+const PARTNER_NAME_PATTERN = '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$';
+const PARTNER_NAME_REGEXP = new RegExp(PARTNER_NAME_PATTERN, 'u');
+
+/**
+ * Builds the serializable manifest behind {@link insiderTag}. The partner
+ * name must already be one lowercase DNS label, the partner ID trimmed, and
+ * `user` JSON-serializable. Compiled fresh on every call, so one visitor's
+ * attributes never come back from a shared cache.
+ */
+export const resolveInsiderManifest = function resolveInsiderManifest({
+	partnerName,
+	partnerId,
+	category = 'marketing',
+	currency,
+	pageType = { type: 'other' },
+	user = {},
+}: InsiderTagOptions): ResolvedManifest {
+	return compileManifest(
+		currency === undefined ? insiderManifest : insiderCurrencyManifest,
+		{
+			category,
+			currency,
+			pageType,
+			partnerId: encodeURIComponent(partnerId),
+			partnerName,
+			user: { ...user, gdpr_optin: true },
+		}
+	);
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; current user attributes, currency, page context and a custom
+ * consent condition stay npm-only. Marked pure so a bundler drops it from an
+ * npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'insiderTag',
+		{
+			partnerId: {
+				example: '10001234',
+				kind: 'id',
+				label: 'Partner ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+			partnerName: {
+				example: 'acmestore',
+				kind: 'id',
+				label: 'Partner name',
+				pattern: PARTNER_NAME_PATTERN,
+				required: true,
+			},
+		},
+		resolveInsiderManifest
+	);
 
 /**
  * Creates an Insider tag gated on marketing consent by default.
@@ -248,7 +310,7 @@ export const insiderTag = function insiderTag(
 ): Script {
 	const category = options?.category ?? 'marketing';
 	const partnerName = readId(options?.partnerName)?.toLowerCase();
-	if (partnerName === undefined || !PARTNER_NAME_PATTERN.test(partnerName)) {
+	if (partnerName === undefined || !PARTNER_NAME_REGEXP.test(partnerName)) {
 		return skipMissingId('insiderTag', 'partnerName', {
 			category,
 			manifest: insiderManifest,
@@ -283,17 +345,14 @@ export const insiderTag = function insiderTag(
 	} catch {
 		return skipScript('insiderTag: user must be JSON-serializable', skipped);
 	}
-	// Keep current identifiers independent of the resolver's shared config cache.
 	return resolvedManifestToScript(
-		compileManifest(
-			currency === undefined ? insiderManifest : insiderCurrencyManifest,
-			{
-				category,
-				currency,
-				pageType: options.pageType ?? { type: 'other' },
-				scriptSrc: `https://${partnerName}.api.useinsider.com/ins.js?id=${encodeURIComponent(partnerId)}`,
-				user: { ...user, gdpr_optin: true },
-			}
-		)
+		resolveInsiderManifest({
+			category,
+			currency,
+			pageType: options.pageType,
+			partnerId,
+			partnerName,
+			user,
+		})
 	);
 };

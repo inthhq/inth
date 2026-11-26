@@ -45,11 +45,6 @@ export const remoteStatus = {
 	gainsightPx: level3,
 	gorgiasChat: level3,
 	hubspot: adapter,
-	insiderTag: {
-		reason:
-			'its script loads from <partnerName>.api.useinsider.com; fixed-script-host allows a host placeholder only for a hostname option, which is for customer domains, so a partner label under a fixed vendor domain needs a rule change first',
-		status: 'npm-only',
-	},
 	luckyOrange: adapter,
 	marketoMunchkin: level2,
 	// Classic mode converts with level 2; consent mode needs an adapter (13).
