@@ -1088,6 +1088,15 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		holdShared(next);
 		return scripts;
 	};
+	/** The scripts already built for `entries` whose manifest is unchanged. */
+	const keptRemote = (entries: RemoteEntry[]): Script[] =>
+		entries.flatMap((entry) => {
+			const cached = built.get(entry.id);
+			return cached?.script &&
+				cached.manifest === JSON.stringify(entry.manifest)
+				? [cached.script]
+				: [];
+		});
 	/** The code scripts, then each remote script no code script claims. */
 	const mergedScripts = (): Script[] => {
 		const claimed = claimedByCode();
@@ -1186,6 +1195,10 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			remoteEntries.map(({ manifest }) => manifest)
 		);
 		if (pending) {
+			// Until the code arrives, keep only the scripts whose entries this
+			// list kept unchanged. The snapshot that brought the list may also
+			// grant consent, and a removed entry must not start on it.
+			setRemoteScripts(keptRemote(remoteEntries));
 			void buildWith(runtime, remoteEntries, pending);
 		} else {
 			setRemoteScripts(buildRemote(runtime));

@@ -457,6 +457,64 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('drops a removed entry before the answer that removes it grants its category, while the new list waits for code', async () => {
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const part = Promise.withResolvers<undefined>();
+		const base = await import('../../manifest-runtime/index');
+		const loadManifestRuntime = vi.fn(() =>
+			Promise.resolve({
+				...base,
+				// The level 3 part is still downloading.
+				prepare: (manifests: readonly unknown[]) =>
+					base.requiresLevelThree(manifests) ? part.promise : undefined,
+			})
+		);
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(() => answer.promise),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: true,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: load(acmeManifest({ category: 'measurement' })),
+					},
+				},
+				remoteScripts: true,
+			},
+			{ ...defaultRuntimeModules, loadManifestRuntime }
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(loadManifestRuntime).toHaveBeenCalled());
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+
+		answer.resolve({
+			policyResolution: {
+				...matchedResolution(optOutRule({ id: 'opt-out' })),
+				version: 1,
+			},
+			scriptRegistry: { load: load(levelThree('ACME-3')) },
+		});
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(runtime.kernel.getSnapshot().effectivePermissions.measurement).toBe(
+			true
+		);
+		expect(tags()).toHaveLength(0);
+		expect((window as { acmeQueue?: unknown[] }).acmeQueue).toBeUndefined();
+		runtime.dispose();
+	});
+
 	test("hands the first list's manifests to the runtime loader, and builds with the runtime prepare gives", async () => {
 		const loadManifestRuntime = vi.fn(async () => {
 			const base = await import('../../manifest-runtime/index');
