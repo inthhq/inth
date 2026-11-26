@@ -142,9 +142,12 @@ export const runsAtManifestLevel = function runsAtManifestLevel(
 
 /**
  * `registry` without the `load` entries a manifest runtime of `level` cannot
- * run, for a list no server filtered for this runtime: one copied from a
- * static manifest, or one kept in a cache. Returns `registry` itself when
- * nothing is dropped. Malformed entries stay for the loader to report.
+ * run, for a caller this side serves or resolves a list for, or one no
+ * server filtered for this runtime: copied from a static manifest, or kept
+ * in a cache. An entry with `requires: 1` loses the field, because a level 1
+ * manifest carries no `requires` and a level 1 SDK refuses one that does.
+ * Returns `registry` itself when nothing changes. Malformed entries stay for
+ * the loader to report.
  */
 export const registryForManifestLevel = function registryForManifestLevel<
 	Registry extends ScriptRegistryWire | undefined,
@@ -153,11 +156,24 @@ export const registryForManifestLevel = function registryForManifestLevel<
 	if (!Array.isArray(load)) {
 		return registry;
 	}
-	const kept = load.filter(
-		(entry) =>
-			typeof entry !== 'object' ||
-			entry === null ||
-			runsAtManifestLevel(entry.manifest, level)
-	);
-	return kept.length === load.length ? registry : { ...registry, load: kept };
+	let changed = false;
+	const kept: RemoteScriptWire[] = [];
+	for (const entry of load) {
+		if (typeof entry !== 'object' || entry === null) {
+			kept.push(entry);
+			continue;
+		}
+		if (!runsAtManifestLevel(entry.manifest, level)) {
+			changed = true;
+			continue;
+		}
+		if (entry.manifest?.requires === 1) {
+			const { requires: _levelOne, ...manifest } = entry.manifest;
+			kept.push({ ...entry, manifest });
+			changed = true;
+			continue;
+		}
+		kept.push(entry);
+	}
+	return changed ? { ...registry, load: kept } : registry;
 };

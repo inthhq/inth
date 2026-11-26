@@ -125,11 +125,24 @@ describe('scriptRegistry', () => {
 				scriptRegistry: listed,
 			});
 
-			expect(
-				resolveInitFromManifest(parsed, {}).scriptRegistry?.load?.map(
-					({ id }) => id
-				)
-			).toEqual(['level-one', 'needs-one']);
+			// A level 1 SDK refuses a manifest with any `requires`, so the
+			// entry that needs level 1 goes out without it.
+			expect(resolveInitFromManifest(parsed, {}).scriptRegistry?.load).toEqual([
+				entry('level-one'),
+				entry('needs-one'),
+			]);
+		});
+
+		test('strips requires: 1 at every level, and keeps a higher one', () => {
+			const registry = {
+				load: [entry('needs-one', 1), entry('needs-two', 2)],
+				sources: scriptSources,
+			};
+			expect(registryForManifestLevel(registry, 2)).toEqual({
+				load: [entry('needs-one'), entry('needs-two', 2)],
+				sources: scriptSources,
+			});
+			expect(registry.load[0]?.manifest).toHaveProperty('requires', 1);
 		});
 
 		test('a higher level keeps the entries it runs', () => {
