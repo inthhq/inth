@@ -268,7 +268,8 @@ export interface Script {
 	nonce?: string;
 
 	/**
-	 * Whether to use an anonymized ID for the script element, this helps ensure the script is not blocked by ad blockers
+	 * Whether to use an anonymized ID for the script element, this helps ensure the script is not blocked by ad blockers.
+	 * Ignored when `attributes.id` is set: the element uses that ID.
 	 * @default true
 	 */
 	anonymizeId?: boolean;

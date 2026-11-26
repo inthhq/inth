@@ -228,6 +228,28 @@ describe('scriptElement and scriptNonce', () => {
 	});
 });
 
+describe('an explicit script id', () => {
+	test('keeps the id and still runs the after-load steps', () => {
+		mount([
+			resolvedManifestToScript(
+				fromJSON({
+					afterLoadSteps: [recordStep('loaded')],
+					loadScript: {
+						attributes: { id: 'vendor-main' },
+						src: 'https://cdn.example/vendor.js',
+						type: 'loadScript',
+					},
+				})
+			),
+		]);
+		const element = document.getElementById('vendor-main');
+
+		expect(element).toBeInstanceOf(HTMLScriptElement);
+		element?.dispatchEvent(new Event('load'));
+		expect(record).toHaveBeenCalledExactlyOnceWith('loaded');
+	});
+});
+
 describe('consentGate', () => {
 	test('passes values while consent holds, and never after dispose', () => {
 		const { kernel, loader } = mount([

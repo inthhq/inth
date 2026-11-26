@@ -484,6 +484,26 @@ describe('mountScript with a server-started element', () => {
 		expect(emitted).toContainEqual({ action: 'already_loaded', scriptId: 's' });
 	});
 
+	test('keeps an explicit id on the adopted element and fires onLoad', () => {
+		const { deps } = makeDeps();
+		const onLoad = vi.fn();
+		const script: Script = {
+			attributes: { id: 'vendor-main' },
+			category: 'marketing',
+			id: 's',
+			onLoad,
+			src: 'https://x/s.js',
+		};
+		const element = startOnServer('s', script.src ?? '');
+		element.id = 'vendor-main';
+
+		mountScript(deps, script, createConsentKernel().getSnapshot(), true, null);
+		element.dispatchEvent(new Event('load'));
+
+		expect(element.id).toBe('vendor-main');
+		expect(onLoad).toHaveBeenCalledOnce();
+	});
+
 	test('adopts the element started for its resourceKey, not its id', () => {
 		const { deps } = makeDeps();
 		const other = startOnServer('s', 'https://x/other.js');

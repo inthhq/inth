@@ -66,7 +66,8 @@ export interface ElementIdResolver {
 /**
  * Build a per-loader element-ID resolver.
  *
- * Resource keys let independent loaders select different physical resources
+ * An `id` in `script.attributes` is the element ID as written. Otherwise,
+ * resource keys let independent loaders select different physical resources
  * under the same logical script ID. Without one, use the script ID.
  * When `script.anonymizeId` is `false`, the ID is `inth-script-<key>` —
  * stable across mounts so consumers can target it from CSS / extensions.
@@ -83,6 +84,12 @@ export const createElementIdResolver =
 				/* empty */
 			},
 			resolve(script) {
+				// The element carries `attributes.id` once inserted, so the
+				// loader uses it to find, adopt and observe the element too.
+				const explicit = script.attributes?.id;
+				if (explicit) {
+					return explicit;
+				}
 				const key = script.resourceKey ?? script.id;
 				const anonymize = script.anonymizeId !== false;
 				if (!anonymize) {
