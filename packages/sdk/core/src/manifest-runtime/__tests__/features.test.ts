@@ -188,6 +188,7 @@ describe('manifestFeatureLevel', () => {
 			'callGlobal.then',
 			withSetup({ global: 'vendor', then: [], type: 'callGlobal' }),
 		],
+		['a defer step', withSetup({ steps: [], type: 'defer' })],
 		[
 			'a level 3 step nested in a level 1 list',
 			{

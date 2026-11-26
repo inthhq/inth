@@ -1,15 +1,15 @@
 /**
  * The level 3 part of the manifest runtime: `if` steps and their
- * conditions, `setFlag`, `listen` and `callGlobal.then`, and the parser's
- * checks for them. The runtime runs them once `installLevelThree` has this
+ * conditions, `setFlag`, `listen`, `defer` and `callGlobal.then`, and the
+ * parser's checks for them. The runtime runs them once `installLevelThree` has this
  * part (see `part.ts`).
  *
- * `listen` and `then` belong to a load: the run of the script that starts
- * with an `onBeforeLoad`. A load ends when its element fails, the script
- * is disposed, or the next `onBeforeLoad` starts another one, as a revoke
- * and grant without disposal does. A listener of an ended load is removed,
- * and a promise of one runs nothing when it settles, so a late answer
- * cannot act on a newer load.
+ * `listen`, `defer` and `then` belong to a load: the run of the script
+ * that starts with an `onBeforeLoad`. A load ends when its element fails,
+ * the script is disposed, or the next `onBeforeLoad` starts another one,
+ * as a revoke and grant without disposal does. A listener of an ended load
+ * is removed, and deferred steps or a promise of one run nothing, so a
+ * late answer cannot act on a newer load.
  */
 import { has } from '../libs/has';
 import { emitScriptDebugEvent } from '../libs/script-loader/debug';
@@ -209,28 +209,31 @@ const run: LevelThreePart['run'] = (step, values, runtime) => {
 			}
 			break;
 		}
-		case 'listen': {
+		case 'listen':
+		case 'defer': {
 			const own = state && stateOf(state);
 			const load = own?.load;
 			if (!(state && own && load?.live) || state.disposed) {
 				break;
 			}
-			const target = step.target === 'document' ? document : window;
 			const { callback } = own;
-			const listener = () =>
+			const later = () =>
 				runLater(
 					state,
 					load,
 					step.steps,
-					'listen',
+					step.type,
 					callback,
 					runtime,
 					values.globals
 				);
-			target.addEventListener(step.event, listener, { once: !!step.once });
-			load.cleanups.push(() =>
-				target.removeEventListener(step.event, listener)
-			);
+			if (step.type === 'defer') {
+				queueMicrotask(later);
+				break;
+			}
+			const target = step.target === 'document' ? document : window;
+			target.addEventListener(step.event, later, { once: !!step.once });
+			load.cleanups.push(() => target.removeEventListener(step.event, later));
 			break;
 		}
 		default: {
@@ -289,6 +292,7 @@ const keepsState = (steps: unknown): boolean =>
 		(step) =>
 			step.type === 'setFlag' ||
 			step.type === 'listen' ||
+			step.type === 'defer' ||
 			(step.type === 'callGlobal' && step.then !== undefined)
 	);
 
@@ -459,10 +463,11 @@ const problem: LevelThreePart['problem'] = (step, list, depth, check) => {
 		}
 		return undefined;
 	};
-	// A listener or promise of a disposed script never runs its steps.
+	// A listener, deferred steps or a promise of a disposed script never
+	// run their steps.
 	if (
 		list === 'onDisposeSteps' &&
-		(type === 'listen' || type === 'callGlobal')
+		(type === 'listen' || type === 'defer' || type === 'callGlobal')
 	) {
 		return `${list} has a ${type} step whose steps would never run`;
 	}
@@ -484,6 +489,9 @@ const problem: LevelThreePart['problem'] = (step, list, depth, check) => {
 				(step.once === undefined || typeof step.once === 'boolean')
 				? nested(step.steps)
 				: `${list} has a listen step without a window or document target and an event name`;
+		}
+		case 'defer': {
+			return nested(step.steps);
 		}
 		default: {
 			return nested(step.then);

@@ -76,7 +76,8 @@ describe('level 3', () => {
 			),
 			listen({ event: 'gorgias-widget-loaded', once: true }),
 			listen({ event: 'vendor.ready:v2', target: 'document' }),
-			{ ...call, then: [ifStep({ documentReady: true }, [call])] }
+			{ ...call, then: [ifStep({ documentReady: true }, [call])] },
+			{ steps: [ifStep({ loaded: true }, [call])], type: 'defer' }
 		);
 
 		expect(parseResolvedManifest(JSON.parse(JSON.stringify(input)))).toEqual({
@@ -209,6 +210,15 @@ describe('level 3', () => {
 		],
 		['a then that is not a list', withSetup({ ...call, then: call })],
 		[
+			'a defer step whose steps are not a list',
+			withSetup({ steps: call, type: 'defer' }),
+		],
+		['a defer step without steps', withSetup({ type: 'defer' })],
+		[
+			'a defer step with another field',
+			withSetup({ delay: 10, steps: [], type: 'defer' }),
+		],
+		[
 			'a nested step of an unknown type',
 			withSetup(ifStep({ loaded: true }, [{ type: 'runInlineCode' }])),
 		],
@@ -243,6 +253,10 @@ describe('level 3', () => {
 		[
 			'a then in onDisposeSteps',
 			manifest({ onDisposeSteps: [{ ...call, then: [] }] }),
+		],
+		[
+			'a defer step in onDisposeSteps',
+			manifest({ onDisposeSteps: [{ steps: [call], type: 'defer' }] }),
 		],
 		[
 			'a second script nested in onDisposeSteps',
@@ -282,6 +296,8 @@ describe('level 3', () => {
 				listen({ steps: [{ ...call, then: [write] }] }),
 			]),
 			{ ...navigate, then: [call] },
+			{ steps: [write], type: 'defer' },
+			{ steps: [navigate], type: 'defer' },
 		];
 
 		expect(
@@ -362,6 +378,10 @@ describe('level 3', () => {
 								{ path: ['inThen', 'x'], type: 'setGlobalPath', value: 1 },
 							],
 						},
+						{
+							steps: [{ ...call, global: 'inDefer' }],
+							type: 'defer',
+						},
 					],
 				}).globals
 			).toEqual([
@@ -372,6 +392,7 @@ describe('level 3', () => {
 				'inListen',
 				'vendor',
 				'inThen',
+				'inDefer',
 			]);
 		});
 
@@ -396,6 +417,10 @@ describe('level 3', () => {
 			[
 				'a step after a call settles',
 				{ ...call, then: [{ ...call, global: 'hidden' }] },
+			],
+			[
+				'a deferred step',
+				{ steps: [{ ...call, global: 'hidden' }], type: 'defer' },
 			],
 			['a step nested 3 deep', nested(3, { ...call, global: 'hidden' })],
 		])(

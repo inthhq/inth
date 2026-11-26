@@ -54,7 +54,7 @@ type StepFields<Type extends ManifestStep['type']> = Readonly<
 >;
 
 /** The step types level 3 added, which its part of the runtime runs. */
-type LevelThreeStepType = 'if' | 'listen' | 'setFlag';
+type LevelThreeStepType = 'defer' | 'if' | 'listen' | 'setFlag';
 
 /**
  * The step types and fields before level 3, and their levels: what the
@@ -166,6 +166,7 @@ export const STEP_FIELD_LEVELS: {
 	...EARLIER_STEP_FIELD_LEVELS,
 	// oxlint-disable-next-line unicorn/no-thenable -- The step field is named then.
 	callGlobal: { ...EARLIER_STEP_FIELD_LEVELS.callGlobal, then: 3 },
+	defer: { steps: 3, type: 3 },
 	// oxlint-disable-next-line unicorn/no-thenable -- The step field is named then.
 	if: { else: 3, then: 3, type: 3, when: 3 },
 	listen: { event: 3, once: 3, steps: 3, target: 3, type: 3 },

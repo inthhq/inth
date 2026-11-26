@@ -1,6 +1,6 @@
 /**
  * Where the level 3 part of the manifest runtime plugs in. The part runs
- * `if`, `setFlag`, `listen` and `callGlobal.then`, and checks them for the
+ * `if`, `setFlag`, `listen`, `defer` and `callGlobal.then`, and checks them for the
  * parser. It is a file of its own (`level-three.ts`), so a page whose
  * manifests need level 2 at most never downloads it; whoever loads the
  * runtime loads the part first when a manifest `requires` level 3.
@@ -84,7 +84,7 @@ export interface LevelThreePart {
 		depth: number,
 		check: StepCheck
 	) => string | undefined;
-	/** Runs an `if`, `setFlag` or `listen` step. */
+	/** Runs an `if`, `setFlag`, `listen` or `defer` step. */
 	run: (step: ManifestStep, values: StepValues, runtime: RuntimeAccess) => void;
 	/**
 	 * Called before a call runs: returns what takes the call's result and

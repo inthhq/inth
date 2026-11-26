@@ -453,10 +453,22 @@ export interface ListenStep {
 	once?: boolean;
 }
 
+/**
+ * Runs `steps` in a microtask (level 3), once the callback that ran this
+ * step and the steps after it are done, with runtime values read then.
+ * The steps belong to the load the step ran in, like a `listen` step's,
+ * so a grant withdrawn in the same task can stop them.
+ */
+export interface DeferStep {
+	type: 'defer';
+	steps: ManifestStep[];
+}
+
 export type ManifestStep =
 	| IfStep
 	| SetFlagStep
 	| ListenStep
+	| DeferStep
 	| LoadScriptStep
 	| SetGlobalStep
 	| DefineQueueFunctionStep
@@ -552,6 +564,7 @@ export const MANIFEST_STEP_TYPES: Readonly<Record<ManifestStep['type'], true>> =
 	{
 		callGlobal: true,
 		constructGlobal: true,
+		defer: true,
 		defineGlobalMethods: true,
 		defineQueueClass: true,
 		defineQueueFunction: true,

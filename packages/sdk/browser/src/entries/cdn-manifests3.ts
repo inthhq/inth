@@ -1,7 +1,7 @@
 /**
  * `dist/inth.manifests3.js`: the manifest runtime of `inth.manifests.js`
- * with its level 3 part, which runs `if`, `setFlag`, `listen` and
- * `callGlobal.then`. The init script and the script-tag engines load it in
+ * with its level 3 part, which runs `if`, `setFlag`, `listen`, `defer`
+ * and `callGlobal.then`. The init script and the script-tag engines load it in
  * place of `inth.manifests.js` when a manifest the Inth server sent
  * requires level 3, so a page loads one runtime file, and a page without
  * such a manifest never downloads the part. See `../init/manifests-file.ts`.

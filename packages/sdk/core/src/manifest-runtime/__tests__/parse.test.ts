@@ -269,6 +269,11 @@ describe('parseResolvedManifest', () => {
 			{ global: 'vendor', then: [], type: 'callGlobal' },
 			'setupSteps has a callGlobal step with the unknown field then',
 		],
+		[
+			'a defer step',
+			{ steps: [], type: 'defer' },
+			'setupSteps has a step of unknown type "defer"',
+		],
 	])(
 		'refuses %s while the level 3 part is not installed',
 		(_label, step, reason) => {

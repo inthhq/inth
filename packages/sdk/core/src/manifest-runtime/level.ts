@@ -13,8 +13,8 @@ import type { LevelThreePart } from './part';
  * `observeConsentBeforeLoad`, `persistAfterDispose` and `resourceKey`
  * fields, and `globals`, the window roots a manifest's steps may use,
  * which every manifest the SDK runs now carries, so none is level 1.
- * Level 3 adds `if` steps and their conditions, `setFlag`, `listen` and
- * `callGlobal.then`, which run in a part of the runtime that loads only
+ * Level 3 adds `if` steps and their conditions, `setFlag`, `listen`,
+ * `defer` and `callGlobal.then`, which run in a part of the runtime that loads only
  * for a manifest that requires level 3. `features.ts` lists the level of
  * each. A manifest that needs a later level's steps or fields says so in
  * `requires`; one without `requires` needs level 1. The SDK sends this

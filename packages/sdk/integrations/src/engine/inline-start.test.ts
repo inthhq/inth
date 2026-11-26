@@ -1236,6 +1236,10 @@ describe('inlineStepsStart', () => {
 					],
 				},
 			],
+			[
+				'a defer step',
+				{ setupSteps: [queue, { steps: [queue], type: 'defer' }] },
+			],
 		])(
 			'leaves a manifest with %s before load to the browser',
 			(_label, fields) => {

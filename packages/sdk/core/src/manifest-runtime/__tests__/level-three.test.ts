@@ -309,6 +309,7 @@ test('skips a nested step or condition whose root globals does not declare', asy
 					then: [callHidden, recordStep('then')],
 					type: 'callGlobal',
 				},
+				{ steps: [callHidden, recordStep('defer')], type: 'defer' },
 			] as never,
 		}),
 	]);
@@ -316,7 +317,7 @@ test('skips a nested step or condition whose root globals does not declare', asy
 	await settle();
 
 	expect(hidden).not.toHaveBeenCalled();
-	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then']]);
+	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then'], ['defer']]);
 });
 
 test('skips a nested call or write the parser would refuse', async () => {
@@ -352,6 +353,7 @@ test('skips a nested call or write the parser would refuse', async () => {
 					then: [write, recordStep('then')],
 					type: 'callGlobal',
 				},
+				{ steps: [write, recordStep('defer')], type: 'defer' },
 			] as never,
 		}),
 	]);
@@ -360,7 +362,7 @@ test('skips a nested call or write the parser would refuse', async () => {
 
 	expect(document.getElementById('injected')).toBeNull();
 	expect(typeof (win.__api as { init?: unknown }).init).toBe('function');
-	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then']]);
+	expect(record.mock.calls).toEqual([['if'], ['listen'], ['then'], ['defer']]);
 });
 
 test('removes a tag a nested step inserted when the script is disposed', () => {
@@ -893,5 +895,108 @@ describe('callGlobal.then', () => {
 		calls[1]?.resolve(undefined);
 		await settle();
 		expect(record).toHaveBeenCalledExactlyOnceWith('initialized', true);
+	});
+});
+
+describe('defer', () => {
+	/** A script that defers `steps` from its setup steps. */
+	const deferring = (steps: unknown[], fields: Record<string, unknown> = {}) =>
+		build({
+			loadScript,
+			setupSteps: [{ steps, type: 'defer' }, recordStep('now')],
+			...fields,
+		});
+
+	test('runs its steps in a microtask, after the steps that follow it', async () => {
+		mount([deferring([recordStep('deferred', hasConsent)])]);
+
+		expect(record.mock.calls).toEqual([['now']]);
+		await Promise.resolve();
+		expect(record.mock.calls).toEqual([['now'], ['deferred', true]]);
+	});
+
+	test('reads consent withdrawn in the same task', async () => {
+		const { kernel } = mount([
+			deferring([recordStep('deferred', hasConsent)], {
+				persistAfterConsentRevoked: true,
+			}),
+		]);
+
+		void kernel.commands.save({ ...granted, measurement: false });
+		await settle();
+
+		expect(record.mock.calls).toEqual([['now'], ['deferred', false]]);
+	});
+
+	test('runs nothing once the script is disposed', async () => {
+		const { loader } = mount([deferring([recordStep('deferred')])]);
+
+		loader.updateScripts([]);
+		await settle();
+
+		expect(record.mock.calls).toEqual([['now']]);
+	});
+
+	test('runs nothing once its element fails', async () => {
+		mount([deferring([recordStep('deferred')])]);
+
+		element()?.dispatchEvent(new Event('error'));
+		await settle();
+
+		expect(record.mock.calls).toEqual([['now']]);
+	});
+
+	test('runs only the later load after a revoke and grant in the same task', async () => {
+		const { kernel } = mount([deferring([recordStep('deferred')])]);
+		const first = element();
+
+		void kernel.commands.save({ ...granted, measurement: false });
+		void kernel.commands.save(granted);
+		await settle();
+
+		expect(element()).not.toBe(first);
+		expect(record.mock.calls).toEqual([['now'], ['now'], ['deferred']]);
+	});
+
+	test('runs nested level 3 steps, which read flags set before it ran', async () => {
+		mount([
+			build({
+				loadScript,
+				setupSteps: [
+					{
+						steps: [ifStep({ flag: 'later' }, [recordStep('flagged')])],
+						type: 'defer',
+					},
+					{ name: 'later', type: 'setFlag', value: true },
+				],
+			}),
+		]);
+		await settle();
+
+		expect(record.mock.calls).toEqual([['flagged']]);
+	});
+
+	test('reports a step that throws as a debug event', async () => {
+		const events: unknown[] = [];
+		disposers.push(
+			subscribeToScriptDebugEvents((event) => {
+				if (event.action === 'step_error') {
+					events.push(event);
+				}
+			})
+		);
+		win.__api = {
+			fail: () => {
+				throw new Error('broken');
+			},
+		};
+		mount([
+			deferring([{ global: '__api', method: 'fail', type: 'callGlobal' }]),
+		]);
+		await settle();
+
+		expect(events).toEqual([
+			expect.objectContaining({ phase: 'defer', scriptId: 'level-three' }),
+		]);
 	});
 });
