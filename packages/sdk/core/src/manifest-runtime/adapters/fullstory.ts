@@ -409,7 +409,8 @@ export const fullStoryScript = function fullStoryScript(
 	{ elementConsent, orgId }: FullStoryAdapterOptions,
 	{
 		endpoints = fullStoryEndpoints(orgId),
-		registrations = (info) => [info],
+		// The registrations a shared remote script's info carries.
+		registrations = (info) => info.registrations ?? [info],
 	}: FullStoryExtras = {}
 ): Script {
 	const { host, script: scriptPath } = endpoints;
