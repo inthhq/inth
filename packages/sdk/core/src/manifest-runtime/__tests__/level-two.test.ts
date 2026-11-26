@@ -396,6 +396,34 @@ describe('callGlobal.path', () => {
 	});
 });
 
+test('skips a step that names a prototype name the parser would refuse', () => {
+	const reached = vi.fn();
+	win.__api = { constructor: { constructor: reached } };
+	// Built without the parser, as a manifest that slipped past it would be.
+	mount([
+		resolvedManifestToScript({
+			...fromJSON({ alwaysLoad: true }),
+			setupSteps: [
+				{
+					args: ['x'],
+					path: ['__api', 'constructor', 'constructor'],
+					type: 'callGlobal',
+				},
+				{
+					args: ['x'],
+					global: '__api',
+					method: 'constructor',
+					type: 'callGlobal',
+				},
+				recordStep('after') as never,
+			],
+		}),
+	]);
+
+	expect(reached).not.toHaveBeenCalled();
+	expect(record).toHaveBeenCalledExactlyOnceWith('after');
+});
+
 test('skips a write to the page that the parser would refuse', () => {
 	win.__api = {};
 	// Built without the parser, as a manifest that slipped past it would be.

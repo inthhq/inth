@@ -481,6 +481,17 @@ describe('inlineStepsStart', () => {
 		}
 	);
 
+	it.each(
+		[
+			['vendor', 'constructor', 'constructor'],
+			['vendor', '__proto__', 'track'],
+		].map((path) => [path])
+	)('has no inline form for a call path through a prototype: %j', (path) => {
+		expect(
+			inlineStepsStart([{ args: ['x'], path, type: 'callGlobal' }])
+		).toBeUndefined();
+	});
+
 	it.each([
 		{
 			path: ['document', 'body', 'innerHTML'],

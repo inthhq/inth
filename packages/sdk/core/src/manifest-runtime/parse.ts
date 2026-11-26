@@ -5,6 +5,7 @@ import {
 import {
 	calledPath,
 	callReachesCode,
+	prototypeName,
 	writeReachesCode,
 	writtenNames,
 } from './call-path';
@@ -104,23 +105,6 @@ const MANIFEST_KEYS: ReadonlySet<string> = new Set(
 	Object.keys(MANIFEST_FIELD_LEVELS)
 );
 
-/** Fields that hold data a step passes on, not names it reads or writes. */
-const DATA_KEYS: ReadonlySet<string> = new Set([
-	'value',
-	'args',
-	'properties',
-	'attributes',
-	'cookie',
-	'src',
-]);
-
-/** Names that would reach an object's prototype instead of a property. */
-const UNSAFE_NAMES: ReadonlySet<string> = new Set([
-	'__proto__',
-	'prototype',
-	'constructor',
-]);
-
 const unknownKey = (
 	value: Record<string, unknown>,
 	known: ReadonlySet<string>
@@ -145,28 +129,6 @@ const isKnownRuntimeValue = (value: Record<string, unknown>): boolean =>
 		: unknownKey(value, new Set(['kind', 'value'])) === undefined);
 
 const MAX_DEPTH = 32;
-
-/** The first unsafe name among the names a step reads or writes. */
-const unsafeName = (value: unknown, depth = 0): string | undefined => {
-	if (typeof value === 'string') {
-		return UNSAFE_NAMES.has(value) ? value : undefined;
-	}
-	if (depth > MAX_DEPTH || !(Array.isArray(value) || isRecord(value))) {
-		return undefined;
-	}
-	const entries = Array.isArray(value)
-		? value
-		: Object.entries(value)
-				.filter(([key]) => !DATA_KEYS.has(key))
-				.map(([, entry]) => entry);
-	for (const entry of entries) {
-		const name = unsafeName(entry, depth + 1);
-		if (name !== undefined) {
-			return name;
-		}
-	}
-	return undefined;
-};
 
 /**
  * Whether `value` holds a runtime value this runtime cannot fill in. Such
@@ -249,7 +211,7 @@ const stepProblem = (step: Record<string, unknown>): string | undefined => {
 	if (extra !== undefined) {
 		return `has a ${String(step.type)} step with the unknown field ${extra}`;
 	}
-	const name = unsafeName(step);
+	const name = prototypeName(step);
 	if (name !== undefined) {
 		return `has a ${String(step.type)} step that names ${name}`;
 	}

@@ -119,6 +119,56 @@ export const writeReachesCode = function writeReachesCode(
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** Fields that hold data a step passes on, not names it reads or writes. */
+const DATA_KEYS: ReadonlySet<string> = new Set([
+	'value',
+	'args',
+	'properties',
+	'attributes',
+	'cookie',
+	'src',
+]);
+
+/** Names that would reach an object's prototype instead of a property. */
+const PROTOTYPE_NAMES: ReadonlySet<string> = new Set([
+	'__proto__',
+	'prototype',
+	'constructor',
+]);
+
+const MAX_DEPTH = 32;
+
+/**
+ * The first prototype name among the names a step reads or writes, at any
+ * depth, or `undefined`. A call's path and a read path count as well as a
+ * written name, since `x.constructor.constructor` is `Function`.
+ *
+ * @internal
+ */
+export const prototypeName = function prototypeName(
+	value: unknown,
+	depth = 0
+): string | undefined {
+	if (typeof value === 'string') {
+		return PROTOTYPE_NAMES.has(value) ? value : undefined;
+	}
+	if (depth > MAX_DEPTH || !(Array.isArray(value) || isRecord(value))) {
+		return undefined;
+	}
+	const entries = Array.isArray(value)
+		? value
+		: Object.entries(value)
+				.filter(([key]) => !DATA_KEYS.has(key))
+				.map(([, entry]) => entry);
+	for (const entry of entries) {
+		const name = prototypeName(entry, depth + 1);
+		if (name !== undefined) {
+			return name;
+		}
+	}
+	return undefined;
+};
+
 /**
  * The global a step calls or constructs, as a path under window.
  *
@@ -179,9 +229,9 @@ export const writtenNames = function writtenNames(
 };
 
 /**
- * Whether `step` calls or writes a name the parser refuses. The runtime and
- * the inline runner skip such a step, since a manifest built in code never
- * meets the parser.
+ * Whether `step` names a prototype, or calls or writes a name, that the
+ * parser refuses. The runtime and the inline runner skip such a step, since
+ * a manifest built in code never meets the parser.
  *
  * @internal
  */
@@ -190,6 +240,7 @@ export const stepReachesCode = function stepReachesCode(
 ): boolean {
 	const fields = step as unknown as Readonly<Record<string, unknown>>;
 	return (
+		prototypeName(fields) !== undefined ||
 		callReachesCode(calledPath(fields)) ||
 		writeReachesCode(writtenNames(fields))
 	);
