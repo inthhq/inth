@@ -4,17 +4,16 @@ import type { BuiltInScriptIntegrationKey } from '../registry';
  * Why a registry vendor has no `remote` export yet.
  *
  * - `pending`: a later pull request in the remote-scripts stack converts it.
- *   `pr` is its place in the stack: 9 needs the level 2 runtime, 11 the
- *   level 3 runtime, 12 and 13 an adapter.
+ *   `pr` is its place in the stack: 11 needs the level 3 runtime, 12 and
+ *   13 an adapter.
  * - `npm-only`: it stays an npm helper on purpose, for `reason`.
  *
  * The PR that adds a vendor's `remote` export deletes its row here.
  */
 export type RemoteStatus =
-	| { status: 'pending'; pr: 9 | 11 | 12 | 13 }
+	| { status: 'pending'; pr: 11 | 12 | 13 }
 	| { status: 'npm-only'; reason: string };
 
-const level2Lifecycle = { pr: 9, status: 'pending' } as const;
 const level3 = { pr: 11, status: 'pending' } as const;
 const adapterSentry = { pr: 12, status: 'pending' } as const;
 const adapter = { pr: 13, status: 'pending' } as const;
@@ -29,7 +28,14 @@ export const remoteStatus = {
 	cloudflareZaraz: adapter,
 	customerIo: level3,
 	defaultComPixel: adapter,
-	dynamicYield: level2Lifecycle,
+	// A level 2 manifest cannot express two behaviours its golden trace
+	// records. The helper inserts api_static.js without an id, and
+	// loadScriptStep always sets one. And when a registration replaces
+	// another, the outgoing one's dispose runs after the incoming one has
+	// started, so a dispose step that sets userActiveConsent to
+	// { accepted: false }, as the helper does on a plain dispose, would
+	// leave the incoming, granted registration reading denied.
+	dynamicYield: adapter,
 	eloquaTracking: adapter,
 	fullStory: adapter,
 	gainsightPx: level3,
