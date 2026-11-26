@@ -4,7 +4,7 @@ import {
 	expectScriptMatchesIntegration,
 	expectSkippedScript,
 } from '../../__tests__/helpers';
-import { marketoMunchkin, resolveMarketoManifest } from './marketo';
+import { marketoMunchkin, remote, resolveMarketoManifest } from './marketo';
 
 describe('marketoMunchkin', () => {
 	it('matches its public registry and export', () => {
@@ -39,10 +39,22 @@ describe('marketoMunchkin', () => {
 			marketoMunchkin({ munchkinId: 'AAA-BBB-CCC', scriptUrl: '   ' }).src
 		).toBe('https://munchkin.marketo.net/munchkin.js');
 	});
-	it("leaves out init options equal to Munchkin's own defaults", () => {
+	it('passes the init options a site sets to Munchkin, defaults included', () => {
+		const manifest = resolveMarketoManifest({
+			initOptions: { anonymizeIP: false, asyncOnly: false },
+			munchkinId: 'AAA-BBB-CCC',
+		});
+
+		expect(manifest.onLoadGrantedSteps).toEqual([
+			expect.objectContaining({
+				args: ['AAA-BBB-CCC', { anonymizeIP: false, asyncOnly: false }],
+			}),
+		]);
+	});
+	it("leaves out remote init options equal to Munchkin's own defaults", () => {
 		// A dashboard form fills every default; Munchkin must get the same
 		// options as a site that left them unset.
-		const manifest = resolveMarketoManifest({
+		const manifest = remote.resolve({
 			initOptions: {
 				anonymizeIP: false,
 				asyncOnly: true,

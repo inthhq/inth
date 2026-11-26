@@ -76,10 +76,11 @@ const MUNCHKIN_DEFAULTS: Readonly<Record<string, unknown>> = {
 /**
  * `initOptions` without the values Munchkin uses anyway, so a dashboard
  * form, which fills every default, sends the same options as a site that
- * left them unset.
+ * left them unset. Only the remote form strips them: a site that passes a
+ * default on purpose keeps it.
  */
 const withoutMunchkinDefaults = (
-	initOptions: Record<string, unknown> = {}
+	initOptions: Readonly<Record<string, unknown>> = {}
 ): Record<string, unknown> =>
 	Object.fromEntries(
 		Object.entries(initOptions).filter(
@@ -102,7 +103,7 @@ export const resolveMarketoManifest = function resolveMarketoManifest({
 }: Omit<MarketoMunchkinOptions, 'scriptUrl'>): ResolvedManifest {
 	return getCompiledManifest(marketoManifest, {
 		category,
-		initOptions: withoutMunchkinDefaults(initOptions),
+		initOptions: initOptions ?? {},
 		munchkinId,
 	});
 };
@@ -147,7 +148,11 @@ export const remote =
 				required: true,
 			},
 		},
-		resolveMarketoManifest
+		(options) =>
+			resolveMarketoManifest({
+				...options,
+				initOptions: withoutMunchkinDefaults(options.initOptions),
+			})
 	);
 
 /**
