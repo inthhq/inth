@@ -22,7 +22,8 @@ const isAdapterFile = (filename: string): boolean =>
 
 /**
  * A manifest names some step lists like callbacks (`onConsentChange: [...]`).
- * Those are data the server can send, so only non-array values count.
+ * Those are data the server can send, so arrays, and conditionals whose
+ * branches are all arrays, do not count.
  */
 const isCallbackValue = (
   sourceCode: SourceCode,
@@ -31,6 +32,12 @@ const isCallbackValue = (
   const resolved = resolveValue(sourceCode, value);
   if (resolved.type === "ArrayExpression") {
     return false;
+  }
+  if (resolved.type === "ConditionalExpression") {
+    return (
+      isCallbackValue(sourceCode, resolved.consequent) ||
+      isCallbackValue(sourceCode, resolved.alternate)
+    );
   }
   if (resolved.type === "Identifier" && resolved.name === "undefined") {
     return false;

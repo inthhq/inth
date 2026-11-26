@@ -81,6 +81,11 @@ tester.run("no-vendor-callbacks", noVendorCallbacksRule, {
       name: "a callback with a manifest field's name",
     },
     {
+      code: `export const example = (enabled: boolean) => ({ onConsentChange: enabled ? [] : () => {} });`,
+      errors: 1,
+      name: "a conditional with a function branch",
+    },
+    {
       code: `export const example = () => ({ onLoad() {} });`,
       errors: 1,
       filename:
@@ -99,6 +104,10 @@ tester.run("no-vendor-callbacks", noVendorCallbacksRule, {
         export const manifest = { onConsentChange: steps } satisfies object;
       `,
       name: "a step list from a const",
+    },
+    {
+      code: `export const manifest = (enabled: boolean) => ({ onConsentChange: enabled ? [{ type: 'callGlobal', global: 'gtag' }] : [] });`,
+      name: "a conditional between step lists",
     },
     {
       code: `export const manifest = { onLoadGranted: [], onConsentGranted: [], onBeforeLoadDenied: [] };`,
