@@ -12,7 +12,6 @@ import {
 } from './features';
 import { MANIFEST_RUNTIME_LEVEL } from './level';
 import {
-	MANIFEST_STEP_TYPES,
 	RUNTIME_VALUE_KIND,
 	VENDOR_MANIFEST_KIND,
 	VENDOR_MANIFEST_SCHEMA_VERSION,
@@ -357,7 +356,7 @@ const manifestProblem = (
 				!(
 					isRecord(step) &&
 					typeof step.type === 'string' &&
-					Object.hasOwn(MANIFEST_STEP_TYPES, step.type)
+					Object.hasOwn(STEP_FIELD_LEVELS, step.type)
 				)
 			) {
 				return `${list} has a step of unknown type ${JSON.stringify(
