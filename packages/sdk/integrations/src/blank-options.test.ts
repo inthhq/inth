@@ -723,7 +723,7 @@ const blankScriptUrlCases: {
 	},
 	{
 		create: (scriptSrc) => microsoftUet({ id: 'uet-123', scriptSrc }),
-		expectedSrc: '//bat.bing.com/bat.js',
+		expectedSrc: 'https://bat.bing.com/bat.js',
 		helper: 'microsoftUet',
 	},
 	{

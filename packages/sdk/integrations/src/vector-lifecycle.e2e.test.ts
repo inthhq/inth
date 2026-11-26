@@ -4,6 +4,7 @@ import type { ConsentState, Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import { vector } from './vendors/ads-and-pixels/vector';
 
 const denied: ConsentState = {
@@ -60,123 +61,128 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('Vector through the production kernel and script loader', () => {
-	it('keeps startup behind marketing consent and queues load before insertion', () => {
-		const storageWrites = vi.spyOn(Storage.prototype, 'setItem');
-		const storageReads = vi.spyOn(Storage.prototype, 'getItem');
-		const cookieBefore = document.cookie;
-		const original = document.head.appendChild.bind(document.head);
-		const appended = vi.spyOn(document.head, 'appendChild');
-		const { kernel } = mount();
-		void kernel.commands.save({ ...denied, measurement: true });
-		expect(appended).not.toHaveBeenCalled();
-		expect(client()).toBeUndefined();
-		expect(storageWrites).not.toHaveBeenCalled();
-		expect(storageReads).not.toHaveBeenCalled();
-		expect(document.cookie).toBe(cookieBefore);
+describe.each(npmAndRemote('vector', vector))(
+	'Vector through the production kernel and script loader through the %s',
+	(_label, build) => {
+		it('keeps startup behind marketing consent and queues load before insertion', () => {
+			const storageWrites = vi.spyOn(Storage.prototype, 'setItem');
+			const storageReads = vi.spyOn(Storage.prototype, 'getItem');
+			const cookieBefore = document.cookie;
+			const original = document.head.appendChild.bind(document.head);
+			const appended = vi.spyOn(document.head, 'appendChild');
+			const { kernel } = mount(build({ pixelId }));
+			void kernel.commands.save({ ...denied, measurement: true });
+			expect(appended).not.toHaveBeenCalled();
+			expect(client()).toBeUndefined();
+			expect(storageWrites).not.toHaveBeenCalled();
+			expect(storageReads).not.toHaveBeenCalled();
+			expect(document.cookie).toBe(cookieBefore);
 
-		appended.mockImplementation((node) => {
-			expect(client()?.q).toEqual([['load', [pixelId]]]);
-			return original(node);
-		});
-		void kernel.commands.save(granted);
-		expect(appended).toHaveBeenCalledOnce();
-		expect(pixelElement()?.src).toBe('https://cdn.vector.co/pixel.js');
-		expect(pixelElement()?.async).toBe(true);
-		expect(client()?.loaded).toBe(true);
-	});
-
-	it('replays nested arguments with original objects and callback references', () => {
-		mount(vector({ pixelId }), granted);
-		const queue = client()?.q;
-		const data = { source: 'application' };
-		const callback = vi.fn();
-		client()?.identify('known-id', data);
-		client()?.on('pixel.loaded', callback);
-		expect(queue).toEqual([
-			['load', [pixelId]],
-			['identify', ['known-id', data]],
-			['on', ['pixel.loaded', callback]],
-		]);
-		expect(queue?.[1]?.[1][1]).toBe(data);
-		expect(queue?.[2]?.[1][1]).toBe(callback);
-		const live = { identify: vi.fn(), load: vi.fn(), on: vi.fn() };
-		Reflect.set(window, 'vector', live);
-		// Vector replays each entry as manager[name](...args).
-		for (const [name, args] of queue ?? []) {
-			if (name !== 'load' && name !== 'identify' && name !== 'on') {
-				throw new Error(`Unexpected Vector method: ${name}`);
-			}
-			live[name](...args);
-		}
-		expect(live.load).toHaveBeenCalledExactlyOnceWith(pixelId);
-		expect(live.identify).toHaveBeenCalledExactlyOnceWith('known-id', data);
-		expect(live.on).toHaveBeenCalledExactlyOnceWith('pixel.loaded', callback);
-	});
-
-	it('starts Vector inline with nested calls and callback references', () => {
-		const script = vector({ pixelId });
-		const inline = script.serverStart?.(
-			{ consents: granted, hasConsent: true, id: script.id },
-			script
-		);
-		expect(inline).toBeDefined();
-		// oxlint-disable-next-line no-new-func -- Runs the generated server startup.
-		new Function(`${inline?.prelude ?? ''};${inline?.code ?? ''}`)();
-		const callback = vi.fn();
-		client()?.on('pixel.loaded', callback);
-		expect(client()?.q).toEqual([
-			['load', [pixelId]],
-			['on', ['pixel.loaded', callback]],
-		]);
-		expect(client()?.q?.[1]?.[1][1]).toBe(callback);
-	});
-
-	it.each([false, true])(
-		'keeps one SDK across withdrawal and regrant, already loaded=%s',
-		(loaded) => {
-			const { kernel, loader } = mount(vector({ pixelId }), granted);
-			const element = pixelElement();
-			const stub = client();
-			if (loaded) {
-				element?.dispatchEvent(new Event('load'));
-			}
-			void kernel.commands.save(denied);
-			expect(element?.isConnected).toBe(true);
-			if (!loaded) {
-				element?.dispatchEvent(new Event('load'));
-			}
+			appended.mockImplementation((node) => {
+				expect(client()?.q).toEqual([['load', [pixelId]]]);
+				return original(node);
+			});
 			void kernel.commands.save(granted);
-			loader.updateScripts([vector({ pixelId })]);
-			expect(pixelElement()).toBe(element);
-			expect(document.head.querySelectorAll('script')).toHaveLength(1);
-			expect(client()).toBe(stub);
-			expect(client()?.q).toEqual([['load', [pixelId]]]);
-		}
-	);
+			expect(appended).toHaveBeenCalledOnce();
+			expect(pixelElement()?.src).toBe('https://cdn.vector.co/pixel.js');
+			expect(pixelElement()?.async).toBe(true);
+			expect(client()?.loaded).toBe(true);
+		});
 
-	it('preserves a previously loaded SDK and never invokes undocumented teardown', () => {
-		const live = {
-			block: vi.fn(),
-			identify: vi.fn(),
-			load: vi.fn(),
-			on: vi.fn(),
-			removeVisitor: vi.fn(),
-		};
-		Reflect.set(window, 'vector', live);
-		const { kernel } = mount(vector({ pixelId }), granted);
-		pixelElement()?.dispatchEvent(new Event('load'));
-		void kernel.commands.save(denied);
-		void kernel.commands.save(granted);
-		expect(client()).toBe(live);
-		expect(client()?.load).toBe(live.load);
-		expect(client()?.identify).toBe(live.identify);
-		expect(client()?.on).toBe(live.on);
-		expect(live.load).toHaveBeenCalledExactlyOnceWith(pixelId);
-		expect(live.block).not.toHaveBeenCalled();
-		expect(live.removeVisitor).not.toHaveBeenCalled();
-	});
+		it('replays nested arguments with original objects and callback references', () => {
+			mount(build({ pixelId }), granted);
+			const queue = client()?.q;
+			const data = { source: 'application' };
+			const callback = vi.fn();
+			client()?.identify('known-id', data);
+			client()?.on('pixel.loaded', callback);
+			expect(queue).toEqual([
+				['load', [pixelId]],
+				['identify', ['known-id', data]],
+				['on', ['pixel.loaded', callback]],
+			]);
+			expect(queue?.[1]?.[1][1]).toBe(data);
+			expect(queue?.[2]?.[1][1]).toBe(callback);
+			const live = { identify: vi.fn(), load: vi.fn(), on: vi.fn() };
+			Reflect.set(window, 'vector', live);
+			// Vector replays each entry as manager[name](...args).
+			for (const [name, args] of queue ?? []) {
+				if (name !== 'load' && name !== 'identify' && name !== 'on') {
+					throw new Error(`Unexpected Vector method: ${name}`);
+				}
+				live[name](...args);
+			}
+			expect(live.load).toHaveBeenCalledExactlyOnceWith(pixelId);
+			expect(live.identify).toHaveBeenCalledExactlyOnceWith('known-id', data);
+			expect(live.on).toHaveBeenCalledExactlyOnceWith('pixel.loaded', callback);
+		});
 
+		it('starts Vector inline with nested calls and callback references', () => {
+			const script = build({ pixelId });
+			const inline = script.serverStart?.(
+				{ consents: granted, hasConsent: true, id: script.id },
+				script
+			);
+			expect(inline).toBeDefined();
+			// oxlint-disable-next-line no-new-func -- Runs the generated server startup.
+			new Function(`${inline?.prelude ?? ''};${inline?.code ?? ''}`)();
+			const callback = vi.fn();
+			client()?.on('pixel.loaded', callback);
+			expect(client()?.q).toEqual([
+				['load', [pixelId]],
+				['on', ['pixel.loaded', callback]],
+			]);
+			expect(client()?.q?.[1]?.[1][1]).toBe(callback);
+		});
+
+		it.each([false, true])(
+			'keeps one SDK across withdrawal and regrant, already loaded=%s',
+			(loaded) => {
+				const { kernel, loader } = mount(build({ pixelId }), granted);
+				const element = pixelElement();
+				const stub = client();
+				if (loaded) {
+					element?.dispatchEvent(new Event('load'));
+				}
+				void kernel.commands.save(denied);
+				expect(element?.isConnected).toBe(true);
+				if (!loaded) {
+					element?.dispatchEvent(new Event('load'));
+				}
+				void kernel.commands.save(granted);
+				loader.updateScripts([build({ pixelId })]);
+				expect(pixelElement()).toBe(element);
+				expect(document.head.querySelectorAll('script')).toHaveLength(1);
+				expect(client()).toBe(stub);
+				expect(client()?.q).toEqual([['load', [pixelId]]]);
+			}
+		);
+
+		it('preserves a previously loaded SDK and never invokes undocumented teardown', () => {
+			const live = {
+				block: vi.fn(),
+				identify: vi.fn(),
+				load: vi.fn(),
+				on: vi.fn(),
+				removeVisitor: vi.fn(),
+			};
+			Reflect.set(window, 'vector', live);
+			const { kernel } = mount(build({ pixelId }), granted);
+			pixelElement()?.dispatchEvent(new Event('load'));
+			void kernel.commands.save(denied);
+			void kernel.commands.save(granted);
+			expect(client()).toBe(live);
+			expect(client()?.load).toBe(live.load);
+			expect(client()?.identify).toBe(live.identify);
+			expect(client()?.on).toBe(live.on);
+			expect(live.load).toHaveBeenCalledExactlyOnceWith(pixelId);
+			expect(live.block).not.toHaveBeenCalled();
+			expect(live.removeVisitor).not.toHaveBeenCalled();
+		});
+	}
+);
+
+describe('Vector npm helper options', () => {
 	it.each([
 		['   ', 'https://cdn.vector.co/pixel.js'],
 		[

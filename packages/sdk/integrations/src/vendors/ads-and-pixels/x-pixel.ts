@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 export interface XPixelContent {
 	/**
@@ -138,8 +140,7 @@ export const xPixelManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://static.ads-twitter.com/uwt.js',
 			type: 'loadScript',
 		},
 	],
@@ -161,6 +162,37 @@ export interface XPixelOptions {
 	/** X Pixel loader URL. */
 	scriptSrc?: string;
 }
+
+/**
+ * Builds the serializable manifest behind {@link xPixel}. `pixelId` must
+ * already be a trimmed, non-empty pixel ID.
+ */
+export const resolveXPixelManifest = function resolveXPixelManifest({
+	pixelId,
+}: Omit<XPixelOptions, 'scriptSrc'>): ResolvedManifest {
+	return getCompiledManifest(xPixelManifest, { pixelId });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'xPixel',
+		{
+			pixelId: {
+				example: 'o1a2b',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveXPixelManifest
+	);
 
 /**
  * Creates an X Pixel script.
@@ -192,15 +224,12 @@ export const xPixel = function xPixel({
 		});
 	}
 
-	const resolved = resolveManifest(xPixelManifest, {
-		pixelId: normalizedPixelId,
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			'https://static.ads-twitter.com/uwt.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveXPixelManifest({ pixelId: normalizedPixelId })
 		),
-	});
-
-	return resolved;
+		scriptSrc
+	);
 };
 
 /**

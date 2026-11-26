@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	grantedMarketingConsents,
 	installHeadProbe,
@@ -13,48 +14,51 @@ import {
 import type { TestWindow } from './e2e-test-utils';
 import { microsoftUet } from './vendors/ads-and-pixels/microsoft-uet';
 
-describe('microsoftUet contract', () => {
-	registerVendorContractCleanup();
+describe.each(npmAndRemote('microsoftUet', microsoftUet))(
+	'microsoftUet contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
 
-	it('boots with constructor handoff and a consent-default push', () => {
-		const constructorArgs: Record<string, unknown>[] = [];
-		const pushCalls: unknown[][] = [];
+		it('boots with constructor handoff and a consent-default push', () => {
+			const constructorArgs: Record<string, unknown>[] = [];
+			const pushCalls: unknown[][] = [];
 
-		installHeadProbe((node, win) => {
-			if (!node.src.includes('bat.js')) {
-				return;
-			}
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('bat.js')) {
+					return;
+				}
 
-			win.UET = function UET(
-				this: { push: (...args: unknown[]) => void },
-				options
-			) {
-				constructorArgs.push(options);
-				this.push = (...args: unknown[]) => {
-					pushCalls.push(args);
-				};
-				return this;
-			} as TestWindow['UET'];
+				win.UET = function UET(
+					this: { push: (...args: unknown[]) => void },
+					options
+				) {
+					constructorArgs.push(options);
+					this.push = (...args: unknown[]) => {
+						pushCalls.push(args);
+					};
+					return this;
+				} as TestWindow['UET'];
 
-			node.dispatchEvent(new Event('load'));
+				node.dispatchEvent(new Event('load'));
+			});
+
+			loadScripts(
+				[
+					{
+						...build({ id: '343003931' }),
+						id: 'microsoft-uet-contract',
+					},
+				],
+				grantedMarketingConsents
+			);
+
+			expect(constructorArgs).toHaveLength(1);
+			expect(constructorArgs[0]).toMatchObject({
+				enableAutoSpaTracking: true,
+				q: ['consent', 'default', { ad_storage: 'granted' }],
+				ti: '343003931',
+			});
+			expect(pushCalls).toEqual([['pageLoad']]);
 		});
-
-		loadScripts(
-			[
-				{
-					...microsoftUet({ id: 'UET-CONTRACT' }),
-					id: 'microsoft-uet-contract',
-				},
-			],
-			grantedMarketingConsents
-		);
-
-		expect(constructorArgs).toHaveLength(1);
-		expect(constructorArgs[0]).toMatchObject({
-			enableAutoSpaTracking: true,
-			q: ['consent', 'default', { ad_storage: 'granted' }],
-			ti: 'UET-CONTRACT',
-		});
-		expect(pushCalls).toEqual([['pageLoad']]);
-	});
-});
+	}
+);

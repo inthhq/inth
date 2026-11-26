@@ -429,7 +429,7 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: true,
 			persistAfterConsentRevoked: true,
-			src: '//bat.bing.com/bat.js',
+			src: 'https://bat.bing.com/bat.js',
 		},
 		script: microsoftUet({ id: 'uet-123' }),
 	},

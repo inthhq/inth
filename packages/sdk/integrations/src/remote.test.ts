@@ -74,10 +74,19 @@ const vendorHosts: Record<string, readonly string[]> = {
 	googleTagManager: ['www.googletagmanager.com'],
 	gtag: ['www.googletagmanager.com'],
 	linkedinInsights: ['snap.licdn.com'],
+	liveIntentTag: ['b-code.liadm.com'],
 	metaPixel: ['connect.facebook.net'],
 	'microsoft-clarity': ['www.clarity.ms'],
+	microsoftUet: ['bat.bing.com'],
+	openaiPixel: ['bzrcdn.openai.com'],
+	pinterestTag: ['s.pinimg.com'],
 	posthog: ['eu-assets.i.posthog.com', 'us-assets.i.posthog.com'],
+	redditPixel: ['www.redditstatic.com'],
+	snapchatPixel: ['sc-static.net'],
+	theTradeDeskPixel: ['js.adsrvr.org'],
 	tiktokPixel: ['analytics.tiktok.com'],
+	vector: ['cdn.vector.co'],
+	xPixel: ['static.ads-twitter.com'],
 };
 
 /**

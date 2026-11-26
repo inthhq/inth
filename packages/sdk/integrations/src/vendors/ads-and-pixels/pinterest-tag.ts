@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * The 20 Pinterest Tag event types accepted by `pintrk('track', ...)`.
@@ -319,8 +321,7 @@ export const pinterestTagManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://s.pinimg.com/ct/core.js',
 			type: 'loadScript',
 		},
 	],
@@ -374,6 +375,82 @@ export interface PinterestTagOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link pinterestTag}. `tagId` must
+ * already be a trimmed, non-empty tag ID.
+ */
+export const resolvePinterestTagManifest =
+	function resolvePinterestTagManifest({
+		tagId,
+		loadOptions,
+		trackPageVisit = true,
+	}: Omit<PinterestTagOptions, 'scriptUrl'>): ResolvedManifest {
+		const loadArgs: unknown[] = ['load', '{{tagId}}'];
+		if (loadOptions !== undefined) {
+			loadArgs.push('{{loadOptions}}');
+		}
+
+		const install: VendorManifest['install'] = [
+			{
+				args: loadArgs,
+				global: 'pintrk',
+				type: 'callGlobal',
+			},
+			{
+				args: ['setconsent', true],
+				global: 'pintrk',
+				type: 'callGlobal',
+			},
+		];
+
+		if (trackPageVisit) {
+			install.push({
+				args: ['page'],
+				global: 'pintrk',
+				type: 'callGlobal',
+			});
+		}
+
+		install.push({
+			async: true,
+			src: 'https://s.pinimg.com/ct/core.js',
+			type: 'loadScript',
+		});
+
+		const manifest = {
+			...pinterestTagManifest,
+			install,
+		} as const satisfies VendorManifest;
+
+		return getCompiledManifest(manifest, { loadOptions, tagId });
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'pinterestTag',
+		{
+			tagId: {
+				example: '2613654212508',
+				kind: 'id',
+				label: 'Tag ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+			trackPageVisit: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page visits',
+			},
+		},
+		resolvePinterestTagManifest
+	);
+
+/**
  * Creates a Pinterest Tag script.
  *
  * This script persists after consent is revoked because Pinterest exposes
@@ -400,12 +477,10 @@ export interface PinterestTagOptions {
  * @see {@link https://help.pinterest.com/en/business/article/install-the-pinterest-tag} Pinterest Tag documentation
  */
 export const pinterestTag = function pinterestTag({
-	tagId,
-	loadOptions,
-	trackPageVisit = true,
 	scriptUrl,
+	...options
 }: PinterestTagOptions): Script {
-	const normalizedTagId = readId(tagId);
+	const normalizedTagId = readId(options.tagId);
 	if (normalizedTagId === undefined) {
 		return skipMissingId('pinterestTag', 'tagId', {
 			category: 'marketing',
@@ -413,49 +488,12 @@ export const pinterestTag = function pinterestTag({
 		});
 	}
 
-	const loadArgs: unknown[] = ['load', '{{tagId}}'];
-	if (loadOptions !== undefined) {
-		loadArgs.push('{{loadOptions}}');
-	}
-
-	const install: VendorManifest['install'] = [
-		{
-			args: loadArgs,
-			global: 'pintrk',
-			type: 'callGlobal',
-		},
-		{
-			args: ['setconsent', true],
-			global: 'pintrk',
-			type: 'callGlobal',
-		},
-	];
-
-	if (trackPageVisit) {
-		install.push({
-			args: ['page'],
-			global: 'pintrk',
-			type: 'callGlobal',
-		});
-	}
-
-	install.push({
-		async: true,
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		src: '{{scriptUrl}}',
-		type: 'loadScript',
-	});
-
-	const manifest = {
-		...pinterestTagManifest,
-		install,
-	} as const satisfies VendorManifest;
-
-	return resolveManifest(manifest, {
-		loadOptions,
-		scriptUrl: resolveScriptUrl(scriptUrl, 'https://s.pinimg.com/ct/core.js'),
-		tagId: normalizedTagId,
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolvePinterestTagManifest({ ...options, tagId: normalizedTagId })
+		),
+		scriptUrl
+	);
 };
 
 /**

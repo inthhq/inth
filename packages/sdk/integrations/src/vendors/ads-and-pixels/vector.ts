@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /** Vector's consent-gated pixel loader and nested argument queue. */
 export const vectorManifest = {
@@ -33,8 +35,7 @@ export const vectorManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://cdn.vector.co/pixel.js',
 			type: 'loadScript',
 		},
 	],
@@ -57,6 +58,37 @@ export interface VectorOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link vector}. `pixelId` must
+ * already be a trimmed, non-empty pixel ID.
+ */
+export const resolveVectorManifest = function resolveVectorManifest({
+	pixelId,
+}: Omit<VectorOptions, 'scriptUrl'>): ResolvedManifest {
+	return getCompiledManifest(vectorManifest, { pixelId });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'vector',
+		{
+			pixelId: {
+				example: '6a3c2f1e-8b4d-4c7a-9e5f-0d1b2c3a4e5f',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolveVectorManifest
+	);
+
+/**
  * Loads Vector after marketing consent, once per page.
  *
  * @returns A consent-gated script, or a skipped script for an invalid ID.
@@ -75,11 +107,8 @@ export const vector = function vector(options: VectorOptions): Script {
 		});
 	}
 
-	return resolveManifest(vectorManifest, {
-		pixelId,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://cdn.vector.co/pixel.js'
-		),
-	});
+	return withScriptUrl(
+		resolvedManifestToScript(resolveVectorManifest({ pixelId })),
+		options.scriptUrl
+	);
 };

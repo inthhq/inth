@@ -17,7 +17,7 @@ describe('microsoftUet', () => {
 		expectScriptMatchesIntegration('microsoftUet', script, {
 			alwaysLoad: true,
 			persistAfterConsentRevoked: true,
-			src: '//bat.bing.com/bat.js',
+			src: 'https://bat.bing.com/bat.js',
 		});
 	});
 

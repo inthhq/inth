@@ -1,11 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { buildQueuePixelInstall } from '../_shared/install-builders';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /**
  * Reddit Pixel standard conversion event names.
@@ -201,9 +203,7 @@ export const redditPixelManifest = {
 		},
 		{
 			async: true,
-
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://www.redditstatic.com/ads/pixel.js',
 			type: 'loadScript',
 		},
 	],
@@ -279,27 +279,15 @@ const getRedditPixelInitOptions = function getRedditPixelInitOptions({
 };
 
 /**
- * Creates a Reddit Pixel script.
- *
- * @remarks When `pixelId` is missing or blank, the
- *   helper logs `redditPixel: missing or invalid pixelId` with
- *   `console.error` and returns a script that never loads.
+ * Builds the serializable manifest behind {@link redditPixel}. `pixelId` must
+ * already be a trimmed, non-empty pixel ID.
  */
-export const redditPixel = function redditPixel({
+export const resolveRedditPixelManifest = function resolveRedditPixelManifest({
 	pixelId,
 	trackPageVisit = true,
 	initOptions,
 	disableFirstPartyCookies,
-	scriptUrl,
-}: RedditPixelOptions): Script {
-	const normalizedPixelId = readId(pixelId);
-	if (normalizedPixelId === undefined) {
-		return skipMissingId('redditPixel', 'pixelId', {
-			category: 'marketing',
-			manifest: redditPixelManifest,
-		});
-	}
-
+}: Omit<RedditPixelOptions, 'scriptUrl'>): ResolvedManifest {
 	let trackStep: { args: unknown[] } | undefined;
 
 	if (trackPageVisit) {
@@ -320,6 +308,11 @@ export const redditPixel = function redditPixel({
 	const install = buildQueuePixelInstall({
 		global: 'rdt',
 		initArgs,
+		loadScript: {
+			async: true,
+			src: 'https://www.redditstatic.com/ads/pixel.js',
+			type: 'loadScript',
+		},
 		trackStep,
 	});
 
@@ -328,14 +321,68 @@ export const redditPixel = function redditPixel({
 		install,
 	} as const satisfies VendorManifest;
 
-	return resolveManifest(manifest, {
+	return getCompiledManifest(manifest, {
 		initOptions: resolvedInitOptions,
-		pixelId: normalizedPixelId,
-		scriptUrl: resolveScriptUrl(
-			scriptUrl,
-			'https://www.redditstatic.com/ads/pixel.js'
-		),
+		pixelId,
 	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'redditPixel',
+		{
+			disableFirstPartyCookies: {
+				default: false,
+				kind: 'boolean',
+				label: 'Disable first-party cookies',
+			},
+			pixelId: {
+				example: 'a2_abcdef123456',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Za-z0-9_]+$',
+				required: true,
+			},
+			trackPageVisit: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page visits',
+			},
+		},
+		resolveRedditPixelManifest
+	);
+
+/**
+ * Creates a Reddit Pixel script.
+ *
+ * @remarks When `pixelId` is missing or blank, the
+ *   helper logs `redditPixel: missing or invalid pixelId` with
+ *   `console.error` and returns a script that never loads.
+ */
+export const redditPixel = function redditPixel({
+	scriptUrl,
+	...options
+}: RedditPixelOptions): Script {
+	const normalizedPixelId = readId(options.pixelId);
+	if (normalizedPixelId === undefined) {
+		return skipMissingId('redditPixel', 'pixelId', {
+			category: 'marketing',
+			manifest: redditPixelManifest,
+		});
+	}
+
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveRedditPixelManifest({ ...options, pixelId: normalizedPixelId })
+		),
+		scriptUrl
+	);
 };
 
 /**

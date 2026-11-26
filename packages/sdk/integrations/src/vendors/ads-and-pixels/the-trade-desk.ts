@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 interface TradeDeskFunction {
 	(...args: unknown[]): void;
@@ -40,8 +42,11 @@ export const theTradeDeskPixelManifest = {
 			global: 'ttdConversionEvents',
 			type: 'callGlobal',
 		},
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		{ async: true, src: '{{scriptUrl}}', type: 'loadScript' },
+		{
+			async: true,
+			src: 'https://js.adsrvr.org/up_loader.3.0.0.js',
+			type: 'loadScript',
+		},
 	],
 	persistAfterConsentRevoked: true,
 	vendor: 'the-trade-desk',
@@ -76,6 +81,66 @@ export interface TheTradeDeskPixelOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link theTradeDeskPixel}.
+ * `advertiserId` and every pixel ID must already be trimmed and non-empty.
+ */
+export const resolveTheTradeDeskPixelManifest =
+	function resolveTheTradeDeskPixelManifest({
+		advertiserId,
+		pixelIds,
+		enableCookieSyncing,
+		dataProcessingOption,
+	}: Omit<TheTradeDeskPixelOptions, 'scriptUrl'>): ResolvedManifest {
+		const initOptions: Record<string, unknown> = { advertiserId, pixelIds };
+		const eventOptions: Record<string, unknown> = { advertiserId, pixelIds };
+		if (enableCookieSyncing !== undefined) {
+			initOptions.enableCookieSyncing = enableCookieSyncing;
+		}
+		if (dataProcessingOption !== undefined) {
+			initOptions.dataProcessingOption = dataProcessingOption;
+			eventOptions.data_processing_option = dataProcessingOption;
+		}
+		return getCompiledManifest(theTradeDeskPixelManifest, {
+			eventOptions,
+			initOptions,
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'theTradeDeskPixel',
+		{
+			advertiserId: {
+				example: 'abc1def',
+				kind: 'id',
+				label: 'Advertiser ID',
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+			enableCookieSyncing: {
+				default: true,
+				kind: 'boolean',
+				label: 'Cookie syncing',
+			},
+			pixelIds: {
+				example: 'xyz9uvw',
+				kind: 'idList',
+				label: 'Universal Pixel IDs',
+				maxItems: 20,
+				pattern: '^[A-Za-z0-9]+$',
+				required: true,
+			},
+		},
+		resolveTheTradeDeskPixelManifest
+	);
+
+/**
  * Initializes The Trade Desk Universal Pixel after marketing consent.
  * @returns A gated script, or a skipped script for missing IDs.
  * @remarks Keep reload on revocation enabled. There is no documented stop API.
@@ -101,21 +166,14 @@ export const theTradeDeskPixel = function theTradeDeskPixel(
 			manifest: theTradeDeskPixelManifest,
 		});
 	}
-	const initOptions: Record<string, unknown> = { advertiserId, pixelIds };
-	const eventOptions: Record<string, unknown> = { advertiserId, pixelIds };
-	if (options.enableCookieSyncing !== undefined) {
-		initOptions.enableCookieSyncing = options.enableCookieSyncing;
-	}
-	if (options.dataProcessingOption !== undefined) {
-		initOptions.dataProcessingOption = options.dataProcessingOption;
-		eventOptions.data_processing_option = options.dataProcessingOption;
-	}
-	return resolveManifest(theTradeDeskPixelManifest, {
-		eventOptions,
-		initOptions,
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://js.adsrvr.org/up_loader.3.0.0.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveTheTradeDeskPixelManifest({
+				...options,
+				advertiserId,
+				pixelIds: pixelIds as string[],
+			})
 		),
-	});
+		options.scriptUrl
+	);
 };

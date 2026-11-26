@@ -1,11 +1,13 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { buildQueuePixelInstall } from '../_shared/install-builders';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 export type SnapchatPixelEventName =
 	| 'PAGE_VIEW'
@@ -152,9 +154,7 @@ export const snapchatPixelManifest = {
 		},
 		{
 			async: true,
-
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://sc-static.net/scevent.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -188,6 +188,75 @@ export interface SnapchatPixelOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link snapchatPixel}. `pixelId`
+ * must already be a trimmed, non-empty pixel ID.
+ */
+export const resolveSnapchatPixelManifest =
+	function resolveSnapchatPixelManifest({
+		pixelId,
+		initOptions,
+		trackPageView = true,
+	}: Omit<SnapchatPixelOptions, 'scriptUrl'>): ResolvedManifest {
+		const initArgs: unknown[] = ['init', '{{pixelId}}'];
+		if (initOptions !== undefined) {
+			initArgs.push('{{initOptions}}');
+		}
+
+		let trackStep: { args: unknown[] } | undefined;
+
+		if (trackPageView) {
+			trackStep = {
+				args: ['track', 'PAGE_VIEW'],
+			};
+		}
+
+		const install = buildQueuePixelInstall({
+			global: 'snaptr',
+			initArgs,
+			loadScript: {
+				async: true,
+				src: 'https://sc-static.net/scevent.min.js',
+				type: 'loadScript',
+			},
+			trackStep,
+		});
+
+		const manifest = {
+			...snapchatPixelManifest,
+			install,
+		} as const satisfies VendorManifest;
+
+		return getCompiledManifest(manifest, { initOptions, pixelId });
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'snapchatPixel',
+		{
+			pixelId: {
+				example: '0b5d6a3e-2f1c-4e8a-9d7b-1a2b3c4d5e6f',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern:
+					'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$',
+				required: true,
+			},
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Track page views',
+			},
+		},
+		resolveSnapchatPixelManifest
+	);
+
+/**
  * Creates a Snapchat Pixel script.
  *
  * @param options.pixelId - Snapchat Pixel ID used in `snaptr('init', ...)`.
@@ -218,12 +287,10 @@ export interface SnapchatPixelOptions {
  * ```
  */
 export const snapchatPixel = function snapchatPixel({
-	pixelId,
-	initOptions,
-	trackPageView = true,
 	scriptUrl,
+	...options
 }: SnapchatPixelOptions): Script {
-	const normalizedPixelId = readId(pixelId);
+	const normalizedPixelId = readId(options.pixelId);
 	if (normalizedPixelId === undefined) {
 		return skipMissingId('snapchatPixel', 'pixelId', {
 			category: 'marketing',
@@ -231,38 +298,12 @@ export const snapchatPixel = function snapchatPixel({
 		});
 	}
 
-	const initArgs: unknown[] = ['init', '{{pixelId}}'];
-	if (initOptions !== undefined) {
-		initArgs.push('{{initOptions}}');
-	}
-
-	let trackStep: { args: unknown[] } | undefined;
-
-	if (trackPageView) {
-		trackStep = {
-			args: ['track', 'PAGE_VIEW'],
-		};
-	}
-
-	const install = buildQueuePixelInstall({
-		global: 'snaptr',
-		initArgs,
-		trackStep,
-	});
-
-	const manifest = {
-		...snapchatPixelManifest,
-		install,
-	} as const satisfies VendorManifest;
-
-	return resolveManifest(manifest, {
-		initOptions,
-		pixelId: normalizedPixelId,
-		scriptUrl: resolveScriptUrl(
-			scriptUrl,
-			'https://sc-static.net/scevent.min.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveSnapchatPixelManifest({ ...options, pixelId: normalizedPixelId })
 		),
-	});
+		scriptUrl
+	);
 };
 
 /**

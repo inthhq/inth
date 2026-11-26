@@ -4,6 +4,7 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -23,63 +24,66 @@ const getOaiq = function getOaiq(): OaiqStub | undefined {
 	return (window as Window & { oaiq?: OaiqStub }).oaiq;
 };
 
-describe('openaiPixel loader contract', () => {
-	registerVendorContractCleanup();
+describe.each(npmAndRemote('openaiPixel', openaiPixel))(
+	'openaiPixel loader contract through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
 
-	it('loads only with marketing consent and preserves the SDK across consent changes', () => {
-		const runtime = vi.fn();
-		let loads = 0;
-		let queue: unknown[] = [];
-		installHeadProbe((node) => {
-			loads += 1;
-			queue = getOaiq()?.q ?? [];
-			Reflect.set(window, 'oaiq', runtime);
-			node.dispatchEvent(new Event('load'));
+		it('loads only with marketing consent and preserves the SDK across consent changes', () => {
+			const runtime = vi.fn();
+			let loads = 0;
+			let queue: unknown[] = [];
+			installHeadProbe((node) => {
+				loads += 1;
+				queue = getOaiq()?.q ?? [];
+				Reflect.set(window, 'oaiq', runtime);
+				node.dispatchEvent(new Event('load'));
+			});
+			const scripts = [build({ debug: true, pixelId })];
+
+			expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
+			expect(loadScripts(scripts, grantedMeasurementConsents)).toEqual([]);
+			expect(loads).toBe(0);
+			expect(getOaiq()).toBeUndefined();
+
+			expect(loadScripts(scripts, grantedMarketingConsents)).toEqual([
+				'openai-pixel',
+			]);
+			expect(queue.every(isArgumentsPayload)).toBe(true);
+			expect(queue.map(toArgs)).toEqual([
+				['consent', false],
+				['init', { debug: true, pixelId }],
+				['consent', true],
+			]);
+			runtime.mockClear();
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(runtime).toHaveBeenLastCalledWith('consent', false);
+			expect(document.querySelectorAll('script')).toHaveLength(1);
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(runtime).toHaveBeenLastCalledWith('consent', true);
+			expect(loads).toBe(1);
+			expect(runtime.mock.calls.some(([command]) => command === 'init')).toBe(
+				false
+			);
 		});
-		const scripts = [openaiPixel({ debug: true, pixelId })];
 
-		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
-		expect(loadScripts(scripts, grantedMeasurementConsents)).toEqual([]);
-		expect(loads).toBe(0);
-		expect(getOaiq()).toBeUndefined();
+		it('queues withdrawal while the SDK is still downloading', () => {
+			let scriptElement: HTMLScriptElement | undefined;
+			installHeadProbe((node) => {
+				scriptElement = node;
+			});
+			const scripts = [build({ pixelId })];
+			loadScripts(scripts, grantedMarketingConsents);
+			updateScripts(scripts, ALL_DENIED);
+			if (scriptElement === undefined) {
+				throw new Error('Expected the OpenAI Pixel SDK script to be appended');
+			}
+			scriptElement.dispatchEvent(new Event('load'));
 
-		expect(loadScripts(scripts, grantedMarketingConsents)).toEqual([
-			'openai-pixel',
-		]);
-		expect(queue.every(isArgumentsPayload)).toBe(true);
-		expect(queue.map(toArgs)).toEqual([
-			['consent', false],
-			['init', { debug: true, pixelId }],
-			['consent', true],
-		]);
-		runtime.mockClear();
-
-		updateScripts(scripts, ALL_DENIED);
-		expect(runtime).toHaveBeenLastCalledWith('consent', false);
-		expect(document.querySelectorAll('script')).toHaveLength(1);
-		updateScripts(scripts, grantedMarketingConsents);
-		expect(runtime).toHaveBeenLastCalledWith('consent', true);
-		expect(loads).toBe(1);
-		expect(runtime.mock.calls.some(([command]) => command === 'init')).toBe(
-			false
-		);
-	});
-
-	it('queues withdrawal while the SDK is still downloading', () => {
-		let scriptElement: HTMLScriptElement | undefined;
-		installHeadProbe((node) => {
-			scriptElement = node;
+			const stub = getOaiq();
+			expect(typeof stub).toBe('function');
+			expect(stub?.q?.map(toArgs).at(-1)).toEqual(['consent', false]);
 		});
-		const scripts = [openaiPixel({ pixelId })];
-		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, ALL_DENIED);
-		if (scriptElement === undefined) {
-			throw new Error('Expected the OpenAI Pixel SDK script to be appended');
-		}
-		scriptElement.dispatchEvent(new Event('load'));
-
-		const stub = getOaiq();
-		expect(typeof stub).toBe('function');
-		expect(stub?.q?.map(toArgs).at(-1)).toEqual(['consent', false]);
-	});
-});
+	}
+);

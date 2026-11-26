@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /** User matching fields accepted by OpenAI. Hash identifiers before passing them. */
 export interface OpenAIPixelUser {
@@ -186,8 +188,7 @@ export const openaiPixelManifest = {
 		},
 		{
 			async: true,
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://bzrcdn.openai.com/sdk/oaiq.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -222,6 +223,44 @@ export const openaiPixelManifest = {
 } as const satisfies VendorManifest;
 
 /**
+ * Builds the serializable manifest behind {@link openaiPixel}. `pixelId` must
+ * already be a trimmed, non-empty pixel ID.
+ */
+export const resolveOpenaiPixelManifest = function resolveOpenaiPixelManifest({
+	pixelId,
+	debug = false,
+	user,
+}: Omit<OpenAIPixelOptions, 'scriptSrc'>): ResolvedManifest {
+	const initOptions: OpenAIPixelInitOptions = { debug, pixelId };
+	if (user !== undefined) {
+		initOptions.user = user;
+	}
+	return getCompiledManifest(openaiPixelManifest, { initOptions });
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'openaiPixel',
+		{
+			debug: { default: false, kind: 'boolean', label: 'Debug logging' },
+			pixelId: {
+				example: 'px_abc123',
+				kind: 'id',
+				label: 'Pixel ID',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolveOpenaiPixelManifest
+	);
+
+/**
  * Creates a consent-aware ChatGPT Ads Measurement Pixel script.
  *
  * @returns A script gated on marketing consent, with SDK consent updates.
@@ -247,20 +286,12 @@ export const openaiPixel = function openaiPixel({
 		});
 	}
 
-	const initOptions: OpenAIPixelInitOptions = {
-		debug,
-		pixelId: normalizedPixelId,
-	};
-	if (user !== undefined) {
-		initOptions.user = user;
-	}
-	return resolveManifest(openaiPixelManifest, {
-		initOptions,
-		scriptSrc: resolveScriptUrl(
-			scriptSrc,
-			'https://bzrcdn.openai.com/sdk/oaiq.min.js'
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveOpenaiPixelManifest({ debug, pixelId: normalizedPixelId, user })
 		),
-	});
+		scriptSrc
+	);
 };
 
 /**

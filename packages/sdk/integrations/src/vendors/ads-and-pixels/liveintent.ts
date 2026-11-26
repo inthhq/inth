@@ -1,10 +1,16 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { ManifestStep, VendorManifest } from '../../types';
+import type {
+	ManifestStep,
+	ResolvedManifest,
+	VendorManifest,
+} from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 /** LiveConnect's plain object event queue. */
 export interface LiveIntentEvent extends Record<string, unknown> {
@@ -28,8 +34,7 @@ export const liveIntentTagManifest = {
 		{
 			async: true,
 			attributes: { charset: 'utf-8' },
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-			src: '{{scriptUrl}}',
+			src: 'https://b-code.liadm.com/{{tagPath}}.min.js',
 			type: 'loadScript',
 		},
 	],
@@ -57,6 +62,58 @@ export interface LiveIntentTagOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link liveIntentTag}. `tagId` must
+ * already be a trimmed, non-empty tag ID.
+ */
+export const resolveLiveIntentTagManifest =
+	function resolveLiveIntentTagManifest({
+		tagId,
+		events = [],
+	}: Omit<LiveIntentTagOptions, 'scriptUrl'>): ResolvedManifest {
+		const config: Record<string, unknown> = {
+			tagPath: encodeURIComponent(tagId),
+		};
+		const eventSteps: ManifestStep[] = events.map((event, index) => {
+			const key = `event${index}`;
+			config[key] = event;
+			return {
+				args: [`{{${key}}}`],
+				global: 'liQ',
+				method: 'push',
+				type: 'callGlobal',
+			};
+		});
+		return getCompiledManifest(
+			{
+				...liveIntentTagManifest,
+				install: [...eventSteps, ...liveIntentTagManifest.install],
+			},
+			config
+		);
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'liveIntentTag',
+		{
+			tagId: {
+				example: 'a-1234',
+				kind: 'id',
+				label: 'Tag ID',
+				pattern: '^[A-Za-z0-9][A-Za-z0-9-]*$',
+				required: true,
+			},
+		},
+		resolveLiveIntentTagManifest
+	);
+
+/**
  * Loads LiveConnect only after marketing consent.
  * @returns A gated script, or a skipped script for a missing tag ID.
  * @remarks Keep reload on revocation enabled. LiveConnect has no documented stop API.
@@ -74,27 +131,10 @@ export const liveIntentTag = function liveIntentTag(
 			manifest: liveIntentTagManifest,
 		});
 	}
-	const config: Record<string, unknown> = {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://b-code.liadm.com/${encodeURIComponent(tagId)}.min.js`
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveLiveIntentTagManifest({ events: options.events, tagId })
 		),
-	};
-	const events: ManifestStep[] = (options.events ?? []).map((event, index) => {
-		const key = `event${index}`;
-		config[key] = event;
-		return {
-			args: [`{{${key}}}`],
-			global: 'liQ',
-			method: 'push',
-			type: 'callGlobal',
-		};
-	});
-	return resolveManifest(
-		{
-			...liveIntentTagManifest,
-			install: [...events, ...liveIntentTagManifest.install],
-		},
-		config
+		options.scriptUrl
 	);
 };

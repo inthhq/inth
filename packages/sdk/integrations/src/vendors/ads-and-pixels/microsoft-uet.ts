@@ -1,10 +1,12 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -58,8 +60,7 @@ export const microsoftUetManifest = {
 		{
 			async: true,
 
-			// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptSrc option can set the whole URL
-			src: '{{scriptSrc}}',
+			src: 'https://bat.bing.com/bat.js',
 			type: 'loadScript',
 		},
 	],
@@ -121,6 +122,38 @@ export interface MicrosoftUetOptions {
 }
 
 /**
+ * Builds the serializable manifest behind {@link microsoftUet}. `id` must
+ * already be a trimmed, non-empty UET tag ID.
+ */
+export const resolveMicrosoftUetManifest =
+	function resolveMicrosoftUetManifest({
+		id,
+	}: Omit<MicrosoftUetOptions, 'scriptSrc'>): ResolvedManifest {
+		return getCompiledManifest(microsoftUetManifest, { id });
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; its other options stay npm-only. Marked pure so a bundler drops
+ * it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'microsoftUet',
+		{
+			id: {
+				example: '343003931',
+				kind: 'id',
+				label: 'UET tag ID',
+				pattern: '^[0-9]+$',
+				required: true,
+			},
+		},
+		resolveMicrosoftUetManifest
+	);
+
+/**
  * Microsoft UET Script
  * This script loads in consent mode and stays persistent because UET can opt
  * into and out of tracking based on consent.
@@ -150,10 +183,8 @@ export const microsoftUet = function microsoftUet({
 		});
 	}
 
-	const resolved = resolveManifest(microsoftUetManifest, {
-		id: normalizedId,
-		scriptSrc: resolveScriptUrl(scriptSrc, '//bat.bing.com/bat.js'),
-	});
-
-	return resolved;
+	return withScriptUrl(
+		resolvedManifestToScript(resolveMicrosoftUetManifest({ id: normalizedId })),
+		scriptSrc
+	);
 };
