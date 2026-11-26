@@ -81,7 +81,7 @@ describe('importChunk', () => {
 		async (_browser, failure) => {
 			const importUrl = vi.fn().mockResolvedValue(prompt);
 			setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
-			const load = vi.fn().mockRejectedValue(failure());
+			const load = vi.fn<() => Promise<typeof prompt>>().mockRejectedValue(failure());
 			await expect(importChunk(load, (m) => m.mountPrompt)).resolves.toBe(
 				prompt.mountPrompt
 			);
@@ -92,7 +92,7 @@ describe('importChunk', () => {
 	it('reuses the chunk it loaded again, so no chunk runs twice', async () => {
 		const importUrl = vi.fn().mockResolvedValue(prompt);
 		setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
-		const load = vi.fn().mockRejectedValue(chromiumFailure());
+		const load = vi.fn<() => Promise<typeof prompt>>().mockRejectedValue(chromiumFailure());
 		await importChunk(load, (m) => m.mountPrompt);
 		await importChunk(load, (m) => m.mountPrompt);
 		expect(load).toHaveBeenCalledTimes(2);
@@ -105,7 +105,7 @@ describe('importChunk', () => {
 			.mockRejectedValueOnce(new TypeError('offline'))
 			.mockResolvedValueOnce(prompt);
 		setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
-		const load = vi.fn().mockRejectedValue(chromiumFailure());
+		const load = vi.fn<() => Promise<typeof prompt>>().mockRejectedValue(chromiumFailure());
 		// The caller sees the chunk's own error, not the retry's.
 		await expect(importChunk(load, (m) => m.mountPrompt)).rejects.toThrow(
 			/dynamically imported module/u
@@ -123,7 +123,7 @@ describe('importChunk', () => {
 		// Rollup merged the module into a chunk and renamed its exports.
 		const importUrl = vi.fn().mockResolvedValue({ a: prompt });
 		setChunkImportForTest({ importUrl, keepsFailedImports: () => true });
-		const load = vi.fn().mockRejectedValue(chromiumFailure());
+		const load = vi.fn<() => Promise<typeof prompt>>().mockRejectedValue(chromiumFailure());
 		await expect(importChunk(load, (m) => m.mountPrompt)).rejects.toThrow(
 			/dynamically imported module/u
 		);
@@ -132,7 +132,7 @@ describe('importChunk', () => {
 	it('loads nothing again where the browser fetches a failed module again', async () => {
 		const importUrl = vi.fn().mockResolvedValue(prompt);
 		setChunkImportForTest({ importUrl, keepsFailedImports: () => false });
-		const load = vi.fn().mockRejectedValue(chromiumFailure());
+		const load = vi.fn<() => Promise<typeof prompt>>().mockRejectedValue(chromiumFailure());
 		await expect(importChunk(load, (m) => m.mountPrompt)).rejects.toThrow(
 			/dynamically imported module/u
 		);
