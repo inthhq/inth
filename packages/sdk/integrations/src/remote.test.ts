@@ -99,6 +99,7 @@ const sharedRegistrationCallbacks: Partial<
 	Record<BuiltInScriptIntegrationKey, string[]>
 > = {
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
+	luckyOrange: ['onLoad'],
 };
 
 /**
@@ -166,6 +167,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	linkedinInsights: ['snap.licdn.com'],
 	liveIntentTag: ['b-code.liadm.com'],
 	logRocket: ['cdn.logrocket.io'],
+	luckyOrange: ['tools.luckyorange.com'],
 	marketoMunchkin: ['munchkin.marketo.net'],
 	matomoAnalytics: ['cdn.matomo.cloud'],
 	metaPixel: ['connect.facebook.net'],
@@ -207,6 +209,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	customerIo: 3,
+	luckyOrange: 4,
 	pendo: 3,
 	pirsch: 3,
 	sentry: 4,

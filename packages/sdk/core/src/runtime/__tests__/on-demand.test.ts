@@ -379,6 +379,7 @@ describe('on-demand chunks', () => {
 			// only one with a level 3 manifest its level 3 part, and only one
 			// with a manifest that names an adapter that adapter.
 			'manifest-runtime/adapters/index',
+			'manifest-runtime/adapters/lucky-orange',
 			'manifest-runtime/adapters/sentry',
 			'manifest-runtime/index',
 			'manifest-runtime/level-three',

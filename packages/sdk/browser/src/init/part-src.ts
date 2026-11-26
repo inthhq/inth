@@ -15,10 +15,12 @@ export type InitFile =
 	| 'dialog'
 	| 'manifests'
 	| 'manifests3'
-	| 'adapter-sentry';
+	| 'adapter-sentry'
+	| 'adapter-lucky-orange';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
+	'adapter-lucky-orange': '__inthAdapterLuckyOrangeSrc',
 	'adapter-sentry': '__inthAdapterSentrySrc',
 	commit: '__inthCommitSrc',
 	dialog: '__inthDialogSrc',

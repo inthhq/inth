@@ -165,6 +165,11 @@
 			"import": "./dist/manifest-runtime/adapters/sentry.js",
 			"default": "./dist/manifest-runtime/adapters/sentry.js"
 		},
+		"./manifest-runtime/adapters/lucky-orange": {
+			"types": "./dist-types/manifest-runtime/adapters/lucky-orange.d.ts",
+			"import": "./dist/manifest-runtime/adapters/lucky-orange.js",
+			"default": "./dist/manifest-runtime/adapters/lucky-orange.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./dist-types/transports/manifest-browser.d.ts",
 			"import": "./dist/transports/manifest-browser.js",

@@ -84,6 +84,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.manifests',
 	'inth.manifests3',
 	'inth.adapter-sentry',
+	'inth.adapter-lucky-orange',
 ]);
 
 /**
@@ -256,6 +257,10 @@ export default defineConfig({
 		scriptTagLib('inth.manifests', './src/entries/cdn-manifests.ts'),
 		scriptTagLib('inth.manifests3', './src/entries/cdn-manifests3.ts'),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
+		scriptTagLib(
+			'inth.adapter-lucky-orange',
+			'./src/entries/cdn-adapter-lucky-orange.ts'
+		),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),

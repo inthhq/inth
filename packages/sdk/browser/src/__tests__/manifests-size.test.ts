@@ -35,8 +35,10 @@ import { expect, it } from 'vite-plus/test';
  * has adapter code. `inth.adapter-sentry.js`, the Sentry consent gate:
  * 6,215, then 6,268 with a type check on every option and the sentry.io
  * DSN pattern.
+ * `inth.adapter-lucky-orange.js`, the Lucky Orange privacy consent: 441.
  */
 const BUDGETS = {
+	'inth.adapter-lucky-orange.js': 470,
 	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
 	'inth.manifests3.js': 11980,

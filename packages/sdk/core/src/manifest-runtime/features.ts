@@ -237,6 +237,7 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
  * listed here is one the parser refuses.
  */
 export const ADAPTER_LEVELS = {
+	'lucky-orange': 4,
 	sentry: 4,
 } as const satisfies Readonly<Record<string, Level>>;
 

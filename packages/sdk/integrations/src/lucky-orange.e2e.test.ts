@@ -8,11 +8,13 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { LuckyOrangeApi } from './vendors/analytics/lucky-orange';
@@ -182,3 +184,61 @@ describe('Lucky Orange privacy readiness', () => {
 		expect(api.privacy.setConsentStatus.mock.calls).toEqual([[false]]);
 	});
 });
+
+describe.each(npmAndRemote('luckyOrange', luckyOrange))(
+	'Lucky Orange dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			for (const name of GLOBALS) {
+				Reflect.deleteProperty(window, name);
+			}
+		});
+
+		it('loads the site after measurement and applies the consent current once privacy is ready', async () => {
+			const scripts = [build({ siteId: 'YOUR_SITE_ID' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script[src]')).toBeNull();
+			expect(window.LOQ).toBeUndefined();
+
+			updateScripts(scripts, granted);
+			expect(getLoader().src).toBe(
+				'https://tools.luckyorange.com/core/lo.js?site-id=YOUR_SITE_ID'
+			);
+			const queue = window.LOQ;
+			if (!Array.isArray(queue)) {
+				throw new Error('Expected LOQ');
+			}
+			let resolvePrivacy: (value: unknown) => void = () => undefined;
+			const api = {
+				$internal: {
+					ready: vi.fn(
+						() =>
+							new Promise((resolve) => {
+								resolvePrivacy = resolve;
+							})
+					),
+				},
+				privacy: { setConsentStatus: vi.fn() },
+			};
+			const entry = queue[0] as ['ready', (api: LuckyOrangeApi) => void];
+			entry[1](api);
+			expect(api.$internal.ready).toHaveBeenCalledWith('privacy');
+
+			// A withdrawal before privacy is ready is what it applies.
+			updateScripts(scripts, ALL_DENIED);
+			resolvePrivacy(undefined);
+			await Promise.resolve();
+			await Promise.resolve();
+			expect(api.privacy.setConsentStatus.mock.calls).toEqual([[false]]);
+
+			updateScripts(scripts, granted);
+			expect(api.privacy.setConsentStatus.mock.calls).toEqual([
+				[false],
+				[true],
+			]);
+			expect(queue).toHaveLength(1);
+		});
+	}
+);

@@ -211,6 +211,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/sentry.js"
 		},
+		"./manifest-runtime/adapters/lucky-orange": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/lucky-orange.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/lucky-orange.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/lucky-orange.js"
+		},
 		"./transports/manifest-browser": {
 			"types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
 			"import": "./lib/core/dist/transports/manifest-browser.js",

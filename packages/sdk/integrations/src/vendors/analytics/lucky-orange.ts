@@ -1,24 +1,24 @@
 import type { Script } from '@inth/sdk/engine';
+import { luckyOrangeScript } from '@inth/sdk/manifest-runtime/adapters/lucky-orange';
+import type {
+	LuckyOrangeApi,
+	LuckyOrangeQueue,
+} from '@inth/sdk/manifest-runtime/adapters/lucky-orange';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
-/** Privacy API provided to Lucky Orange's ready callback. */
-export interface LuckyOrangeApi {
-	$internal: { ready: (module: string) => Promise<unknown> };
-	privacy: {
-		setConsentStatus: (consented: boolean) => void;
-		getConsentStatus?: () => boolean;
-	};
-}
-/** Lucky Orange's queue accepts ready callbacks before and after installation. */
-export interface LuckyOrangeQueue {
-	push: (entry: ['ready', (api: LuckyOrangeApi) => void]) => unknown;
-}
+export type {
+	LuckyOrangeApi,
+	LuckyOrangeQueue,
+} from '@inth/sdk/manifest-runtime/adapters/lucky-orange';
+
 declare global {
 	interface Window {
 		LOQ?: LuckyOrangeQueue;
@@ -26,13 +26,20 @@ declare global {
 	}
 }
 
-/** Lucky Orange loader, gated even when dashboard consent is enabled. */
+/**
+ * Lucky Orange loader, gated even when dashboard consent is enabled. The
+ * Lucky Orange adapter in `@inth/sdk` sets its privacy consent.
+ */
 export const luckyOrangeManifest = {
 	...vendorManifestContract,
 	category: 'measurement',
 	install: [
-		// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-		{ async: true, defer: true, src: '{{scriptUrl}}', type: 'loadScript' },
+		{
+			async: true,
+			defer: true,
+			src: 'https://tools.luckyorange.com/core/lo.js?site-id={{siteId}}',
+			type: 'loadScript',
+		},
 	],
 	persistAfterConsentRevoked: true,
 	vendor: 'lucky-orange',
@@ -53,78 +60,55 @@ export interface LuckyOrangeOptions {
 	scriptUrl?: string;
 }
 
+/**
+ * The manifest for a Lucky Orange site: its loader, and the Lucky Orange
+ * adapter, which takes no options. The npm helper and the Inth server both
+ * build it here. `siteId` must already be trimmed and non-empty.
+ */
+export const resolveLuckyOrangeManifest = function resolveLuckyOrangeManifest({
+	siteId,
+}: Pick<LuckyOrangeOptions, 'siteId'>): ResolvedManifest {
+	return {
+		...getCompiledManifest(luckyOrangeManifest, {
+			siteId: encodeURIComponent(siteId),
+		}),
+		adapter: { id: 'lucky-orange', options: {} },
+		requires: 4,
+	};
+};
+
+/**
+ * What the Inth server may set for Lucky Orange: the site ID. The category
+ * and a loader URL of the site's own stay npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'luckyOrange',
+		{
+			siteId: {
+				example: 'a1b2c3d4',
+				kind: 'id',
+				label: 'Site ID',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+		},
+		resolveLuckyOrangeManifest
+	);
+
 const reuseLuckyOrange = createScriptReuse<LuckyOrangeOptions>();
 
 const createLuckyOrange = function createLuckyOrange(
 	options: LuckyOrangeOptions
 ): Script {
-	const category = options?.category ?? 'measurement';
-	const siteId = readId(options?.siteId);
-	if (!siteId) {
-		return skipMissingId('luckyOrange', 'siteId', {
-			category,
-			manifest: luckyOrangeManifest,
-		});
-	}
-	const script = resolveManifest(luckyOrangeManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://tools.luckyorange.com/core/lo.js?site-id=${encodeURIComponent(siteId)}`
-		),
+	const { adapter: _adapter, ...manifest } =
+		resolveLuckyOrangeManifest(options);
+	return luckyOrangeScript({
+		...withScriptUrl(resolvedManifestToScript(manifest), options.scriptUrl),
+		category: options.category ?? 'measurement',
 	});
-	let hasConsent = false;
-	let api: LuckyOrangeApi | undefined;
-	let subscribed = false;
-	let disposed = false;
-	let appliedConsent: boolean | undefined;
-	const applyConsent = (): void => {
-		if (!api || appliedConsent === hasConsent) {
-			return;
-		}
-		api.privacy.setConsentStatus(hasConsent);
-		appliedConsent = hasConsent;
-	};
-	const ready = async (loaded: LuckyOrangeApi): Promise<void> => {
-		try {
-			await loaded.$internal.ready('privacy');
-			if (disposed) {
-				return;
-			}
-			api = loaded;
-			applyConsent();
-		} catch (error) {
-			console.error('luckyOrange: privacy initialization failed.', error);
-		}
-	};
-	return {
-		...script,
-		category,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad({ hasConsent: consent }) {
-			hasConsent = consent;
-			if (!hasConsent || subscribed) {
-				return;
-			}
-			subscribed = true;
-			const queue: ['ready', (loaded: LuckyOrangeApi) => void][] = [];
-			window.LOQ ??= queue;
-			window.LOQ.push([
-				'ready',
-				(loaded) => {
-					void ready(loaded);
-				},
-			]);
-		},
-		onConsentChange({ hasConsent: consent }) {
-			hasConsent = consent;
-			applyConsent();
-		},
-		onDispose() {
-			disposed = true;
-			hasConsent = false;
-			applyConsent();
-		},
-	};
 };
 
 /**
@@ -140,11 +124,12 @@ const createLuckyOrange = function createLuckyOrange(
 export const luckyOrange = function luckyOrange(
 	options: LuckyOrangeOptions
 ): Script {
-	if (!readId(options?.siteId)) {
+	const siteId = readId(options?.siteId);
+	if (!siteId) {
 		return skipMissingId('luckyOrange', 'siteId', {
 			category: options?.category ?? 'measurement',
 			manifest: luckyOrangeManifest,
 		});
 	}
-	return reuseLuckyOrange(options, createLuckyOrange);
+	return reuseLuckyOrange({ ...options, siteId }, createLuckyOrange);
 };
