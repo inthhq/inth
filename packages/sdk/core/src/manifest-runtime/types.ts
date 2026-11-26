@@ -402,8 +402,8 @@ export interface ConstructGlobalStep {
 /**
  * A test an `if` step makes when it runs (level 3).
  *
- * - `consent`: the condition holds for the vendor's consent now. Every
- *   optional category reads denied while the visitor has the vendor off.
+ * - `consent`: the condition holds for the vendor's consent now. It fails
+ *   while the visitor has the vendor off, whatever the condition.
  * - `lost`: one of the categories was granted when this script's previous
  *   callback ran, and is not now. In a `listen` or `then` step, the
  *   comparison is with the last such step that tested `lost` since that

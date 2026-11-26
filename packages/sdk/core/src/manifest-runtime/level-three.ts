@@ -111,7 +111,13 @@ const holds = (condition: ManifestCondition, values: StepValues): boolean => {
 		return condition.all.every((entry) => holds(entry, values));
 	}
 	if ('consent' in condition) {
-		return has(condition.consent, consentsOf(values.info));
+		// A vendor the visitor turned off fails every consent condition, so
+		// a negated category, which every category denied would pass, fails
+		// too.
+		return (
+			values.info?.vendor?.granted !== false &&
+			has(condition.consent, consentsOf(values.info))
+		);
 	}
 	if ('lost' in condition) {
 		const now = consentsOf(values.info);

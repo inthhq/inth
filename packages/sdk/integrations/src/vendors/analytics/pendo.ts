@@ -34,8 +34,8 @@ declare global {
 
 /**
  * The script's own consent condition, filled in from the `category` config
- * value like the manifest's `category`. The vendor switch counts too: a
- * vendor the visitor turned off reads as every category denied.
+ * value like the manifest's `category`. The vendor switch counts too: it
+ * fails while the visitor has the vendor off, even for a negated category.
  */
 const categoryHolds = {
 	consent: '{{category}}' as AllConsentNames,
@@ -239,8 +239,9 @@ const reusePendo = createScriptReuse<PendoOptions>();
 
 /**
  * `script`, given the consent of every loader `createScriptReuse` shares it
- * between: while one of them denies Pendo, the manifest sees every category
- * denied. The remote form has one registration, so it needs none of this.
+ * between: while one of them denies Pendo, the manifest sees the vendor
+ * turned off, so even a negated category fails. The remote form has one
+ * registration, so it needs none of this.
  */
 const withSharedConsent = function withSharedConsent(script: Script): Script {
 	// `Object.create` keeps the info's other fields, enumerable or not.
@@ -249,6 +250,7 @@ const withSharedConsent = function withSharedConsent(script: Script): Script {
 			? info
 			: (Object.create(info, {
 					consents: { value: ALL_DENIED },
+					vendor: { value: { granted: false, id: 'pendo' } },
 				}) as ScriptCallbackInfo);
 	// `onBeforeLoad` reads no consent, and keeps the inline start that
 	// `serverStart` checks it against.

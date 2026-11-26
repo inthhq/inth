@@ -156,6 +156,34 @@ describe('Pendo event lifecycle', () => {
 
 		expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
 	});
+	it('stops sending events when the visitor turns off only the vendor of a negated category', async () => {
+		const kernel = createConsentKernel();
+		await kernel.commands.save(ALL_DENIED, { vendors: { pendo: true } });
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [
+				pendo({ apiKey: 'negated-key', category: { not: 'measurement' } }),
+			],
+		});
+		try {
+			const runtime = {
+				initialize: vi.fn(),
+				startSendingEvents: vi.fn(),
+				stopSendingEvents: vi.fn(),
+			};
+			window.pendo = runtime;
+			getLoader().dispatchEvent(new Event('load'));
+			await Promise.resolve();
+			expect(runtime.initialize).toHaveBeenCalledOnce();
+
+			await kernel.commands.save(ALL_DENIED, { vendors: { pendo: false } });
+
+			expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
 	it('keeps events stopped while another loader sharing the script denies measurement', async () => {
 		// Sharing one script between loaders is npm-only; the remote form has
 		// one registration per vendor.
@@ -185,6 +213,45 @@ describe('Pendo event lifecycle', () => {
 			void firstKernel.commands.save({ ...granted, measurement: false });
 			expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
 			void secondKernel.commands.save({ ...granted, marketing: true });
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(runtime.startSendingEvents).not.toHaveBeenCalled();
+		} finally {
+			first.dispose();
+			second.dispose();
+			firstKernel.dispose();
+			secondKernel.dispose();
+		}
+	});
+	it('keeps events stopped while another loader sharing the script denies a negated category', async () => {
+		const category = { not: 'measurement' } as const;
+		const firstKernel = createConsentKernel();
+		const secondKernel = createConsentKernel();
+		await firstKernel.commands.save(ALL_DENIED);
+		await secondKernel.commands.save(ALL_DENIED);
+		const first = createScriptLoader({
+			kernel: firstKernel,
+			scripts: [pendo({ apiKey: 'shared-negated-key', category })],
+		});
+		const second = createScriptLoader({
+			kernel: secondKernel,
+			scripts: [pendo({ apiKey: 'shared-negated-key', category })],
+		});
+		try {
+			const runtime = {
+				initialize: vi.fn(),
+				startSendingEvents: vi.fn(),
+				stopSendingEvents: vi.fn(),
+			};
+			window.pendo = runtime;
+			getLoader().dispatchEvent(new Event('load'));
+			await Promise.resolve();
+			expect(runtime.initialize).toHaveBeenCalledOnce();
+
+			await firstKernel.commands.save(granted);
+			expect(runtime.stopSendingEvents).toHaveBeenCalledOnce();
+			await secondKernel.commands.save(unrelated);
 			await Promise.resolve();
 			await Promise.resolve();
 

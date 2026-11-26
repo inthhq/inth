@@ -164,6 +164,19 @@ describe('if', () => {
 			false,
 		],
 		[
+			'a negated category of a vendor the visitor turned off',
+			{ consent: { not: 'marketing' } },
+			{
+				...choiceRecords({ measurement: true }),
+				vendorChoice: {
+					confirmedAt: NOW - 1,
+					denied: ['level-three'],
+					version: 1 as const,
+				},
+			},
+			false,
+		],
+		[
 			'a condition over categories',
 			{ consent: { and: ['measurement', { not: 'marketing' }] } },
 			undefined,
