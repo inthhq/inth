@@ -1,6 +1,11 @@
 import type { ESTree, SourceCode } from "vite-plus/lint/plugins";
 
-import { effectiveStringValue, resolveValue } from "./ast.ts";
+import {
+  effectiveStringValue,
+  lookupProperty,
+  resolveValue,
+  stringLiteralValue,
+} from "./ast.ts";
 
 const DEFINE_REMOTE_NAMES = new Set([
   "defineRemote",
@@ -60,4 +65,25 @@ export const isHostnameSpec = (
     spec.type === "ObjectExpression" &&
     effectiveStringValue(sourceCode, spec, "kind") === "hostname"
   );
+};
+
+/**
+ * The `pattern` of an option spec with kind `id`, when both are plain strings
+ * the rule can read through `const`s and spreads. Null otherwise.
+ */
+export const idSpecPattern = (
+  sourceCode: SourceCode,
+  value: ESTree.Expression
+): string | null => {
+  const spec = resolveValue(sourceCode, value);
+  if (
+    spec.type !== "ObjectExpression" ||
+    effectiveStringValue(sourceCode, spec, "kind") !== "id"
+  ) {
+    return null;
+  }
+  const pattern = lookupProperty(sourceCode, spec, "pattern");
+  return pattern.status === "found"
+    ? stringLiteralValue(resolveValue(sourceCode, pattern.value))
+    : null;
 };

@@ -12,6 +12,19 @@ const tester = new RuleTester({
 });
 
 const notFixed = { messageId: "notFixed" };
+const hostPlaceholder = { messageId: "hostPlaceholder" };
+
+/** A file whose manifest loads `src` and whose remote options are `options`. */
+const partnerFile = (src: string, options: string): string => `
+  export const m = { install: [{ src: '${src}', type: 'loadScript' }] };
+  export const remote = defineRemote('insiderTag', { ${options} }, resolve);
+`;
+const LABEL_SRC =
+  "https://{{partnerName}}.api.useinsider.com/ins.js?id={{partnerId}}";
+const LABEL_PATTERN = "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$";
+/** A `partnerName` id option; `pattern` is written into a single-quoted string. */
+const labelOption = (pattern: string, name = "partnerName"): string =>
+  `${name}: { example: 'acme', kind: 'id', label: 'Partner name', pattern: '${pattern}', required: true }`;
 
 tester.run("fixed-script-host", fixedScriptHostRule, {
   invalid: [
@@ -175,6 +188,157 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
       errors: [{ messageId: "hostPlaceholder" }],
       name: "a hostname declaration in the resolver",
     },
+    {
+      code: partnerFile(
+        "https://cdn.{{partnerName}}.useinsider.com/ins.js",
+        labelOption(LABEL_PATTERN)
+      ),
+      errors: [hostPlaceholder],
+      name: "an id label placeholder that is not the leftmost label",
+    },
+    {
+      code: partnerFile(
+        "https://{{partnerName}}.useinsider/ins.js",
+        labelOption(LABEL_PATTERN)
+      ),
+      errors: [hostPlaceholder],
+      name: "an id label placeholder followed by a single-label domain",
+    },
+    {
+      code: partnerFile(
+        "https://{{partnerName}}/ins.js",
+        labelOption(LABEL_PATTERN)
+      ),
+      errors: [hostPlaceholder],
+      name: "an id placeholder for the whole host",
+    },
+    {
+      code: partnerFile(
+        "https://{{partnerName}}-cdn.useinsider.com/ins.js",
+        labelOption(LABEL_PATTERN)
+      ),
+      errors: [hostPlaceholder],
+      name: "an id placeholder for part of the leftmost label",
+    },
+    {
+      code: partnerFile(
+        "https://{{partnerName}}.{{region}}.useinsider.com/ins.js",
+        `${labelOption(LABEL_PATTERN)}, ${labelOption(LABEL_PATTERN, "region")}`
+      ),
+      errors: [hostPlaceholder],
+      name: "a second placeholder in the vendor domain",
+    },
+    {
+      code: partnerFile(
+        "https://{{partnerName}}.api.useinsider.com:8443/ins.js",
+        labelOption(LABEL_PATTERN)
+      ),
+      errors: [hostPlaceholder],
+      name: "an id label placeholder with a port",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z0-9.-]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that allows dots",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^.+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with a wildcard",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[^/]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with a negated class",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[+-9]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern whose class range spans a dot",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[0-z]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern whose class range spans punctuation",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z-.]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with a hyphen inside a class that is not a range",
+    },
+    {
+      // The source text '^[\\w-]+$' holds the pattern ^[\w-]+$.
+      code: partnerFile(LABEL_SRC, labelOption(String.raw`^[\\w-]+$`)),
+      errors: [hostPlaceholder],
+      name: "an id pattern with an escape",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("[a-z0-9-]+")),
+      errors: [hostPlaceholder],
+      name: "an unanchored id pattern",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z0-9-]+")),
+      errors: [hostPlaceholder],
+      name: "an id pattern anchored only at the start",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z]+$|^evil.example$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with an alternation",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^(?:[a-z]|[0-9])+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with an alternation inside a group",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^(?=a)[a-z]+$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern with a lookahead",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z]*$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that matches an empty label",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption("^[a-z]{2,1}$")),
+      errors: [hostPlaceholder],
+      name: "an id pattern that does not compile",
+    },
+    {
+      code: `
+        const PATTERN = String('^[a-z]+$');
+        ${partnerFile(LABEL_SRC, "partnerName: { kind: 'id', label: 'Partner', pattern: PATTERN, required: true }")}
+      `,
+      errors: [hostPlaceholder],
+      name: "an id pattern the rule cannot read",
+    },
+    {
+      code: `
+        const unrelated = { ${labelOption(LABEL_PATTERN)} };
+        export const m = { install: [{ src: '${LABEL_SRC}', type: 'loadScript' }] };
+      `,
+      errors: [hostPlaceholder],
+      name: "an id label option declared outside the remote options",
+    },
+    {
+      code: partnerFile(
+        LABEL_SRC,
+        `settings: { kind: 'object', label: 'Settings', required: true, fields: { ${labelOption(LABEL_PATTERN)} } }`
+      ),
+      errors: [hostPlaceholder],
+      name: "an id label option nested inside an object option",
+    },
+    {
+      code: partnerFile(
+        LABEL_SRC,
+        "partnerName: { kind: 'idList', label: 'Partner', pattern: '^[a-z]+$', maxItems: 2, required: true }"
+      ),
+      errors: [hostPlaceholder],
+      name: "an idList option in the leftmost label",
+    },
   ],
   valid: [
     {
@@ -245,6 +409,21 @@ tester.run("fixed-script-host", fixedScriptHostRule, {
         export const remote = defineRemote('pardot', { ...hostOptions }, resolve);
       `,
       name: "a hostname option spread into the options",
+    },
+    {
+      code: partnerFile(LABEL_SRC, labelOption(LABEL_PATTERN)),
+      name: "an id option as the leftmost label of a fixed vendor domain",
+    },
+    {
+      code: `
+        const PARTNER_PATTERN = '^[A-Za-z0-9-]+$';
+        const options = {
+          partnerName: { example: 'acme', kind: 'id', label: 'Partner', pattern: PARTNER_PATTERN, required: true },
+        } as const;
+        export const m = { install: [{ src: '${LABEL_SRC}', type: 'loadScript' }] };
+        export const remote = defineRemote('insiderTag', options, resolve);
+      `,
+      name: "an id label pattern from a const",
     },
   ],
 });
