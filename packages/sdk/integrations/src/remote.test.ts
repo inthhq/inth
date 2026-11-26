@@ -297,12 +297,49 @@ const requiredOnly = function requiredOnly(
 	);
 };
 
+/**
+ * For an integration whose manifest names an adapter, each ID option's
+ * first sample stretched to the longest value the dashboard accepts: its
+ * example with its last character repeated. The SDK must run whatever the
+ * dashboard saves, so this finds a limit the dashboard and the adapter's
+ * options check disagree on.
+ */
+const stretchedOptions = function stretchedOptions(
+	integration: RemoteIntegration
+): Options[] {
+	const samples = sampleObjects(integration.options);
+	const [first = {}] = samples;
+	const adapted = samples.some((sample) => {
+		const validated = validateRemoteOptions(integration.key, sample);
+		return (
+			validated.ok &&
+			integration.resolveRemote(validated.options).adapter !== undefined
+		);
+	});
+	return Object.entries(integration.options).flatMap(([name, spec]) => {
+		if (!adapted || spec.kind !== 'id') {
+			return [];
+		}
+		let longest = spec.example;
+		const last = spec.example.at(-1) ?? '';
+		for (let value = spec.example + last; value.length <= 200; value += last) {
+			if (
+				validateRemoteOptions(integration.key, { ...first, [name]: value }).ok
+			) {
+				longest = value;
+			}
+		}
+		return longest === spec.example ? [] : [{ ...first, [name]: longest }];
+	});
+};
+
 const sampleOptions = function sampleOptions(
 	integration: RemoteIntegration
 ): Options[] {
 	return [
 		...sampleObjects(integration.options),
 		requiredOnly(integration.options),
+		...stretchedOptions(integration),
 	];
 };
 
@@ -712,6 +749,22 @@ describe('validateRemoteOptions', () => {
 		const result = validateRemoteOptions(key, options);
 
 		expect(result.ok).toBe(false);
+	});
+
+	it('refuses the Databuddy options its adapter refuses', () => {
+		expect(
+			validateRemoteOptions('databuddy', {
+				clientId: 'a'.repeat(129),
+				replay: {},
+			}).ok
+		).toBe(false);
+		expect(
+			validateRemoteOptions('databuddy', {
+				clientId: 'db_contract',
+				replay: {},
+				version: '2026-10-30.1234567',
+			}).ok
+		).toBe(false);
 	});
 
 	it('rejects an ID that is not a string', () => {

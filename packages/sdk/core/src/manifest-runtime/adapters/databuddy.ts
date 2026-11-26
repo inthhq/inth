@@ -213,8 +213,16 @@ export const databuddyReplayScript = function databuddyReplayScript(
 	};
 };
 
-const CLIENT_ID = /^[A-Za-z0-9_-]{1,128}$/u;
-const VERSION = /^[0-9]{4}-[0-9]{2}-[0-9]{2}[.][0-9]{1,6}$/u;
+/**
+ * What a client ID may be. The `databuddy` dashboard options use the same
+ * pattern, so the dashboard saves no ID this check refuses.
+ */
+export const DATABUDDY_CLIENT_ID_PATTERN = '^[A-Za-z0-9_-]{1,128}$';
+/** What a pinned release may be, shared with the dashboard the same way. */
+export const DATABUDDY_VERSION_PATTERN =
+	'^[0-9]{4}-[0-9]{2}-[0-9]{2}[.][0-9]{1,6}$';
+const CLIENT_ID = new RegExp(DATABUDDY_CLIENT_ID_PATTERN, 'u');
+const VERSION = new RegExp(DATABUDDY_VERSION_PATTERN, 'u');
 const OPTION_NAMES: ReadonlySet<string> = new Set([
 	'clientId',
 	'replay',

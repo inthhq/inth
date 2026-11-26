@@ -1,6 +1,8 @@
 import type { Script } from '@inth/sdk/engine';
 import {
+	DATABUDDY_CLIENT_ID_PATTERN,
 	DATABUDDY_DEFAULT_API_URL,
+	DATABUDDY_VERSION_PATTERN,
 	databuddyCdnFile,
 	databuddyReplayScript,
 } from '@inth/sdk/manifest-runtime/adapters/databuddy';
@@ -432,7 +434,8 @@ export const remote =
 				example: 'db_1234567890abcdef',
 				kind: 'id',
 				label: 'Client ID',
-				pattern: '^[A-Za-z0-9_-]+$',
+				// The adapter's own limit, so every saved ID runs.
+				pattern: DATABUDDY_CLIENT_ID_PATTERN,
 				required: true,
 			},
 			features: {
@@ -489,7 +492,7 @@ export const remote =
 				example: '2026-10-30.1',
 				kind: 'id',
 				label: 'Pinned release',
-				pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[.][0-9]+$',
+				pattern: DATABUDDY_VERSION_PATTERN,
 				required: false,
 			},
 		},
