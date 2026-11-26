@@ -48,4 +48,26 @@ export const amazonAdsNoCountryTrace: TraceSpec = {
 	script: () => amazonAdsTag({ tagId }),
 };
 
-export const traces = [amazonAdsTrace, amazonAdsNoCountryTrace];
+/**
+ * Options a dashboard can set: no country, so no consent helper, with the
+ * EU region and no PageView.
+ */
+export const amazonAdsDashboardTrace: TraceSpec = {
+	granted: { marketing: true },
+	name: 'amazon-ads.dashboard',
+	onFileLoad: runFile,
+	scenarios: [
+		{
+			name: 'revoke before the file runs',
+			start: 'granted',
+			steps: ['deny', 'load-detached', 'grant', 'load', 'dispose'],
+		},
+	],
+	script: () => amazonAdsTag({ region: 'EU', tagId, trackPageView: false }),
+};
+
+export const traces = [
+	amazonAdsTrace,
+	amazonAdsNoCountryTrace,
+	amazonAdsDashboardTrace,
+];

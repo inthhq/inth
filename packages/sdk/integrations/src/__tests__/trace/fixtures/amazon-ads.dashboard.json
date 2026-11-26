@@ -1,0 +1,318 @@
+{
+	"name": "amazon-ads.dashboard",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225601000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225601000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "deny" },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225600000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225600000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225600000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225600000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225600000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225600000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "replace-while-revoke-pending" },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225600000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225600000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "grant" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		],
+		"revoke before the file runs": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://c.amazon-adsystem.com/aat/amzn.js"
+				},
+				"async": true
+			},
+			{
+				"global": "amzn",
+				"value": {
+					"[Function]": true,
+					"q": [
+						[{ "[Arguments]": ["setRegion", "EU"] }, 1767225600000],
+						[
+							{
+								"[Arguments]": [
+									"addTag",
+									"00000000-0000-0000-0000-000000000000"
+								]
+							},
+							1767225600000
+						]
+					],
+					"version": "0.0"
+				}
+			},
+			{ "step": "deny" },
+			{
+				"global": "amzn",
+				"value": { "[Function]": true, "q": [], "version": "0.0" }
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://c.amazon-adsystem.com/aat/amzn.js" },
+			{ "global": "amzn", "value": "[stub amzn]" },
+			{ "step": "grant" },
+			{ "call": "amzn", "args": ["setRegion", "EU"] },
+			{
+				"call": "amzn",
+				"args": ["addTag", "00000000-0000-0000-0000-000000000000"]
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://c.amazon-adsystem.com/aat/amzn.js]"
+			}
+		]
+	}
+}
