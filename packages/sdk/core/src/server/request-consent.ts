@@ -1006,6 +1006,7 @@ const resolveRequest = async function resolveRequest(
 			}
 			onHostedAnswer?.({
 				init: payload,
+				manifestLevel: MANIFEST_RUNTIME_LEVEL,
 				requestHeaders: { ...headers },
 				responseHeaders: response.headers,
 				url: target.url,
@@ -1123,8 +1124,13 @@ export const resolveRequestConsent = function resolveRequestConsent(
 export interface RequestInitAnswer {
 	/** The response body. */
 	init: InitOutput;
-	/** The URL asked, or the path for an in-process route. */
+	/**
+	 * The URL asked, or the path for an in-process route, without the
+	 * query parameters the request added.
+	 */
 	url: string;
+	/** The manifest runtime level the request sent as `manifestLevel`. */
+	manifestLevel: number;
 	/** The headers sent upstream, after the forwarding rule. */
 	requestHeaders: Readonly<Record<string, string>>;
 	/** The response's headers, such as its cache status. */

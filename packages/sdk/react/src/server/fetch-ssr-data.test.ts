@@ -58,6 +58,7 @@ describe('fetchSSRData', () => {
 			country: 'US',
 			gpc: false,
 			language: null,
+			manifestLevel: 2,
 			projectUrl: 'https://example.com/api/inth',
 			region: null,
 		});
@@ -94,6 +95,26 @@ describe('fetchSSRData', () => {
 			detail: 'x-vercel-cache=MISS',
 			isHit: false,
 		});
+	});
+
+	// The browser reuses SSR data only when it was made for its own level,
+	// and reads data that names no level as level 1.
+	it('records the manifest level it asked init for', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		const result = await fetchSSRData({
+			headers: createRequestHeaders(),
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const asked = new URL(String(fetchMock.mock.calls[0]?.[0]));
+		expect(asked.searchParams.get('manifestLevel')).not.toBeNull();
+		expect(result?.metadata?.requestContext?.manifestLevel).toBe(
+			Number(asked.searchParams.get('manifestLevel'))
+		);
 	});
 
 	it('asks /v1 init with no version, contract or cookie header', async () => {
@@ -288,6 +309,7 @@ describe('fetchSSRData', () => {
 				country: 'US',
 				gpc: false,
 				language: null,
+				manifestLevel: 2,
 				projectUrl: 'https://consent.example.com/api/inth',
 				region: null,
 			},
@@ -326,6 +348,7 @@ describe('fetchSSRData', () => {
 			country: 'DE',
 			gpc: true,
 			language: 'de',
+			manifestLevel: 2,
 			projectUrl: 'https://example.com/api/inth',
 			region: 'BE',
 		});

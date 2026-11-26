@@ -4,15 +4,21 @@ import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
 import type { FetchSSRDataOptions } from './types';
 
-/** What the request told the backend, from the headers `/v1/consent/init` was sent. */
+/**
+ * What the request told the backend, from the manifest level and headers
+ * `/v1/consent/init` was sent. The browser reuses the answer only when the
+ * level matches its own, and reads a missing level as level 1.
+ */
 const buildRequestContext = function buildRequestContext(
 	projectUrl: string,
+	manifestLevel: number,
 	sent: Readonly<Record<string, string>>
 ): NonNullable<SSRInitialData['metadata']>['requestContext'] {
 	return {
 		country: sent['x-inth-country'] ?? null,
 		gpc: sent['sec-gpc'] === '1',
 		language: sent['accept-language'] ?? null,
+		manifestLevel,
 		projectUrl,
 		region: sent['x-inth-region'] ?? null,
 	};
@@ -176,7 +182,11 @@ export const fetchSSRData = async function fetchSSRData(
 	}
 	const metadata: SSRInitialData['metadata'] = {
 		cache: inspectCacheHeaders(answer.responseHeaders),
-		requestContext: buildRequestContext(normalizedUrl, answer.requestHeaders),
+		requestContext: buildRequestContext(
+			normalizedUrl,
+			answer.manifestLevel,
+			answer.requestHeaders
+		),
 		requestDurationMs: Math.max(0, Math.round(getNowMs() - startTime)),
 	};
 	if (debug) {
