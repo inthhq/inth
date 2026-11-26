@@ -160,6 +160,29 @@ const validateManifestContract = function validateManifestContract(
 	}
 };
 
+const level2Fields = function level2Fields(
+	manifest: VendorManifest,
+	config: Record<string, unknown>
+): Partial<ResolvedManifest> {
+	const fields: Partial<ResolvedManifest> = {};
+	if (manifest.onDispose !== undefined) {
+		fields.onDisposeSteps = interpolateSteps(manifest.onDispose, config);
+	}
+	for (const key of [
+		'target',
+		'observeConsentBeforeLoad',
+		'persistAfterDispose',
+		'resourceKey',
+	] as const) {
+		if (manifest[key] !== undefined) {
+			Object.assign(fields, {
+				[key]: interpolateValue(manifest[key], config),
+			});
+		}
+	}
+	return fields;
+};
+
 export const compileManifest = function compileManifest(
 	manifest: VendorManifest,
 	config: Record<string, unknown> = {}
@@ -222,5 +245,8 @@ export const compileManifest = function compileManifest(
 		setupSteps,
 		vendor: manifest.vendor,
 		vendorDetails: manifest.vendorDetails,
+		// Level 2 fields stay out of a manifest that does not set them, so a
+		// level 1 manifest parses in an SDK from before level 2.
+		...level2Fields(manifest, config),
 	};
 };

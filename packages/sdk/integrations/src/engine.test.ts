@@ -1233,6 +1233,43 @@ describe('scripts engine', () => {
 		);
 	});
 
+	it('carries level 2 fields only when a manifest sets them', () => {
+		const base = {
+			...vendorManifestContract,
+			category: 'measurement',
+			install: [],
+			vendor: 'level-two',
+		} as const;
+
+		const levelOne = compileManifest(base);
+		for (const key of [
+			'onDisposeSteps',
+			'target',
+			'observeConsentBeforeLoad',
+			'persistAfterDispose',
+			'resourceKey',
+		]) {
+			expect(Object.hasOwn(levelOne, key), key).toBe(false);
+		}
+		expect(
+			compileManifest(
+				{
+					...base,
+					onDispose: [{ global: '{{name}}', type: 'callGlobal' }],
+					persistAfterDispose: true,
+					resourceKey: '{{name}}-main',
+					target: 'body',
+				},
+				{ name: 'vendor' }
+			)
+		).toMatchObject({
+			onDisposeSteps: [{ global: 'vendor', type: 'callGlobal' }],
+			persistAfterDispose: true,
+			resourceKey: 'vendor-main',
+			target: 'body',
+		});
+	});
+
 	it('rejects manifests with an unsupported contract', () => {
 		expect(() =>
 			compileManifest({

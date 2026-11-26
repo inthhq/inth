@@ -129,6 +129,24 @@ export interface VendorManifest extends ManifestContract {
 	onConsentDenied?: ManifestStep[];
 
 	/**
+	 * Steps to run when the script is disposed (level 2). A replacement runs
+	 * them once the new script has started, with consent read then.
+	 */
+	onDispose?: ManifestStep[];
+
+	/** `Script.target` (level 2). */
+	target?: 'head' | 'body';
+
+	/** `Script.observeConsentBeforeLoad` (level 2). */
+	observeConsentBeforeLoad?: boolean;
+
+	/** `Script.persistAfterDispose` (level 2). */
+	persistAfterDispose?: boolean;
+
+	/** `Script.resourceKey` (level 2). */
+	resourceKey?: string;
+
+	/**
 	 * Maps Inth consent categories to vendor-specific consent type names.
 	 *
 	 * Used with `consentSignal` to translate Inth consent state into
