@@ -87,7 +87,10 @@ const reportAlloyError = (command: string, error: unknown): void => {
 export const adobeTargetWebSdkScript = function adobeTargetWebSdkScript(
 	base: Script,
 	options: AdobeTargetAdapterOptions,
-	{ registrations = (info) => [info] }: AdobeTargetExtras = {}
+	// The registrations a shared remote script's info carries.
+	{
+		registrations = (info) => info.registrations ?? [info],
+	}: AdobeTargetExtras = {}
 ): Script {
 	let loaded = false;
 	let alloy: AlloyFunction | undefined;
