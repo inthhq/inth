@@ -8,10 +8,12 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { pendo } from './vendors/analytics/pendo';
@@ -179,3 +181,44 @@ describe('Pendo event lifecycle', () => {
 		expect(runtime.stopSendingEvents).toHaveBeenCalledTimes(2);
 	});
 });
+
+describe.each(npmAndRemote('pendo', pendo))(
+	'Pendo consent loader through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			delete window.pendo;
+		});
+
+		it('initializes once after consent, then stops and resumes events', async () => {
+			const scripts = [build({ apiKey: 'dashboard-key' })];
+			loadScripts(scripts, granted);
+			await settleScripts();
+			const loader = getLoader();
+			expect(loader.src).toBe(
+				'https://cdn.pendo.io/agent/static/dashboard-key/pendo.js'
+			);
+			const runtime = {
+				initialize: vi.fn(),
+				startSendingEvents: vi.fn(),
+				stopSendingEvents: vi.fn(),
+			};
+			window.pendo = runtime;
+			loader.dispatchEvent(new Event('load'));
+			await Promise.resolve();
+			expect(runtime.initialize).toHaveBeenCalledExactlyOnceWith({});
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(runtime.stopSendingEvents).toHaveBeenCalledTimes(1);
+			updateScripts(scripts, granted);
+			updateScripts(scripts, ALL_DENIED);
+			await Promise.resolve();
+			expect(runtime.startSendingEvents).not.toHaveBeenCalled();
+			updateScripts(scripts, granted);
+			await Promise.resolve();
+			expect(runtime.startSendingEvents).toHaveBeenCalledTimes(1);
+			expect(runtime.initialize).toHaveBeenCalledTimes(1);
+			expect(getLoader()).toBe(loader);
+		});
+	}
+);

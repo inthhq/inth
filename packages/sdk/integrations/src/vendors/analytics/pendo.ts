@@ -1,11 +1,19 @@
-import type { Script } from '@inth/sdk/engine';
+/* oxlint-disable unicorn/no-thenable -- `if` and `callGlobal` steps have a `then` field. */
+import type { AllConsentNames, Script } from '@inth/sdk/engine';
+import type { ManifestCondition } from '@inth/sdk/manifest-runtime';
 
-import { resolveManifest } from '../../resolve';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type {
+	ManifestStep,
+	ResolvedManifest,
+	VendorManifest,
+} from '../../types';
+import { levelThreeScript } from '../_shared/level-three';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -19,12 +27,120 @@ declare global {
 	}
 }
 
+/**
+ * The script's own consent condition, filled in from the `category` config
+ * value like the manifest's `category`. The vendor switch counts too: a
+ * vendor the visitor turned off reads as every category denied.
+ */
+const categoryHolds = {
+	consent: '{{category}}' as AllConsentNames,
+} as const satisfies ManifestCondition;
+
+const hasApi = {
+	global: ['pendo'],
+	is: 'defined',
+} as const satisfies ManifestCondition;
+
+/**
+ * Flags: `initialized` once `initialize` ran; `on` while events are sent;
+ * `off` once they were stopped; `granting` while an activation runs, cleared
+ * by a withdrawal, even one inside `initialize`; `resume` when an activation
+ * restarts events stopped before.
+ */
+const stopSending = [
+	{
+		then: [
+			{ name: 'off', type: 'setFlag', value: true },
+			{ name: 'on', type: 'setFlag', value: false },
+			{ name: 'granting', type: 'setFlag', value: false },
+			{ global: 'pendo', method: 'stopSendingEvents', type: 'callGlobal' },
+		],
+		type: 'if',
+		when: {
+			all: [{ loaded: true }, { not: { flag: 'off' } }, hasApi],
+		},
+	},
+] as const satisfies ManifestStep[];
+
+/** Runs a microtask after a grant, with consent read again then. */
+const activate = [
+	{
+		then: [
+			{ name: 'granting', type: 'setFlag', value: true },
+			{ name: 'resume', type: 'setFlag', value: false },
+		],
+		type: 'if',
+		when: {
+			all: [{ loaded: true }, categoryHolds, { not: { flag: 'on' } }, hasApi],
+		},
+	},
+	{
+		then: [{ name: 'resume', type: 'setFlag', value: true }],
+		type: 'if',
+		when: { all: [{ flag: 'granting' }, { flag: 'off' }] },
+	},
+	{
+		then: [
+			{ name: 'initialized', type: 'setFlag', value: true },
+			{ name: 'off', type: 'setFlag', value: false },
+			{
+				args: ['{{initializeOptions}}'],
+				global: 'pendo',
+				method: 'initialize',
+				type: 'callGlobal',
+			},
+		],
+		type: 'if',
+		when: { all: [{ flag: 'granting' }, { not: { flag: 'initialized' } }] },
+	},
+	{
+		then: [
+			{ global: 'pendo', method: 'startSendingEvents', type: 'callGlobal' },
+		],
+		type: 'if',
+		when: { all: [{ flag: 'granting' }, { flag: 'resume' }] },
+	},
+	{
+		then: [
+			{ name: 'on', type: 'setFlag', value: true },
+			{ name: 'off', type: 'setFlag', value: false },
+			{ name: 'granting', type: 'setFlag', value: false },
+		],
+		type: 'if',
+		when: { flag: 'granting' },
+	},
+] as const satisfies ManifestStep[];
+
+/** Stops or starts sending events to match consent, once the agent loaded. */
+const applyConsent = [
+	{
+		then: stopSending,
+		type: 'if',
+		when: { not: categoryHolds },
+	},
+	{
+		// Activation waits a microtask, so a grant withdrawn in the same
+		// task never starts Pendo.
+		then: [{ steps: activate, type: 'defer' }],
+		type: 'if',
+		when: { all: [{ loaded: true }, categoryHolds, { not: { flag: 'on' } }] },
+	},
+] as const satisfies ManifestStep[];
+
 /** Pendo's agent, without initialization before consent. */
-export const pendoManifest = {
+export const pendoManifest: VendorManifest = {
 	...vendorManifestContract,
-	category: 'measurement',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	afterLoad: applyConsent,
+	category: '{{category}}',
+	install: [
+		{
+			async: true,
+			src: 'https://cdn.pendo.io/agent/static/{{apiKeyPath}}/pendo.js',
+			type: 'loadScript',
+		},
+	],
+	onConsentChange: applyConsent,
+	onDispose: stopSending,
 	persistAfterConsentRevoked: true,
 	vendor: 'pendo',
 	vendorDetails: {
@@ -33,7 +149,7 @@ export const pendoManifest = {
 		name: 'Pendo',
 		privacyPolicyUrl: 'https://www.pendo.io/legal/privacy-policy/',
 	},
-} as const satisfies VendorManifest;
+};
 
 export interface PendoOptions {
 	/** Public Pendo application key. */
@@ -50,105 +166,93 @@ export interface PendoOptions {
 	scriptUrl?: string;
 }
 
+/**
+ * Builds the serializable manifest behind {@link pendo}. The API key must
+ * already be trimmed and non-empty.
+ */
+export const resolvePendoManifest = function resolvePendoManifest({
+	account,
+	apiKey,
+	category = 'measurement',
+	initializeOptions,
+	visitor,
+}: Omit<PendoOptions, 'scriptUrl'>): ResolvedManifest {
+	const options: Record<string, unknown> = { ...initializeOptions };
+	if (visitor) {
+		options.visitor = visitor;
+	}
+	if (account) {
+		options.account = account;
+	}
+	return getCompiledManifest(pendoManifest, {
+		apiKeyPath: encodeURIComponent(apiKey),
+		category,
+		initializeOptions: options,
+	});
+};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; visitor and account identity stay in the site's code, and
+ * `initializeOptions`, a custom consent condition and `scriptUrl` stay
+ * npm-only. Marked pure so a bundler drops it from an npm bundle that never
+ * reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'pendo',
+		{
+			apiKey: {
+				example: '0123abcd-4567-89ef-0123-456789abcdef',
+				kind: 'id',
+				label: 'API key',
+				pattern: '^[A-Za-z0-9_-]{1,64}$',
+				required: true,
+			},
+		},
+		resolvePendoManifest
+	);
+
 const reusePendo = createScriptReuse<PendoOptions>();
 
-// These callbacks can run in a microtask, outside core's error isolation, so
-// log instead of throwing.
-const missingApi = 'pendo: loader did not install the Pendo API';
-
-const createPendo = function createPendo(
-	options: PendoOptions,
-	apiKey: string
-): Script {
-	const category = options.category ?? 'measurement';
-	const script = resolveManifest(pendoManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			`https://cdn.pendo.io/agent/static/${encodeURIComponent(apiKey)}/pendo.js`
-		),
-	});
-	const initializeOptions = {
-		...options.initializeOptions,
-	};
-	if (options.visitor) {
-		initializeOptions.visitor = options.visitor;
-	}
-	if (options.account) {
-		initializeOptions.account = options.account;
-	}
-	let initialized = false;
-	let hasConsent = false;
-	let loaded = false;
-	let appliedConsent: boolean | undefined;
-	let activationQueued = false;
-	const applyConsent = (): void => {
-		if (!loaded || appliedConsent === hasConsent) {
-			return;
+/**
+ * Logs a loaded agent that installed no `window.pendo`, after each
+ * callback that would have started or stopped it. A manifest cannot log:
+ * `console` is a browser global, so the remote form stays silent.
+ */
+const logMissingApi = function logMissingApi(script: Script): Script {
+	const loaded = new WeakSet<HTMLScriptElement>();
+	const report = (element: HTMLScriptElement | undefined) => {
+		if (element && loaded.has(element) && !window.pendo) {
+			console.error('pendo: loader did not install the Pendo API');
 		}
-		if (!hasConsent) {
-			const api = window.pendo;
-			if (!api) {
-				console.error(missingApi);
-				return;
-			}
-			api.stopSendingEvents();
-			appliedConsent = false;
-			return;
-		}
-		if (activationQueued) {
-			return;
-		}
-		activationQueued = true;
-		queueMicrotask(() => {
-			activationQueued = false;
-			if (!loaded || !hasConsent || appliedConsent === true) {
-				return;
-			}
-			const api = window.pendo;
-			if (!api) {
-				console.error(missingApi);
-				return;
-			}
-			const resume = appliedConsent === false;
-			if (!initialized) {
-				appliedConsent = undefined;
-				api.initialize(initializeOptions);
-				initialized = true;
-			}
-			if (!hasConsent || !loaded) {
-				return;
-			}
-			if (resume) {
-				api.startSendingEvents();
-			}
-			appliedConsent = true;
-		});
 	};
-	return {
-		...script,
-		category,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad({ hasConsent: consent }) {
-			hasConsent = consent;
-		},
-		onConsentChange({ hasConsent: consent }) {
-			hasConsent = consent;
-			applyConsent();
-		},
-		onDispose() {
-			hasConsent = false;
-			applyConsent();
-			loaded = false;
-		},
-		onLoad({ element, hasConsent: consent }) {
-			if (!element?.isConnected) {
-				return;
-			}
-			hasConsent = consent;
-			loaded = true;
-			applyConsent();
-		},
+	const { onConsentChange, onDispose, onError, onLoad } = script;
+	/* oxlint-disable integrations/no-vendor-callbacks -- npm-only: logs a loader that installed no Pendo API, which a manifest cannot */
+	script.onError = (info) => {
+		if (info.element) {
+			loaded.delete(info.element);
+		}
+		onError?.(info);
 	};
+	script.onLoad = (info) => {
+		if (info.element) {
+			loaded.add(info.element);
+		}
+		onLoad?.(info);
+		report(info.element);
+	};
+	script.onConsentChange = (info) => {
+		onConsentChange?.(info);
+		report(info.element);
+	};
+	script.onDispose = (info) => {
+		onDispose?.(info);
+		report(info.element);
+	};
+	/* oxlint-enable integrations/no-vendor-callbacks */
+	return script;
 };
 
 /**
@@ -168,5 +272,12 @@ export const pendo = function pendo(options: PendoOptions): Script {
 			manifest: pendoManifest,
 		});
 	}
-	return reusePendo(options, (saved) => createPendo(saved, apiKey));
+	return reusePendo(options, ({ scriptUrl, ...saved }) =>
+		logMissingApi(
+			withScriptUrl(
+				levelThreeScript(resolvePendoManifest({ ...saved, apiKey })),
+				scriptUrl
+			)
+		)
+	);
 };

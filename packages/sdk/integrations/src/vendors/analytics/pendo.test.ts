@@ -4,7 +4,8 @@ import {
 	expectScriptMatchesIntegration,
 	expectSkippedScript,
 } from '../../__tests__/helpers';
-import { pendo } from './pendo';
+import { manifestLevel } from '../../remote';
+import { pendo, remote } from './pendo';
 
 describe('pendo', () => {
 	it('matches its public registry and export', () => {
@@ -24,6 +25,12 @@ describe('pendo', () => {
 			);
 		}
 	);
+	it('needs manifest runtime level 3 for its consent steps', () => {
+		const manifest = remote.resolve({ apiKey: 'YOUR_API_KEY' });
+
+		expect(manifestLevel(manifest)).toBe(3);
+		expect(manifest.requires).toBe(3);
+	});
 	it('trims identifiers and custom loader URLs', () => {
 		expect(
 			pendo({

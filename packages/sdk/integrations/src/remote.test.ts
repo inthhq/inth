@@ -139,6 +139,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	openaiPixel: ['bzrcdn.openai.com'],
 	optimizelyWeb: ['cdn.optimizely.com'],
 	pardotTracking: ['pi.pardot.com'],
+	pendo: ['cdn.pendo.io'],
 	pinterestTag: ['s.pinimg.com'],
 	pirsch: ['api.pirsch.io'],
 	plausibleAnalytics: ['plausible.io'],
@@ -168,6 +169,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	customerIo: 3,
+	pendo: 3,
 	pirsch: 3,
 };
 

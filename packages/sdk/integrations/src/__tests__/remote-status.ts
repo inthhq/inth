@@ -46,7 +46,6 @@ export const remoteStatus = {
 	gorgiasChat: level3,
 	hubspot: adapter,
 	luckyOrange: adapter,
-	pendo: level3,
 	sentry: adapterSentry,
 	// The helper points zE.s at the loader's element on every grant, also when
 	// zE is already a function (the stub of an earlier grant, or the loaded
