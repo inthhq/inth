@@ -16,6 +16,7 @@ export type InitFile =
 	| 'manifests'
 	| 'manifests3'
 	| 'adapter-activecampaign'
+	| 'adapter-amazon-ads'
 	| 'adapter-databuddy'
 	| 'adapter-fullstory'
 	| 'adapter-gainsight-px'
@@ -28,6 +29,7 @@ export type InitFile =
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	'adapter-activecampaign': '__inthAdapterActivecampaignSrc',
+	'adapter-amazon-ads': '__inthAdapterAmazonAdsSrc',
 	'adapter-databuddy': '__inthAdapterDatabuddySrc',
 	'adapter-fullstory': '__inthAdapterFullstorySrc',
 	'adapter-gainsight-px': '__inthAdapterGainsightPxSrc',

@@ -238,6 +238,7 @@ export const RUNTIME_VALUE_LEVELS: Readonly<
  */
 export const ADAPTER_LEVELS = {
 	activecampaign: 4,
+	'amazon-ads': 4,
 	databuddy: 4,
 	fullstory: 4,
 	'gainsight-px': 4,

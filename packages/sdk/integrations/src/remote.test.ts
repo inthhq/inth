@@ -96,6 +96,7 @@ const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
 const sharedRegistrationCallbacks: Partial<
 	Record<BuiltInScriptIntegrationKey, string[]>
 > = {
+	amazonAdsTag: ['onLoad'],
 	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
 	gainsightPx: ['onDispose', 'onLoad'],
 	luckyOrange: ['onLoad'],
@@ -172,6 +173,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	adobeAnalytics: ['assets.adobedtm.com'],
 	adrollPixel: ['s.adroll.com'],
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
+	amazonAdsTag: ['c.amazon-adsystem.com'],
 	amplitude: ['cdn.amplitude.com'],
 	appcues: ['fast.appcues.com', 'fast.eu.appcues.com'],
 	attentiveTag: ['cdn.attn.tv'],
@@ -248,6 +250,7 @@ const vendorLevels: Partial<
 	Record<BuiltInScriptIntegrationKey, number | ((options: Options) => number)>
 > = {
 	activeCampaignTracking: 4,
+	amazonAdsTag: 4,
 	customerIo: 3,
 	// Session replay names the Databuddy adapter.
 	databuddy: (options) => (options.replay === undefined ? 2 : 4),

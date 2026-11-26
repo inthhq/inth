@@ -21,7 +21,6 @@ export const remoteStatus = {
 	ada: adapter,
 	// The Web SDK mode needs an adapter; at.js loads from a fixed Adobe host.
 	adobeTarget: adapter,
-	amazonAdsTag: adapter,
 	cloudflareZaraz: adapter,
 	defaultComPixel: adapter,
 	// A level 2 manifest cannot express two behaviours its golden trace

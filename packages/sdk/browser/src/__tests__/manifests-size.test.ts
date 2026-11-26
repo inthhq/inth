@@ -50,9 +50,11 @@ import { expect, it } from 'vite-plus/test';
  * and chat lifecycle: 2,794.
  * `inth.adapter-oracle-eloqua.js`, the Eloqua consent dispatcher: 2,074.
  * `inth.adapter-salesforce-pardot.js`, Pardot's consent cycle: 570.
+ * `inth.adapter-amazon-ads.js`, Amazon's queue under consent: 1,516.
  */
 const BUDGETS = {
 	'inth.adapter-activecampaign.js': 1560,
+	'inth.adapter-amazon-ads.js': 1550,
 	'inth.adapter-databuddy.js': 1240,
 	'inth.adapter-fullstory.js': 2130,
 	'inth.adapter-gainsight-px.js': 1510,
@@ -109,6 +111,7 @@ it('keeps adapter code out of the runtime files and the Sentry gate in its own',
 
 it.each([
 	['inth.adapter-activecampaign.js', 'an unmanaged tracker exists'],
+	['inth.adapter-amazon-ads.js', 'amzn-consent.js'],
 	['inth.adapter-hubspot.js', 'belongs to a non-script element'],
 	['inth.adapter-oracle-eloqua.js', 'consent dispatch failed'],
 ])('keeps the code of %s in its own file', (file, message) => {
@@ -118,7 +121,7 @@ it.each([
 			'utf8'
 		);
 
-	// A message only that adapter logs.
+	// A string only that adapter has: a message it logs, or a URL it loads.
 	expect(read(file)).toContain(message);
 	for (const name of [
 		'inth.hosted.js',

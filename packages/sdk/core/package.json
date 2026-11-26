@@ -180,6 +180,11 @@
 			"import": "./dist/manifest-runtime/adapters/hubspot.js",
 			"default": "./dist/manifest-runtime/adapters/hubspot.js"
 		},
+		"./manifest-runtime/adapters/amazon-ads": {
+			"types": "./dist-types/manifest-runtime/adapters/amazon-ads.d.ts",
+			"import": "./dist/manifest-runtime/adapters/amazon-ads.js",
+			"default": "./dist/manifest-runtime/adapters/amazon-ads.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./dist/manifest-runtime/adapters/sentry.js",

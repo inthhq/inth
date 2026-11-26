@@ -379,6 +379,7 @@ describe('on-demand chunks', () => {
 			// only one with a level 3 manifest its level 3 part, and only one
 			// with a manifest that names an adapter that adapter.
 			'manifest-runtime/adapters/activecampaign',
+			'manifest-runtime/adapters/amazon-ads',
 			'manifest-runtime/adapters/databuddy',
 			'manifest-runtime/adapters/fullstory',
 			'manifest-runtime/adapters/gainsight-px',

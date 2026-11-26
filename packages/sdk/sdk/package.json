@@ -226,6 +226,11 @@
 			"import": "./lib/core/dist/manifest-runtime/adapters/hubspot.js",
 			"default": "./lib/core/dist/manifest-runtime/adapters/hubspot.js"
 		},
+		"./manifest-runtime/adapters/amazon-ads": {
+			"types": "./lib/core/dist-types/manifest-runtime/adapters/amazon-ads.d.ts",
+			"import": "./lib/core/dist/manifest-runtime/adapters/amazon-ads.js",
+			"default": "./lib/core/dist/manifest-runtime/adapters/amazon-ads.js"
+		},
 		"./manifest-runtime/adapters/sentry": {
 			"types": "./lib/core/dist-types/manifest-runtime/adapters/sentry.d.ts",
 			"import": "./lib/core/dist/manifest-runtime/adapters/sentry.js",

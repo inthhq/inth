@@ -3,6 +3,7 @@
  */
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -10,6 +11,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { amazonAdsTag } from './vendors/ads-and-pixels/amazon-ads';
 
@@ -56,3 +58,46 @@ describe('Amazon Ads core loader consent contract', () => {
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 });
+
+describe.each(npmAndRemote('amazonAdsTag', amazonAdsTag))(
+	'Amazon Ads dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => {
+			Reflect.deleteProperty(window, 'amzn');
+		});
+		const queued = () =>
+			(window.amzn?.q ?? []).map(([args]) => Array.from(args));
+
+		it('queues the EU tag on marketing consent and drops it on a revoke before amzn.js runs', async () => {
+			const scripts = [
+				build({
+					region: 'EU',
+					tagId: '00000000-0000-0000-0000-000000000000',
+					trackPageView: false,
+				}),
+			];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script')).toBeNull();
+			expect('amzn' in window).toBe(false);
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(document.querySelector('script')?.src).toBe(
+				'https://c.amazon-adsystem.com/aat/amzn.js'
+			);
+			const tag = [
+				['setRegion', 'EU'],
+				['addTag', '00000000-0000-0000-0000-000000000000'],
+			];
+			expect(queued()).toEqual(tag);
+
+			// amzn.js has not run, so the commands never reach Amazon.
+			updateScripts(scripts, ALL_DENIED);
+			expect(queued()).toEqual([]);
+
+			updateScripts(scripts, grantedMarketingConsents);
+			expect(queued()).toEqual(tag);
+		});
+	}
+);

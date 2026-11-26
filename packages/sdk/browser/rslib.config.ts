@@ -35,15 +35,9 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   the Inth server sends, up to manifest level 2. `dist/inth.manifests3.js`
  *   is the same runtime with level 3, loaded in its place when a manifest
  *   requires level 3. Both are served next to `dist/inth.hosted.js`.
- * - `dist/inth.adapter-activecampaign.js` — the ActiveCampaign adapter, the
- *   same way.
- * - `dist/inth.adapter-oracle-eloqua.js` — the Oracle Eloqua adapter, the
- *   same way.
- * - `dist/inth.adapter-salesforce-pardot.js` — the Salesforce Pardot adapter,
- *   the same way.
- * - `dist/inth.adapter-hubspot.js` — the HubSpot adapter, the same way.
- * - `dist/inth.adapter-sentry.js` — the Sentry adapter, which the engine
- *   loads beside the manifest runtime only when a manifest names it.
+ * - `dist/inth.adapter-<id>.js` — each adapter, such as Sentry's in
+ *   `inth.adapter-sentry.js`, which the engine loads beside the manifest
+ *   runtime only when a manifest names it.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
@@ -94,6 +88,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.adapter-oracle-eloqua',
 	'inth.adapter-salesforce-pardot',
 	'inth.adapter-hubspot',
+	'inth.adapter-amazon-ads',
 	'inth.adapter-sentry',
 	'inth.adapter-databuddy',
 	'inth.adapter-fullstory',
@@ -285,6 +280,10 @@ export default defineConfig({
 		scriptTagLib(
 			'inth.adapter-hubspot',
 			'./src/entries/cdn-adapter-hubspot.ts'
+		),
+		scriptTagLib(
+			'inth.adapter-amazon-ads',
+			'./src/entries/cdn-adapter-amazon-ads.ts'
 		),
 		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib(

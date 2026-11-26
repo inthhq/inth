@@ -11,6 +11,7 @@ const ADAPTER_MODULES: Record<
 > = {
 	activecampaign: async () =>
 		(await import('./activecampaign')).activeCampaignAdapter,
+	'amazon-ads': async () => (await import('./amazon-ads')).amazonAdsAdapter,
 	databuddy: async () => (await import('./databuddy')).databuddyAdapter,
 	fullstory: async () => (await import('./fullstory')).fullStoryAdapter,
 	'gainsight-px': async () =>

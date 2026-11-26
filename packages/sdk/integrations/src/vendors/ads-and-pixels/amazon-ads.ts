@@ -1,30 +1,29 @@
-import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { amazonAdsScript } from '@inth/sdk/manifest-runtime/adapters/amazon-ads';
+import type {
+	AmazonAdsAdapterOptions,
+	AmazonAdsConsent,
+	AmazonAdsFunction,
+} from '@inth/sdk/manifest-runtime/adapters/amazon-ads';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import {
+	resolveScriptUrl,
+	trimToUndefined,
+	withScriptUrl,
+} from '../_shared/script-url';
 
-/** A queued Amazon command and the time the caller issued it. */
-export type AmazonAdsQueueEntry = [args: IArguments, timestamp: number];
-
-/** Amazon's callable tag API, including its pre-load command queue. */
-export interface AmazonAdsFunction {
-	(...args: unknown[]): void;
-	q?: AmazonAdsQueueEntry[];
-	version?: string;
-}
-
-/** Documented input to Amazon's optional consent helper. */
-export interface AmazonAdsConsent {
-	countryCode: string;
-	enableAdStorage: boolean;
-	enableUserData: boolean;
-	ipAddress?: string;
-	gpp?: string;
-}
+export type {
+	AmazonAdsConsent,
+	AmazonAdsFunction,
+	AmazonAdsQueueEntry,
+} from '@inth/sdk/manifest-runtime/adapters/amazon-ads';
 
 declare global {
 	interface Window {
@@ -59,8 +58,8 @@ export interface AmazonAdsTagOptions {
 }
 
 /**
- * Amazon Ads metadata and main loader. Amazon's nested timestamp queue and
- * optional consent helper are implemented in the consent-gated callbacks.
+ * Amazon Ads metadata and main loader. The Amazon Ads adapter in `@inth/sdk`
+ * runs Amazon's timestamped queue under consent.
  *
  * @see https://github.com/amzn/ads-pao-amznjs-gtm-template
  * @see https://advertising.amazon.com/legal/product-terms
@@ -68,8 +67,14 @@ export interface AmazonAdsTagOptions {
 export const amazonAdsTagManifest = {
 	...vendorManifestContract,
 	category: 'marketing',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	install: [
+		{
+			async: true,
+			src: 'https://c.amazon-adsystem.com/aat/amzn.js',
+			type: 'loadScript',
+		},
+	],
+	observeConsentBeforeLoad: true,
 	persistAfterConsentRevoked: true,
 	vendor: 'amazon-ads',
 	vendorDetails: {
@@ -79,257 +84,85 @@ export const amazonAdsTagManifest = {
 		privacyPolicyUrl:
 			'https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ',
 	},
-} satisfies VendorManifest;
+} as const satisfies VendorManifest;
 
-// Different configurations can borrow the same Inth-created ACS element.
-const helperOwners = new WeakMap<HTMLScriptElement, number>();
+/**
+ * The manifest for Amazon Ads: amzn.js from Amazon's host, and the Amazon
+ * Ads adapter with the tag it adds. The npm helper and the Inth server both
+ * build it here.
+ */
+export const resolveAmazonAdsTagManifest =
+	function resolveAmazonAdsTagManifest({
+		region,
+		tagId,
+		trackPageView,
+	}: Pick<
+		AmazonAdsTagOptions,
+		'region' | 'tagId' | 'trackPageView'
+	>): ResolvedManifest {
+		const options: AmazonAdsAdapterOptions = {
+			region: region ?? 'NA',
+			tagId,
+			trackPageView: trackPageView !== false,
+		};
+		return {
+			...getCompiledManifest(amazonAdsTagManifest, {}),
+			adapter: { id: 'amazon-ads', options: { ...options } },
+			requires: 4,
+		};
+	};
 
-interface ConsentOwner {
-	readonly allowed: boolean;
-	readonly details: Pick<AmazonAdsConsent, 'countryCode' | 'ipAddress' | 'gpp'>;
-}
-
-interface SharedConsent {
-	owners: Set<ConsentOwner>;
-	lastConsent?: AmazonAdsConsent;
-	api?: Window['amznConsent'];
-}
-
-// ACS is global even when distinct configurations borrow different elements.
-const consentOwners = new WeakMap<Document, SharedConsent>();
+/**
+ * What the Inth server may set for Amazon Ads. The visitor's country, IP
+ * address and GPP string are per-visitor values, PageView attributes take
+ * free keys, and the script URLs are the site's own: all npm-only.
+ * Marked pure so a bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'amazonAdsTag',
+		{
+			region: {
+				default: 'NA',
+				kind: 'enum',
+				label: 'Region of the Amazon advertising account',
+				values: ['NA', 'EU'],
+			},
+			tagId: {
+				example: '00000000-0000-0000-0000-000000000000',
+				kind: 'id',
+				label: 'Tag ID',
+				pattern:
+					'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$',
+				required: true,
+			},
+			trackPageView: {
+				default: true,
+				kind: 'boolean',
+				label: 'Send a PageView once the tag starts',
+			},
+		},
+		resolveAmazonAdsTagManifest
+	);
 
 const createAmazonAdsTag = (options: AmazonAdsTagOptions): Script => {
-	const countryCode = trimToUndefined(options.countryCode)?.toUpperCase();
-	const script = resolveManifest(amazonAdsTagManifest, {
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://c.amazon-adsystem.com/aat/amzn.js'
-		),
-	});
-	let allowed = false;
-	let initialized = false;
-	let disposed = false;
-	let sharedConsent: SharedConsent | undefined;
-	const consentOwner: ConsentOwner = {
-		get allowed() {
-			return allowed;
-		},
-		details: { countryCode: countryCode ?? '' },
-	};
-	if (options.ipAddress !== undefined) {
-		consentOwner.details.ipAddress = options.ipAddress;
-	}
-	if (options.gpp !== undefined) {
-		consentOwner.details.gpp = options.gpp;
-	}
-	let helper: HTMLScriptElement | undefined;
-	let releaseHelper: (() => void) | undefined;
-	const pendingCommands = new Set<AmazonAdsQueueEntry>();
-
-	const ensureQueue = () => {
-		if (window.amzn) {
-			return;
-		}
-		const pending: AmazonAdsQueueEntry[] = [];
-		const queue = function queue() {
-			// oxlint-disable-next-line prefer-rest-params -- Match Amazon's arguments-and-timestamp queue.
-			pending.push([arguments, Date.now()]);
-		};
-		queue.q = pending;
-		queue.version = '0.0';
-		window.amzn = queue;
-	};
-
-	const forwardConsent = () => {
-		const state = sharedConsent;
-		if (!state || typeof window.amznConsent !== 'function') {
-			return;
-		}
-		const source =
-			(state.owners.has(consentOwner) && allowed ? consentOwner : undefined) ??
-			[...state.owners].find((owner) => owner.allowed) ??
-			state.owners.values().next().value ??
-			consentOwner;
-		const permitted = state.owners.has(source) && source.allowed;
-		const consent: AmazonAdsConsent = {
-			...source.details,
-			enableAdStorage: permitted,
-			enableUserData: permitted,
-		};
-		const previous = state.lastConsent;
-		if (
-			state.api === window.amznConsent &&
-			previous?.countryCode === consent.countryCode &&
-			previous.enableAdStorage === permitted &&
-			previous.ipAddress === consent.ipAddress &&
-			previous.gpp === consent.gpp
-		) {
-			return;
-		}
-		window.amznConsent(consent);
-		state.lastConsent = consent;
-		state.api = window.amznConsent;
-	};
-
-	const initialize = () => {
-		if (
-			!allowed ||
-			initialized ||
-			(countryCode && typeof window.amznConsent !== 'function')
-		) {
-			return;
-		}
-		ensureQueue();
-		const queue = window.amzn?.q;
-		const previousLength = queue?.length ?? 0;
-		window.amzn?.('setRegion', options.region ?? 'NA');
-		window.amzn?.('addTag', options.tagId);
-		if (options.trackPageView !== false) {
-			window.amzn?.('trackEvent', 'PageView', options.pageViewAttributes ?? {});
-		}
-		for (const entry of queue?.slice(previousLength) ?? []) {
-			pendingCommands.add(entry);
-		}
-		initialized = true;
-	};
-
-	const discardPendingCommands = () => {
-		const queue = window.amzn?.q;
-		if (queue) {
-			for (let index = queue.length - 1; index >= 0; index -= 1) {
-				const entry = queue[index];
-				if (entry && pendingCommands.has(entry)) {
-					queue.splice(index, 1);
-					initialized = false;
-				}
-			}
-		}
-		pendingCommands.clear();
-	};
-
-	const startConsentHelper = (info: ScriptCallbackInfo) => {
-		if (!countryCode || window.amznConsent || helper) {
-			return;
-		}
-		const helperId = `${info.elementId}-consent`;
-		const existing = document.getElementById(helperId);
-		const existingHelper =
-			existing instanceof HTMLScriptElement ? existing : undefined;
-		helper = existingHelper ?? document.createElement('script');
-		if (!existingHelper) {
-			helper.id = helperId;
-			// Ordered dynamic scripts execute the helper before the core-owned tag.
-			helper.async = false;
-			helper.src = resolveScriptUrl(
+	const { adapter, ...manifest } = resolveAmazonAdsTagManifest(options);
+	return amazonAdsScript(
+		// The site's own amzn.js URL is npm-only.
+		withScriptUrl(resolvedManifestToScript(manifest), options.scriptUrl),
+		adapter?.options as unknown as AmazonAdsAdapterOptions,
+		{
+			consentScriptUrl: resolveScriptUrl(
 				options.consentScriptUrl,
 				'https://c.amazon-adsystem.com/aat/amzn-consent.js'
-			);
-			if (info.element?.nonce) {
-				helper.nonce = info.element.nonce;
-			}
+			),
+			countryCode: trimToUndefined(options.countryCode)?.toUpperCase(),
+			gpp: options.gpp,
+			ipAddress: options.ipAddress,
+			pageViewAttributes: options.pageViewAttributes,
 		}
-		const element = helper;
-		if (!existingHelper || helperOwners.has(element)) {
-			helperOwners.set(element, (helperOwners.get(element) ?? 0) + 1);
-		}
-		const completed = (event: Event) => {
-			element.removeEventListener('load', completed);
-			element.removeEventListener('error', completed);
-			if (disposed) {
-				return;
-			}
-			if (event.type === 'error') {
-				console.error(
-					'amazonAdsTag: consent helper failed to load. Reload to retry.'
-				);
-				return;
-			}
-			forwardConsent();
-			initialize();
-		};
-		releaseHelper = () => {
-			element.removeEventListener('load', completed);
-			element.removeEventListener('error', completed);
-			const owners = helperOwners.get(element);
-			if (owners === 1) {
-				helperOwners.delete(element);
-				element.remove();
-			} else if (owners !== undefined) {
-				helperOwners.set(element, owners - 1);
-			}
-			helper = undefined;
-		};
-		helper.addEventListener('load', completed, { once: true });
-		helper.addEventListener('error', completed, { once: true });
-		if (!existingHelper) {
-			document.head.appendChild(helper);
-		}
-	};
-
-	const update = (info: ScriptCallbackInfo) => {
-		if (info.replacing) {
-			return;
-		}
-		const changed = allowed !== info.hasConsent;
-		allowed = info.hasConsent;
-		if (countryCode && !sharedConsent) {
-			sharedConsent = consentOwners.get(document) ?? { owners: new Set() };
-			consentOwners.set(document, sharedConsent);
-			sharedConsent.owners.add(consentOwner);
-		}
-		if (!allowed) {
-			discardPendingCommands();
-			if (window.amzn) {
-				forwardConsent();
-			}
-			return;
-		}
-		if (!changed) {
-			return;
-		}
-		ensureQueue();
-		startConsentHelper(info);
-		forwardConsent();
-		initialize();
-	};
-
-	return {
-		...script,
-		async: !countryCode,
-		observeConsentBeforeLoad: true,
-		// oxlint-disable-next-line integrations/no-vendor-callbacks -- pending conversion
-		onBeforeLoad: update,
-		onConsentChange: update,
-		onDispose: (info) => {
-			disposed = true;
-			// Hold this permission until incoming membership is known. A
-			// replacement can include a real withdrawal, so read current consent.
-			allowed =
-				info.afterReplacement !== undefined &&
-				(info.getCurrentConsent?.().hasConsent ?? info.hasConsent);
-			discardPendingCommands();
-			releaseHelper?.();
-			const finish = () => {
-				allowed = false;
-				sharedConsent?.owners.delete(consentOwner);
-				try {
-					forwardConsent();
-				} finally {
-					if (
-						sharedConsent?.owners.size === 0 &&
-						consentOwners.get(document) === sharedConsent
-					) {
-						consentOwners.delete(document);
-					}
-				}
-			};
-			if (info.afterReplacement) {
-				info.afterReplacement(finish);
-			} else {
-				finish();
-			}
-		},
-	};
+	);
 };
 
 const reuseAmazonAdsTag = createScriptReuse<AmazonAdsTagOptions>();
