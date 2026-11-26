@@ -587,6 +587,80 @@ describe('remoteScripts', () => {
 		runtime.dispose();
 	});
 
+	test('does not keep a skipped entry because a code script with its ID started', async () => {
+		const onDebug = vi.fn<(event: ScriptLoaderDebugEvent) => void>();
+		const answer = Promise.withResolvers<Record<string, unknown>>();
+		const withAccount = (account: string, overrides = {}) =>
+			load(
+				acmeManifest({
+					setupSteps: [
+						{
+							queue: 'acmeQueue',
+							type: 'pushToQueue',
+							value: ['init', account],
+						},
+					],
+					...overrides,
+				})
+			);
+		const options = {
+			enabled: true,
+			mode: initMode(() => answer.promise),
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: true,
+				initialPolicyResolution: matchedResolution(
+					optInRule({ id: 'opt-in' })
+				),
+				initialScriptRegistry: {
+					load: withAccount('ACME-OLD', { alwaysLoad: true }),
+				},
+			},
+			remoteScripts: true,
+			scriptLoader: { onDebug },
+		} satisfies Parameters<typeof createConsentProviderRuntime>[0];
+		const runtime = createConsentProviderRuntime(
+			{
+				...options,
+				scripts: [
+					{
+						alwaysLoad: true,
+						category: 'marketing',
+						id: 'acme-pixel',
+						src: 'https://cdn.acme.example/own-copy.js',
+					},
+				],
+			},
+			defaultRuntimeModules
+		);
+		runtime.start();
+		await vi.waitFor(() =>
+			expect(tags('https://cdn.acme.example/own-copy.js')).toHaveLength(1)
+		);
+		// The server entry was built and skipped: code wins.
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({ action: 'skipped', scriptId: 'acme-pixel' })
+			)
+		);
+
+		// The new list waits for marketing, which opt-in denies.
+		answer.resolve({ scriptRegistry: { load: withAccount('ACME-NEW') } });
+		await vi.waitFor(() =>
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+		);
+		await runtime.update({ ...options, scripts: [] });
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(tags()).toHaveLength(0);
+		expect((window as { acmeQueue?: unknown[] }).acmeQueue ?? []).not.toContainEqual(
+			['init', 'ACME-OLD']
+		);
+		runtime.dispose();
+	});
+
 	test('stops a running script when a later init moves it to a denied category', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({

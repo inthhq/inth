@@ -918,8 +918,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	): Script => {
 		// By the script's own ID: an adapter can register a script under an
 		// ID other than its entry's, such as Default Forms.
+		// Only when this remote script is the registered one: a code script
+		// that won the ID has its own element.
 		if (
 			!earlier ||
+			activeRemote.get(earlier.id) !== earlier ||
 			!(loadedElements.has(earlier.id) || retainedElements.has(earlier.id))
 		) {
 			return fresh;
