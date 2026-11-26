@@ -72,6 +72,12 @@ export const adapterProblem = function adapterProblem(
 	if (!isLoaded(entry)) {
 		return `its ${String(id)} adapter ${entry ? `did not load: ${entry.failure}` : 'is not loaded'}`;
 	}
-	const problem = entry.problem(adapter.options);
+	let problem: string | undefined;
+	try {
+		problem = entry.problem(adapter.options);
+	} catch (error) {
+		// Not `String(error)`, which throws for a value whose toString does.
+		problem = `its check failed${error instanceof Error ? `: ${error.message}` : ''}`;
+	}
 	return problem && `its ${String(id)} adapter options are wrong: ${problem}`;
 };

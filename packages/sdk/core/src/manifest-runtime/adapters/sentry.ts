@@ -1523,13 +1523,15 @@ const wrongField = (
 			)
 		: '(not an object)';
 
-const isHttpsUrl = (value: unknown): boolean => {
-	try {
-		return new URL(value as string).protocol === 'https:';
-	} catch {
-		return false;
-	}
-};
+/**
+ * A DSN on Sentry's own ingest host, as the Inth server builds one from its
+ * parts. A self-hosted Sentry stays npm-only.
+ */
+const SENTRY_DSN =
+	/^https:\/\/[0-9A-Za-z]{1,64}@o\d{1,20}\.ingest(?:\.[a-z]{2,10})?\.sentry\.io\/\d{1,20}$/u;
+
+const matches = (value: unknown, pattern: RegExp): boolean =>
+	typeof value === 'string' && pattern.test(value);
 
 const OPTION_NAMES: ReadonlySet<string> = new Set([
 	'dsn',
@@ -1550,7 +1552,8 @@ const REPLAY_NAMES: ReadonlySet<string> = new Set([
 /**
  * Why `options` are not {@link SentryAdapterOptions} the Inth server may
  * send, or `undefined`. It refuses any name it does not know, so no option
- * can carry code or a URL other than the DSN.
+ * can carry code or a URL other than the DSN, and checks each value's type
+ * without converting it.
  */
 // oxlint-disable-next-line complexity -- One check per option.
 export const sentryOptionsProblem = function sentryOptionsProblem(
@@ -1561,10 +1564,10 @@ export const sentryOptionsProblem = function sentryOptionsProblem(
 		return `it has the unknown option ${extra}`;
 	}
 	const { replay } = options;
-	if (!isHttpsUrl(options.dsn)) {
-		return 'its dsn is not an https URL';
+	if (!matches(options.dsn, SENTRY_DSN)) {
+		return 'its dsn is not a sentry.io DSN as the Inth server builds one';
 	}
-	if (!SENTRY_VERSION.test(String(options.version))) {
+	if (!matches(options.version, SENTRY_VERSION)) {
 		return 'its version is not a version number';
 	}
 	if (

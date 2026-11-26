@@ -101,7 +101,7 @@ describe('adapter levels', () => {
 
 describe('parsing a manifest that names an adapter', () => {
 	it("is refused by the runtime's own parser, which runs no adapters", () => {
-		expect(runtime.parseResolvedManifest(sentryManifest())).toEqual({
+		expect(runtime.parseResolvedManifest(sentryManifest())).toMatchObject({
 			ok: false,
 			reason: 'it has the unknown field adapter',
 		});
@@ -195,7 +195,7 @@ describe('parsing a manifest that names an adapter', () => {
 			'its sentry adapter options are wrong: it has the unknown option beforeSend'
 		);
 		expect(withOptions({ dsn: 'http://public@o0.ingest.sentry.io/0' })).toBe(
-			'its sentry adapter options are wrong: its dsn is not an https URL'
+			'its sentry adapter options are wrong: its dsn is not a sentry.io DSN as the Inth server builds one'
 		);
 		expect(withOptions({ version: '11.4.0/../../evil' })).toBe(
 			'its sentry adapter options are wrong: its version is not a version number'
@@ -219,6 +219,60 @@ describe('parsing a manifest that names an adapter', () => {
 			})
 		).toBe(
 			'its sentry adapter options are wrong: its replay options have the unknown or wrong option maskAllText'
+		);
+	});
+});
+
+describe('the Sentry adapter options check', () => {
+	const problem = (overrides: Record<string, unknown>) =>
+		sentry.sentryOptionsProblem(sentryOptions(overrides));
+
+	it.each([
+		['an object whose toString is null', { toString: null }],
+		['a list holding a version', ['11.4.0']],
+		['a number', 11],
+	])('refuses a version that is %s, without throwing', (_label, version) => {
+		expect(problem({ version })).toBe('its version is not a version number');
+	});
+
+	it.each([
+		['a list holding a DSN', ['https://public@o0.ingest.sentry.io/0']],
+		['an object whose toString is null', { toString: null }],
+		['a self-hosted Sentry', 'https://public@sentry.example.com/1'],
+		['another host under sentry.io', 'https://public@evil.sentry.io/1'],
+		['a path after the project', 'https://public@o0.ingest.sentry.io/0/x'],
+		['a project that is not a number', 'https://public@o0.ingest.sentry.io/a'],
+		['a port', 'https://public@o0.ingest.sentry.io:8443/0'],
+	])('refuses a dsn that is %s', (_label, dsn) => {
+		expect(problem({ dsn })).toBe(
+			'its dsn is not a sentry.io DSN as the Inth server builds one'
+		);
+	});
+
+	it.each([
+		'https://public@o0.ingest.sentry.io/0',
+		'https://abc123@o123456.ingest.us.sentry.io/7890',
+		'https://abc123@o1.ingest.de.sentry.io/2',
+	])('accepts the DSN %s', (dsn) => {
+		expect(problem({ dsn })).toBeUndefined();
+	});
+});
+
+describe('an adapter whose options check throws', () => {
+	it('refuses only that manifest', async () => {
+		const throwing = {
+			...sentry.sentryAdapter,
+			problem: () => {
+				throw new Error('broken check');
+			},
+		};
+		const adapted = runtime.withAdapters(base(), () =>
+			Promise.resolve(throwing)
+		);
+		await adapted.prepare?.([sentryManifest()]);
+
+		expect(reasonFrom(adapted, sentryManifest())).toBe(
+			'its sentry adapter options are wrong: its check failed: broken check'
 		);
 	});
 });
