@@ -30,15 +30,16 @@ import { expect, it } from 'vite-plus/test';
  * with those and level 3's `requires` check, flag names and `lost` outside
  * a callback, 11,592 with `globals`, 11,630 with the `defer` step, 11,817
  * with the call-time checks, and 11,936 with the later-run, refusal and
- * `ifNullish` changes. Level 4 leaves them about there: the engine loads,
- * checks and runs adapters (`withAdapters`), so neither runtime file has
- * adapter code.
- * `inth.adapter-sentry.js`, the Sentry consent gate: 6,215.
+ * `ifNullish` changes. Level 4 leaves them at 9,576 and 11,968: the engine
+ * loads, checks and runs adapters (`withAdapters`), so neither runtime file
+ * has adapter code. `inth.adapter-sentry.js`, the Sentry consent gate:
+ * 6,215, then 6,268 with a type check on every option and the sentry.io
+ * DSN pattern.
  */
 const BUDGETS = {
-	'inth.adapter-sentry.js': 6250,
+	'inth.adapter-sentry.js': 6280,
 	'inth.manifests.js': 9590,
-	'inth.manifests3.js': 11975,
+	'inth.manifests3.js': 11980,
 };
 
 it.each(Object.entries(BUDGETS))(
