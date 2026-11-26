@@ -1,0 +1,264 @@
+{
+	"name": "adroll",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{ "step": "grant" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "deny" },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			}
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			}
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			}
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			}
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "remove-element" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			},
+			{ "step": "load-detached" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{ "step": "grant-then-deny" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://s.adroll.com/j/advertiser/roundtrip.js"
+				},
+				"async": true
+			},
+			{ "global": "__adroll_loaded", "value": true },
+			{
+				"global": "adroll",
+				"value": {
+					"[Array]": [["track", { "[Arguments]": ["pageView"] }]],
+					"f": ["setProperties", "identify", "track"],
+					"identify": "[Function]",
+					"setProperties": "[Function]",
+					"track": "[Function]"
+				}
+			},
+			{ "global": "adroll_adv_id", "value": "advertiser" },
+			{ "global": "adroll_pix_id", "value": "pixel" },
+			{ "global": "adroll_version", "value": "2.0" },
+			{ "step": "load-detached" },
+			{ "load": "https://s.adroll.com/j/advertiser/roundtrip.js" },
+			{
+				"global": "adroll",
+				"value": {
+					"identify": "[stub adroll.identify]",
+					"setProperties": "[stub adroll.setProperties]",
+					"track": "[stub adroll.track]"
+				}
+			},
+			{ "step": "grant" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{
+				"remove": "[<script> #inth-#1 https://s.adroll.com/j/advertiser/roundtrip.js]"
+			}
+		]
+	}
+}
