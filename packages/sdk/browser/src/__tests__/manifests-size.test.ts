@@ -18,14 +18,16 @@ import { expect, it } from 'vite-plus/test';
  * to 6,264, the checks on what a step calls and writes to 6,594, and level 3
  * to 6,665, since its steps build into `inth.manifests3.js` only. Refusing
  * prototype names in every name, removing tags nested steps insert on
- * dispose, and tying a promise to its load brought it to 6,793.
- * `inth.manifests3.js`, the same runtime with level 3: 8,986, then 9,126
- * with those and level 3's `requires` check, flag names and `lost` outside
- * a callback.
+ * dispose, and tying a promise to its load brought it to 6,793, and
+ * `globals` to 9,267: about 1,400 for the list of platform globals no
+ * manifest may declare, the rest for the root, native call and browser
+ * object checks. `inth.manifests3.js`, the same runtime with level 3:
+ * 8,986, then 9,126 with those and level 3's `requires` check, flag names
+ * and `lost` outside a callback, and 11,592 with `globals`.
  */
 const BUDGETS = {
-	'inth.manifests.js': 6830,
-	'inth.manifests3.js': 9160,
+	'inth.manifests.js': 9300,
+	'inth.manifests3.js': 11630,
 };
 
 it.each(Object.entries(BUDGETS))(
