@@ -1,6 +1,8 @@
 /**
  * @vitest-environment jsdom
  */
+import type { Script } from '@inth/sdk-core';
+import type { ResolvedManifest } from '@inth/sdk-core/manifest-runtime';
 import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 const boot = vi.hoisted(() => ({ script: null as Element | null }));
@@ -17,7 +19,8 @@ const { loadManifestsFile } = await import('../init/manifests-import');
 
 afterEach(() => {
 	boot.script = null;
-	loadPartFile.mockClear();
+	loadPartFile.mockReset();
+	loadPartFile.mockImplementation((key: string) => Promise.resolve({ key }));
 });
 
 describe('loadManifestsFile', () => {
@@ -86,7 +89,7 @@ describe('loadManifestsFile', () => {
 			expect.stringMatching(/\/sdk\/inth\.manifests3\.js\?v=/u),
 			'abc123'
 		);
-		expect(runtime).toEqual({ key: '__inthManifests3' });
+		expect(runtime).toMatchObject({ key: '__inthManifests3' });
 	});
 
 	test('falls back to inth.manifests.js for the first list when inth.manifests3.js fails', async () => {
@@ -135,7 +138,7 @@ describe('loadManifestsFile', () => {
 			'abc123'
 		);
 		expect(runtime.prepare?.([{ requires: 2 }, {}])).toBeUndefined();
-		await expect(runtime.prepare?.(levelThree)).resolves.toEqual({
+		await expect(runtime.prepare?.(levelThree)).resolves.toMatchObject({
 			key: '__inthManifests3',
 		});
 		expect(loadPartFile).toHaveBeenLastCalledWith(
@@ -143,5 +146,123 @@ describe('loadManifestsFile', () => {
 			expect.stringMatching(/\/sdk\/inth\.manifests3\.js\?v=/u),
 			'abc123'
 		);
+	});
+
+	describe('adapters', () => {
+		const sentryAdapter = {
+			id: 'sentry',
+			problem: () => undefined,
+			script: (base: Script) => ({ ...base, adapted: true }),
+		};
+		const manifest = {
+			adapter: { id: 'sentry', options: {} },
+			category: 'measurement',
+			requires: 4,
+			vendor: 'sentry',
+		};
+		/** A runtime file whose own parser accepts the rest of any manifest. */
+		const runtimeFile = (key: string) => ({
+			key,
+			parseResolvedManifest: (value: unknown) => ({
+				manifest: value,
+				ok: true,
+			}),
+			resolvedManifestToScript: (value: ResolvedManifest): Script => ({
+				category: value.category,
+				id: value.vendor,
+				vendor: value.vendor,
+			}),
+		});
+
+		afterEach(() => {
+			delete (window as { __inthAdapterSentrySrc?: unknown })
+				.__inthAdapterSentrySrc;
+		});
+
+		test('loads inth.adapter-sentry.js beside inth.js, with the nonce, for a list that names it', async () => {
+			initTag({ 'data-nonce': 'abc123' });
+			loadPartFile.mockImplementation(
+				(key: string) =>
+					Promise.resolve(
+						key === '__inthAdapterSentry'
+							? { adapter: sentryAdapter, key }
+							: runtimeFile(key)
+					) as never
+			);
+
+			const runtime = await loadManifestsFile([manifest]);
+			await runtime.prepare?.([manifest]);
+
+			expect(loadPartFile).toHaveBeenLastCalledWith(
+				'__inthAdapterSentry',
+				expect.stringMatching(/\/sdk\/inth\.adapter-sentry\.js\?v=/u),
+				'abc123'
+			);
+			const parsed = runtime.parseResolvedManifest(manifest);
+			expect(parsed.ok).toBe(true);
+			expect(runtime.resolvedManifestToScript(manifest as never)).toMatchObject(
+				{ adapted: true, vendor: 'sentry' }
+			);
+		});
+
+		test('loads no adapter for a list that names none', async () => {
+			initTag();
+
+			const runtime = await loadManifestsFile([{ requires: 2 }]);
+
+			expect(runtime.prepare?.([{ requires: 2 }])).toBeUndefined();
+			expect(loadPartFile).toHaveBeenCalledExactlyOnceWith(
+				'__inthManifests',
+				expect.any(String),
+				undefined
+			);
+		});
+
+		test('uses data-adapter-sentry-src from the init tag, then the backend global', async () => {
+			initTag({ 'data-adapter-sentry-src': '/files/sentry.js' });
+			loadPartFile.mockImplementation(
+				(key: string) =>
+					Promise.resolve(
+						key === '__inthAdapterSentry'
+							? { adapter: sentryAdapter, key }
+							: runtimeFile(key)
+					) as never
+			);
+
+			await (await loadManifestsFile([manifest])).prepare?.([manifest]);
+			expect(loadPartFile).toHaveBeenLastCalledWith(
+				'__inthAdapterSentry',
+				'/files/sentry.js',
+				undefined
+			);
+
+			(window as { __inthAdapterSentrySrc?: string }).__inthAdapterSentrySrc =
+				'https://backend.example/sentry.js';
+			await (await loadManifestsFile([manifest])).prepare?.([manifest]);
+			expect(loadPartFile).toHaveBeenLastCalledWith(
+				'__inthAdapterSentry',
+				'https://backend.example/sentry.js',
+				undefined
+			);
+		});
+
+		test('refuses a manifest whose adapter file did not load, saying where it looked', async () => {
+			initTag({ 'data-adapter-sentry-src': '/files/sentry.js' });
+			loadPartFile.mockImplementation(
+				(key: string) =>
+					Promise.resolve(
+						key === '__inthAdapterSentry' ? undefined : runtimeFile(key)
+					) as never
+			);
+
+			const runtime = await loadManifestsFile([manifest]);
+			await runtime.prepare?.([manifest]);
+
+			expect(runtime.parseResolvedManifest(manifest)).toEqual({
+				ok: false,
+				reason:
+					'its sentry adapter did not load: inth.adapter-sentry.js did not load from /files/sentry.js, or is from another release',
+			});
+		});
 	});
 });

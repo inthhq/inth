@@ -35,6 +35,8 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   the Inth server sends, up to manifest level 2. `dist/inth.manifests3.js`
  *   is the same runtime with level 3, loaded in its place when a manifest
  *   requires level 3. Both are served next to `dist/inth.hosted.js`.
+ * - `dist/inth.adapter-sentry.js` — the Sentry adapter, which the engine
+ *   loads beside the manifest runtime only when a manifest names it.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
@@ -81,6 +83,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.gpp',
 	'inth.manifests',
 	'inth.manifests3',
+	'inth.adapter-sentry',
 ]);
 
 /**
@@ -252,6 +255,7 @@ export default defineConfig({
 		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
 		scriptTagLib('inth.manifests', './src/entries/cdn-manifests.ts'),
 		scriptTagLib('inth.manifests3', './src/entries/cdn-manifests3.ts'),
+		scriptTagLib('inth.adapter-sentry', './src/entries/cdn-adapter-sentry.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),

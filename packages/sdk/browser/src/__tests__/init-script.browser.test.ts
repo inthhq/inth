@@ -886,6 +886,26 @@ describe('scripts the Inth server lists', () => {
 		expect(manifestsRequested(win)).toBe(false);
 	});
 
+	it('loads the adapter a listed manifest names from inth.adapter-sentry.js, and runs the manifest with it', async () => {
+		const win = await open({ remote: 'adapter' });
+		const sentryTag = () =>
+			win.document.querySelector(
+				'script[src="https://sentry-cdn.invalid/bundle.min.js"]'
+			);
+
+		// The tag goes in only once the entry parsed and built with its adapter.
+		await expect.poll(sentryTag, { timeout: 8000 }).not.toBeNull();
+		expect(requested(win, 'inth.adapter-sentry.js')).toBe(true);
+		expect(requested(win, 'inth.manifests3.js')).toBe(true);
+	});
+
+	it('loads no adapter file for a list that names no adapter', async () => {
+		const win = await open({ remote: 'always' });
+
+		await expect.poll(() => win.__ran, { timeout: 8000 }).toContain('remote');
+		expect(requested(win, 'inth.adapter-sentry.js')).toBe(false);
+	});
+
 	it('loads one that may run before a choice through the engine and inth.manifests.js', async () => {
 		const win = await open({ remote: 'always' });
 

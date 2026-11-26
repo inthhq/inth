@@ -10,6 +10,10 @@
  * @internal
  */
 
+import type {
+	AdapterId,
+	ManifestAdapter,
+} from '@inth/sdk-core/manifest-runtime';
 import type { RemoteManifestRuntime } from '@inth/sdk-core/modules/script-loader';
 
 import type { PartFile } from './part-file';
@@ -26,3 +30,17 @@ export const LEVEL_THREE_KEY = '__inthManifests3';
 
 /** What `inth.manifests.js` and `inth.manifests3.js` publish. @internal */
 export interface ManifestsFile extends PartFile, RemoteManifestRuntime {}
+
+/**
+ * Globals each adapter's file (`inth.adapter-<id>.js`) publishes its
+ * {@link AdapterFile} on. The engine loads one only for a list in which a
+ * manifest names that adapter, and installs it into the runtime file.
+ */
+export const ADAPTER_KEYS: Readonly<Record<AdapterId, string>> = {
+	sentry: '__inthAdapterSentry',
+};
+
+/** What an adapter's file publishes. @internal */
+export interface AdapterFile extends PartFile {
+	adapter: ManifestAdapter<never>;
+}

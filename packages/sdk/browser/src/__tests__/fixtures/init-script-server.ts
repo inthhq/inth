@@ -27,8 +27,10 @@
  * - `/__inth-init__/backend-remote-<mode>/v1/consent/init`: the same, with a
  *   `scriptRegistry.load` list of one marketing script whose setup pushes
  *   `remote` onto `window.__ran`: `always` loads before a choice, `gated`
- *   waits for marketing. The page's `remote=<mode>` points its tag there,
- *   and `no-remote` adds `data-remote-scripts="false"`.
+ *   waits for marketing, `levelthree` needs `inth.manifests3.js`, and
+ *   `adapter` names the Sentry adapter, which loads from
+ *   `inth.adapter-sentry.js`. The page's `remote=<mode>` points its tag
+ *   there, and `no-remote` adds `data-remote-scripts="false"`.
  * - `/__inth-init__/backend/v1/consent/records`: counts saves.
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
@@ -95,11 +97,52 @@ const levelThreeManifest = () => ({
 	],
 });
 
+/** Sentry's file, on a host that never answers. */
+export const SENTRY_SRC = 'https://sentry-cdn.invalid/bundle.min.js';
+
+/** A manifest that names the Sentry adapter, which loads before a choice. */
+const adapterManifest = () => ({
+	...remoteManifest(true),
+	adapter: {
+		id: 'sentry',
+		options: {
+			dsn: 'https://public@o0.ingest.sentry.io/0',
+			initOptions: {},
+			loadMode: 'always',
+			piiCategory: 'measurement',
+			replay: { category: 'measurement', load: false },
+			tracing: false,
+			version: '11.4.0',
+		},
+	},
+	category: { or: ['necessary', 'measurement'] },
+	loadScript: { async: true, src: SENTRY_SRC, type: 'loadScript' },
+	requires: 4,
+	setupSteps: [],
+	vendor: 'sentry',
+});
+
 let registryUnavailable = false;
 
 const remoteRegistry = (mode: string | undefined) => {
-	if (!(mode === 'always' || mode === 'gated' || mode === 'levelthree')) {
+	if (
+		!(
+			mode === 'always' ||
+			mode === 'gated' ||
+			mode === 'levelthree' ||
+			mode === 'adapter'
+		)
+	) {
 		return {};
+	}
+	if (mode === 'adapter' && !registryUnavailable) {
+		return {
+			scriptRegistry: {
+				load: [
+					{ id: 'sentry', integration: 'sentry', manifest: adapterManifest() },
+				],
+			},
+		};
 	}
 	return registryUnavailable
 		? { scriptRegistry: { unavailable: true } }

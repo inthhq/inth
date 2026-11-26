@@ -6,15 +6,24 @@
  * @internal
  */
 
-import { requiresLevelThree } from '@inth/sdk-core/manifest-runtime';
+import {
+	requiresLevelThree,
+	withAdapters,
+} from '@inth/sdk-core/manifest-runtime';
+import type {
+	AdapterId,
+	ManifestAdapter,
+} from '@inth/sdk-core/manifest-runtime';
 import type { RemoteManifestRuntime } from '@inth/sdk-core/modules/script-loader';
 
 import { readNonce } from '../auto-init';
 import { adoptedBoot } from './adopt';
-import { LEVEL_THREE_KEY, MANIFESTS_KEY } from './manifests-file';
-import type { ManifestsFile } from './manifests-file';
+import { ADAPTER_KEYS, LEVEL_THREE_KEY, MANIFESTS_KEY } from './manifests-file';
+import type { AdapterFile, ManifestsFile } from './manifests-file';
 import { loadPartFile } from './part-file';
+import type { PartFile } from './part-file';
 import { partSrc } from './part-src';
+import type { InitFile } from './part-src';
 
 // Read while this file runs: `currentScript` is the engine's own tag.
 const own =
@@ -29,8 +38,10 @@ const own =
  * `inth.manifests3.js`, the same runtime with level 3, from the same place
  * with the same nonce; a later list that needs level 3 moves to it
  * through `prepare`. When `inth.manifests3.js` fails for the first list,
- * it is `inth.manifests.js`. The `loadManifestRuntime` runtime module of
- * the script-tag engines.
+ * it is `inth.manifests.js`. Each adapter a list names loads the same way,
+ * from `inth.adapter-<id>.js`, through `prepare`, and installs into the
+ * runtime file in use. The `loadManifestRuntime` runtime module of the
+ * script-tag engines.
  *
  * @throws {Error} When the file has no URL, fails to load, or is from
  * another release; the loader then reports that remote scripts do not load.
@@ -46,8 +57,11 @@ export const loadManifestsFile = async function loadManifestsFile(
 	// The nonce the page gave the tag: `data-nonce`, else its own.
 	const tag = init ?? own;
 	const nonce = tag ? readNonce(tag) : undefined;
-	const load = async (levelThree: boolean): Promise<ManifestsFile> => {
-		const file = levelThree ? 'manifests3' : 'manifests';
+	/** The file named `file`, published on `key`. */
+	const loadFile = async <File extends PartFile>(
+		file: Exclude<InitFile, 'hosted'>,
+		key: string
+	): Promise<File> => {
 		const name = `inth.${file}.js`;
 		const src = init
 			? partSrc(file, init, init.getAttribute('src'))
@@ -55,11 +69,7 @@ export const loadManifestsFile = async function loadManifestsFile(
 		if (!src) {
 			throw new Error(`${name} has no URL`);
 		}
-		const loaded = await loadPartFile<ManifestsFile>(
-			levelThree ? LEVEL_THREE_KEY : MANIFESTS_KEY,
-			src,
-			nonce
-		);
+		const loaded = await loadPartFile<File>(key, src, nonce);
 		if (!loaded) {
 			throw new Error(
 				`${name} did not load from ${src}, or is from another release`
@@ -67,6 +77,12 @@ export const loadManifestsFile = async function loadManifestsFile(
 		}
 		return loaded;
 	};
+	const load = (levelThree: boolean): Promise<ManifestsFile> =>
+		levelThree
+			? loadFile('manifests3', LEVEL_THREE_KEY)
+			: loadFile('manifests', MANIFESTS_KEY);
+	const loadAdapter = async (id: AdapterId): Promise<ManifestAdapter<never>> =>
+		(await loadFile<AdapterFile>(`adapter-${id}`, ADAPTER_KEYS[id])).adapter;
 	const levelTwo = async (
 		failed: readonly unknown[] = []
 	): Promise<RemoteManifestRuntime> => ({
@@ -82,13 +98,13 @@ export const loadManifestsFile = async function loadManifestsFile(
 	});
 	if (requiresLevelThree(manifests)) {
 		try {
-			return await load(true);
+			return withAdapters(await load(true), loadAdapter);
 		} catch {
 			// The list's level 1 and 2 entries still run. The parser refuses,
 			// and the loader reports, each entry that needs level 3. A later
 			// list tries the file again; this one does not wait for it twice.
-			return levelTwo(manifests);
+			return withAdapters(await levelTwo(manifests), loadAdapter);
 		}
 	}
-	return levelTwo();
+	return withAdapters(await levelTwo(), loadAdapter);
 };

@@ -1,10 +1,11 @@
 // @vitest-environment node
 /**
  * The sizes of `inth.manifests.js`, which a page with remote scripts
- * downloads beside `inth.js`, and of `inth.manifests3.js`, which it
- * downloads in its place when a manifest requires level 3. Each budget sits
- * just above the current size, so a change that grows a file has to raise
- * it on purpose.
+ * downloads beside `inth.js`, of `inth.manifests3.js`, which it downloads
+ * in its place when a manifest requires level 3, and of each adapter's
+ * file, which it downloads only for a manifest that names the adapter. Each
+ * budget sits just above the current size, so a change that grows a file
+ * has to raise it on purpose.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -32,8 +33,10 @@ import { expect, it } from 'vite-plus/test';
  * `ifNullish` changes. Level 4 leaves them about there: the engine loads,
  * checks and runs adapters (`withAdapters`), so neither runtime file has
  * adapter code.
+ * `inth.adapter-sentry.js`, the Sentry consent gate: 6,215.
  */
 const BUDGETS = {
+	'inth.adapter-sentry.js': 6250,
 	'inth.manifests.js': 9590,
 	'inth.manifests3.js': 11975,
 };
@@ -61,4 +64,21 @@ it('keeps the level 3 steps out of inth.manifests.js', () => {
 	// The level 3 part's own parser message.
 	expect(read('inth.manifests.js')).not.toContain('nests steps more than');
 	expect(read('inth.manifests3.js')).toContain('nests steps more than');
+});
+
+it('keeps adapter code out of the runtime files and the Sentry gate in its own', () => {
+	const read = (name: string) =>
+		readFileSync(
+			resolve(dirname(fileURLToPath(import.meta.url)), '../../dist', name),
+			'utf8'
+		);
+
+	// The adapter check's own parser message, and the Sentry gate's.
+	for (const name of ['inth.manifests.js', 'inth.manifests3.js']) {
+		expect(read(name)).not.toContain('is not an id with options');
+		expect(read(name)).not.toContain('sentryReplaySession');
+	}
+	expect(read('inth.hosted.js')).toContain('is not an id with options');
+	expect(read('inth.hosted.js')).not.toContain('sentryReplaySession');
+	expect(read('inth.adapter-sentry.js')).toContain('sentryReplaySession');
 });
