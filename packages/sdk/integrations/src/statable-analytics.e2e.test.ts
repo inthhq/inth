@@ -17,6 +17,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { statableAnalytics } from './vendors/analytics/statable-analytics';
@@ -34,13 +35,14 @@ describe.each(npmAndRemote('statableAnalytics', statableAnalytics))(
 			vi.unstubAllGlobals();
 		});
 
-		it('leaves scripts, event globals and storage untouched before measurement consent', () => {
+		it('leaves scripts, event globals and storage untouched before measurement consent', async () => {
 			const script = build({ siteId: '12345' });
 			const cookies = document.cookie;
 			const localKeys = Object.keys(window.localStorage);
 			const sessionKeys = Object.keys(window.sessionStorage);
 
 			expect(loadScripts([script], ALL_DENIED)).toEqual([]);
+			await settleScripts();
 			expect(updateScripts([script], grantedMarketingConsents).loaded).toEqual(
 				[]
 			);
@@ -51,9 +53,10 @@ describe.each(npmAndRemote('statableAnalytics', statableAnalytics))(
 			expect(Object.keys(window.sessionStorage)).toEqual(sessionKeys);
 		});
 
-		it('removes a downloading loader when measurement is revoked', () => {
+		it('removes a downloading loader when measurement is revoked', async () => {
 			const scripts = [build({ siteId: '12345' })];
 			loadScripts(scripts, grantedMeasurementConsents);
+			await settleScripts();
 			const element = document.querySelector('script');
 			updateScripts(scripts, ALL_DENIED);
 			element?.dispatchEvent(new Event('load'));

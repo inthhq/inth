@@ -9,8 +9,9 @@ import {
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
-	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { theTradeDeskPixel } from './vendors/ads-and-pixels/the-trade-desk';
 
@@ -23,11 +24,12 @@ describe.each(npmAndRemote('theTradeDeskPixel', theTradeDeskPixel))(
 				Reflect.deleteProperty(window, key);
 			}
 		});
-		it('creates no vendor globals, requests or storage before mapped consent', () => {
+		it('creates no vendor globals, requests or storage before mapped consent', async () => {
 			const scripts = [
 				build({ advertiserId: 'inthfake', pixelIds: ['inthfake'] }),
 			];
 			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
 			updateScripts(scripts, grantedMeasurementConsents);
 			expect(document.querySelector('script')).toBeNull();
 			for (const key of [
@@ -46,11 +48,12 @@ describe.each(npmAndRemote('theTradeDeskPixel', theTradeDeskPixel))(
 			updateScripts(scripts, grantedMarketingConsents);
 			expect(document.querySelectorAll('script')).toHaveLength(1);
 		});
-		it('retains one loader across in-flight revoke and regrant', () => {
+		it('retains one loader across in-flight revoke and regrant', async () => {
 			const scripts = [
 				build({ advertiserId: 'inthfake', pixelIds: ['inthfake'] }),
 			];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			const old = document.querySelector('script');
 			updateScripts(scripts, ALL_DENIED);
 			expect(old?.isConnected).toBe(true);

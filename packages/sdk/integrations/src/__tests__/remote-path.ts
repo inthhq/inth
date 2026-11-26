@@ -1,17 +1,40 @@
 /**
- * Builds a script the way the SDK does for a remote integration: the Inth
- * server resolves the options, the manifest crosses the wire as JSON, the
- * SDK's parser checks it, and the loader turns it into a script. An e2e
- * suite runs its scenarios through both this path and the npm helper.
+ * Runs e2e scenarios through the path a remote integration takes in
+ * production: the Inth server validates the saved options and resolves the
+ * manifest, the manifest crosses the wire as JSON on
+ * `scriptRegistry.load`, and the SDK's script loader, with remote scripts on,
+ * reads the entry, declares its category and vendor, loads the manifest
+ * runtime and builds the script.
  */
-import type { Script } from '@inth/sdk/engine';
-import { parseResolvedManifest } from '@inth/sdk/manifest-runtime';
+import type { createConsentKernel, Script } from '@inth/sdk/engine';
+import { MANIFEST_RUNTIME_LEVEL } from '@inth/sdk/manifest-runtime';
+import type {
+	ScriptLoaderDebugEvent,
+	ScriptLoaderOptions,
+} from '@inth/sdk/modules/script-loader';
+import { loadManifestRuntime } from '@inth/sdk/runtime';
 
-import { resolvedManifestToScript } from '../engine/runtime';
 import type { BuiltInScriptIntegrationKey } from '../registry';
-import { remoteIntegrations } from '../remote';
+import { remoteIntegrations, validateRemoteOptions } from '../remote';
 
-/** A script built from the JSON manifest the server sends for `options`. */
+type KernelConfig = NonNullable<Parameters<typeof createConsentKernel>[0]>;
+
+/** One `scriptRegistry.load` entry as the Inth server sends it. */
+export type RemoteLoadEntry = NonNullable<
+	NonNullable<KernelConfig['initialScriptRegistry']>['load']
+>[number];
+
+const ENTRY = Symbol('remote load entry');
+
+type RemoteStandIn = Script & { [ENTRY]: RemoteLoadEntry };
+
+/**
+ * A stand-in for the script the server lists for `options`. Pass it where a
+ * scenario passes scripts; `splitRemote` turns it into its `load` entry.
+ * The real script exists only once the loader builds it, so a scenario that
+ * reads the returned object reads only its `id` (the manifest's vendor) and
+ * its category.
+ */
 export const fromRemote = function fromRemote<TOptions>(
 	key: BuiltInScriptIntegrationKey,
 	options: TOptions
@@ -20,22 +43,28 @@ export const fromRemote = function fromRemote<TOptions>(
 	if (integration === undefined) {
 		throw new Error(`${key} has no remote definition`);
 	}
-	const wire: unknown = JSON.parse(
-		JSON.stringify(
-			integration.resolveRemote(options as Record<string, unknown>)
-		)
-	);
-	const parsed = parseResolvedManifest(wire);
-	if (!parsed.ok) {
-		throw new Error(`${key}: the SDK refused the manifest: ${parsed.reason}`);
+	const validated = validateRemoteOptions(key, options);
+	if (!validated.ok) {
+		throw new Error(
+			`A dashboard cannot save these options: ${validated.issues.join('; ')}`
+		);
 	}
-	return resolvedManifestToScript(parsed.manifest);
+	const manifest = JSON.parse(
+		JSON.stringify(integration.resolveRemote(validated.options))
+	) as RemoteLoadEntry['manifest'];
+	const id = String(manifest.vendor);
+	const standIn: RemoteStandIn = {
+		[ENTRY]: { id, integration: key, manifest },
+		category: manifest.category as Script['category'],
+		id,
+	};
+	return standIn;
 };
 
 /**
  * `[label, build]` rows for `describe.each`: the npm helper, then the same
- * options through the server's JSON manifest. Use it only for scenarios whose
- * options a dashboard can set.
+ * options through the server's `load` list. Use it only for scenarios whose
+ * options a dashboard can set; `fromRemote` throws for any other.
  */
 export const npmAndRemote = function npmAndRemote<TOptions>(
 	key: BuiltInScriptIntegrationKey,
@@ -45,4 +74,79 @@ export const npmAndRemote = function npmAndRemote<TOptions>(
 		['npm helper', helper],
 		['remote manifest', (options) => fromRemote(key, options)],
 	];
+};
+
+/**
+ * Splits `scripts` into the scripts declared in code and the `load` list the
+ * stand-ins came from. A spread copy of a stand-in keeps its entry, and any
+ * `id` it was given is ignored: the server's entry id is the vendor.
+ */
+export const splitRemote = function splitRemote(scripts: readonly Script[]): {
+	code: Script[];
+	load: RemoteLoadEntry[];
+} {
+	const code: Script[] = [];
+	const load: RemoteLoadEntry[] = [];
+	for (const script of scripts) {
+		const entry = (script as Partial<RemoteStandIn>)[ENTRY];
+		if (entry === undefined) {
+			code.push(script);
+		} else {
+			load.push(entry);
+		}
+	}
+	return { code, load };
+};
+
+let runtimeLoad: Promise<unknown> | undefined;
+/** Remote entries the loader refused or skipped, so a scenario fails. */
+let refused: string[] = [];
+
+const REMOTE_PROBLEM =
+	/^(?:The Inth server sent|Remote script|The manifest runtime for remote scripts)/u;
+
+/**
+ * The loader's `onDebug`: records a remote entry it refused, which would
+ * otherwise pass a scenario that expects nothing to load.
+ */
+export const onRemoteDebug = function onRemoteDebug(
+	event: ScriptLoaderDebugEvent
+): void {
+	if (
+		(event.action === 'error' || event.action === 'skipped') &&
+		REMOTE_PROBLEM.test(event.message)
+	) {
+		refused.push(event.message);
+	}
+};
+
+/** The loader's `remote` option, as `remoteScripts: true` builds it. */
+export const remoteLoaderOption: NonNullable<ScriptLoaderOptions['remote']> = {
+	level: MANIFEST_RUNTIME_LEVEL,
+	loadRuntime: () => {
+		const load = loadManifestRuntime();
+		runtimeLoad = load;
+		return load;
+	},
+};
+
+/**
+ * Waits until a loader that started loading the manifest runtime has built
+ * its remote scripts. Resolves at once for a scenario with none.
+ */
+export const settleRemote = async function settleRemote(): Promise<void> {
+	if (runtimeLoad !== undefined) {
+		await runtimeLoad;
+		// The loader awaited the same promise first, so its scripts are built.
+		await Promise.resolve();
+	}
+	if (refused.length > 0) {
+		throw new Error(`The loader refused a remote script: ${refused.join(' ')}`);
+	}
+};
+
+/** Forgets the runtime load of a finished scenario. */
+export const resetRemote = function resetRemote(): void {
+	runtimeLoad = undefined;
+	refused = [];
 };

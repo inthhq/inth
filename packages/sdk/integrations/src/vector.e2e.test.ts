@@ -11,6 +11,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { vector } from './vendors/ads-and-pixels/vector';
 
@@ -18,11 +19,12 @@ describe.each(npmAndRemote('vector', vector))(
 	'Vector core loader consent contract through the %s',
 	(_label, build) => {
 		registerVendorContractCleanup();
-		it('creates no vendor globals, requests or storage before mapped consent', () => {
+		it('creates no vendor globals, requests or storage before mapped consent', async () => {
 			const scripts = [
 				build({ pixelId: '00000000-0000-0000-0000-000000000000' }),
 			];
 			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
 			updateScripts(scripts, grantedMeasurementConsents);
 			expect(document.querySelector('script')).toBeNull();
 			for (const key of ['vector', '__vector_manager']) {
@@ -36,11 +38,12 @@ describe.each(npmAndRemote('vector', vector))(
 			updateScripts(scripts, grantedMarketingConsents);
 			expect(document.querySelectorAll('script')).toHaveLength(1);
 		});
-		it('retains one loader across in-flight revoke and regrant', () => {
+		it('retains one loader across in-flight revoke and regrant', async () => {
 			const scripts = [
 				build({ pixelId: '00000000-0000-0000-0000-000000000000' }),
 			];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			const old = document.querySelector('script');
 			updateScripts(scripts, ALL_DENIED);
 			expect(old?.isConnected).toBe(true);

@@ -11,6 +11,7 @@ import {
 	isArgumentsPayload,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	toArgs,
 } from './e2e-test-utils';
 import { xPixel } from './vendors/ads-and-pixels/x-pixel';
@@ -20,7 +21,7 @@ describe.each(npmAndRemote('xPixel', xPixel))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots with the vendor queue shape and config call intact', () => {
+		it('boots with the vendor queue shape and config call intact', async () => {
 			let acknowledged = false;
 			let queueSnapshot: unknown[] = [];
 
@@ -53,6 +54,7 @@ describe.each(npmAndRemote('xPixel', xPixel))(
 				],
 				grantedMarketingConsents
 			);
+			await settleScripts();
 
 			expect(acknowledged).toBe(true);
 			expect(Array.isArray(queueSnapshot[0])).toBe(false);

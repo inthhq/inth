@@ -12,6 +12,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { clearbit } from './vendors/analytics/clearbit';
 
@@ -20,7 +21,7 @@ describe.each(npmAndRemote('clearbit', clearbit))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('gates loading on marketing consent and exposes loader attributes before append', () => {
+		it('gates loading on marketing consent and exposes loader attributes before append', async () => {
 			let appendCount = 0;
 			let attributes: Record<string, string | null> | undefined;
 
@@ -46,6 +47,7 @@ describe.each(npmAndRemote('clearbit', clearbit))(
 			};
 
 			loadScripts([script], ALL_DENIED);
+			await settleScripts();
 			expect(appendCount).toBe(0);
 
 			loadScripts([script], grantedMeasurementConsents);

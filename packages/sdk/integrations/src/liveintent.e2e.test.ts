@@ -9,8 +9,9 @@ import {
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
-	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { liveIntentTag } from './vendors/ads-and-pixels/liveintent';
 
@@ -57,9 +58,10 @@ describe.each(npmAndRemote('liveIntentTag', liveIntentTag))(
 				Reflect.deleteProperty(window, key);
 			}
 		});
-		it('creates no vendor globals, requests or storage before mapped consent', () => {
+		it('creates no vendor globals, requests or storage before mapped consent', async () => {
 			const scripts = [build({ tagId: 'a-00xx' })];
 			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
 			updateScripts(scripts, grantedMeasurementConsents);
 			expect(document.querySelector('script')).toBeNull();
 			for (const key of ['liQ', 'LI', 'lc2', 'liQHub', 'liQ_instances']) {
@@ -73,9 +75,10 @@ describe.each(npmAndRemote('liveIntentTag', liveIntentTag))(
 			updateScripts(scripts, grantedMarketingConsents);
 			expect(document.querySelectorAll('script')).toHaveLength(1);
 		});
-		it('retains one loader across in-flight revoke and regrant', () => {
+		it('retains one loader across in-flight revoke and regrant', async () => {
 			const scripts = [build({ tagId: 'a-00xx' })];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			const old = document.querySelector('script');
 			updateScripts(scripts, ALL_DENIED);
 			expect(old?.isConnected).toBe(true);

@@ -4,7 +4,14 @@ import type { ConsentState, Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { npmAndRemote } from './__tests__/remote-path';
+import {
+	npmAndRemote,
+	onRemoteDebug,
+	remoteLoaderOption,
+	resetRemote,
+	settleRemote,
+	splitRemote,
+} from './__tests__/remote-path';
 import { vector } from './vendors/ads-and-pixels/vector';
 
 const denied: ConsentState = {
@@ -34,11 +41,24 @@ declare global {
 
 const client = () => window.vector;
 
-const mount = (script: Script = vector({ pixelId }), initial = denied) => {
-	const kernel = createConsentKernel();
+/** Starts the production kernel and loader, with remote scripts on. */
+const mount = async (
+	script: Script = vector({ pixelId }),
+	initial = denied
+) => {
+	const { code, load } = splitRemote([script]);
+	const kernel = createConsentKernel(
+		load.length > 0 ? { initialScriptRegistry: { load } } : undefined
+	);
 	void kernel.commands.save(initial);
-	const loader = createScriptLoader({ kernel, scripts: [script] });
+	const loader = createScriptLoader({
+		kernel,
+		onDebug: onRemoteDebug,
+		remote: remoteLoaderOption,
+		scripts: code,
+	});
 	disposers.push(kernel.dispose, loader.dispose);
+	await settleRemote();
 	return { kernel, loader };
 };
 
@@ -48,6 +68,7 @@ afterEach(() => {
 	for (const dispose of disposers.splice(0).reverse()) {
 		dispose();
 	}
+	resetRemote();
 	document.head.replaceChildren();
 	document.body.replaceChildren();
 	for (const name of [
@@ -64,13 +85,13 @@ afterEach(() => {
 describe.each(npmAndRemote('vector', vector))(
 	'Vector through the production kernel and script loader through the %s',
 	(_label, build) => {
-		it('keeps startup behind marketing consent and queues load before insertion', () => {
+		it('keeps startup behind marketing consent and queues load before insertion', async () => {
 			const storageWrites = vi.spyOn(Storage.prototype, 'setItem');
 			const storageReads = vi.spyOn(Storage.prototype, 'getItem');
 			const cookieBefore = document.cookie;
 			const original = document.head.appendChild.bind(document.head);
 			const appended = vi.spyOn(document.head, 'appendChild');
-			const { kernel } = mount(build({ pixelId }));
+			const { kernel } = await mount(build({ pixelId }));
 			void kernel.commands.save({ ...denied, measurement: true });
 			expect(appended).not.toHaveBeenCalled();
 			expect(client()).toBeUndefined();
@@ -89,8 +110,8 @@ describe.each(npmAndRemote('vector', vector))(
 			expect(client()?.loaded).toBe(true);
 		});
 
-		it('replays nested arguments with original objects and callback references', () => {
-			mount(build({ pixelId }), granted);
+		it('replays nested arguments with original objects and callback references', async () => {
+			await mount(build({ pixelId }), granted);
 			const queue = client()?.q;
 			const data = { source: 'application' };
 			const callback = vi.fn();
@@ -117,28 +138,10 @@ describe.each(npmAndRemote('vector', vector))(
 			expect(live.on).toHaveBeenCalledExactlyOnceWith('pixel.loaded', callback);
 		});
 
-		it('starts Vector inline with nested calls and callback references', () => {
-			const script = build({ pixelId });
-			const inline = script.serverStart?.(
-				{ consents: granted, hasConsent: true, id: script.id },
-				script
-			);
-			expect(inline).toBeDefined();
-			// oxlint-disable-next-line no-new-func -- Runs the generated server startup.
-			new Function(`${inline?.prelude ?? ''};${inline?.code ?? ''}`)();
-			const callback = vi.fn();
-			client()?.on('pixel.loaded', callback);
-			expect(client()?.q).toEqual([
-				['load', [pixelId]],
-				['on', ['pixel.loaded', callback]],
-			]);
-			expect(client()?.q?.[1]?.[1][1]).toBe(callback);
-		});
-
 		it.each([false, true])(
 			'keeps one SDK across withdrawal and regrant, already loaded=%s',
-			(loaded) => {
-				const { kernel, loader } = mount(build({ pixelId }), granted);
+			async (loaded) => {
+				const { kernel, loader } = await mount(build({ pixelId }), granted);
 				const element = pixelElement();
 				const stub = client();
 				if (loaded) {
@@ -150,7 +153,8 @@ describe.each(npmAndRemote('vector', vector))(
 					element?.dispatchEvent(new Event('load'));
 				}
 				void kernel.commands.save(granted);
-				loader.updateScripts([build({ pixelId })]);
+				// A rerender passes the code scripts again; the server's list stays.
+				loader.updateScripts(splitRemote([build({ pixelId })]).code);
 				expect(pixelElement()).toBe(element);
 				expect(document.head.querySelectorAll('script')).toHaveLength(1);
 				expect(client()).toBe(stub);
@@ -158,7 +162,7 @@ describe.each(npmAndRemote('vector', vector))(
 			}
 		);
 
-		it('preserves a previously loaded SDK and never invokes undocumented teardown', () => {
+		it('preserves a previously loaded SDK and never invokes undocumented teardown', async () => {
 			const live = {
 				block: vi.fn(),
 				identify: vi.fn(),
@@ -167,7 +171,7 @@ describe.each(npmAndRemote('vector', vector))(
 				removeVisitor: vi.fn(),
 			};
 			Reflect.set(window, 'vector', live);
-			const { kernel } = mount(build({ pixelId }), granted);
+			const { kernel } = await mount(build({ pixelId }), granted);
 			pixelElement()?.dispatchEvent(new Event('load'));
 			void kernel.commands.save(denied);
 			void kernel.commands.save(granted);
@@ -183,24 +187,47 @@ describe.each(npmAndRemote('vector', vector))(
 );
 
 describe('Vector npm helper options', () => {
+	// A server render starts an npm script inline; the remote loader builds
+	// its scripts in the browser and gives them no serverStart.
+	it('starts Vector inline with nested calls and callback references', () => {
+		const script = vector({ pixelId });
+		const inline = script.serverStart?.(
+			{ consents: granted, hasConsent: true, id: script.id },
+			script
+		);
+		expect(inline).toBeDefined();
+		// oxlint-disable-next-line no-new-func -- Runs the generated server startup.
+		new Function(`${inline?.prelude ?? ''};${inline?.code ?? ''}`)();
+		const callback = vi.fn();
+		client()?.on('pixel.loaded', callback);
+		expect(client()?.q).toEqual([
+			['load', [pixelId]],
+			['on', ['pixel.loaded', callback]],
+		]);
+		expect(client()?.q?.[1]?.[1][1]).toBe(callback);
+	});
+
 	it.each([
 		['   ', 'https://cdn.vector.co/pixel.js'],
 		[
 			' https://cdn.example.com/vector.js ',
 			'https://cdn.example.com/vector.js',
 		],
-	])('resolves scriptUrl %j and trims the pixel ID', (scriptUrl, expected) => {
-		mount(vector({ pixelId: ` ${pixelId} `, scriptUrl }), granted);
-		expect(pixelElement()?.src).toBe(expected);
-		expect(client()?.q).toEqual([['load', [pixelId]]]);
-	});
+	])(
+		'resolves scriptUrl %j and trims the pixel ID',
+		async (scriptUrl, expected) => {
+			await mount(vector({ pixelId: ` ${pixelId} `, scriptUrl }), granted);
+			expect(pixelElement()?.src).toBe(expected);
+			expect(client()?.q).toEqual([['load', [pixelId]]]);
+		}
+	);
 
 	it.each(['', '   ', undefined])(
 		'skips an absent or blank pixel ID %j',
-		(id) => {
+		async (id) => {
 			const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 			// Exercise a missing environment value from a JavaScript caller.
-			mount(vector({ pixelId: id as string }), granted);
+			await mount(vector({ pixelId: id as string }), granted);
 			expect(error).toHaveBeenCalledWith(
 				'vector: missing or invalid pixelId. The script will not load.'
 			);

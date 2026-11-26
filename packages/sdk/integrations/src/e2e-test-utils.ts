@@ -9,6 +9,13 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import { afterEach, vi } from 'vite-plus/test';
 
+import {
+	onRemoteDebug,
+	remoteLoaderOption,
+	resetRemote,
+	splitRemote,
+} from './__tests__/remote-path';
+import type { RemoteLoadEntry } from './__tests__/remote-path';
 import { ALL_DENIED } from './engine/vendor-consent';
 
 export interface GoogleTagDataState {
@@ -185,6 +192,8 @@ export type TestWindow = Window &
  */
 let kernel: ConsentKernel = createConsentKernel();
 let loader: ScriptLoaderHandle | null = null;
+/** The `load` list the loader was created with, as JSON. */
+let remoteLoad: string | undefined;
 
 const muteSubscription = function muteSubscription(
 	source: ConsentKernel
@@ -197,21 +206,43 @@ const muteSubscription = function muteSubscription(
 	};
 };
 
+/**
+ * The subscription is muted, so the loader reads the `load` list only when
+ * it starts; a scenario passes the same remote stand-ins every time.
+ */
+const assertSameLoad = function assertSameLoad(load: RemoteLoadEntry[]): void {
+	if (JSON.stringify(load) !== remoteLoad) {
+		throw new Error(
+			'The remote scripts changed after the loader started; clear the scripts first.'
+		);
+	}
+};
+
 const reconcileScripts = function reconcileScripts(
 	scripts: Script[],
 	consents: ConsentState,
 	options: { nonce?: string } = {}
 ): ScriptUpdateResult {
 	const before = loader ? loader.getLoadedScriptIds() : [];
+	const { code, load } = splitRemote(scripts);
+	if (!loader && load.length > 0) {
+		// The Inth server's list arrives with init, before the loader starts.
+		kernel.dispose();
+		kernel = createConsentKernel({ initialScriptRegistry: { load } });
+	}
 	void kernel.commands.save(consents);
 
 	if (loader) {
-		loader.updateScripts(scripts);
+		assertSameLoad(load);
+		loader.updateScripts(code);
 	} else {
+		remoteLoad = JSON.stringify(load);
 		loader = createScriptLoader({
 			kernel: muteSubscription(kernel),
 			nonce: options.nonce,
-			scripts,
+			onDebug: onRemoteDebug,
+			remote: remoteLoaderOption,
+			scripts: code,
 		});
 	}
 
@@ -251,9 +282,13 @@ export const updateScripts = function updateScripts(
 export const clearAllScripts = function clearAllScripts(): void {
 	loader?.dispose();
 	loader = null;
+	remoteLoad = undefined;
+	resetRemote();
 	kernel.dispose();
 	kernel = createConsentKernel();
 };
+
+export { settleRemote as settleScripts } from './__tests__/remote-path';
 
 export { ALL_DENIED };
 

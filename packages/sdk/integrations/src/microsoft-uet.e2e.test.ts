@@ -10,6 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
 import { microsoftUet } from './vendors/ads-and-pixels/microsoft-uet';
@@ -19,7 +20,7 @@ describe.each(npmAndRemote('microsoftUet', microsoftUet))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots with constructor handoff and a consent-default push', () => {
+		it('boots with constructor handoff and a consent-default push', async () => {
 			const constructorArgs: Record<string, unknown>[] = [];
 			const pushCalls: unknown[][] = [];
 
@@ -51,6 +52,7 @@ describe.each(npmAndRemote('microsoftUet', microsoftUet))(
 				],
 				grantedMarketingConsents
 			);
+			await settleScripts();
 
 			expect(constructorArgs).toHaveLength(1);
 			expect(constructorArgs[0]).toMatchObject({

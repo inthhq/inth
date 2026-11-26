@@ -10,6 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { segment } from './vendors/analytics/segment';
 
@@ -27,7 +28,7 @@ describe.each(npmAndRemote('segment', segment))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('boots the analytics.js queue and methods before the loader appends', () => {
+		it('boots the analytics.js queue and methods before the loader appends', async () => {
 			let methodTypes: Record<string, string> | undefined;
 			let queueSnapshot: unknown[] | undefined;
 			let scriptSrc: string | undefined;
@@ -63,6 +64,7 @@ describe.each(npmAndRemote('segment', segment))(
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(scriptSrc).toContain(
 				'/analytics.js/v1/SEGMENTCONTRACT/analytics.min.js'

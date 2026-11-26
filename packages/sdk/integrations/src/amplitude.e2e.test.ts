@@ -11,6 +11,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
@@ -56,7 +57,7 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('waits for measurement consent before appending the loader', () => {
+		it('waits for measurement consent before appending the loader', async () => {
 			let appended = false;
 
 			installHeadProbe((node) => {
@@ -76,12 +77,13 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 				],
 				ALL_DENIED
 			);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 			expect((window as TestWindow).amplitude).toBeUndefined();
 		});
 
-		it('calls setOptOut(true) on revoke and keeps the loaded SDK on the page', () => {
+		it('calls setOptOut(true) on revoke and keeps the loaded SDK on the page', async () => {
 			const setOptOut = vi.fn();
 			const script = {
 				...build({
@@ -102,6 +104,7 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 			});
 
 			loadScripts([script], grantedMeasurementConsents);
+			await settleScripts();
 			updateScripts([script], ALL_DENIED);
 
 			expect(setOptOut).toHaveBeenCalledWith(true);
@@ -110,27 +113,7 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 			).not.toBeNull();
 		});
 
-		it('calls setOptOut(false) when measurement consent is granted after load', () => {
-			const setOptOut = vi.fn();
-			const script = build({
-				apiKey: '0123456789abcdef0123456789abcdef',
-			});
-
-			(window as TestWindow).amplitude = {
-				setOptOut,
-			};
-
-			script.onConsentChange?.({
-				consents: grantedMeasurementConsents,
-				elementId: script.id,
-				hasConsent: true,
-				id: script.id,
-			});
-
-			expect(setOptOut).toHaveBeenCalledWith(false);
-		});
-
-		it('keeps the loaded SDK and opts back in on grant, revoke, grant without a reload', () => {
+		it('keeps the loaded SDK and opts back in on grant, revoke, grant without a reload', async () => {
 			const setOptOut = vi.fn();
 			const track = vi.fn();
 			let appends = 0;
@@ -154,6 +137,7 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 			});
 
 			loadScripts([script], grantedMeasurementConsents);
+			await settleScripts();
 			updateScripts([script], ALL_DENIED);
 			loadScripts([script], grantedMeasurementConsents);
 
@@ -169,6 +153,28 @@ describe.each(npmAndRemote('amplitude', amplitude))(
 
 describe('amplitude npm helper options', () => {
 	registerVendorContractCleanup();
+
+	// Calls the npm script's callback directly; the remote rows reach it
+	// through the loader in the grant, revoke, grant scenario.
+	it('calls setOptOut(false) when measurement consent is granted after load', () => {
+		const setOptOut = vi.fn();
+		const script = amplitude({
+			apiKey: '0123456789abcdef0123456789abcdef',
+		});
+
+		(window as TestWindow).amplitude = {
+			setOptOut,
+		};
+
+		script.onConsentChange?.({
+			consents: grantedMeasurementConsents,
+			elementId: script.id,
+			hasConsent: true,
+			id: script.id,
+		});
+
+		expect(setOptOut).toHaveBeenCalledWith(false);
+	});
 
 	it('boots the Browser SDK 2 queue contract before the loader appends', () => {
 		let methodTypes: Record<string, string> | undefined;

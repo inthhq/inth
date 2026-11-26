@@ -10,6 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { ahrefsAnalytics } from './vendors/analytics/ahrefs-analytics';
 import { cloudflareWebAnalytics } from './vendors/analytics/cloudflare-web-analytics';
@@ -23,7 +24,7 @@ describe('analytics loader contracts', () => {
 
 	it.each(npmAndRemote('ahrefsAnalytics', ahrefsAnalytics))(
 		'exposes Ahrefs loader attributes before append through the %s',
-		(_label, build) => {
+		async (_label, build) => {
 			let attributes: Record<string, string | boolean | null> | undefined;
 
 			installHeadProbe((node) => {
@@ -47,6 +48,7 @@ describe('analytics loader contracts', () => {
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(attributes).toEqual({
 				async: true,
@@ -57,7 +59,7 @@ describe('analytics loader contracts', () => {
 
 	it.each(npmAndRemote('cloudflareWebAnalytics', cloudflareWebAnalytics))(
 		'serializes Cloudflare beacon config before append through the %s',
-		(_label, build) => {
+		async (_label, build) => {
 			let beaconConfig: Record<string, unknown> | undefined;
 			let defer: boolean | undefined;
 
@@ -89,6 +91,7 @@ describe('analytics loader contracts', () => {
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(beaconConfig).toEqual({
 				spa: false,
@@ -100,7 +103,7 @@ describe('analytics loader contracts', () => {
 
 	it.each(npmAndRemote('fathomAnalytics', fathomAnalytics))(
 		'exposes Fathom loader options as data attributes through the %s',
-		(_label, build) => {
+		async (_label, build) => {
 			let attributes: Record<string, string | boolean | null> | undefined;
 
 			installHeadProbe((node) => {
@@ -134,6 +137,7 @@ describe('analytics loader contracts', () => {
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(attributes).toEqual({
 				dataAuto: 'false',
@@ -148,7 +152,7 @@ describe('analytics loader contracts', () => {
 
 	it.each(npmAndRemote('promptwatch', promptwatch))(
 		'exposes Promptwatch project id before append through the %s',
-		(_label, build) => {
+		async (_label, build) => {
 			let attributes: Record<string, string | boolean | null> | undefined;
 
 			installHeadProbe((node) => {
@@ -172,6 +176,7 @@ describe('analytics loader contracts', () => {
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(attributes).toEqual({
 				async: true,

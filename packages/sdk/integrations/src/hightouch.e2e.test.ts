@@ -11,6 +11,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import {
 	HIGHTOUCH_QUEUE_METHODS,
@@ -28,7 +29,7 @@ describe.each(npmAndRemote('hightouch', hightouch))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('omits page when trackPageView is false', () => {
+		it('omits page when trackPageView is false', async () => {
 			let queueSnapshot: unknown[] | undefined;
 
 			installHeadProbe((node, win) => {
@@ -52,11 +53,12 @@ describe.each(npmAndRemote('hightouch', hightouch))(
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(queueSnapshot).toEqual([['load', 'HIGHTOUCHCONTRACT', {}]]);
 		});
 
-		it('waits for measurement consent before appending the loader', () => {
+		it('waits for measurement consent before appending the loader', async () => {
 			let appended = false;
 
 			installHeadProbe((node) => {
@@ -74,6 +76,7 @@ describe.each(npmAndRemote('hightouch', hightouch))(
 				],
 				ALL_DENIED
 			);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 			expect(window.htevents).toBeUndefined();

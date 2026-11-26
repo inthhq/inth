@@ -13,6 +13,7 @@ import {
 	isArgumentsPayload,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	toArgs,
 	updateScripts,
 } from './e2e-test-utils';
@@ -29,7 +30,7 @@ describe.each(npmAndRemote('openaiPixel', openaiPixel))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('loads only with marketing consent and preserves the SDK across consent changes', () => {
+		it('loads only with marketing consent and preserves the SDK across consent changes', async () => {
 			const runtime = vi.fn();
 			let loads = 0;
 			let queue: unknown[] = [];
@@ -42,6 +43,7 @@ describe.each(npmAndRemote('openaiPixel', openaiPixel))(
 			const scripts = [build({ debug: true, pixelId })];
 
 			expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
+			await settleScripts();
 			expect(loadScripts(scripts, grantedMeasurementConsents)).toEqual([]);
 			expect(loads).toBe(0);
 			expect(getOaiq()).toBeUndefined();
@@ -68,13 +70,14 @@ describe.each(npmAndRemote('openaiPixel', openaiPixel))(
 			);
 		});
 
-		it('queues withdrawal while the SDK is still downloading', () => {
+		it('queues withdrawal while the SDK is still downloading', async () => {
 			let scriptElement: HTMLScriptElement | undefined;
 			installHeadProbe((node) => {
 				scriptElement = node;
 			});
 			const scripts = [build({ pixelId })];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			updateScripts(scripts, ALL_DENIED);
 			if (scriptElement === undefined) {
 				throw new Error('Expected the OpenAI Pixel SDK script to be appended');

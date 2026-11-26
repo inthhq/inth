@@ -11,6 +11,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import type { TestWindow } from './e2e-test-utils';
@@ -37,7 +38,7 @@ describe.each(npmAndRemote('heap', heap))(
 	(_label, build) => {
 		registerVendorContractCleanup();
 
-		it('replays queued callbacks against the loaded Heap runtime shape', () => {
+		it('replays queued callbacks against the loaded Heap runtime shape', async () => {
 			const calls: unknown[][] = [];
 
 			installHeadProbe((node, win) => {
@@ -70,11 +71,12 @@ describe.each(npmAndRemote('heap', heap))(
 				],
 				grantedMeasurementConsents
 			);
+			await settleScripts();
 
 			expect(calls).toEqual([['Signup', { plan: 'pro' }]]);
 		});
 
-		it('waits for measurement consent before appending the loader', () => {
+		it('waits for measurement consent before appending the loader', async () => {
 			let appended = false;
 
 			installHeadProbe((node) => {
@@ -94,19 +96,16 @@ describe.each(npmAndRemote('heap', heap))(
 				],
 				ALL_DENIED
 			);
+			await settleScripts();
 
 			expect(appended).toBe(false);
 			expect((window as TestWindow).heap).toBeUndefined();
 			expect((window as TestWindow).heapReadyCb).toBeUndefined();
 		});
 
-		it('unloads by default on measurement consent revocation', () => {
-			const script = {
-				...build({
-					envId: '123456789',
-				}),
-				id: 'heap-contract',
-			};
+		it('unloads by default on measurement consent revocation', async () => {
+			// No id override: a remote entry's id is its vendor.
+			const script = build({ envId: '123456789' });
 
 			installHeadProbe((node) => {
 				if (node.src.includes('cdn.us.heap-api.com/config/123456789')) {
@@ -115,14 +114,15 @@ describe.each(npmAndRemote('heap', heap))(
 			});
 
 			loadScripts([script], grantedMeasurementConsents);
+			await settleScripts();
 
 			const result = updateScripts([script], ALL_DENIED);
 
-			expect(result.unloaded).toEqual(['heap-contract']);
-			expect(document.getElementById('inth-script-heap-contract')).toBeNull();
+			expect(result.unloaded).toEqual([script.id]);
+			expect(document.getElementById(`inth-script-${script.id}`)).toBeNull();
 		});
 
-		it('keeps live heap.js methods on grant, revoke, grant without a reload', () => {
+		it('keeps live heap.js methods on grant, revoke, grant without a reload', async () => {
 			const track = vi.fn();
 			let appends = 0;
 			const script = {
@@ -148,6 +148,7 @@ describe.each(npmAndRemote('heap', heap))(
 			});
 
 			loadScripts([script], grantedMeasurementConsents);
+			await settleScripts();
 			updateScripts([script], ALL_DENIED);
 			loadScripts([script], grantedMeasurementConsents);
 
