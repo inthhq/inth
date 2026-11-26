@@ -17,7 +17,9 @@ export interface RemoteTraceOptions {
 	 * npm helper returns the same script for equal options, so a trace
 	 * `replace` with identical options is the same registration on both
 	 * paths. @default false: every call builds a fresh script, as the loader
-	 * does when the manifest changes.
+	 * does for a changed manifest whose entry has not started. (A started
+	 * entry keeps its script until the next page, so these traces check a
+	 * stricter case than a live page runs.)
 	 */
 	keepScript?: boolean;
 }
