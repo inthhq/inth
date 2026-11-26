@@ -70,7 +70,9 @@ export interface RemoteIntegration {
 	options: Readonly<Record<string, RemoteOptionSpec>>;
 	/**
 	 * Builds the manifest for options that pass
-	 * {@link validateRemoteOptions}. Returns a new object on every call.
+	 * {@link validateRemoteOptions}, with `requires` set to its
+	 * {@link manifestLevel} when that is above 1. Returns a new object on
+	 * every call.
 	 *
 	 * @throws {Error} When the options do not pass validation.
 	 */
