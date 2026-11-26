@@ -899,6 +899,28 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	let runtimeLoad: Promise<RemoteManifestRuntime> | undefined;
 	/** The script each entry built, kept while its manifest is unchanged. */
 	let built = new Map<string, { manifest: string; script: Script | null }>();
+	/**
+	 * The script to register for an entry whose manifest changed. Once the
+	 * earlier script has started, it keeps running with its own setup and
+	 * callbacks until the next page, as a rerendered npm helper does, and
+	 * takes only the new category, so consent stays current. Before that,
+	 * the new script.
+	 */
+	const keepStarted = (
+		id: string,
+		earlier: Script | null | undefined,
+		fresh: Script
+	): Script => {
+		if (!earlier || !(loadedElements.has(id) || retainedElements.has(id))) {
+			return fresh;
+		}
+		if (JSON.stringify(earlier.category) === JSON.stringify(fresh.category)) {
+			return earlier;
+		}
+		const kept = { ...earlier, category: fresh.category };
+		remoteObjects.add(kept);
+		return kept;
+	};
 	const buildRemote = (loaded: RemoteManifestRuntime): Script[] => {
 		const next = new Map<string, { manifest: string; script: Script | null }>();
 		const scripts: Script[] = [];
@@ -911,8 +933,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			} else {
 				const parsed = loaded.parseResolvedManifest(entry.manifest);
 				if (parsed.ok) {
-					script = loaded.resolvedManifestToScript(parsed.manifest);
-					remoteObjects.add(script);
+					const fresh = loaded.resolvedManifestToScript(parsed.manifest);
+					remoteObjects.add(fresh);
+					script = keepStarted(entry.id, cached?.script, fresh);
 				} else {
 					reportRemote(
 						'error',
