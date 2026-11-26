@@ -8,11 +8,13 @@ import {
 	vi,
 } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	clearAllScripts,
 	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { attentiveTag } from './vendors/email-and-sms/attentive';
@@ -115,3 +117,26 @@ describe('Attentive body tag lifecycle', () => {
 		).toBe('https://cdn.attn.tv/inthfake/dtag.js');
 	});
 });
+
+describe.each(npmAndRemote('attentiveTag', attentiveTag))(
+	'Attentive dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('loads the site tag at the end of body after marketing consent, and keeps it on revoke', async () => {
+			const scripts = [build({ siteSlug: 'inth-site_1' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, unrelated);
+			expect(document.querySelector('script[src]')).toBeNull();
+
+			updateScripts(scripts, granted);
+			const loader = getLoader();
+			expect(loader.src).toBe('https://cdn.attn.tv/inth-site_1/dtag.js');
+			expect(loader.parentElement).toBe(document.body);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(loader.isConnected).toBe(true);
+		});
+	}
+);

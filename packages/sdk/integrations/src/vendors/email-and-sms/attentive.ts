@@ -1,19 +1,27 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
+import { resolvedManifestToScript } from '../../engine/runtime';
+import { defineRemote } from '../../remote-define';
+import { getCompiledManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import type { ResolvedManifest, VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { withScriptUrl } from '../_shared/script-url';
 
-/** Attentive's tag, loaded only after marketing consent. */
+/** Attentive's tag at the end of body, loaded only after consent. */
 export const attentiveTagManifest = {
 	...vendorManifestContract,
-	category: 'marketing',
-	// oxlint-disable-next-line integrations/fixed-script-host -- pending conversion: the site's scriptUrl option can set the whole URL
-	install: [{ async: true, src: '{{scriptUrl}}', type: 'loadScript' }],
+	category: '{{category}}',
+	install: [
+		{
+			async: true,
+			src: 'https://cdn.attn.tv/{{sitePath}}/dtag.js',
+			type: 'loadScript',
+		},
+	],
 	persistAfterConsentRevoked: true,
+	target: 'body',
 	vendor: 'attentive',
 	vendorDetails: {
 		homepageUrl: 'https://www.attentive.com/',
@@ -32,23 +40,56 @@ export interface AttentiveTagOptions {
 	scriptUrl?: string;
 }
 
+/**
+ * Builds the serializable manifest behind {@link attentiveTag}. `siteSlug`
+ * must already be trimmed and non-empty.
+ */
+export const resolveAttentiveTagManifest =
+	function resolveAttentiveTagManifest({
+		siteSlug,
+		category = 'marketing',
+	}: Pick<AttentiveTagOptions, 'siteSlug' | 'category'>): ResolvedManifest {
+		return getCompiledManifest(attentiveTagManifest, {
+			category,
+			sitePath: encodeURIComponent(siteSlug),
+		});
+	};
+
+/**
+ * What the Inth server may set for this vendor. The npm helper calls the same
+ * resolver; `category` and `scriptUrl` stay npm-only. Marked pure so a
+ * bundler drops it from an npm bundle that never reads it.
+ */
+export const remote =
+	/* @__PURE__ */
+	defineRemote(
+		'attentiveTag',
+		{
+			siteSlug: {
+				example: 'acmestore',
+				kind: 'id',
+				label: 'Site slug',
+				pattern: '^[A-Za-z0-9_-]+$',
+				required: true,
+			},
+		},
+		resolveAttentiveTagManifest
+	);
+
 const reuseAttentiveTag = createScriptReuse<AttentiveTagOptions>();
 
 const createAttentiveTag = function createAttentiveTag(
 	options: AttentiveTagOptions
 ): Script {
-	const category = options.category ?? 'marketing';
-	const siteSlug = String(options.siteSlug).trim();
-	return {
-		...resolveManifest(attentiveTagManifest, {
-			scriptUrl: resolveScriptUrl(
-				options.scriptUrl,
-				`https://cdn.attn.tv/${encodeURIComponent(siteSlug)}/dtag.js`
-			),
-		}),
-		category,
-		target: 'body',
-	};
+	return withScriptUrl(
+		resolvedManifestToScript(
+			resolveAttentiveTagManifest({
+				category: options.category,
+				siteSlug: String(options.siteSlug).trim(),
+			})
+		),
+		options.scriptUrl
+	);
 };
 
 /**

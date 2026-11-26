@@ -58,6 +58,17 @@ const npmRequired: Partial<Record<BuiltInScriptIntegrationKey, string[]>> = {
 	gtag: ['category'],
 };
 
+/**
+ * Callbacks an npm helper wraps around its manifest's own to share one
+ * script between registrations with equal options. The Inth server sends one
+ * registration per vendor, so the remote script has nothing to share.
+ */
+const sharedRegistrationCallbacks: Partial<
+	Record<BuiltInScriptIntegrationKey, string[]>
+> = {
+	attentiveTag: ['onBeforeLoad', 'onConsentChange', 'onDispose', 'onLoad'],
+};
+
 /** `options` as a site would pass them to the npm helper. */
 const npmInput = function npmInput(key: string, options: Options): Options {
 	const integration = remoteIntegrations[key] as RemoteIntegration;
@@ -79,6 +90,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	ahrefsAnalytics: ['analytics.ahrefs.com'],
 	amplitude: ['cdn.amplitude.com'],
 	appcues: ['fast.appcues.com', 'fast.eu.appcues.com'],
+	attentiveTag: ['cdn.attn.tv'],
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],
@@ -128,6 +140,7 @@ const vendorHosts: Record<string, readonly string[]> = {
  */
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	adrollPixel: 2,
+	attentiveTag: 2,
 };
 
 /**
@@ -390,7 +403,11 @@ describe('remoteIntegrations', () => {
 			const fromRemote = remoteScript(key, options);
 
 			expect(withoutFunctions(fromRemote)).toEqual(withoutFunctions(fromNpm));
-			expect(functionNames(fromRemote)).toEqual(functionNames(fromNpm));
+			const shared =
+				sharedRegistrationCallbacks[key as BuiltInScriptIntegrationKey] ?? [];
+			const own = (script: Script) =>
+				functionNames(script).filter((name) => !shared.includes(name));
+			expect(own(fromRemote)).toEqual(own(fromNpm));
 			// The inline start a server render writes covers every step the
 			// script runs before its file loads.
 			expect(grantedServerStart(fromRemote)).toEqual(
