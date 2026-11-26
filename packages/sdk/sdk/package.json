@@ -31,7 +31,12 @@
 		"AGENTS.md",
 		"SKILL.md",
 		"docs",
-		"README.md"
+		"README.md",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

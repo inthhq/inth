@@ -26,7 +26,12 @@
 		"dist-types",
 		"AGENTS.md",
 		"SKILL.md",
-		"docs"
+		"docs",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": false,

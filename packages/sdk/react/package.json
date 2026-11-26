@@ -36,7 +36,12 @@
 		"iab",
 		"src/styles.tw3.css",
 		"src/iab/styles.tw3.css",
-		"!dist/mockServiceWorker.js"
+		"!dist/mockServiceWorker.js",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

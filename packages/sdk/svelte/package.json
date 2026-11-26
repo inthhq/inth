@@ -44,12 +44,14 @@
 		"dist",
 		"styles.css",
 		"iab",
-		"!dist/**/__tests__/**",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*",
 		"docs",
 		"AGENTS.md",
-		"SKILL.md"
+		"SKILL.md",
+		"!**/__tests__/**",
+		"!**/__mocks__/**",
+		"!**/*.test.*",
+		"!**/*.spec.*",
+		"!**/*.stories.*"
 	],
 	"type": "module",
 	"sideEffects": [

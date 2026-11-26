@@ -87,6 +87,33 @@ test("a tarball that would install wrong is refused", () => {
   ]);
 });
 
+test("a tarball with test code is refused", () => {
+  const withTests = packed({});
+  expect(
+    tarballProblems(
+      {
+        ...withTests,
+        files: [
+          ...withTests.files,
+          "dist/__tests__/index.js",
+          "dist/__mocks__/fetch.js",
+          "dist/index.test.d.ts",
+          "dist/index.spec.js",
+          "dist/banner.stories.js",
+          "dist/latest.js",
+        ],
+      },
+      expectations
+    )
+  ).toEqual([
+    "dist/__tests__/index.js is test code",
+    "dist/__mocks__/fetch.js is test code",
+    "dist/index.test.d.ts is test code",
+    "dist/index.spec.js is test code",
+    "dist/banner.stories.js is test code",
+  ]);
+});
+
 const aliasedTarballProblems = (target: string) =>
   tarballProblems(
     packed({
@@ -184,5 +211,19 @@ test("each package publishes after the packages it depends on", () => {
 test("every published SDK package has the publish settings its version needs", () => {
   for (const { manifest } of published) {
     expect(settingProblems(manifest), manifest.name).toEqual([]);
+  }
+});
+
+test("every published SDK package leaves test code out of its tarball", () => {
+  for (const { manifest } of published) {
+    expect(manifest.files, manifest.name).toEqual(
+      expect.arrayContaining([
+        "!**/__tests__/**",
+        "!**/__mocks__/**",
+        "!**/*.test.*",
+        "!**/*.spec.*",
+        "!**/*.stories.*",
+      ])
+    );
   }
 });

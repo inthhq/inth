@@ -169,6 +169,10 @@ const wildcard = (target: string) =>
     "u"
   );
 
+/** Test code, which must stay out of a tarball. */
+const testFile =
+  /(?:^|\/)(?:__tests__|__mocks__)\/|\.(?:test|spec|stories)\.[^/]+$/u;
+
 const fileProblems = (packed: PackedPackage, source: Manifest) => {
   const fileSet = new Set(packed.files);
   // `files` entries are files or folders; a folder must contribute a file.
@@ -190,7 +194,10 @@ const fileProblems = (packed: PackedPackage, source: Manifest) => {
         : !fileSet.has(target)
     )
     .map((target) => `entry point ${target} is not in the tarball`);
-  return [...listed, ...entries];
+  const tests = packed.files
+    .filter((file) => testFile.test(file))
+    .map((file) => `${file} is test code`);
+  return [...listed, ...entries, ...tests];
 };
 
 const importProblems = (packed: PackedPackage, privateNames: Set<string>) => {
