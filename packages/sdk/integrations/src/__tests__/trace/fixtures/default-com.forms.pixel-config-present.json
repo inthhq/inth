@@ -2,12 +2,28 @@
 	"name": "default-com.forms.pixel-config-present",
 	"scenarios": {
 		"granted with Pixel configuration already on the page": [
-			{"step":"start granted"},
-			{"consoleError":["defaultComFormsSdk: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run."]},
-			{"insert":"script","in":"head","attrs":{"id":"inth-#1","nonce":"trace-nonce","type":"application/x-inth-default-conflict"},"async":true},
-			{"global":"__defaultPixel__","value":{"key":"existing-key","q":[["existing"]]}},
-			{"step":"load"},
-			{"step":"dispose"}
+			{ "step": "start granted" },
+			{
+				"consoleError": [
+					"defaultComFormsSdk: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run."
+				]
+			},
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"type": "application/x-inth-default-conflict"
+				},
+				"async": true
+			},
+			{
+				"global": "__defaultPixel__",
+				"value": { "key": "existing-key", "q": [["existing"]] }
+			},
+			{ "step": "load" },
+			{ "step": "dispose" }
 		]
 	}
 }
