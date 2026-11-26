@@ -3,11 +3,14 @@
 // The Inth server resolves remote integrations without a DOM.
 import type { Script } from '@inth/sdk/engine';
 import {
+	installLevelThree,
 	isDeclarableGlobal,
 	MANIFEST_RUNTIME_LEVEL,
 	manifestRoots,
 	parseResolvedManifest,
+	requiresLevelThree,
 } from '@inth/sdk/manifest-runtime';
+import { levelThreePart } from '@inth/sdk/manifest-runtime/level-three';
 import { describe, expect, it } from 'vite-plus/test';
 
 import { grantedServerStart } from './__tests__/helpers';
@@ -26,6 +29,19 @@ import type {
 import { vendorModules } from './remote-catalogue';
 
 type Options = Record<string, RemoteOptionValue>;
+
+/**
+ * Parses a manifest from the wire as the browser does: the loader installs
+ * the level 3 part before it parses a manifest that requires level 3.
+ */
+const parseWire = function parseWire(
+	wire: unknown
+): ReturnType<typeof parseResolvedManifest> {
+	if (requiresLevelThree([wire])) {
+		installLevelThree(levelThreePart);
+	}
+	return parseResolvedManifest(wire);
+};
 
 /** npm helpers not named after their registry key. */
 const helperNames: Partial<Record<BuiltInScriptIntegrationKey, string>> = {
@@ -123,6 +139,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	optimizelyWeb: ['cdn.optimizely.com'],
 	pardotTracking: ['pi.pardot.com'],
 	pinterestTag: ['s.pinimg.com'],
+	pirsch: ['api.pirsch.io'],
 	plausibleAnalytics: ['plausible.io'],
 	posthog: ['eu-assets.i.posthog.com', 'us-assets.i.posthog.com'],
 	promptwatch: ['ingest.promptwatch.com'],
@@ -274,7 +291,7 @@ const remoteScript = function remoteScript(
 	const wire: unknown = JSON.parse(
 		JSON.stringify(remoteIntegrations[key]?.resolveRemote(validated.options))
 	);
-	const parsed = parseResolvedManifest(wire);
+	const parsed = parseWire(wire);
 	if (!parsed.ok) {
 		throw new Error(`${key}: ${parsed.reason}`);
 	}
@@ -301,12 +318,10 @@ describe('remoteIntegrations', () => {
 		expect(JSON.parse(JSON.stringify(manifest))).toEqual(manifest);
 		expect(manifest?.vendor).toBe(remoteIntegrations[key]?.vendor);
 		// The SDK runs what it receives only once it passes its own check.
-		expect(parseResolvedManifest(JSON.parse(JSON.stringify(manifest)))).toEqual(
-			{
-				manifest: expect.anything(),
-				ok: true,
-			}
-		);
+		expect(parseWire(JSON.parse(JSON.stringify(manifest)))).toEqual({
+			manifest: expect.anything(),
+			ok: true,
+		});
 	});
 
 	it.each(cases)(

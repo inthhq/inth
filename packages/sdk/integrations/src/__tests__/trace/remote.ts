@@ -1,43 +1,68 @@
 /**
- * The server path for a golden trace run: the factory builds each script
- * from the manifest the Inth server sends for `options`, after a JSON round
- * trip and the SDK's parser, and the run compares it with the npm helper's
- * fixture.
+ * Golden trace factories for the server path: the Inth server validates the
+ * options and resolves the manifest, the manifest crosses the wire as JSON,
+ * and the browser's manifest runtime parses it and builds the script, as
+ * the remote loader does. Pass one as `factory` to `describeGoldenTraces`,
+ * so the server path is held to the npm helper's recorded trace.
  */
+import type { Script } from '@inth/sdk/engine';
+
 import type { BuiltInScriptIntegrationKey } from '../../registry';
-import type { GoldenTraceOptions, TraceFactory } from './golden';
+import type { TraceFactory } from './golden';
+
+export interface RemoteTraceOptions {
+	/**
+	 * Return the first built script on every call, as the remote loader does
+	 * while the manifest it receives is unchanged. Use it for a vendor whose
+	 * npm helper returns the same script for equal options, so a trace
+	 * `replace` with identical options is the same registration on both
+	 * paths. @default false: every call builds a fresh script, as the loader
+	 * does when the manifest changes.
+	 */
+	keepScript?: boolean;
+}
 
 /**
- * A `describeGoldenTraces` factory for the remote manifest of `key` with
- * `options`. Pass only options a dashboard can set; validation fails for
- * any other.
+ * A `factory` that builds `key`'s script from the manifest the Inth server
+ * sends for `options`. `options` must be ones a dashboard can save.
  */
 export const remoteTraceFactory = function remoteTraceFactory(
 	key: BuiltInScriptIntegrationKey,
-	options: Readonly<Record<string, unknown>>
-): NonNullable<GoldenTraceOptions['factory']> {
-	return async (): Promise<TraceFactory> => {
-		// Imported per scenario, after the module reset, like the helpers.
-		const { parseResolvedManifest } =
-			await import('@inth/sdk/manifest-runtime');
-		const { resolvedManifestToScript } = await import('../../engine/runtime');
+	options: Readonly<Record<string, unknown>>,
+	{ keepScript = false }: RemoteTraceOptions = {}
+): () => Promise<TraceFactory> {
+	return async () => {
+		// Imported per scenario, after the golden runner reset the registry.
 		const { remoteIntegrations, validateRemoteOptions } =
 			await import('../../remote');
+		const runtime = await import('@inth/sdk/manifest-runtime');
 		const validated = validateRemoteOptions(key, options);
 		if (!validated.ok) {
 			throw new Error(
 				`A dashboard cannot save these options: ${validated.issues.join('; ')}`
 			);
 		}
-		const wire: unknown = JSON.parse(
-			JSON.stringify(remoteIntegrations[key]?.resolveRemote(validated.options))
+		const wire = JSON.stringify(
+			remoteIntegrations[key]?.resolveRemote(validated.options)
 		);
+		// The loader installs the level 3 part before it parses a manifest
+		// that requires it.
+		if (runtime.requiresLevelThree([JSON.parse(wire)])) {
+			const { levelThreePart } =
+				await import('@inth/sdk/manifest-runtime/level-three');
+			runtime.installLevelThree(levelThreePart);
+		}
+		let kept: Script | undefined;
 		return () => {
-			const parsed = parseResolvedManifest(wire);
+			if (keepScript && kept) {
+				return kept;
+			}
+			const parsed = runtime.parseResolvedManifest(JSON.parse(wire));
 			if (!parsed.ok) {
 				throw new Error(`${key}: ${parsed.reason}`);
 			}
-			return resolvedManifestToScript(parsed.manifest);
+			kept = runtime.resolvedManifestToScript(parsed.manifest);
+			return kept;
 		};
 	};
 };

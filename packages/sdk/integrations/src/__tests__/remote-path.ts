@@ -99,6 +99,8 @@ export const splitRemote = function splitRemote(scripts: readonly Script[]): {
 };
 
 let runtimeLoad: Promise<unknown> | undefined;
+/** What the runtime's `prepare` last started, such as loading the level 3 part. */
+let preparing: Promise<unknown> | undefined;
 /** Remote entries the loader refused or skipped, so a scenario fails. */
 let refused: string[] = [];
 
@@ -124,7 +126,20 @@ export const onRemoteDebug = function onRemoteDebug(
 export const remoteLoaderOption: NonNullable<ScriptLoaderOptions['remote']> = {
 	level: MANIFEST_RUNTIME_LEVEL,
 	loadRuntime: () => {
-		const load = loadManifestRuntime();
+		const load = loadManifestRuntime().then((runtime) => {
+			const { prepare } = runtime;
+			if (!prepare) {
+				return runtime;
+			}
+			return {
+				...runtime,
+				prepare: (manifests: readonly unknown[]) => {
+					const pending = prepare(manifests);
+					preparing = pending ?? preparing;
+					return pending;
+				},
+			};
+		});
 		runtimeLoad = load;
 		return load;
 	},
@@ -132,12 +147,18 @@ export const remoteLoaderOption: NonNullable<ScriptLoaderOptions['remote']> = {
 
 /**
  * Waits until a loader that started loading the manifest runtime has built
- * its remote scripts. Resolves at once for a scenario with none.
+ * its remote scripts, including ones that waited for the level 3 part.
+ * Resolves at once for a scenario with none.
  */
 export const settleRemote = async function settleRemote(): Promise<void> {
 	if (runtimeLoad !== undefined) {
 		await runtimeLoad;
 		// The loader awaited the same promise first, so its scripts are built.
+		await Promise.resolve();
+	}
+	if (preparing !== undefined) {
+		// The loader builds a list that needs the level 3 part once it loaded.
+		await preparing;
 		await Promise.resolve();
 	}
 	if (refused.length > 0) {
@@ -148,5 +169,6 @@ export const settleRemote = async function settleRemote(): Promise<void> {
 /** Forgets the runtime load of a finished scenario. */
 export const resetRemote = function resetRemote(): void {
 	runtimeLoad = undefined;
+	preparing = undefined;
 	refused = [];
 };
