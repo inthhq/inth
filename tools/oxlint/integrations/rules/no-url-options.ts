@@ -1,31 +1,10 @@
 import { defineRule } from "vite-plus/lint/plugins";
-import type { ESTree } from "vite-plus/lint/plugins";
 
-import {
-  propertyKeyName,
-  resolveValue,
-  stringPropertyValue,
-} from "../shared/ast.ts";
+import { objectEntries } from "../shared/ast.ts";
+import { isHostnameSpec, remoteOptions } from "../shared/remote.ts";
 
-const DEFINE_REMOTE_NAMES = new Set([
-  "defineRemote",
-  "defineRemoteIntegration",
-]);
-const URL_NAME_PATTERN = /url|src|endpoint|apihost|host/iu;
-
-const calleeName = (callee: ESTree.Expression): string | null => {
-  if (callee.type === "Identifier") {
-    return callee.name;
-  }
-  if (
-    callee.type === "MemberExpression" &&
-    !callee.computed &&
-    callee.property.type === "Identifier"
-  ) {
-    return callee.property.name;
-  }
-  return null;
-};
+// `(?<!re)` keeps names such as `resourceKey` out.
+const URL_NAME_PATTERN = /url|src|(?<!re)source|endpoint|host/iu;
 
 /**
  * A remote option is a value someone types into the dashboard. An option that
@@ -39,38 +18,27 @@ export const noUrlOptionsRule = defineRule({
     const { sourceCode } = context;
     return {
       CallExpression(node) {
-        const name = calleeName(node.callee);
-        const [, optionsArgument] = node.arguments;
-        if (
-          name === null ||
-          !DEFINE_REMOTE_NAMES.has(name) ||
-          !optionsArgument ||
-          optionsArgument.type === "SpreadElement"
-        ) {
+        const options = remoteOptions(sourceCode, node);
+        if (options === null) {
           return;
         }
-        const options = resolveValue(sourceCode, optionsArgument);
-        if (options.type !== "ObjectExpression") {
+        if (options.status === "unknown") {
+          context.report({ messageId: "unresolved", node: options.node });
           return;
         }
-        for (const property of options.properties) {
-          if (property.type !== "Property") {
-            continue;
-          }
-          const optionName = propertyKeyName(property);
-          if (optionName === null || !URL_NAME_PATTERN.test(optionName)) {
-            continue;
-          }
-          const spec = resolveValue(sourceCode, property.value);
-          const kind =
-            spec.type === "ObjectExpression"
-              ? stringPropertyValue(spec, "kind")
-              : null;
-          if (kind !== "hostname") {
+        const { entries, unknown } = objectEntries(sourceCode, options.object);
+        for (const via of unknown) {
+          context.report({ messageId: "unresolved", node: via });
+        }
+        for (const [name, entry] of entries) {
+          if (
+            URL_NAME_PATTERN.test(name) &&
+            !isHostnameSpec(sourceCode, entry.value)
+          ) {
             context.report({
-              data: { name: optionName },
+              data: { name },
               messageId: "urlOption",
-              node: property.key,
+              node: entry.via.type === "Property" ? entry.via.key : entry.via,
             });
           }
         }
@@ -83,6 +51,8 @@ export const noUrlOptionsRule = defineRule({
         "Disallow remote options named like a URL, source, endpoint or host, except kind `hostname`.",
     },
     messages: {
+      unresolved:
+        "This rule cannot see which remote options this adds. Write the options as an object literal in this file, or spread a `const` object literal from this file.",
       urlOption:
         "Remote option `{{name}}` reads like a URL, source, endpoint or host. Build the URL from a fixed vendor host and validated IDs, or use kind `hostname` for a tracker on the customer's own domain.",
     },

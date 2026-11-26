@@ -8,7 +8,7 @@ Rules for `@inth/integrations` vendor files. The Inth server sends vendor manife
 | --- | --- |
 | `no-vendor-callbacks` | `onBeforeLoad`, `onLoad`, `onConsentChange`, `onDispose`, `onError`, `validate` or `serverStart` on a script, outside an `adapters/` directory. A manifest step list such as `onConsentChange: [...]` passes. |
 | `fixed-script-host` | A manifest script `src` that does not start with `https://` and a literal host. A `{{name}}` in the host passes only when the same file declares an option `name` of kind `hostname`. |
-| `no-url-options` | A `defineRemote` option named like a URL, source, endpoint or host, unless its kind is `hostname`. |
+| `no-url-options` | A `defineRemote` option named like a URL, source, endpoint or host, unless its kind is `hostname`. Spreads of `const` object literals in the same file are followed; options the rule cannot follow are reported. |
 
 ## Disable comments
 

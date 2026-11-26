@@ -15,13 +15,19 @@ const idOption = `{ kind: 'id', label: 'X', pattern: '^a$', required: true }`;
 
 tester.run("no-url-options", noUrlOptionsRule, {
   invalid: [
-    ...["scriptUrl", "src", "apiEndpoint", "apiHost", "host", "cdnURL"].map(
-      (name) => ({
-        code: `export const remote = defineRemote('example', { ${name}: ${idOption} }, resolve);`,
-        errors: [{ message: new RegExp(`^Remote option \`${name}\``, "u") }],
-        name: `an id option named ${name}`,
-      })
-    ),
+    ...[
+      "scriptUrl",
+      "src",
+      "scriptSource",
+      "apiEndpoint",
+      "apiHost",
+      "host",
+      "cdnURL",
+    ].map((name) => ({
+      code: `export const remote = defineRemote('example', { ${name}: ${idOption} }, resolve);`,
+      errors: [{ message: new RegExp(`^Remote option \`${name}\``, "u") }],
+      name: `an id option named ${name}`,
+    })),
     {
       code: `export const remote = defineRemoteIntegration('example', { scriptUrl: { kind: 'enum', label: 'X', values: ['a'], default: 'a' } }, resolve);`,
       errors: 1,
@@ -48,6 +54,37 @@ tester.run("no-url-options", noUrlOptionsRule, {
       errors: 1,
       name: "a spec whose kind is unknown",
     },
+    {
+      code: `
+        const scriptOptions = { scriptUrl: ${idOption} };
+        export const remote = defineRemoteIntegration('example', { ...scriptOptions }, resolve);
+      `,
+      errors: [{ message: /^Remote option `scriptUrl`/u }],
+      name: "an option spread from a const",
+    },
+    {
+      code: `export const remote = defineRemote('example', { id: ${idOption}, ...{ scriptSrc: ${idOption} } }, resolve);`,
+      errors: 1,
+      name: "an option spread from a literal",
+    },
+    {
+      code: `
+        const hostSpec = { kind: 'hostname', label: 'X' } as const;
+        export const remote = defineRemote('example', { trackerHost: { ...hostSpec, kind: 'id' } }, resolve);
+      `,
+      errors: 1,
+      name: "a hostname kind overridden after a spread",
+    },
+    {
+      code: `export const make = (extra: object) => defineRemote('example', { ...extra }, resolve);`,
+      errors: [{ messageId: "unresolved" }],
+      name: "a spread the rule cannot follow",
+    },
+    {
+      code: `export const remote = defineRemote('example', makeOptions(), resolve);`,
+      errors: [{ messageId: "unresolved" }],
+      name: "options the rule cannot follow",
+    },
   ],
   valid: [
     {
@@ -72,6 +109,24 @@ tester.run("no-url-options", noUrlOptionsRule, {
     {
       code: `export const remote = defineSomethingElse('example', { scriptUrl: ${idOption} });`,
       name: "another function",
+    },
+    {
+      code: `
+        const hostSpec = { kind: 'hostname', label: 'X' } as const;
+        export const remote = defineRemote('example', { trackerHost: { label: 'Tracker', ...hostSpec } }, resolve);
+      `,
+      name: "a hostname kind from a spread",
+    },
+    {
+      code: `
+        const shared = { region: { kind: 'enum', label: 'Region', values: ['eu'], default: 'eu' } } as const;
+        export const remote = defineRemote('example', { id: ${idOption}, ...shared }, resolve);
+      `,
+      name: "spread options with no URL names",
+    },
+    {
+      code: `export const remote = defineRemote('example', { resourceKey: ${idOption} }, resolve);`,
+      name: "a name that contains source inside another word",
     },
   ],
 });
