@@ -8,7 +8,13 @@
 import { version } from '../version';
 
 /** A file the init script or the engine loads next to `inth.js`. */
-export type InitFile = 'hosted' | 'commit' | 'records' | 'dialog' | 'manifests';
+export type InitFile =
+	| 'hosted'
+	| 'commit'
+	| 'records'
+	| 'dialog'
+	| 'manifests'
+	| 'manifests3';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
@@ -16,6 +22,7 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
 	dialog: '__inthDialogSrc',
 	hosted: '__inthHostedSrc',
 	manifests: '__inthManifestsSrc',
+	manifests3: '__inthManifests3Src',
 	records: '__inthRecordsSrc',
 };
 

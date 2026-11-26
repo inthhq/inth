@@ -1,8 +1,10 @@
 // @vitest-environment node
 /**
- * The size of `inth.manifests.js`, which a page with remote scripts
- * downloads beside `inth.js`. The budget sits just above the current size,
- * so a change that grows the file has to raise it on purpose.
+ * The sizes of `inth.manifests.js`, which a page with remote scripts
+ * downloads beside `inth.js`, and of `inth.manifests3.js`, which it
+ * downloads in its place when a manifest requires level 3. Each budget sits
+ * just above the current size, so a change that grows a file has to raise
+ * it on purpose.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -12,20 +14,37 @@ import { gzipSync } from 'node:zlib';
 import { expect, it } from 'vite-plus/test';
 
 /**
- * Gzipped bytes. Level 1 was 4,690; level 2 brought it to 6,264, and the
- * checks on what a step calls and writes to 6,594. `globals` brought it to
- * 9,015: 1,398 for the list of platform globals no manifest may declare,
- * the rest for the root, native call and browser object checks. Checking
- * what a stub or a queued callback calls when called, and which push an
- * array call may use, brought it to 9,236.
+ * Gzipped bytes. `inth.manifests.js`: level 1 was 4,690, level 2 brought it
+ * to 6,264, the checks on what a step calls and writes to 6,594, and level 3
+ * to 6,665, since its steps build into `inth.manifests3.js` only.
+ * `inth.manifests3.js`, the same runtime with level 3: 8,986.
  */
-const BUDGET = 9270;
+const BUDGETS = {
+	'inth.manifests.js': 6700,
+	'inth.manifests3.js': 9050,
+};
 
-it('keeps inth.manifests.js within its gzip budget', () => {
-	const file = resolve(
-		dirname(fileURLToPath(import.meta.url)),
-		'../../dist/inth.manifests.js'
-	);
+it.each(Object.entries(BUDGETS))(
+	'keeps %s within its gzip budget',
+	(name, budget) => {
+		const file = resolve(
+			dirname(fileURLToPath(import.meta.url)),
+			'../../dist',
+			name
+		);
 
-	expect(gzipSync(readFileSync(file)).length).toBeLessThanOrEqual(BUDGET);
+		expect(gzipSync(readFileSync(file)).length).toBeLessThanOrEqual(budget);
+	}
+);
+
+it('keeps the level 3 steps out of inth.manifests.js', () => {
+	const read = (name: string) =>
+		readFileSync(
+			resolve(dirname(fileURLToPath(import.meta.url)), '../../dist', name),
+			'utf8'
+		);
+
+	// The level 3 part's own parser message.
+	expect(read('inth.manifests.js')).not.toContain('nests steps more than');
+	expect(read('inth.manifests3.js')).toContain('nests steps more than');
 });

@@ -81,6 +81,18 @@ describe('readRemoteStandIns', () => {
 		expect(read.categories).toEqual(['marketing']);
 	});
 
+	test('says whether an entry it reads requires level 3', () => {
+		const read = (load: unknown[]) =>
+			readRemoteStandIns(answer({ load }), [
+				{ category: 'marketing', id: 'claimed' },
+			]).levelThree;
+
+		expect(read([entry('a'), entry('b', { requires: 2 })])).toBeFalsy();
+		expect(read([entry('a'), entry('b', { requires: 3 })])).toBe(true);
+		// The engine skips a claimed entry, so it needs no level 3 file.
+		expect(read([entry('claimed', { requires: 3 })])).toBeFalsy();
+	});
+
 	test('skips an entry whose id a code script uses, whatever its vendor', () => {
 		const read = readRemoteStandIns(answer({ load: [entry('acme-pixel')] }), [
 			{ category: 'marketing', id: 'acme-pixel', vendor: 'acme-legacy' },

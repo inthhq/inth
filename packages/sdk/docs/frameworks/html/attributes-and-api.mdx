@@ -33,6 +33,7 @@ manifest). Load files not served per project, such as `inth.devtools.js` or
 | `inth.commit.js` | Persists an Accept or Reject click made on the initial banner. Loaded automatically by `inth.js`. |
 | `inth.records.js` | Reads stored consent for returning visitors to start permitted scripts immediately. Loaded automatically by `inth.js`. |
 | `inth.manifests.js` | Runs the integrations your project added on the Inth server. Loaded automatically when there are any. |
+| `inth.manifests3.js` | The same, for integrations that need manifest runtime level 3. Loaded in place of `inth.manifests.js` when one does. |
 | `inth.testing.js` | Test pages only. Stock UI with `testing()` and built-in policy presets, with no network requests. |
 | `inth.headless.js` | Runtime and `window.inth` API without stock UI or CSS; see [headless](/docs/frameworks/html/headless). |
 | `inth.iab.js` | Replaces `inth.js` for IAB TCF policies; see [IAB TCF](/docs/frameworks/html/iab). |
@@ -73,11 +74,11 @@ hands off cleanly without re-sending `/v1/consent/init` or flashing the banner.
 `inth.onInit((client) => ...)` to access the full client.
 
 `inth.js` resolves `inth.hosted.js`, `inth.commit.js`, `inth.records.js`,
-`inth.dialog.js` and `inth.manifests.js` beside its own URL with
-`?v=<version>`. If copying files to your own server, copy all six together,
-or point to custom URLs with `data-hosted-src`, `data-commit-src`,
-`data-records-src`, `data-dialog-src` and `data-manifests-src`. Allow all of
-them in `script-src` under CSP.
+`inth.dialog.js`, `inth.manifests.js` and `inth.manifests3.js` beside its own
+URL with `?v=<version>`. If copying files to your own server, copy all seven
+together, or point to custom URLs with `data-hosted-src`, `data-commit-src`,
+`data-records-src`, `data-dialog-src`, `data-manifests-src` and
+`data-manifests3-src`. Allow all of them in `script-src` under CSP.
 
 `dist/inth.css` and `dist/inth.iab.css` are the standalone stylesheets when
 using `data-shadow="false"` and `styles: false`.
@@ -103,7 +104,7 @@ Attributes are read once on startup. `inth.js` uses hosted mode and requires
 | `data-hide-branding` | Hide the "Secured by" tag (the IAB banner always keeps it). |
 | `data-shadow="false"` | Render into the page DOM so page CSS applies; see [style it with your own stylesheet](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Run without stock UI (load `inth.headless.js` instead to omit UI bytes). |
-| `data-hosted-src`, `data-commit-src`, `data-records-src`, `data-dialog-src`, `data-manifests-src` | Custom URLs for companion files loaded by `inth.js`. |
+| `data-hosted-src`, `data-commit-src`, `data-records-src`, `data-dialog-src`, `data-manifests-src`, `data-manifests3-src` | Custom URLs for companion files loaded by `inth.js`. |
 | `data-remote-scripts="false"` | Load none of the integrations your project added on the Inth server. They load by default; a script your page declares for the same integration always wins. |
 | `data-manual` | Wait for `inth.init()` instead of starting automatically; see [start Inth yourself](/docs/frameworks/html/api#start-inth-yourself). |
 | `data-nonce` | CSP nonce for stock UI `<style>` and loaded scripts (overrides tag's `nonce`); see [Content Security Policy](/docs/frameworks/html/content-security-policy). |

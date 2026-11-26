@@ -74,6 +74,11 @@ export interface RemoteStandIns {
 	scripts: Script[];
 	/** Every category those entries ask for. */
 	categories: AllConsentNames[];
+	/**
+	 * Whether one of those entries requires manifest runtime level 3, which
+	 * `inth.manifests3.js` runs in place of `inth.manifests.js`.
+	 */
+	levelThree?: boolean;
 }
 
 /**
@@ -119,6 +124,7 @@ export const readRemoteStandIns = function readRemoteStandIns(
 			continue;
 		}
 		claimed.add(id);
+		result.levelThree ||= (manifest.requires as number) >= 3;
 		result.categories.push(...categories);
 		result.scripts.push({
 			alwaysLoad: manifest.alwaysLoad === true,

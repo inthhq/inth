@@ -31,6 +31,10 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   before the engine and opens the dialog without the engine; the engine
  *   fetches it the first time it needs the dialog. Served next to
  *   `dist/inth.hosted.js`.
+ * - `dist/inth.manifests.js` — the manifest runtime that runs the scripts
+ *   the Inth server sends, up to manifest level 2. `dist/inth.manifests3.js`
+ *   is the same runtime with level 3, loaded in its place when a manifest
+ *   requires level 3. Both are served next to `dist/inth.hosted.js`.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
@@ -76,6 +80,7 @@ const PRODUCTION_BUNDLES = new Set([
 	'inth.iab',
 	'inth.gpp',
 	'inth.manifests',
+	'inth.manifests3',
 ]);
 
 /**
@@ -197,6 +202,21 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						? [modeBundleBoundary('production')]
 						: []),
 					...(name === 'inth.testing' ? [modeBundleBoundary('testing')] : []),
+					// `inth.manifests.js` runs manifests up to level 2: with no
+					// level 3 part, the code that hands steps to it drops out.
+					// `inth.manifests3.js` is the runtime with the part.
+					...(name === 'inth.manifests'
+						? [
+								new rspack.NormalModuleReplacementPlugin(
+									/^\.\/part(?:\.js)?$/u,
+									(resource) => {
+										if (/[\\/]manifest-runtime$/u.test(resource.context)) {
+											resource.request = './part-none.js';
+										}
+									}
+								),
+							]
+						: []),
 				],
 			},
 		},
@@ -231,6 +251,7 @@ export default defineConfig({
 		scriptTagLib('inth.records', './src/entries/cdn-records.ts'),
 		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
 		scriptTagLib('inth.manifests', './src/entries/cdn-manifests.ts'),
+		scriptTagLib('inth.manifests3', './src/entries/cdn-manifests3.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),

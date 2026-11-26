@@ -78,10 +78,27 @@ const remoteManifest = (alwaysLoad: boolean) => ({
 	},
 });
 
+/**
+ * A manifest that needs runtime level 3: its setup pushes through an `if`
+ * step, which only `inth.manifests3.js` runs.
+ */
+const levelThreeManifest = () => ({
+	...remoteManifest(true),
+	requires: 3,
+	setupSteps: [
+		{
+			// oxlint-disable-next-line unicorn/no-thenable -- The if step's field is named then.
+			then: [{ queue: '__ran', type: 'pushToQueue', value: 'remote' }],
+			type: 'if',
+			when: { global: ['__ran'], is: 'array' },
+		},
+	],
+});
+
 let registryUnavailable = false;
 
 const remoteRegistry = (mode: string | undefined) => {
-	if (!(mode === 'always' || mode === 'gated')) {
+	if (!(mode === 'always' || mode === 'gated' || mode === 'levelthree')) {
 		return {};
 	}
 	return registryUnavailable
@@ -92,7 +109,10 @@ const remoteRegistry = (mode: string | undefined) => {
 						{
 							id: 'remote-pixel',
 							integration: 'remotePixel',
-							manifest: remoteManifest(mode === 'always'),
+							manifest:
+								mode === 'levelthree'
+									? levelThreeManifest()
+									: remoteManifest(mode === 'always'),
 						},
 					],
 				},

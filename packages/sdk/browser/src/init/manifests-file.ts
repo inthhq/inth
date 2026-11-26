@@ -17,5 +17,12 @@ import type { PartFile } from './part-file';
 /** Global `inth.manifests.js` publishes its {@link ManifestsFile} on. */
 export const MANIFESTS_KEY = '__inthManifests';
 
-/** What `inth.manifests.js` publishes. @internal */
+/**
+ * Global `inth.manifests3.js` publishes its {@link ManifestsFile} on: the
+ * same runtime with level 3, which the init script and the engine load in
+ * place of `inth.manifests.js` when a manifest requires level 3.
+ */
+export const LEVEL_THREE_KEY = '__inthManifests3';
+
+/** What `inth.manifests.js` and `inth.manifests3.js` publish. @internal */
 export interface ManifestsFile extends PartFile, RemoteManifestRuntime {}

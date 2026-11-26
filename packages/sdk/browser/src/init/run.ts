@@ -394,8 +394,8 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `inth.commit.js`, `inth.records.js`, `inth.dialog.js` or
-	 * `inth.manifests.js`, once.
+	 * Fetch `inth.commit.js`, `inth.records.js`, `inth.dialog.js`,
+	 * `inth.manifests.js` or `inth.manifests3.js`, once.
 	 * Settles when it has run, failed, or after {@link INIT_WAIT_MS}; `parts`
 	 * or the dialog global holds what it provided.
 	 */
@@ -856,7 +856,7 @@ export const runInitScript = function runInitScript(
 					? [...new Set([...current.consentCategories, ...remote.categories])]
 					: current.consentCategories;
 			if (remote.scripts.length) {
-				void loadPart('manifests');
+				void loadPart(remote.levelThree ? 'manifests3' : 'manifests');
 			}
 		};
 		let pending: Promise<SSRInitialData | undefined> | undefined;

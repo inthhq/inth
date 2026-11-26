@@ -4,7 +4,9 @@
 import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
 
 const boot = vi.hoisted(() => ({ script: null as Element | null }));
-const loadPartFile = vi.hoisted(() => vi.fn(() => Promise.resolve({})));
+const loadPartFile = vi.hoisted(() =>
+	vi.fn((key: string) => Promise.resolve({ key }))
+);
 
 vi.mock('../init/adopt', () => ({
 	adoptedBoot: () => (boot.script ? { script: boot.script } : null),
@@ -61,6 +63,62 @@ describe('loadManifestsFile', () => {
 			'__inthManifests',
 			'/files/manifests.js',
 			undefined
+		);
+	});
+
+	const levelThree = [{ requires: 3 }];
+	const initTag = (attributes: Record<string, string> = {}) => {
+		const tag = document.createElement('script');
+		tag.setAttribute('src', '/sdk/inth.js');
+		for (const [name, value] of Object.entries(attributes)) {
+			tag.setAttribute(name, value);
+		}
+		boot.script = tag;
+	};
+
+	test('loads inth.manifests3.js in its place for a manifest that requires level 3', async () => {
+		initTag({ 'data-nonce': 'abc123' });
+
+		const runtime = await loadManifestsFile([{ requires: 2 }, ...levelThree]);
+
+		expect(loadPartFile).toHaveBeenCalledExactlyOnceWith(
+			'__inthManifests3',
+			expect.stringMatching(/\/sdk\/inth\.manifests3\.js\?v=/u),
+			'abc123'
+		);
+		expect(runtime).toEqual({ key: '__inthManifests3' });
+	});
+
+	test('uses data-manifests3-src from the init tag', async () => {
+		initTag({ 'data-manifests3-src': '/files/manifests3.js' });
+
+		await loadManifestsFile(levelThree);
+
+		expect(loadPartFile).toHaveBeenCalledWith(
+			'__inthManifests3',
+			'/files/manifests3.js',
+			undefined
+		);
+	});
+
+	test('moves to inth.manifests3.js for a later list that requires level 3', async () => {
+		initTag({ 'data-nonce': 'abc123' });
+
+		const runtime = await loadManifestsFile([{ requires: 2 }]);
+
+		expect(loadPartFile).toHaveBeenCalledExactlyOnceWith(
+			'__inthManifests',
+			expect.any(String),
+			'abc123'
+		);
+		expect(runtime.prepare?.([{ requires: 2 }, {}])).toBeUndefined();
+		await expect(runtime.prepare?.(levelThree)).resolves.toEqual({
+			key: '__inthManifests3',
+		});
+		expect(loadPartFile).toHaveBeenLastCalledWith(
+			'__inthManifests3',
+			expect.stringMatching(/\/sdk\/inth\.manifests3\.js\?v=/u),
+			'abc123'
 		);
 	});
 });

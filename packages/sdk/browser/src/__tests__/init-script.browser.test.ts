@@ -870,10 +870,21 @@ describe('scripts the Inth server lists', () => {
 	const REMOTE_SRC = 'https://remote-pixel.invalid/pixel.js';
 	const remoteTag = (win: PageWindow): HTMLScriptElement | null =>
 		win.document.querySelector(`script[src="${REMOTE_SRC}"]`);
-	const manifestsRequested = (win: PageWindow): boolean =>
+	const requested = (win: PageWindow, file: string): boolean =>
 		[...win.document.querySelectorAll('script')].some((tag) =>
-			tag.src.includes('/inth.manifests.js')
+			tag.src.includes(`/${file}`)
 		);
+	const manifestsRequested = (win: PageWindow): boolean =>
+		requested(win, 'inth.manifests.js');
+
+	it('runs one that requires level 3 with inth.manifests3.js alone', async () => {
+		const win = await open({ remote: 'levelthree' });
+
+		await expect.poll(() => win.__ran, { timeout: 8000 }).toContain('remote');
+		expect(remoteTag(win)).not.toBeNull();
+		expect(requested(win, 'inth.manifests3.js')).toBe(true);
+		expect(manifestsRequested(win)).toBe(false);
+	});
 
 	it('loads one that may run before a choice through the engine and inth.manifests.js', async () => {
 		const win = await open({ remote: 'always' });
