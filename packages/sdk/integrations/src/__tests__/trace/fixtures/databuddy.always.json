@@ -1,0 +1,333 @@
+{
+	"name": "databuddy.always",
+	"scenarios": {
+		"denied, grant, load, revoke, regrant, dispose": [
+			{ "step": "start denied" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant" },
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "deny" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" }
+		],
+		"granted, load, dispose": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" }
+		],
+		"replace with identical options while granted": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "replace" },
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" }
+		],
+		"replace while a revoke is pending": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "replace-while-revoke-pending" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" }
+		],
+		"load after the element was removed": [
+			{ "step": "start granted" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "remove-element" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" },
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "dispose" }
+		],
+		"grant then revoke in the same tick": [
+			{ "step": "start denied" },
+			{
+				"insert": "script",
+				"in": "head",
+				"attrs": {
+					"crossorigin": "anonymous",
+					"data-api-url": "https://basket.databuddy.cc",
+					"data-client-id": "client-id",
+					"id": "inth-#1",
+					"nonce": "trace-nonce",
+					"src": "https://cdn.databuddy.cc/databuddy.js"
+				},
+				"async": true
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": true
+				}
+			},
+			{ "step": "grant-then-deny" },
+			{ "step": "load-detached" },
+			{ "load": "https://cdn.databuddy.cc/databuddy.js" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": true },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{ "step": "grant" },
+			{
+				"global": "databuddy",
+				"value": {
+					"clear": "[stub databuddy.clear]",
+					"flush": "[stub databuddy.flush]",
+					"options": { "disabled": false },
+					"track": "[stub databuddy.track]"
+				}
+			},
+			{
+				"global": "databuddyConfig",
+				"value": {
+					"apiUrl": "https://basket.databuddy.cc",
+					"clientId": "client-id",
+					"disabled": false
+				}
+			},
+			{ "step": "load" },
+			{ "step": "dispose" },
+			{ "remove": "[<script> #inth-#1 https://cdn.databuddy.cc/databuddy.js]" }
+		]
+	}
+}

@@ -52,4 +52,33 @@ export const databuddyReplayTrace: TraceSpec = {
 		}),
 };
 
-export const traces = [databuddyTrace, databuddyReplayTrace];
+/** With every feature switch set, as a dashboard form sends them. */
+export const databuddyDashboardTrace: TraceSpec = {
+	...databuddyTrace,
+	name: 'databuddy.dashboard',
+	script: () =>
+		databuddy({
+			clientId: 'client-id',
+			features: {
+				errors: true,
+				interactions: false,
+				outgoingLinks: false,
+				webVitals: true,
+			},
+			version: '2026-10-30.1',
+		}),
+};
+
+/** Loaded before consent, with the tracker disabled until a grant. */
+export const databuddyAlwaysTrace: TraceSpec = {
+	...databuddyTrace,
+	name: 'databuddy.always',
+	script: () => databuddy({ clientId: 'client-id', loadMode: 'always' }),
+};
+
+export const traces = [
+	databuddyTrace,
+	databuddyReplayTrace,
+	databuddyDashboardTrace,
+	databuddyAlwaysTrace,
+];
