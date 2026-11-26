@@ -15,6 +15,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { insiderTag } from './vendors/email-and-sms/insider';
@@ -121,12 +122,13 @@ describe.each(npmAndRemote('insiderTag', insiderTag))(
 	(_label, build) => {
 		cleanUp();
 
-		it('does not recover historical identity or reset preserved currency when the caller omits them', () => {
+		it('does not recover historical identity or reset preserved currency when the caller omits them', async () => {
 			window.InsiderQueue = [
 				{ type: 'user', value: { email: 'previous@example.com' } },
 				{ type: 'currency', value: 'EUR' },
 			];
 			loadScripts([build(account)], grantedMarketingConsents);
+			await settleScripts();
 			const runtime = installSdkModel();
 			expect(runtime.events).toEqual([
 				{
@@ -137,9 +139,10 @@ describe.each(npmAndRemote('insiderTag', insiderTag))(
 			]);
 		});
 
-		it('deduplicates equivalent registrations without replacing the queue', () => {
+		it('deduplicates equivalent registrations without replacing the queue', async () => {
 			const append = installHeadProbe(() => undefined);
 			loadScripts([build(account)], grantedMarketingConsents);
+			await settleScripts();
 			const queue = window.InsiderQueue;
 			const element = getLoader();
 			updateScripts([build(account)], grantedMarketingConsents);
@@ -153,9 +156,10 @@ describe.each(npmAndRemote('insiderTag', insiderTag))(
 			]);
 		});
 
-		it('sends false, a neutral page and init to a running SDK and removes the loader', () => {
+		it('sends false, a neutral page and init to a running SDK and removes the loader', async () => {
 			const scripts = [build(account)];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			const element = getLoader();
 			expect(element).not.toBeNull();
 			element?.dispatchEvent(new Event('load'));
@@ -186,13 +190,15 @@ describe.each(npmAndRemote('insiderTag', insiderTag))(
 			]);
 		});
 
-		it('does not recreate the queue on a denied fresh page', () => {
+		it('does not recreate the queue on a denied fresh page', async () => {
 			const scripts = [build(account)];
 			loadScripts(scripts, grantedMarketingConsents);
+			await settleScripts();
 			updateScripts(scripts, ALL_DENIED);
 			clearAllScripts();
 			delete window.InsiderQueue;
 			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
 			expect(window.InsiderQueue).toBeUndefined();
 			expect(getLoader()).toBeNull();
 		});
