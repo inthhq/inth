@@ -4,8 +4,8 @@
  *
  * The runner is a string, not a function, so a minifier or a coverage
  * tool can't rename what it calls. It runs the level 1 steps the snippet
- * vendors use, `callGlobal.path` and the `nameAndArguments` queue format,
- * with the semantics of `executeStep` in `runtime.ts`. A step, field,
+ * vendors use, `callGlobal.path`, `setGlobal.ifNullish` and the
+ * `nameAndArguments` queue format, with the semantics of `executeStep` in `runtime.ts`. A step, field,
  * value or runtime value it doesn't run makes the whole vendor fall back
  * to the script loader; the manifest runtime's level table says which
  * names a step can carry, so a later level's name falls back too.
@@ -49,7 +49,7 @@ function M(f,h,m){var n;try{n=S.call(f).indexOf('[native code]')>=0}catch(e){n=t
 function c(v){if(v&&typeof v==='object'){if(!Array.isArray(v)&&v.kind===K&&(v.value==='date'||v.value==='timestamp'))return v.value==='date'?new Date():Date.now();if(Array.isArray(v))return v.map(c);var o={};for(var k in v)o[k]=c(v[k]);return o}return v}
 function q(queue,owner){var t='global' in queue&&typeof queue.global==='string'?w[queue.global]:owner?owner[queue.property]:undefined;return Array.isArray(t)?t:undefined}
 for(var i=0;i<steps.length;i++){var s=steps[i];(function(s){switch(s.type){
-case 'setGlobal':if(s.ifUndefined!==false&&w[s.name]!==undefined)return;if(s.keepExistingQueue&&Array.isArray(w[s.name]))return;w[s.name]=c(s.value);return;
+case 'setGlobal':if(s.ifNullish?w[s.name]!=null:s.ifUndefined!==false&&w[s.name]!==undefined)return;if(s.keepExistingQueue&&Array.isArray(w[s.name]))return;w[s.name]=c(s.value);return;
 case 'defineQueueFunction':if(s.ifUndefined!==false&&w[s.name]!==undefined)return;w[s.name]=function(){var t=w[s.queue];if(!Array.isArray(t))return;t.push(s.pushStyle==='array'?Array.prototype.slice.call(arguments):arguments)};return;
 case 'defineStubFunction':if(s.ifUndefined!==false&&w[s.name]!==undefined)return;var f=function(){var self=w[s.name];if(P(self))self=undefined;var d=self&&s.dispatchProperty?self[s.dispatchProperty]:undefined,a=Array.prototype.slice.call(arguments);if(typeof d==='function'&&M(d,self,s.dispatchProperty)){d.apply(self,a);return}var t=q(s.queue,self);if(!t)return;t.push(s.queueFormat==='array'?a:arguments)};w[s.name]=f;
 if('property' in s.queue&&typeof s.queue.property==='string'&&f[s.queue.property]===undefined)f[s.queue.property]=[];(s.aliases||[]).forEach(function(n){w[n]=f});(s.selfReferences||[]).forEach(function(n){f[n]=f});for(var p in s.properties||{})f[p]=c(s.properties[p]);return;
@@ -66,6 +66,7 @@ case 'defineQueueProxy':if(w[s.name])return;w[s.queue]=w[s.queue]||[];w[s.name]=
 /** Fields above level 1 the runner runs, by step type. */
 const INLINE_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
 	callGlobal: new Set(['path']),
+	setGlobal: new Set(['ifNullish']),
 };
 
 /** Field values above level 1 the runner runs. */

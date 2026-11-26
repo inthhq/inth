@@ -682,6 +682,60 @@ describe('copied fields and queue formats', () => {
 		expect(element?.isConnected).toBe(true);
 	});
 
+	test.each([
+		['undefined', undefined, []],
+		['null', null, []],
+		['a value', 'kept', 'kept'],
+	])(
+		'setGlobal ifNullish sets a global that is %s only when it is nullish',
+		(_label, before, after) => {
+			win.__queue = before;
+			mount([
+				resolvedManifestToScript(
+					fromJSON({
+						alwaysLoad: true,
+						setupSteps: [
+							{
+								ifNullish: true,
+								name: '__queue',
+								type: 'setGlobal',
+								value: [],
+							},
+						],
+					})
+				),
+			]);
+
+			expect(win.__queue).toEqual(after);
+		}
+	);
+
+	test('refuses a setGlobal ifNullish that is not a boolean', () => {
+		expect(() =>
+			fromJSON({
+				setupSteps: [
+					{ ifNullish: 'yes', name: '__queue', type: 'setGlobal', value: [] },
+				],
+			})
+		).toThrow(
+			'setupSteps has a setGlobal step that has an ifNullish that is not a boolean'
+		);
+	});
+
+	test('setGlobal without ifNullish keeps a null global', () => {
+		win.__queue = null;
+		mount([
+			resolvedManifestToScript(
+				fromJSON({
+					alwaysLoad: true,
+					setupSteps: [{ name: '__queue', type: 'setGlobal', value: [] }],
+				})
+			),
+		]);
+
+		expect(win.__queue).toBeNull();
+	});
+
 	test('nameAndArguments queues the call with its Arguments object', () => {
 		mount([
 			resolvedManifestToScript(

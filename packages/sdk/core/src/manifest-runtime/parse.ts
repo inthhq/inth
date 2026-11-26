@@ -201,6 +201,11 @@ const fieldProblem = (step: Record<string, unknown>): string | undefined => {
 		case 'removeScript': {
 			return isElementId(step.id) ? undefined : 'has no id';
 		}
+		case 'setGlobal': {
+			return isOptional(step.ifNullish, isBoolean)
+				? undefined
+				: 'has an ifNullish that is not a boolean';
+		}
 		default: {
 			return undefined;
 		}

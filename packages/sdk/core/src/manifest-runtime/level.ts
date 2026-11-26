@@ -8,7 +8,7 @@ import type { LevelThreePart } from './part';
  *
  * Level 1 is the manifest shape the first remote scripts used. Level 2
  * adds runtime values read from consent and the script element,
- * `onDisposeSteps`, `callGlobal.path`, owned second script tags, the
+ * `onDisposeSteps`, `callGlobal.path`, `setGlobal.ifNullish`, owned second script tags, the
  * `nameAndArguments` queue format, a script tag `id`, and the `target`,
  * `observeConsentBeforeLoad`, `persistAfterDispose` and `resourceKey`
  * fields, and `globals`, the window roots a manifest's steps may use,

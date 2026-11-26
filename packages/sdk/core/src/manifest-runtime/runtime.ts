@@ -369,8 +369,12 @@ const executeStep = function executeStep(
 
 	switch (step.type) {
 		case 'setGlobal': {
-			const shouldSet = step.ifUndefined !== false;
-			if (shouldSet && win[step.name] !== undefined) {
+			const current = win[step.name];
+			if (
+				step.ifNullish
+					? current !== undefined && current !== null
+					: step.ifUndefined !== false && current !== undefined
+			) {
 				break;
 			}
 			if (step.keepExistingQueue && Array.isArray(win[step.name])) {

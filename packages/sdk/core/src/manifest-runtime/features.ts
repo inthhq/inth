@@ -141,6 +141,7 @@ export const EARLIER_STEP_FIELD_LEVELS: {
 	removeScript: { id: 2, type: 2 },
 	setCookie: { cookie: 1, type: 1 },
 	setGlobal: {
+		ifNullish: 2,
 		ifUndefined: 1,
 		keepExistingQueue: 1,
 		name: 1,

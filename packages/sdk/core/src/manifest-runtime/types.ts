@@ -116,6 +116,13 @@ export interface SetGlobalStep {
 	 * @default false
 	 */
 	keepExistingQueue?: boolean;
+	/**
+	 * Set the global when it is `undefined` or `null`, as the
+	 * `window.x = window.x ?? value` pattern does, and keep any other
+	 * value. Takes the place of `ifUndefined`.
+	 * @default false
+	 */
+	ifNullish?: boolean;
 }
 
 export interface DefineQueueFunctionStep {

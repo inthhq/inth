@@ -884,6 +884,39 @@ describe('inlineStepsStart', () => {
 			expect(JSON.stringify(fromInline)).toContain('"kind":"arguments"');
 		});
 
+		it.each([undefined, null, 'kept'])(
+			'sets a %s global with ifNullish from the HTML the way onBeforeLoad does',
+			(before) => {
+				const page = getTestGlobal() as unknown as Record<string, unknown>;
+				const script = level2({
+					setupSteps: [
+						{
+							ifNullish: true,
+							name: 'vendorQueue',
+							type: 'setGlobal',
+							value: [],
+						},
+					],
+				});
+				const values = [];
+				for (const run of ['callback', 'inline']) {
+					page.vendorQueue = before;
+					if (run === 'callback') {
+						script.onBeforeLoad?.(createCallbackInfo(info));
+					} else {
+						const start = script.serverStart?.(info, script);
+						// oxlint-disable-next-line no-new-func -- Runs the inline code, as the page would.
+						new Function(`${start?.prelude ?? ''};${start?.code}`)();
+					}
+					values.push(page.vendorQueue);
+				}
+				Reflect.deleteProperty(page, 'vendorQueue');
+
+				expect(values[1]).toEqual(values[0]);
+				expect(values[0]).toEqual(before ?? []);
+			}
+		);
+
 		it('calls a callGlobal path from the HTML on the object that holds it', () => {
 			const page = getTestGlobal() as unknown as Record<string, unknown>;
 			const script = level2({
