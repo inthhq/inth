@@ -67,6 +67,24 @@ export const gorgiasTrace: TraceSpec = {
 				'dispose',
 			],
 		},
+		{
+			// Segment runs while measurement is granted, and stops with the
+			// chat when functionality is revoked, even with measurement kept.
+			name: 'functionality revoked while measurement stays granted',
+			start: 'granted',
+			steps: [
+				{
+					consent: { functionality: true, measurement: true },
+					label: 'grant measurement too',
+				},
+				'load',
+				{
+					consent: { measurement: true },
+					label: 'revoke functionality, keep measurement',
+				},
+				'dispose',
+			],
+		},
 	],
 };
 

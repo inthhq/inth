@@ -2,308 +2,128 @@
 	"name": "gorgias",
 	"scenarios": {
 		"denied, grant, load, revoke, regrant, dispose": [
-			{ "step": "start denied" },
-			{ "step": "grant" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#1.init", "args": [] },
-			{ "call": "GorgiasChat#1.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "deny" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			},
-			{ "step": "grant" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#2.init", "args": [] },
-			{ "call": "GorgiasChat#2.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#2.disableSegment]",
-					"init": "[stub GorgiasChat#2.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start denied"},
+			{"step":"grant"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#1.init","args":[]},
+			{"call":"GorgiasChat#1.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"deny"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"step":"grant"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#2.init","args":[]},
+			{"call":"GorgiasChat#2.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#2.disableSegment]","init":"[stub GorgiasChat#2.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
 		],
 		"granted, load, dispose": [
-			{ "step": "start granted" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#1.init", "args": [] },
-			{ "call": "GorgiasChat#1.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#1.init","args":[]},
+			{"call":"GorgiasChat#1.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
 		],
 		"replace with identical options while granted": [
-			{ "step": "start granted" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#1.init", "args": [] },
-			{ "call": "GorgiasChat#1.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "replace" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			},
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#2.init", "args": [] },
-			{ "call": "GorgiasChat#2.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#2.disableSegment]",
-					"init": "[stub GorgiasChat#2.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#1.init","args":[]},
+			{"call":"GorgiasChat#1.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"replace"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#2.init","args":[]},
+			{"call":"GorgiasChat#2.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#2.disableSegment]","init":"[stub GorgiasChat#2.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
 		],
 		"replace while a revoke is pending": [
-			{ "step": "start granted" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#1.init", "args": [] },
-			{ "call": "GorgiasChat#1.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "replace-while-revoke-pending" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			},
-			{ "step": "grant" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#2.init", "args": [] },
-			{ "call": "GorgiasChat#2.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#2.disableSegment]",
-					"init": "[stub GorgiasChat#2.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#1.init","args":[]},
+			{"call":"GorgiasChat#1.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"replace-while-revoke-pending"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"step":"grant"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#2.init","args":[]},
+			{"call":"GorgiasChat#2.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#2.disableSegment]","init":"[stub GorgiasChat#2.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
 		],
 		"load after the element was removed": [
-			{ "step": "start granted" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "remove-element" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			},
-			{ "step": "load-detached" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "dispose" }
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"remove-element"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"step":"load-detached"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"dispose"}
 		],
 		"grant then revoke in the same tick": [
-			{ "step": "start denied" },
-			{ "step": "grant-then-deny" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			},
-			{ "step": "load-detached" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "grant" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{ "call": "GorgiasChat#2.init", "args": [] },
-			{ "call": "GorgiasChat#2.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#2.disableSegment]",
-					"init": "[stub GorgiasChat#2.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start denied"},
+			{"step":"grant-then-deny"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"step":"load-detached"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"grant"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#2.init","args":[]},
+			{"call":"GorgiasChat#2.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#2.disableSegment]","init":"[stub GorgiasChat#2.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
 		],
 		"widget-loaded event before the load event": [
-			{ "step": "start granted" },
-			{
-				"insert": "script",
-				"in": "body",
-				"attrs": {
-					"id": "inth-#1",
-					"nonce": "trace-nonce",
-					"src": "https://config.gorgias.chat/bundle-loader/app-key"
-				},
-				"async": true
-			},
-			{ "step": "bundle dispatches gorgias-widget-loaded" },
-			{ "call": "GorgiasChat#early.disableSegment", "args": [] },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#early.disableSegment]",
-					"init": "[stub GorgiasChat#early.init]"
-				}
-			},
-			{ "step": "load" },
-			{ "load": "https://config.gorgias.chat/bundle-loader/app-key" },
-			{
-				"global": "GorgiasChat",
-				"value": {
-					"disableSegment": "[stub GorgiasChat#1.disableSegment]",
-					"init": "[stub GorgiasChat#1.init]"
-				}
-			},
-			{ "step": "dispose" },
-			{
-				"remove": "[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"
-			}
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"bundle dispatches gorgias-widget-loaded"},
+			{"call":"GorgiasChat#early.disableSegment","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#early.disableSegment]","init":"[stub GorgiasChat#early.init]"}},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"dispose"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"}
+		],
+		"functionality revoked while measurement stays granted": [
+			{"step":"start granted"},
+			{"insert":"script","in":"body","attrs":{"id":"inth-#1","nonce":"trace-nonce","src":"https://config.gorgias.chat/bundle-loader/app-key"},"async":true},
+			{"step":"grant measurement too"},
+			{"step":"load"},
+			{"load":"https://config.gorgias.chat/bundle-loader/app-key"},
+			{"call":"GorgiasChat#1.init","args":[]},
+			{"global":"GorgiasChat","value":{"disableSegment":"[stub GorgiasChat#1.disableSegment]","init":"[stub GorgiasChat#1.init]"}},
+			{"step":"revoke functionality, keep measurement"},
+			{"remove":"[<script> #inth-#1 https://config.gorgias.chat/bundle-loader/app-key]"},
+			{"call":"GorgiasChat#1.disableSegment","args":[]},
+			{"step":"dispose"}
 		]
 	}
 }
