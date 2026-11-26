@@ -746,6 +746,76 @@ describe('remoteScripts', () => {
 		denies.dispose();
 	});
 
+	test('gives a remote script no other loader shares its own consents and registration', async () => {
+		vi.resetModules();
+		const base = await import('../../manifest-runtime/index');
+		const seen: {
+			consents: Record<string, boolean>;
+			hasConsent: boolean;
+			registration: symbol | undefined;
+		}[] = [];
+		const disposedWith: (symbol | undefined)[] = [];
+		const runtime = createConsentRuntimeWith(
+			{
+				enabled: true,
+				mode: initMode(
+					() =>
+						new Promise(() => {
+							// Never settles.
+						})
+				),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: matchedResolution(
+						optInRule({ id: 'opt-in' })
+					),
+					initialScriptRegistry: {
+						load: load(
+							acmeManifest({ alwaysLoad: true, category: 'measurement' })
+						),
+					},
+				},
+				remoteScripts: true,
+			},
+			{
+				...defaultRuntimeModules,
+				loadManifestRuntime: () =>
+					Promise.resolve({
+						...base,
+						resolvedManifestToScript: (
+							manifest: Parameters<typeof base.resolvedManifestToScript>[0]
+						) => ({
+							...base.resolvedManifestToScript(manifest),
+							onConsentChange: (info: ScriptCallbackInfo) => {
+								seen.push({
+									consents: { ...info.consents },
+									hasConsent: info.hasConsent,
+									registration: info.registration,
+								});
+							},
+							onDispose: (info: ScriptCallbackInfo) => {
+								disposedWith.push(info.registration);
+							},
+						}),
+					}),
+			}
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+
+		// Marketing allowed, its own category (measurement) still denied.
+		await runtime.kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
+		const last = seen.at(-1);
+		expect(last?.hasConsent).toBe(false);
+		expect(last?.consents.marketing).toBe(true);
+		expect(typeof last?.registration).toBe('symbol');
+
+		runtime.dispose();
+		expect(disposedWith).toEqual([last?.registration]);
+	});
+
 	test('stops a running script when a later init moves it to a denied category', async () => {
 		const answer = Promise.withResolvers<Record<string, unknown>>();
 		const runtime = createConsentRuntime({

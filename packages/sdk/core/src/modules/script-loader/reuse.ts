@@ -162,7 +162,15 @@ export const createScriptReuse = <OptionsType extends object>({
 			const states = [...registrations.values()];
 			const vendor = states.find((state) => state.vendor)?.vendor;
 			const hasConsent = states.every((state) => state.hasConsent);
-			const denied = deniedView && !hasConsent;
+			// Only another registration's denial: a registration's own denied
+			// category leaves its other categories as they are, as a script
+			// no other loader shares sees them.
+			const own = registrationOf(info);
+			const denied =
+				deniedView &&
+				[...registrations].some(
+					([registration, state]) => registration !== own && !state.hasConsent
+				);
 			const combined = {
 				...info,
 				hasConsent,
@@ -180,8 +188,14 @@ export const createScriptReuse = <OptionsType extends object>({
 					Object.keys(info.consents).map((name) => [name, false])
 				) as ScriptCallbackInfo['consents'];
 			}
-			if (info.replacing) {
-				Object.defineProperty(combined, 'replacing', { value: true });
+			// The spread copies only enumerable fields; keep the loader's
+			// non-enumerable ones, such as the registration a script keys its
+			// own state by and the consent and error readers.
+			for (const key of Reflect.ownKeys(info)) {
+				const field = Object.getOwnPropertyDescriptor(info, key);
+				if (field && !field.enumerable && key !== 'registrations') {
+					Object.defineProperty(combined, key, field);
+				}
 			}
 			registrationStates.set(combined, states);
 			Object.defineProperty(combined, 'registrations', { value: states });
