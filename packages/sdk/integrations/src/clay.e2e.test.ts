@@ -3,6 +3,7 @@
  */
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -10,6 +11,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 } from './e2e-test-utils';
 import { clay } from './vendors/analytics/clay';
 
@@ -126,3 +128,31 @@ describe('Clay pending tracker consent', () => {
 		]);
 	});
 });
+
+describe.each(npmAndRemote('clay', clay))(
+	'Clay dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+		afterEach(() => Reflect.deleteProperty(window, 'Claydar'));
+
+		it('loads the site loader in body after marketing consent and forwards consent to its queue', async () => {
+			const scripts = [build({ siteId: 'site-1' })];
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			updateScripts(scripts, grantedMeasurementConsents);
+			expect(document.querySelector('script')).toBeNull();
+
+			updateScripts(scripts, grantedMarketingConsents);
+			const loader = document.querySelector('script');
+			expect(loader?.src).toBe(
+				'https://static.claydar.com/init.v1.js?id=site-1'
+			);
+			expect(loader?.parentElement).toBe(document.body);
+			const queue: unknown[] = [];
+			Reflect.set(window, 'Claydar', queue);
+			loader?.dispatchEvent(new Event('load'));
+			updateScripts(scripts, ALL_DENIED);
+			expect(queue).toEqual([['giveCookieConsent'], ['denyCookieConsent']]);
+		});
+	}
+);

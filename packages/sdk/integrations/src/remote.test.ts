@@ -91,6 +91,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 	amplitude: ['cdn.amplitude.com'],
 	appcues: ['fast.appcues.com', 'fast.eu.appcues.com'],
 	attentiveTag: ['cdn.attn.tv'],
+	clay: ['static.claydar.com'],
 	clearbit: ['tag.clearbitscripts.com'],
 	cloudflareWebAnalytics: ['static.cloudflareinsights.com'],
 	crisp: ['client.crisp.chat'],
@@ -141,6 +142,7 @@ const vendorHosts: Record<string, readonly string[]> = {
 const vendorLevels: Partial<Record<BuiltInScriptIntegrationKey, number>> = {
 	adrollPixel: 2,
 	attentiveTag: 2,
+	clay: 2,
 };
 
 /**
