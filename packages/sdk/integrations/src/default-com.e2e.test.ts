@@ -185,10 +185,7 @@ describe('Default from npm and from the Inth server on one page', () => {
 		}
 	});
 
-	it('blocks the Forms SDK the server lists once the npm Pixel claimed the page', async () => {
-		const error = vi
-			.spyOn(console, 'error')
-			.mockImplementation(() => undefined);
+	it('skips the Forms SDK the server lists, because the npm helper claims Default', async () => {
 		const scripts = [
 			fresh.defaultComPixel({ publicKey: 'inthfake' }),
 			fromRemote('defaultComPixel', {
@@ -197,7 +194,7 @@ describe('Default from npm and from the Inth server on one page', () => {
 			}),
 		];
 		loadScripts(scripts, ALL_DENIED);
-		await settleScripts();
+		await settleScripts(/code wins/u);
 		updateScripts(scripts, {
 			...grantedMeasurementConsents,
 			functionality: true,
@@ -206,10 +203,32 @@ describe('Default from npm and from the Inth server on one page', () => {
 		const sources = [...document.querySelectorAll('script')].map((element) =>
 			element.getAttribute('src')
 		);
-		expect(sources).toEqual(['https://handshake.default.com/index.js', null]);
-		expect(error).toHaveBeenCalledWith(
-			'defaultComFormsSdk: conflicting Default installation. Use one Default helper per page. The conflicting loader will not run.'
-		);
+		expect(sources).toEqual(['https://handshake.default.com/index.js']);
+	});
+
+	it('lets the npm Pixel win when functionality is allowed before measurement', async () => {
+		const scripts = [
+			// The key the block's other tests use: the page claim outlives a test.
+			fresh.defaultComPixel({ publicKey: 'inthfake' }),
+			fromRemote('defaultComPixel', {
+				product: 'forms',
+				publicKey: 'inthfake',
+			}),
+		];
+		loadScripts(scripts, ALL_DENIED);
+		await settleScripts(/code wins/u);
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
+		updateScripts(scripts, {
+			...grantedMeasurementConsents,
+			functionality: true,
+		});
+
+		// Code claims the entry, so the server's Forms SDK never loads.
+		expect(document.querySelector('script[src*="sdk.js"]')).toBeNull();
+		expect(
+			document.querySelector('script[src="https://handshake.default.com/index.js"]')
+		).not.toBeNull();
+		expect(window.__defaultPixel__).toMatchObject({ key: 'inthfake' });
 	});
 });
 
