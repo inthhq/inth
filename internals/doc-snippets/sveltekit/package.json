@@ -1,24 +1,24 @@
 {
-	"name": "@inth/doc-snippets-sveltekit",
-	"private": true,
-	"type": "module",
-	"imports": {
-		"#lib/*": "./src/lib/*"
-	},
-	"scripts": {
-		"check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/svelte": "workspace:*"
-	},
-	"devDependencies": {
-		"@sveltejs/kit": "3.0.0",
-		"@sveltejs/vite-plugin-svelte": "^7.3.1",
-		"svelte": "^5.57.1",
-		"svelte-check": "^4.7.6",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/doc-snippets-sveltekit",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/svelte": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/kit": "3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

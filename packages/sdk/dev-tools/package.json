@@ -1,71 +1,71 @@
 {
-	"name": "@inth/sdk-dev-tools",
-	"version": "0.0.0-alpha.0",
-	"private": true,
-	"description": "Developer tools for debugging Inth. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
-	"keywords": [
-		"cmp",
-		"consent",
-		"cookie-consent",
-		"debugging",
-		"developer-tools",
-		"devtools",
-		"gdpr",
-		"inth",
-		"privacy"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/dev-tools"
-	},
-	"files": [
-		"dist",
-		"dist-types"
-	],
-	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		}
-	},
-	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"check-types": "tsrs --noEmit",
-		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"test": "vp test run"
-	},
-	"dependencies": {
-		"@inth/sdk-core": "workspace:*",
-		"@inth/sdk-schema": "workspace:*"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "^25.0.0",
-		"postcss": "^8.5.16",
-		"tsrs": "catalog:",
-		"typescript": "7.0.2",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	},
-	"browserslist": [
-		">0.2%",
-		"not dead",
-		"not op_mini all"
-	]
+  "name": "@inth/sdk-dev-tools",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "description": "Developer tools for debugging Inth. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
+  "keywords": [
+    "cmp",
+    "consent",
+    "cookie-consent",
+    "debugging",
+    "developer-tools",
+    "devtools",
+    "gdpr",
+    "inth",
+    "privacy"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/dev-tools"
+  },
+  "files": [
+    "dist",
+    "dist-types"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
+    "check-types": "tsrs --noEmit",
+    "dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@inth/sdk-core": "workspace:*",
+    "@inth/sdk-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "^25.0.0",
+    "postcss": "^8.5.16",
+    "tsrs": "catalog:",
+    "typescript": "7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ]
 }

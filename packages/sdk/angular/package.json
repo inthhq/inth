@@ -1,215 +1,215 @@
 {
-	"name": "@inth/angular",
-	"version": "0.0.0-alpha.0",
-	"description": "Angular cookie consent banner for Inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
-	"keywords": [
-		"angular",
-		"angular-cookie-consent",
-		"banner",
-		"ccpa",
-		"cmp",
-		"consent",
-		"consent-banner",
-		"consent-management-platform",
-		"consent-manager",
-		"consent-mode-v2",
-		"cookie",
-		"cookie-banner",
-		"cookie-consent",
-		"gdpr",
-		"global-privacy-control",
-		"google-consent-mode",
-		"headless",
-		"iab-tcf",
-		"preference-center",
-		"privacy",
-		"signals",
-		"typescript",
-		"user-consent"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/angular"
-	},
-	"files": [
-		"dist",
-		"!dist/package.json",
-		"!dist/!(schematics)/package.json",
-		"!dist/README.md",
-		"!dist/**/__tests__/**",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*",
-		"docs",
-		"AGENTS.md",
-		"SKILL.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"**/*.css",
-		"./dist/translations/*.js"
-	],
-	"module": "./dist/fesm2022/inth-angular.mjs",
-	"types": "./dist/types/inth-angular.d.ts",
-	"exports": {
-		"./gpp": {
-			"types": "./dist/types/inth-angular-gpp.d.ts",
-			"default": "./dist/fesm2022/inth-angular-gpp.mjs"
-		},
-		"./engine": {
-			"types": "./dist/types/inth-angular-engine.d.ts",
-			"default": "./dist/fesm2022/inth-angular-engine.mjs"
-		},
-		"./translations/*": {
-			"types": "./dist/translations/*.d.ts",
-			"import": "./dist/translations/*.js",
-			"default": "./dist/translations/*.js"
-		},
-		"./package.json": "./package.json",
-		"./styles.css": "./dist/styles.css",
-		"./iab/styles.css": "./dist/iab/styles.css",
-		"./devtools": {
-			"types": "./dist/types/inth-angular-devtools.d.ts",
-			"default": "./dist/fesm2022/inth-angular-devtools.mjs"
-		},
-		"./postcss-tailwind3": {
-			"types": "./dist/postcss-tailwind3/index.d.ts",
-			"default": "./dist/postcss-tailwind3/index.mjs"
-		},
-		"./ssr": {
-			"types": "./dist/types/inth-angular-ssr.d.ts",
-			"default": "./dist/fesm2022/inth-angular-ssr.mjs"
-		},
-		"./testing": {
-			"types": "./dist/types/inth-angular-testing.d.ts",
-			"default": "./dist/fesm2022/inth-angular-testing.mjs"
-		},
-		"./consent-dialog": {
-			"types": "./dist/types/inth-angular-consent-dialog.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-dialog.mjs"
-		},
-		"./consent-dialog-trigger": {
-			"types": "./dist/types/inth-angular-consent-dialog-trigger.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-dialog-trigger.mjs"
-		},
-		"./consent-gate": {
-			"types": "./dist/types/inth-angular-consent-gate.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-gate.mjs"
-		},
-		"./provider": {
-			"types": "./dist/types/inth-angular-provider.d.ts",
-			"default": "./dist/fesm2022/inth-angular-provider.mjs"
-		},
-		"./consent-widget": {
-			"types": "./dist/types/inth-angular-consent-widget.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-widget.mjs"
-		},
-		"./iab": {
-			"types": "./dist/types/inth-angular-iab.d.ts",
-			"default": "./dist/fesm2022/inth-angular-iab.mjs"
-		},
-		"./primitives": {
-			"types": "./dist/types/inth-angular-primitives.d.ts",
-			"default": "./dist/fesm2022/inth-angular-primitives.mjs"
-		},
-		".": {
-			"types": "./dist/types/inth-angular.d.ts",
-			"default": "./dist/fesm2022/inth-angular.mjs"
-		}
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics && node ../shared/write-translation-entries.mjs dist",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/angular",
-		"build:schematics": "tsrs -p schematics/tsconfig.json && node schematics/copy-assets.mjs",
-		"check-types": "tsrs --noEmit -p tsconfig.json && tsrs --noEmit -p tsconfig.spec.json",
-		"dev": "ng-packagr -p ng-package.json -c tsconfig.lib.json --watch",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"prepack": "pnpm run build:docs && pnpm run build",
-		"test": "vp test run",
-		"test:watch": "vp test"
-	},
-	"dependencies": {
-		"@inth/sdk": "workspace:*",
-		"tslib": "^2.8.1"
-	},
-	"devDependencies": {
-		"@analogjs/vite-plugin-angular": "2.9.6",
-		"@analogjs/vitest-angular": "2.9.6",
-		"@angular-devkit/core": "22.2.6",
-		"@angular-devkit/schematics": "22.2.6",
-		"@angular/build": "22.2.6",
-		"@angular/cdk": "22.2.6",
-		"@angular/common": "22.2.5",
-		"@angular/compiler": "22.2.5",
-		"@angular/compiler-cli": "22.2.5",
-		"@angular/core": "22.2.5",
-		"@angular/forms": "22.2.5",
-		"@angular/platform-browser": "22.2.5",
-		"@angular/platform-server": "22.2.5",
-		"@angular/router": "22.2.5",
-		"@angular/ssr": "22.2.6",
-		"@inth/conformance": "workspace:*",
-		"@inth/integrations": "workspace:*",
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@schematics/angular": "22.2.6",
-		"@types/node": "25.5.0",
-		"@vitest/coverage-istanbul": "catalog:",
-		"jsdom": "^25.0.0",
-		"ng-packagr": "22.2.6",
-		"rxjs": "7.8.2",
-		"tsrs": "catalog:",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:"
-	},
-	"peerDependencies": {
-		"@angular-devkit/schematics": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/cdk": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/common": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/compiler": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/forms": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/platform-browser": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/platform-server": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@angular/ssr": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"@schematics/angular": "^20.0.0 || ^21.0.0 || ^22.0.0",
-		"rxjs": "^6.5.3 || ^7.4.0",
-		"typescript": ">=5.8.0"
-	},
-	"peerDependenciesMeta": {
-		"@angular-devkit/schematics": {
-			"optional": true
-		},
-		"@angular/cdk": {
-			"optional": true
-		},
-		"@angular/platform-server": {
-			"optional": true
-		},
-		"@angular/ssr": {
-			"optional": true
-		},
-		"@schematics/angular": {
-			"optional": true
-		},
-		"typescript": {
-			"optional": true
-		}
-	},
-	"ng-add": {
-		"save": "dependencies"
-	},
-	"schematics": "./dist/schematics/collection.json"
+  "name": "@inth/angular",
+  "version": "0.0.0-alpha.0",
+  "description": "Angular cookie consent banner for Inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
+  "keywords": [
+    "angular",
+    "angular-cookie-consent",
+    "banner",
+    "ccpa",
+    "cmp",
+    "consent",
+    "consent-banner",
+    "consent-management-platform",
+    "consent-manager",
+    "consent-mode-v2",
+    "cookie",
+    "cookie-banner",
+    "cookie-consent",
+    "gdpr",
+    "global-privacy-control",
+    "google-consent-mode",
+    "headless",
+    "iab-tcf",
+    "preference-center",
+    "privacy",
+    "signals",
+    "typescript",
+    "user-consent"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/angular"
+  },
+  "files": [
+    "dist",
+    "!dist/package.json",
+    "!dist/!(schematics)/package.json",
+    "!dist/README.md",
+    "!dist/**/__tests__/**",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*",
+    "docs",
+    "AGENTS.md",
+    "SKILL.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./dist/translations/*.js"
+  ],
+  "module": "./dist/fesm2022/inth-angular.mjs",
+  "types": "./dist/types/inth-angular.d.ts",
+  "exports": {
+    "./gpp": {
+      "types": "./dist/types/inth-angular-gpp.d.ts",
+      "default": "./dist/fesm2022/inth-angular-gpp.mjs"
+    },
+    "./engine": {
+      "types": "./dist/types/inth-angular-engine.d.ts",
+      "default": "./dist/fesm2022/inth-angular-engine.mjs"
+    },
+    "./translations/*": {
+      "types": "./dist/translations/*.d.ts",
+      "import": "./dist/translations/*.js",
+      "default": "./dist/translations/*.js"
+    },
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/styles.css",
+    "./iab/styles.css": "./dist/iab/styles.css",
+    "./devtools": {
+      "types": "./dist/types/inth-angular-devtools.d.ts",
+      "default": "./dist/fesm2022/inth-angular-devtools.mjs"
+    },
+    "./postcss-tailwind3": {
+      "types": "./dist/postcss-tailwind3/index.d.ts",
+      "default": "./dist/postcss-tailwind3/index.mjs"
+    },
+    "./ssr": {
+      "types": "./dist/types/inth-angular-ssr.d.ts",
+      "default": "./dist/fesm2022/inth-angular-ssr.mjs"
+    },
+    "./testing": {
+      "types": "./dist/types/inth-angular-testing.d.ts",
+      "default": "./dist/fesm2022/inth-angular-testing.mjs"
+    },
+    "./consent-dialog": {
+      "types": "./dist/types/inth-angular-consent-dialog.d.ts",
+      "default": "./dist/fesm2022/inth-angular-consent-dialog.mjs"
+    },
+    "./consent-dialog-trigger": {
+      "types": "./dist/types/inth-angular-consent-dialog-trigger.d.ts",
+      "default": "./dist/fesm2022/inth-angular-consent-dialog-trigger.mjs"
+    },
+    "./consent-gate": {
+      "types": "./dist/types/inth-angular-consent-gate.d.ts",
+      "default": "./dist/fesm2022/inth-angular-consent-gate.mjs"
+    },
+    "./provider": {
+      "types": "./dist/types/inth-angular-provider.d.ts",
+      "default": "./dist/fesm2022/inth-angular-provider.mjs"
+    },
+    "./consent-widget": {
+      "types": "./dist/types/inth-angular-consent-widget.d.ts",
+      "default": "./dist/fesm2022/inth-angular-consent-widget.mjs"
+    },
+    "./iab": {
+      "types": "./dist/types/inth-angular-iab.d.ts",
+      "default": "./dist/fesm2022/inth-angular-iab.mjs"
+    },
+    "./primitives": {
+      "types": "./dist/types/inth-angular-primitives.d.ts",
+      "default": "./dist/fesm2022/inth-angular-primitives.mjs"
+    },
+    ".": {
+      "types": "./dist/types/inth-angular.d.ts",
+      "default": "./dist/fesm2022/inth-angular.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics && node ../shared/write-translation-entries.mjs dist",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/angular",
+    "build:schematics": "tsrs -p schematics/tsconfig.json && node schematics/copy-assets.mjs",
+    "check-types": "tsrs --noEmit -p tsconfig.json && tsrs --noEmit -p tsconfig.spec.json",
+    "dev": "ng-packagr -p ng-package.json -c tsconfig.lib.json --watch",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "prepack": "pnpm run build:docs && pnpm run build",
+    "test": "vp test run",
+    "test:watch": "vp test"
+  },
+  "dependencies": {
+    "@inth/sdk": "workspace:*",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "2.9.6",
+    "@analogjs/vitest-angular": "2.9.6",
+    "@angular-devkit/core": "22.2.6",
+    "@angular-devkit/schematics": "22.2.6",
+    "@angular/build": "22.2.6",
+    "@angular/cdk": "22.2.6",
+    "@angular/common": "22.2.5",
+    "@angular/compiler": "22.2.5",
+    "@angular/compiler-cli": "22.2.5",
+    "@angular/core": "22.2.5",
+    "@angular/forms": "22.2.5",
+    "@angular/platform-browser": "22.2.5",
+    "@angular/platform-server": "22.2.5",
+    "@angular/router": "22.2.5",
+    "@angular/ssr": "22.2.6",
+    "@inth/conformance": "workspace:*",
+    "@inth/integrations": "workspace:*",
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@schematics/angular": "22.2.6",
+    "@types/node": "25.5.0",
+    "@vitest/coverage-istanbul": "catalog:",
+    "jsdom": "^25.0.0",
+    "ng-packagr": "22.2.6",
+    "rxjs": "7.8.2",
+    "tsrs": "catalog:",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@angular-devkit/schematics": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/cdk": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/common": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/compiler": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/forms": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/platform-browser": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/platform-server": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/ssr": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@schematics/angular": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "rxjs": "^6.5.3 || ^7.4.0",
+    "typescript": ">=5.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular-devkit/schematics": {
+      "optional": true
+    },
+    "@angular/cdk": {
+      "optional": true
+    },
+    "@angular/platform-server": {
+      "optional": true
+    },
+    "@angular/ssr": {
+      "optional": true
+    },
+    "@schematics/angular": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
+  },
+  "ng-add": {
+    "save": "dependencies"
+  },
+  "schematics": "./dist/schematics/collection.json"
 }

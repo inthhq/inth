@@ -1,24 +1,24 @@
 {
-	"name": "@inth/fixture-vue",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "vp build",
-		"check-types": "vue-tsc --noEmit",
-		"dev": "vp dev --host 127.0.0.1",
-		"start": "vp preview --host 127.0.0.1"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"@inth/vue": "workspace:*",
-		"vue": "^3.5.39"
-	},
-	"devDependencies": {
-		"@vitejs/plugin-vue": "6.0.7",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vue-tsc": "^3.2.6"
-	}
+  "name": "@inth/fixture-vue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp build",
+    "check-types": "vue-tsc --noEmit",
+    "dev": "vp dev --host 127.0.0.1",
+    "start": "vp preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "@inth/vue": "workspace:*",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.7",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vue-tsc": "^3.2.6"
+  }
 }

@@ -1,3 +1,39 @@
+## @inth/cli@0.1.0
+
+### Set a project's minimum c15t version
+
+`inth consent config-update --project <project-id> --minimum-c15t-major 3` makes the project refuse requests from c15t 2.x sites. Those sites stop loading the banner until they update to 3.x, so check `c15tV2HoursLast7Days` in `inth consent config-get` first. `--minimum-c15t-major 2` serves 2.x and 3.x again. Choosing 3 is rolling out and the command returns the server's refusal until it reaches your organization.
+
+### Send approved audit policies for the API to check
+
+`inth website create` and `inth website update` now check only that `approvedAuditPolicy` is a JSON object or `null`, then send it unchanged. The Inth API checks the policy's fields and returns any error. Send back the policy you read from `inth website get`, or leave it out to keep the current one.
+
+### Set up mobile apps with `inth mobile setup`
+
+`inth mobile setup --backend-url https://your-project.inth.app --privacy-policy-url https://your-app.example/privacy` configures Inth consent in an Expo, bare React Native, Swift or Android app. In an Expo app it adds the config plugin entry to `app.json` and writes a provider file. In a bare React Native app it writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. In a Swift or Android app it prints the package, dependencies and code to add. It never edits an Xcode project, a Gradle file or a native manifest.
+
+Setup checks `--backend-url` with the same rule as the Expo plugin and the native SDKs, and checks every answer before it writes a file. `--dry-run` shows the files and steps without writing, and `--json` returns them for scripts. It needs no sign-in and never prompts.
+
+### Hash legal documents with `inth document hash`
+
+`inth document hash privacy-policy.md` prints the hash that identifies a published version of a privacy policy or terms of service: `sha256:` and the lowercase hex SHA-256 of the file's exact bytes. Line endings, whitespace and encoding are not normalized, so a CRLF copy hashes differently from an LF copy. Pass `-` to hash stdin, and `--json` to read `path`, `bytes` and `hash` from a script. It needs no sign-in, never prompts and sends nothing from the document.
+
+### Generate `InthProvider` as the root in `inth c15t setup`
+
+The Next.js, React, TanStack Start, Svelte, SvelteKit, Vue and Nuxt files that `inth c15t setup` writes now render `InthProvider` at the top of the app, the root's new name in every Inth web package. A SvelteKit layout imports it from `@inth/svelte/kit`. The setup instructions use the same name.
+
+### Generate Inth names in `inth c15t setup`
+
+`inth c15t setup` now writes the names the `@inth` packages read: `inth.config.ts`, `inth` in Astro and Vue, `inthHandle`, `src/inth.client.ts`, `/api/inth`, `inth.js`, `#inth-preferences` and `data-inth-category`. Apps it set up before got the c15t names, which the `@inth` packages don't read.
+
+On a page that still loads `c15t.js` or links to `#c15t-preferences`, setup adds no second copy and asks you to update the old snippet instead. An existing Next.js `inth.config.mts`, `.js` or `.mjs`, or Astro `src/inth.client.js` or `.mjs`, stays in use: setup targets that file instead of adding a `.ts` file that would replace it.
+
+### Set up the Inth SDK with `inth init`
+
+`inth init` sets up the `@inth/*` packages in an app. It takes the same actions and options as `inth c15t`: start a coding agent, print a setup prompt, or scaffold the framework quickstart files. It selects an Inth project or creates one with Inth branding, and its scaffolds install the latest `@inth` release. The agent prompt points at the Inth docs and the project URL.
+
+Scaffolds from both commands now write the project URL under the `*_INTH_PROJECT_URL` names the `@inth` packages read first, and the React and Solid quickstarts pass it as `projectUrl`, which the packages now require. In an existing Vite React app, setup keeps your `src/main.*` and `vite.config.*` and tells you what to add, instead of stopping on them.
+
 ## @inth/cli@0.0.8
 
 ### Review vendors seen on a project

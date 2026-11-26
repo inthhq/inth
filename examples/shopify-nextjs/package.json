@@ -1,28 +1,28 @@
 {
-	"name": "@inth/example-shopify-nextjs",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "next build",
-		"check-types": "next typegen && tsrs --noEmit",
-		"dev": "next dev --port 3104",
-		"start": "next start --port 3104"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nextjs": "workspace:*",
-		"@shopify/hydrogen": "2026.10.0",
-		"next": "16.2.10",
-		"react": "19.2.7",
-		"react-dom": "19.2.7"
-	},
-	"devDependencies": {
-		"@types/node": "^25.5.0",
-		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3",
-		"tsrs": "catalog:",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/example-shopify-nextjs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "check-types": "next typegen && tsrs --noEmit",
+    "dev": "next dev --port 3104",
+    "start": "next start --port 3104"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nextjs": "workspace:*",
+    "@shopify/hydrogen": "2026.10.0",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "tsrs": "catalog:",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

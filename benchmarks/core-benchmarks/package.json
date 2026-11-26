@@ -1,22 +1,22 @@
 {
-	"name": "@inth/core-benchmarks",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"bench": "pnpm run bench:core && pnpm run bench:policy",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/core-runtime vpx src/run.ts && BENCH_OUTPUT_DIR=../../.benchmarks/head/policy-runtime vpx src/policy-runtime.ts",
-		"bench:core": "BENCH_OUTPUT_DIR=../../.benchmarks/current/core-runtime vpx src/run.ts",
-		"bench:full": "pnpm run bench",
-		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/core-runtime vpx src/run.ts && BENCH_OUTPUT_DIR=../../.benchmarks/nightly/policy-runtime vpx src/policy-runtime.ts",
-		"bench:policy": "BENCH_OUTPUT_DIR=../../.benchmarks/current/policy-runtime vpx src/policy-runtime.ts",
-		"build": "echo 'core benchmarks are source-only'"
-	},
-	"dependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "25.5.0",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/core-benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "pnpm run bench:core && pnpm run bench:policy",
+    "bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/core-runtime vpx src/run.ts && BENCH_OUTPUT_DIR=../../.benchmarks/head/policy-runtime vpx src/policy-runtime.ts",
+    "bench:core": "BENCH_OUTPUT_DIR=../../.benchmarks/current/core-runtime vpx src/run.ts",
+    "bench:full": "pnpm run bench",
+    "bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/core-runtime vpx src/run.ts && BENCH_OUTPUT_DIR=../../.benchmarks/nightly/policy-runtime vpx src/policy-runtime.ts",
+    "bench:policy": "BENCH_OUTPUT_DIR=../../.benchmarks/current/policy-runtime vpx src/policy-runtime.ts",
+    "build": "echo 'core benchmarks are source-only'"
+  },
+  "dependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "typescript": "6.0.3"
+  }
 }

@@ -1,15 +1,15 @@
 {
-	"name": "@inth/doc-snippets-javascript",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"check-types": "tsrs --noEmit"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"tsrs": "catalog:"
-	}
+  "name": "@inth/doc-snippets-javascript",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsrs --noEmit"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsrs": "catalog:"
+  }
 }

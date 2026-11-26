@@ -1,231 +1,231 @@
 {
-	"name": "@inth/astro",
-	"version": "0.0.0-alpha.0",
-	"description": "Astro cookie consent banner for Inth, with server-rendered markup, preference center islands and geo-aware middleware.",
-	"keywords": [
-		"astro",
-		"astro-cookie-consent",
-		"astro-integration",
-		"banner",
-		"ccpa",
-		"cmp",
-		"consent",
-		"consent-banner",
-		"consent-management-platform",
-		"consent-manager",
-		"consent-mode-v2",
-		"cookie",
-		"cookie-banner",
-		"cookie-consent",
-		"gdpr",
-		"global-privacy-control",
-		"google-consent-mode",
-		"iab",
-		"iab-tcf",
-		"islands",
-		"lgpd",
-		"privacy",
-		"react",
-		"ssr",
-		"svelte",
-		"tcf",
-		"typescript",
-		"vue"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/astro"
-	},
-	"files": [
-		"dist",
-		"dist-types",
-		"src/components",
-		"docs",
-		"AGENTS.md",
-		"SKILL.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"**/*.css",
-		"./dist/translations/*.js"
-	],
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		},
-		"./client": {
-			"types": "./dist-types/client.d.ts",
-			"import": "./dist/client.js",
-			"default": "./dist/client.js"
-		},
-		"./devtools": {
-			"types": "./dist-types/devtools.d.ts",
-			"import": "./dist/devtools.js",
-			"default": "./dist/devtools.js"
-		},
-		"./middleware": {
-			"types": "./dist-types/middleware.d.ts",
-			"import": "./dist/middleware.js",
-			"default": "./dist/middleware.js"
-		},
-		"./server": {
-			"types": "./dist-types/server.d.ts",
-			"import": "./dist/server.js",
-			"default": "./dist/server.js"
-		},
-		"./api": {
-			"types": "./dist-types/api/route.d.ts",
-			"import": "./dist/api/route.js",
-			"default": "./dist/api/route.js"
-		},
-		"./testing": {
-			"types": "./dist-types/testing.d.ts",
-			"import": "./dist/testing.js",
-			"default": "./dist/testing.js"
-		},
-		"./ui/svelte": {
-			"types": "./dist-types/ui/svelte.d.ts",
-			"import": "./dist/ui/svelte.js",
-			"default": "./dist/ui/svelte.js"
-		},
-		"./ui/react": {
-			"types": "./dist-types/ui/react.d.ts",
-			"import": "./dist/ui/react.js",
-			"default": "./dist/ui/react.js"
-		},
-		"./ui/vue": {
-			"types": "./dist-types/ui/vue.d.ts",
-			"import": "./dist/ui/vue.js",
-			"default": "./dist/ui/vue.js"
-		},
-		"./components": {
-			"types": "./src/components/index.ts",
-			"import": "./src/components/index.ts",
-			"default": "./src/components/index.ts"
-		},
-		"./components/*": "./src/components/*",
-		"./islands/*": {
-			"svelte": "./src/components/islands/*",
-			"default": "./src/components/islands/*"
-		},
-		"./styles.css": "./dist/styles.css",
-		"./iab/styles.css": "./dist/iab/styles.css",
-		"./dialog.css": "./dist/dialog.css",
-		"./primitives.css": "./dist/primitives.css",
-		"./postcss-tailwind3": {
-			"types": "./dist-types/postcss-tailwind3.d.ts",
-			"import": "./dist/postcss-tailwind3.js",
-			"default": "./dist/postcss-tailwind3.js"
-		},
-		"./engine": {
-			"types": "./dist-types/engine.d.ts",
-			"import": "./dist/engine.js",
-			"default": "./dist/engine.js"
-		},
-		"./translations/*": {
-			"types": "./dist-types/translations/*.d.ts",
-			"import": "./dist/translations/*.js",
-			"default": "./dist/translations/*.js"
-		},
-		"./package.json": "./package.json",
-		"./components/consent-script.astro": "./src/components/consent-script.astro",
-		"./components/consent-banner-deferred.astro": "./src/components/prompt-deferred.astro",
-		"./components/consent-banner.astro": "./src/components/prompt.astro",
-		"./components/consent-dialog-link.astro": "./src/components/panel-link.astro",
-		"./components/consent-dialog.astro": "./src/components/panel.astro",
-		"./components/iab-consent-banner.astro": "./src/components/iab-prompt.astro",
-		"./components/iab-consent-dialog.astro": "./src/components/iab-panel.astro",
-		"./components/islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
-		"./islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
-		"./components/islands/consent-dialog-surface.tsx": "./src/components/islands/panel-surface.tsx",
-		"./islands/consent-dialog-surface.tsx": "./src/components/islands/panel-surface.tsx",
-		"./components/islands/consent-dialog-surface.vue": "./src/components/islands/panel-surface.vue",
-		"./islands/consent-dialog-surface.vue": "./src/components/islands/panel-surface.vue"
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && node ../shared/write-translation-entries.mjs dist dist-types",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/astro",
-		"check-types": "tsrs --noEmit",
-		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
-		"test": "vp test run",
-		"test:watch": "vp test"
-	},
-	"dependencies": {
-		"@inth/sdk": "workspace:*",
-		"@inth/svelte": "workspace:*"
-	},
-	"devDependencies": {
-		"@astrojs/react": "^6.0.6",
-		"@astrojs/svelte": "^9.0.1",
-		"@babel/parser": "7.28.5",
-		"@inth/conformance": "workspace:*",
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"@vitejs/plugin-vue": "6.0.7",
-		"@vitest/coverage-istanbul": "catalog:",
-		"astro": "^7.3.0",
-		"jsdom": "^25.0.0",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
-		"svelte": "^5.0.0",
-		"tsrs": "catalog:",
-		"typescript": "6.0.3",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:",
-		"vue": "^3.5.0"
-	},
-	"peerDependencies": {
-		"@inth/react": "workspace:^",
-		"@inth/vue": "workspace:^",
-		"astro": "^5.0.0 || ^6.0.0 || ^7.0.0",
-		"react": "^18.0.0 || ^19.0.0",
-		"react-dom": "^18.0.0 || ^19.0.0",
-		"svelte": "^5.0.0",
-		"vue": "^3.5.0"
-	},
-	"peerDependenciesMeta": {
-		"astro": {
-			"optional": true
-		},
-		"@inth/react": {
-			"optional": true
-		},
-		"@inth/vue": {
-			"optional": true
-		},
-		"react": {
-			"optional": true
-		},
-		"react-dom": {
-			"optional": true
-		},
-		"svelte": {
-			"optional": true
-		},
-		"vue": {
-			"optional": true
-		}
-	}
+  "name": "@inth/astro",
+  "version": "0.0.0-alpha.0",
+  "description": "Astro cookie consent banner for Inth, with server-rendered markup, preference center islands and geo-aware middleware.",
+  "keywords": [
+    "astro",
+    "astro-cookie-consent",
+    "astro-integration",
+    "banner",
+    "ccpa",
+    "cmp",
+    "consent",
+    "consent-banner",
+    "consent-management-platform",
+    "consent-manager",
+    "consent-mode-v2",
+    "cookie",
+    "cookie-banner",
+    "cookie-consent",
+    "gdpr",
+    "global-privacy-control",
+    "google-consent-mode",
+    "iab",
+    "iab-tcf",
+    "islands",
+    "lgpd",
+    "privacy",
+    "react",
+    "ssr",
+    "svelte",
+    "tcf",
+    "typescript",
+    "vue"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/astro"
+  },
+  "files": [
+    "dist",
+    "dist-types",
+    "src/components",
+    "docs",
+    "AGENTS.md",
+    "SKILL.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./dist/translations/*.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist-types/client.d.ts",
+      "import": "./dist/client.js",
+      "default": "./dist/client.js"
+    },
+    "./devtools": {
+      "types": "./dist-types/devtools.d.ts",
+      "import": "./dist/devtools.js",
+      "default": "./dist/devtools.js"
+    },
+    "./middleware": {
+      "types": "./dist-types/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "default": "./dist/middleware.js"
+    },
+    "./server": {
+      "types": "./dist-types/server.d.ts",
+      "import": "./dist/server.js",
+      "default": "./dist/server.js"
+    },
+    "./api": {
+      "types": "./dist-types/api/route.d.ts",
+      "import": "./dist/api/route.js",
+      "default": "./dist/api/route.js"
+    },
+    "./testing": {
+      "types": "./dist-types/testing.d.ts",
+      "import": "./dist/testing.js",
+      "default": "./dist/testing.js"
+    },
+    "./ui/svelte": {
+      "types": "./dist-types/ui/svelte.d.ts",
+      "import": "./dist/ui/svelte.js",
+      "default": "./dist/ui/svelte.js"
+    },
+    "./ui/react": {
+      "types": "./dist-types/ui/react.d.ts",
+      "import": "./dist/ui/react.js",
+      "default": "./dist/ui/react.js"
+    },
+    "./ui/vue": {
+      "types": "./dist-types/ui/vue.d.ts",
+      "import": "./dist/ui/vue.js",
+      "default": "./dist/ui/vue.js"
+    },
+    "./components": {
+      "types": "./src/components/index.ts",
+      "import": "./src/components/index.ts",
+      "default": "./src/components/index.ts"
+    },
+    "./components/*": "./src/components/*",
+    "./islands/*": {
+      "svelte": "./src/components/islands/*",
+      "default": "./src/components/islands/*"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./iab/styles.css": "./dist/iab/styles.css",
+    "./dialog.css": "./dist/dialog.css",
+    "./primitives.css": "./dist/primitives.css",
+    "./postcss-tailwind3": {
+      "types": "./dist-types/postcss-tailwind3.d.ts",
+      "import": "./dist/postcss-tailwind3.js",
+      "default": "./dist/postcss-tailwind3.js"
+    },
+    "./engine": {
+      "types": "./dist-types/engine.d.ts",
+      "import": "./dist/engine.js",
+      "default": "./dist/engine.js"
+    },
+    "./translations/*": {
+      "types": "./dist-types/translations/*.d.ts",
+      "import": "./dist/translations/*.js",
+      "default": "./dist/translations/*.js"
+    },
+    "./package.json": "./package.json",
+    "./components/consent-script.astro": "./src/components/consent-script.astro",
+    "./components/consent-banner-deferred.astro": "./src/components/prompt-deferred.astro",
+    "./components/consent-banner.astro": "./src/components/prompt.astro",
+    "./components/consent-dialog-link.astro": "./src/components/panel-link.astro",
+    "./components/consent-dialog.astro": "./src/components/panel.astro",
+    "./components/iab-consent-banner.astro": "./src/components/iab-prompt.astro",
+    "./components/iab-consent-dialog.astro": "./src/components/iab-panel.astro",
+    "./components/islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
+    "./islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
+    "./components/islands/consent-dialog-surface.tsx": "./src/components/islands/panel-surface.tsx",
+    "./islands/consent-dialog-surface.tsx": "./src/components/islands/panel-surface.tsx",
+    "./components/islands/consent-dialog-surface.vue": "./src/components/islands/panel-surface.vue",
+    "./islands/consent-dialog-surface.vue": "./src/components/islands/panel-surface.vue"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && node ../shared/write-translation-entries.mjs dist dist-types",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/astro",
+    "check-types": "tsrs --noEmit",
+    "dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
+    "test": "vp test run",
+    "test:watch": "vp test"
+  },
+  "dependencies": {
+    "@inth/sdk": "workspace:*",
+    "@inth/svelte": "workspace:*"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^6.0.6",
+    "@astrojs/svelte": "^9.0.1",
+    "@babel/parser": "7.28.5",
+    "@inth/conformance": "workspace:*",
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-vue": "6.0.7",
+    "@vitest/coverage-istanbul": "catalog:",
+    "astro": "^7.3.0",
+    "jsdom": "^25.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "svelte": "^5.0.0",
+    "tsrs": "catalog:",
+    "typescript": "6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vue": "^3.5.0"
+  },
+  "peerDependencies": {
+    "@inth/react": "workspace:^",
+    "@inth/vue": "workspace:^",
+    "astro": "^5.0.0 || ^6.0.0 || ^7.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "svelte": "^5.0.0",
+    "vue": "^3.5.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    },
+    "@inth/react": {
+      "optional": true
+    },
+    "@inth/vue": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  }
 }

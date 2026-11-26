@@ -1,16 +1,16 @@
 {
-	"name": "@inth/typescript-config",
-	"version": "0.0.1",
-	"private": true,
-	"type": "module",
-	"publishConfig": {
-		"access": "public"
-	},
-	"scripts": {
-		"dev": "echo '@inth/typescript-config has no watch task'",
-		"fmt": "vp fmt -c ../../oxfmt.sdk.config.ts ."
-	},
-	"devDependencies": {
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/typescript-config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "echo '@inth/typescript-config has no watch task'",
+    "fmt": "vp fmt -c ../../oxfmt.sdk.config.ts ."
+  },
+  "devDependencies": {
+    "vite-plus": "catalog:"
+  }
 }

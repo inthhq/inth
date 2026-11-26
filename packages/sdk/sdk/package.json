@@ -1,922 +1,922 @@
 {
-	"name": "@inth/sdk",
-	"version": "0.0.0-alpha.0",
-	"description": "The Inth consent SDK: the vanilla JavaScript client, the consent engine, UI styles, translations and IAB TCF support. Framework packages such as @inth/react build on it.",
-	"keywords": [
-		"cmp",
-		"consent",
-		"consent-banner",
-		"consent-management",
-		"cookie-banner",
-		"cookie-consent",
-		"gdpr",
-		"iab-tcf",
-		"javascript",
-		"privacy",
-		"script-blocking",
-		"script-tag"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/sdk"
-	},
-	"files": [
-		"lib",
-		"AGENTS.md",
-		"SKILL.md",
-		"docs",
-		"README.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"**/*.css",
-		"./lib/browser/dist/inth.commit.js",
-		"./lib/browser/dist/inth.devtools.js",
-		"./lib/browser/dist/inth.dialog.js",
-		"./lib/browser/dist/inth.gpp.js",
-		"./lib/browser/dist/inth.headless.js",
-		"./lib/browser/dist/inth.hosted.js",
-		"./lib/browser/dist/inth.iab.js",
-		"./lib/browser/dist/inth.js",
-		"./lib/browser/dist/inth.local.js",
-		"./lib/browser/dist/inth.offline.js",
-		"./lib/browser/dist/inth.records.js",
-		"./lib/dev-tools/**",
-		"./lib/iab/**",
-		"./lib/translations/dist/all.js",
-		"./lib/translations/dist/languages/*.js"
-	],
-	"main": "./lib/browser/dist/index.js",
-	"types": "./lib/browser/dist-types/index.d.ts",
-	"unpkg": "./lib/browser/dist/inth.js",
-	"jsdelivr": "./lib/browser/dist/inth.js",
-	"exports": {
-		".": {
-			"types": "./lib/browser/dist-types/index.d.ts",
-			"import": "./lib/browser/dist/index.js",
-			"default": "./lib/browser/dist/index.js"
-		},
-		"./hosted": {
-			"types": "./lib/browser/dist-types/hosted.d.ts",
-			"import": "./lib/browser/dist/hosted.js",
-			"default": "./lib/browser/dist/hosted.js"
-		},
-		"./headless": {
-			"types": "./lib/browser/dist-types/headless.d.ts",
-			"import": "./lib/browser/dist/headless.js",
-			"default": "./lib/browser/dist/headless.js"
-		},
-		"./gpp": {
-			"types": "./lib/browser/dist-types/gpp.d.ts",
-			"import": "./lib/browser/dist/gpp.js",
-			"default": "./lib/browser/dist/gpp.js"
-		},
-		"./styles.css": "./lib/browser/dist/inth.css",
-		"./inth.js": "./lib/browser/dist/inth.js",
-		"./inth.hosted.js": "./lib/browser/dist/inth.hosted.js",
-		"./inth.commit.js": "./lib/browser/dist/inth.commit.js",
-		"./inth.records.js": "./lib/browser/dist/inth.records.js",
-		"./inth.dialog.js": "./lib/browser/dist/inth.dialog.js",
-		"./inth.testing.js": "./lib/browser/dist/inth.testing.js",
-		"./inth.headless.js": "./lib/browser/dist/inth.headless.js",
-		"./inth.devtools.js": "./lib/browser/dist/inth.devtools.js",
-		"./inth.gpp.js": "./lib/browser/dist/inth.gpp.js",
-		"./iab-client": {
-			"types": "./lib/browser/dist-types/iab.d.ts",
-			"import": "./lib/browser/dist/iab.js",
-			"default": "./lib/browser/dist/iab.js"
-		},
-		"./inth.iab.js": "./lib/browser/dist/inth.iab.js",
-		"./iab/styles.css": "./lib/browser/dist/inth.iab.css",
-		"./postcss-tailwind3": {
-			"types": "./lib/browser/dist-types/postcss-tailwind3.d.ts",
-			"import": "./lib/browser/dist/postcss-tailwind3.js",
-			"default": "./lib/browser/dist/postcss-tailwind3.js"
-		},
-		"./prefetch": {
-			"types": "./lib/browser/dist-types/prefetch.d.ts",
-			"import": "./lib/browser/dist/prefetch.js",
-			"default": "./lib/browser/dist/prefetch.js"
-		},
-		"./engine": {
-			"types": "./lib/core/dist-types/index.d.ts",
-			"import": "./lib/core/dist/index.js",
-			"default": "./lib/core/dist/index.js"
-		},
-		"./consent-record": {
-			"types": "./lib/core/dist-types/consent-record/index.d.ts",
-			"import": "./lib/core/dist/consent-record.js",
-			"default": "./lib/core/dist/consent-record.js"
-		},
-		"./events": {
-			"types": "./lib/core/dist-types/events.d.ts",
-			"import": "./lib/core/dist/events.js",
-			"default": "./lib/core/dist/events.js"
-		},
-		"./experiment": {
-			"types": "./lib/core/dist-types/experiment.d.ts",
-			"import": "./lib/core/dist/experiment.js",
-			"default": "./lib/core/dist/experiment.js"
-		},
-		"./modes": {
-			"types": "./lib/core/dist-types/modes.d.ts",
-			"import": "./lib/core/dist/modes.js",
-			"default": "./lib/core/dist/modes.js"
-		},
-		"./testing": {
-			"types": "./lib/core/dist-types/testing.d.ts",
-			"import": "./lib/core/dist/testing.js",
-			"default": "./lib/core/dist/testing.js"
-		},
-		"./surface-actions": {
-			"types": "./lib/core/dist-types/surface-actions/index.d.ts",
-			"import": "./lib/core/dist/surface-actions/index.js",
-			"default": "./lib/core/dist/surface-actions/index.js"
-		},
-		"./surface-actions/early-commit": {
-			"types": "./lib/core/dist-types/surface-actions/early-commit.d.ts",
-			"import": "./lib/core/dist/surface-actions/early-commit.js",
-			"default": "./lib/core/dist/surface-actions/early-commit.js"
-		},
-		"./surface-actions/instant-commit": {
-			"types": "./lib/core/dist-types/surface-actions/instant-commit.d.ts",
-			"import": "./lib/core/dist/surface-actions/instant-commit.js",
-			"default": "./lib/core/dist/surface-actions/instant-commit.js"
-		},
-		"./surface-actions/stored-records": {
-			"types": "./lib/core/dist-types/surface-actions/stored-records.d.ts",
-			"import": "./lib/core/dist/surface-actions/stored-records.js",
-			"default": "./lib/core/dist/surface-actions/stored-records.js"
-		},
-		"./surface-actions/plain-scripts": {
-			"types": "./lib/core/dist-types/surface-actions/plain-scripts.d.ts",
-			"import": "./lib/core/dist/surface-actions/plain-scripts.js",
-			"default": "./lib/core/dist/surface-actions/plain-scripts.js"
-		},
-		"./surface-state": {
-			"types": "./lib/core/dist-types/surface-state.d.ts",
-			"import": "./lib/core/dist/surface-state.js",
-			"default": "./lib/core/dist/surface-state.js"
-		},
-		"./iab-support": {
-			"types": "./lib/core/dist-types/iab-support.d.ts",
-			"import": "./lib/core/dist/iab-support.js",
-			"default": "./lib/core/dist/iab-support.js"
-		},
-		"./consent-categories": {
-			"types": "./lib/core/dist-types/consent-record/types.d.ts",
-			"import": "./lib/core/dist/consent-categories.js",
-			"default": "./lib/core/dist/consent-categories.js"
-		},
-		"./transports": {
-			"types": "./lib/core/dist-types/transports/index.d.ts",
-			"import": "./lib/core/dist/transports.js",
-			"default": "./lib/core/dist/transports.js"
-		},
-		"./transports/hosted-factory": {
-			"types": "./lib/core/dist-types/transports/hosted-factory.d.ts",
-			"import": "./lib/core/dist/transports/hosted-factory.js",
-			"default": "./lib/core/dist/transports/hosted-factory.js"
-		},
-		"./transports/manifest": {
-			"types": "./lib/core/dist-types/transports/v1/manifest.d.ts",
-			"import": "./lib/core/dist/transport-manifest.js",
-			"default": "./lib/core/dist/transport-manifest.js"
-		},
-		"./transports/manifest-browser": {
-			"types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
-			"import": "./lib/core/dist/transports/manifest-browser.js",
-			"default": "./lib/core/dist/transports/manifest-browser.js"
-		},
-		"./transports/manifest-location": {
-			"types": "./lib/core/dist-types/transports/manifest-browser-location.d.ts",
-			"import": "./lib/core/dist/transports/manifest-browser-location.js",
-			"default": "./lib/core/dist/transports/manifest-browser-location.js"
-		},
-		"./transports/manifest-cache": {
-			"types": "./lib/core/dist-types/transports/manifest-cache.d.ts",
-			"import": "./lib/core/dist/transport-manifest-cache.js",
-			"default": "./lib/core/dist/transport-manifest-cache.js"
-		},
-		"./modules/clear-on-revocation": {
-			"types": "./lib/core/dist-types/modules/clear-on-revocation/index.d.ts",
-			"import": "./lib/core/dist/clear-on-revocation.js",
-			"default": "./lib/core/dist/clear-on-revocation.js"
-		},
-		"./modules/script-loader": {
-			"types": "./lib/core/dist-types/modules/script-loader/index.d.ts",
-			"import": "./lib/core/dist/script-loader.js",
-			"default": "./lib/core/dist/script-loader.js"
-		},
-		"./modules/network-blocker": {
-			"types": "./lib/core/dist-types/modules/network-blocker/index.d.ts",
-			"import": "./lib/core/dist/network-blocker.js",
-			"default": "./lib/core/dist/network-blocker.js"
-		},
-		"./modules/network-hold": {
-			"types": "./lib/core/dist-types/modules/network-blocker/hold.d.ts",
-			"import": "./lib/core/dist/network-hold.js",
-			"default": "./lib/core/dist/network-hold.js"
-		},
-		"./modules/iframe-blocker": {
-			"types": "./lib/core/dist-types/modules/iframe-blocker/index.d.ts",
-			"import": "./lib/core/dist/iframe-blocker.js",
-			"default": "./lib/core/dist/iframe-blocker.js"
-		},
-		"./modules/persistence": {
-			"types": "./lib/core/dist-types/modules/persistence/index.d.ts",
-			"import": "./lib/core/dist/persistence.js",
-			"default": "./lib/core/dist/persistence.js"
-		},
-		"./preference-draft": {
-			"types": "./lib/core/dist-types/preference-draft/index.d.ts",
-			"import": "./lib/core/dist/preference-draft.js",
-			"default": "./lib/core/dist/preference-draft.js"
-		},
-		"./server": {
-			"types": "./lib/core/dist-types/server/index.d.ts",
-			"import": "./lib/core/dist/server.js",
-			"default": "./lib/core/dist/server.js"
-		},
-		"./static": {
-			"types": "./lib/core/dist-types/static.d.ts",
-			"import": "./lib/core/dist/static.js",
-			"default": "./lib/core/dist/static.js"
-		},
-		"./modules/window-debug": {
-			"types": "./lib/core/dist-types/modules/window-debug/index.d.ts",
-			"import": "./lib/core/dist/window-debug.js",
-			"default": "./lib/core/dist/window-debug.js"
-		},
-		"./runtime": {
-			"types": "./lib/core/dist-types/runtime/index.d.ts",
-			"import": "./lib/core/dist/runtime.js",
-			"default": "./lib/core/dist/runtime.js"
-		},
-		"./runtime/client-mode": {
-			"types": "./lib/core/dist-types/runtime/client-mode.d.ts",
-			"import": "./lib/core/dist/runtime/client-mode.js",
-			"default": "./lib/core/dist/runtime/client-mode.js"
-		},
-		"./runtime/deferred-boot": {
-			"types": "./lib/core/dist-types/runtime/deferred-boot.d.ts",
-			"import": "./lib/core/dist/runtime/deferred-boot.js",
-			"default": "./lib/core/dist/runtime/deferred-boot.js"
-		},
-		"./runtime/deferred-snapshot": {
-			"types": "./lib/core/dist-types/runtime/deferred-snapshot.d.ts",
-			"import": "./lib/core/dist/runtime/deferred-snapshot.js",
-			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
-		},
-		"./runtime/page-globals": {
-			"types": "./lib/core/dist-types/libs/page-globals.d.ts",
-			"import": "./lib/core/dist/libs/page-globals.js",
-			"default": "./lib/core/dist/libs/page-globals.js"
-		},
-		"./runtime/stand-in-kernel": {
-			"types": "./lib/core/dist-types/runtime/stand-in-kernel.d.ts",
-			"import": "./lib/core/dist/runtime/stand-in-kernel.js",
-			"default": "./lib/core/dist/runtime/stand-in-kernel.js"
-		},
-		"./runtime/storage-for": {
-			"types": "./lib/core/dist-types/libs/storage-for.d.ts",
-			"import": "./lib/core/dist/libs/storage-for.js",
-			"default": "./lib/core/dist/libs/storage-for.js"
-		},
-		"./runtime/save-preload": {
-			"types": "./lib/core/dist-types/runtime/save-preload.d.ts",
-			"import": "./lib/core/dist/runtime/save-preload.js",
-			"default": "./lib/core/dist/runtime/save-preload.js"
-		},
-		"./runtime/controls": {
-			"types": "./lib/core/dist-types/runtime/controls.d.ts",
-			"import": "./lib/core/dist/runtime/controls.js",
-			"default": "./lib/core/dist/runtime/controls.js"
-		},
-		"./runtime/on-demand": {
-			"types": "./lib/core/dist-types/runtime/on-demand.d.ts",
-			"import": "./lib/core/dist/runtime/on-demand.js",
-			"default": "./lib/core/dist/runtime/on-demand.js"
-		},
-		"./runtime/on-demand-factories": {
-			"types": "./lib/core/dist-types/runtime/on-demand-factories.d.ts",
-			"import": "./lib/core/dist/runtime/on-demand-factories.js",
-			"default": "./lib/core/dist/runtime/on-demand-factories.js"
-		},
-		"./runtime/provider": {
-			"types": "./lib/core/dist-types/runtime/provider.d.ts",
-			"import": "./lib/core/dist/runtime/provider.js",
-			"default": "./lib/core/dist/runtime/provider.js"
-		},
-		"./runtime/script-loader-preload": {
-			"types": "./lib/core/dist-types/runtime/script-loader-preload.d.ts",
-			"import": "./lib/core/dist/runtime/script-loader-preload.js",
-			"default": "./lib/core/dist/runtime/script-loader-preload.js"
-		},
-		"./runtime/script-server-start": {
-			"types": "./lib/core/dist-types/runtime/script-server-start.d.ts",
-			"import": "./lib/core/dist/runtime/script-server-start.js",
-			"default": "./lib/core/dist/runtime/script-server-start.js"
-		},
-		"./runtime/streamed-init": {
-			"types": "./lib/core/dist-types/runtime/streamed-init.d.ts",
-			"import": "./lib/core/dist/runtime/streamed-init.js",
-			"default": "./lib/core/dist/runtime/streamed-init.js"
-		},
-		"./build": {
-			"types": "./lib/core/dist-types/build.d.ts",
-			"import": "./lib/core/dist/build.js",
-			"default": "./lib/core/dist/build.js"
-		},
-		"./generated": {
-			"types": "./lib/core/dist-types/generated.d.ts",
-			"import": "./lib/core/dist/generated.js",
-			"default": "./lib/core/dist/generated.js"
-		},
-		"./iab": {
-			"types": "./lib/iab/dist-types/index.d.ts",
-			"import": "./lib/iab/dist/index.js",
-			"default": "./lib/iab/dist/index.js"
-		},
-		"./iab/headless": {
-			"types": "./lib/iab/dist-types/headless.d.ts",
-			"import": "./lib/iab/dist/headless.js",
-			"default": "./lib/iab/dist/headless.js"
-		},
-		"./iab/gpp": {
-			"types": "./lib/iab/dist-types/gpp.d.ts",
-			"import": "./lib/iab/dist/gpp.js",
-			"default": "./lib/iab/dist/gpp.js"
-		},
-		"./schema": {
-			"types": "./lib/schema/dist-types/index.d.ts",
-			"import": "./lib/schema/dist/index.js",
-			"default": "./lib/schema/dist/index.js"
-		},
-		"./schema/types": {
-			"types": "./lib/schema/dist-types/types.d.ts",
-			"import": "./lib/schema/dist/types.js",
-			"default": "./lib/schema/dist/types.js"
-		},
-		"./schema/config": {
-			"types": "./lib/schema/dist-types/config/index.d.ts",
-			"import": "./lib/schema/dist/config.js",
-			"default": "./lib/schema/dist/config.js"
-		},
-		"./schema/geo": {
-			"types": "./lib/schema/dist-types/shared/geo-headers.d.ts",
-			"import": "./lib/schema/dist/geo.js",
-			"default": "./lib/schema/dist/geo.js"
-		},
-		"./schema/canonical-order": {
-			"types": "./lib/schema/dist-types/shared/canonical-order.d.ts",
-			"import": "./lib/schema/dist/canonical-order.js",
-			"default": "./lib/schema/dist/canonical-order.js"
-		},
-		"./schema/v1": {
-			"types": "./lib/schema/dist-types/api/v1/index.d.ts",
-			"import": "./lib/schema/dist/api/v1/index.js",
-			"default": "./lib/schema/dist/api/v1/index.js"
-		},
-		"./translations": {
-			"types": "./lib/translations/dist-types/index.d.ts",
-			"import": "./lib/translations/dist/index.js",
-			"default": "./lib/translations/dist/index.js"
-		},
-		"./translations/all": {
-			"types": "./lib/translations/dist-types/all.d.ts",
-			"import": "./lib/translations/dist/all.js",
-			"default": "./lib/translations/dist/all.js"
-		},
-		"./translations/en": {
-			"types": "./lib/translations/dist-types/translations/en.d.ts",
-			"import": "./lib/translations/dist/translations/en.js",
-			"default": "./lib/translations/dist/translations/en.js"
-		},
-		"./translations/ar": {
-			"types": "./lib/translations/dist-types/languages/ar.d.ts",
-			"import": "./lib/translations/dist/languages/ar.js",
-			"default": "./lib/translations/dist/languages/ar.js"
-		},
-		"./translations/bg": {
-			"types": "./lib/translations/dist-types/languages/bg.d.ts",
-			"import": "./lib/translations/dist/languages/bg.js",
-			"default": "./lib/translations/dist/languages/bg.js"
-		},
-		"./translations/bn": {
-			"types": "./lib/translations/dist-types/languages/bn.d.ts",
-			"import": "./lib/translations/dist/languages/bn.js",
-			"default": "./lib/translations/dist/languages/bn.js"
-		},
-		"./translations/cs": {
-			"types": "./lib/translations/dist-types/languages/cs.d.ts",
-			"import": "./lib/translations/dist/languages/cs.js",
-			"default": "./lib/translations/dist/languages/cs.js"
-		},
-		"./translations/cy": {
-			"types": "./lib/translations/dist-types/languages/cy.d.ts",
-			"import": "./lib/translations/dist/languages/cy.js",
-			"default": "./lib/translations/dist/languages/cy.js"
-		},
-		"./translations/da": {
-			"types": "./lib/translations/dist-types/languages/da.d.ts",
-			"import": "./lib/translations/dist/languages/da.js",
-			"default": "./lib/translations/dist/languages/da.js"
-		},
-		"./translations/de": {
-			"types": "./lib/translations/dist-types/languages/de.d.ts",
-			"import": "./lib/translations/dist/languages/de.js",
-			"default": "./lib/translations/dist/languages/de.js"
-		},
-		"./translations/el": {
-			"types": "./lib/translations/dist-types/languages/el.d.ts",
-			"import": "./lib/translations/dist/languages/el.js",
-			"default": "./lib/translations/dist/languages/el.js"
-		},
-		"./translations/es": {
-			"types": "./lib/translations/dist-types/languages/es.d.ts",
-			"import": "./lib/translations/dist/languages/es.js",
-			"default": "./lib/translations/dist/languages/es.js"
-		},
-		"./translations/et": {
-			"types": "./lib/translations/dist-types/languages/et.d.ts",
-			"import": "./lib/translations/dist/languages/et.js",
-			"default": "./lib/translations/dist/languages/et.js"
-		},
-		"./translations/fi": {
-			"types": "./lib/translations/dist-types/languages/fi.d.ts",
-			"import": "./lib/translations/dist/languages/fi.js",
-			"default": "./lib/translations/dist/languages/fi.js"
-		},
-		"./translations/fr": {
-			"types": "./lib/translations/dist-types/languages/fr.d.ts",
-			"import": "./lib/translations/dist/languages/fr.js",
-			"default": "./lib/translations/dist/languages/fr.js"
-		},
-		"./translations/ga": {
-			"types": "./lib/translations/dist-types/languages/ga.d.ts",
-			"import": "./lib/translations/dist/languages/ga.js",
-			"default": "./lib/translations/dist/languages/ga.js"
-		},
-		"./translations/gu": {
-			"types": "./lib/translations/dist-types/languages/gu.d.ts",
-			"import": "./lib/translations/dist/languages/gu.js",
-			"default": "./lib/translations/dist/languages/gu.js"
-		},
-		"./translations/he": {
-			"types": "./lib/translations/dist-types/languages/he.d.ts",
-			"import": "./lib/translations/dist/languages/he.js",
-			"default": "./lib/translations/dist/languages/he.js"
-		},
-		"./translations/hi": {
-			"types": "./lib/translations/dist-types/languages/hi.d.ts",
-			"import": "./lib/translations/dist/languages/hi.js",
-			"default": "./lib/translations/dist/languages/hi.js"
-		},
-		"./translations/hr": {
-			"types": "./lib/translations/dist-types/languages/hr.d.ts",
-			"import": "./lib/translations/dist/languages/hr.js",
-			"default": "./lib/translations/dist/languages/hr.js"
-		},
-		"./translations/ht": {
-			"types": "./lib/translations/dist-types/languages/ht.d.ts",
-			"import": "./lib/translations/dist/languages/ht.js",
-			"default": "./lib/translations/dist/languages/ht.js"
-		},
-		"./translations/hu": {
-			"types": "./lib/translations/dist-types/languages/hu.d.ts",
-			"import": "./lib/translations/dist/languages/hu.js",
-			"default": "./lib/translations/dist/languages/hu.js"
-		},
-		"./translations/id": {
-			"types": "./lib/translations/dist-types/languages/id.d.ts",
-			"import": "./lib/translations/dist/languages/id.js",
-			"default": "./lib/translations/dist/languages/id.js"
-		},
-		"./translations/is": {
-			"types": "./lib/translations/dist-types/languages/is.d.ts",
-			"import": "./lib/translations/dist/languages/is.js",
-			"default": "./lib/translations/dist/languages/is.js"
-		},
-		"./translations/it": {
-			"types": "./lib/translations/dist-types/languages/it.d.ts",
-			"import": "./lib/translations/dist/languages/it.js",
-			"default": "./lib/translations/dist/languages/it.js"
-		},
-		"./translations/ja": {
-			"types": "./lib/translations/dist-types/languages/ja.d.ts",
-			"import": "./lib/translations/dist/languages/ja.js",
-			"default": "./lib/translations/dist/languages/ja.js"
-		},
-		"./translations/kn": {
-			"types": "./lib/translations/dist-types/languages/kn.d.ts",
-			"import": "./lib/translations/dist/languages/kn.js",
-			"default": "./lib/translations/dist/languages/kn.js"
-		},
-		"./translations/ko": {
-			"types": "./lib/translations/dist-types/languages/ko.d.ts",
-			"import": "./lib/translations/dist/languages/ko.js",
-			"default": "./lib/translations/dist/languages/ko.js"
-		},
-		"./translations/lb": {
-			"types": "./lib/translations/dist-types/languages/lb.d.ts",
-			"import": "./lib/translations/dist/languages/lb.js",
-			"default": "./lib/translations/dist/languages/lb.js"
-		},
-		"./translations/lt": {
-			"types": "./lib/translations/dist-types/languages/lt.d.ts",
-			"import": "./lib/translations/dist/languages/lt.js",
-			"default": "./lib/translations/dist/languages/lt.js"
-		},
-		"./translations/lv": {
-			"types": "./lib/translations/dist-types/languages/lv.d.ts",
-			"import": "./lib/translations/dist/languages/lv.js",
-			"default": "./lib/translations/dist/languages/lv.js"
-		},
-		"./translations/ml": {
-			"types": "./lib/translations/dist-types/languages/ml.d.ts",
-			"import": "./lib/translations/dist/languages/ml.js",
-			"default": "./lib/translations/dist/languages/ml.js"
-		},
-		"./translations/mr": {
-			"types": "./lib/translations/dist-types/languages/mr.d.ts",
-			"import": "./lib/translations/dist/languages/mr.js",
-			"default": "./lib/translations/dist/languages/mr.js"
-		},
-		"./translations/ms": {
-			"types": "./lib/translations/dist-types/languages/ms.d.ts",
-			"import": "./lib/translations/dist/languages/ms.js",
-			"default": "./lib/translations/dist/languages/ms.js"
-		},
-		"./translations/mt": {
-			"types": "./lib/translations/dist-types/languages/mt.d.ts",
-			"import": "./lib/translations/dist/languages/mt.js",
-			"default": "./lib/translations/dist/languages/mt.js"
-		},
-		"./translations/nb": {
-			"types": "./lib/translations/dist-types/languages/nb.d.ts",
-			"import": "./lib/translations/dist/languages/nb.js",
-			"default": "./lib/translations/dist/languages/nb.js"
-		},
-		"./translations/nl": {
-			"types": "./lib/translations/dist-types/languages/nl.d.ts",
-			"import": "./lib/translations/dist/languages/nl.js",
-			"default": "./lib/translations/dist/languages/nl.js"
-		},
-		"./translations/nn": {
-			"types": "./lib/translations/dist-types/languages/nn.d.ts",
-			"import": "./lib/translations/dist/languages/nn.js",
-			"default": "./lib/translations/dist/languages/nn.js"
-		},
-		"./translations/pa": {
-			"types": "./lib/translations/dist-types/languages/pa.d.ts",
-			"import": "./lib/translations/dist/languages/pa.js",
-			"default": "./lib/translations/dist/languages/pa.js"
-		},
-		"./translations/pl": {
-			"types": "./lib/translations/dist-types/languages/pl.d.ts",
-			"import": "./lib/translations/dist/languages/pl.js",
-			"default": "./lib/translations/dist/languages/pl.js"
-		},
-		"./translations/pt": {
-			"types": "./lib/translations/dist-types/languages/pt.d.ts",
-			"import": "./lib/translations/dist/languages/pt.js",
-			"default": "./lib/translations/dist/languages/pt.js"
-		},
-		"./translations/rm": {
-			"types": "./lib/translations/dist-types/languages/rm.d.ts",
-			"import": "./lib/translations/dist/languages/rm.js",
-			"default": "./lib/translations/dist/languages/rm.js"
-		},
-		"./translations/ro": {
-			"types": "./lib/translations/dist-types/languages/ro.d.ts",
-			"import": "./lib/translations/dist/languages/ro.js",
-			"default": "./lib/translations/dist/languages/ro.js"
-		},
-		"./translations/ru": {
-			"types": "./lib/translations/dist-types/languages/ru.d.ts",
-			"import": "./lib/translations/dist/languages/ru.js",
-			"default": "./lib/translations/dist/languages/ru.js"
-		},
-		"./translations/sk": {
-			"types": "./lib/translations/dist-types/languages/sk.d.ts",
-			"import": "./lib/translations/dist/languages/sk.js",
-			"default": "./lib/translations/dist/languages/sk.js"
-		},
-		"./translations/sl": {
-			"types": "./lib/translations/dist-types/languages/sl.d.ts",
-			"import": "./lib/translations/dist/languages/sl.js",
-			"default": "./lib/translations/dist/languages/sl.js"
-		},
-		"./translations/sv": {
-			"types": "./lib/translations/dist-types/languages/sv.d.ts",
-			"import": "./lib/translations/dist/languages/sv.js",
-			"default": "./lib/translations/dist/languages/sv.js"
-		},
-		"./translations/ta": {
-			"types": "./lib/translations/dist-types/languages/ta.d.ts",
-			"import": "./lib/translations/dist/languages/ta.js",
-			"default": "./lib/translations/dist/languages/ta.js"
-		},
-		"./translations/te": {
-			"types": "./lib/translations/dist-types/languages/te.d.ts",
-			"import": "./lib/translations/dist/languages/te.js",
-			"default": "./lib/translations/dist/languages/te.js"
-		},
-		"./translations/th": {
-			"types": "./lib/translations/dist-types/languages/th.d.ts",
-			"import": "./lib/translations/dist/languages/th.js",
-			"default": "./lib/translations/dist/languages/th.js"
-		},
-		"./translations/tr": {
-			"types": "./lib/translations/dist-types/languages/tr.d.ts",
-			"import": "./lib/translations/dist/languages/tr.js",
-			"default": "./lib/translations/dist/languages/tr.js"
-		},
-		"./translations/ur": {
-			"types": "./lib/translations/dist-types/languages/ur.d.ts",
-			"import": "./lib/translations/dist/languages/ur.js",
-			"default": "./lib/translations/dist/languages/ur.js"
-		},
-		"./translations/vi": {
-			"types": "./lib/translations/dist-types/languages/vi.d.ts",
-			"import": "./lib/translations/dist/languages/vi.js",
-			"default": "./lib/translations/dist/languages/vi.js"
-		},
-		"./translations/yi": {
-			"types": "./lib/translations/dist-types/languages/yi.d.ts",
-			"import": "./lib/translations/dist/languages/yi.js",
-			"default": "./lib/translations/dist/languages/yi.js"
-		},
-		"./translations/zh": {
-			"types": "./lib/translations/dist-types/languages/zh.d.ts",
-			"import": "./lib/translations/dist/languages/zh.js",
-			"default": "./lib/translations/dist/languages/zh.js"
-		},
-		"./ui/styles.css": "./lib/ui/dist/styles.css",
-		"./ui/styles.tw3.css": "./lib/ui/dist/styles.tw3.css",
-		"./ui/iab/styles.css": "./lib/ui/dist/iab/styles.css",
-		"./ui/iab/styles.tw3.css": "./lib/ui/dist/iab/styles.tw3.css",
-		"./ui/styles/dialog.css": "./lib/ui/dist/styles/dialog.css",
-		"./ui/styles/dialog": {
-			"types": "./lib/ui/dist/styles/dialog.d.ts",
-			"import": "./lib/ui/dist/styles/dialog.js",
-			"default": "./lib/ui/dist/styles/dialog.js"
-		},
-		"./ui/styles/primitives.css": "./lib/ui/dist/styles/primitives.css",
-		"./ui/styles/sheets/*.css": "./lib/ui/dist/styles/sheets/*.css",
-		"./ui/styles/sheets/*": {
-			"types": "./lib/ui/dist-types/styles/sheets/*.d.ts",
-			"import": "./lib/ui/dist/styles/sheets/*.js",
-			"default": "./lib/ui/dist/styles/sheets/*.js"
-		},
-		"./ui/postcss-tailwind3": {
-			"types": "./lib/ui/dist-types/postcss-tailwind3.d.ts",
-			"import": "./lib/ui/dist/postcss-tailwind3.js",
-			"default": "./lib/ui/dist/postcss-tailwind3.js"
-		},
-		"./ui/primitives": {
-			"types": "./lib/ui/dist-types/primitives/index.d.ts",
-			"import": "./lib/ui/dist/primitives/index.js",
-			"default": "./lib/ui/dist/primitives/index.js"
-		},
-		"./ui/primitives/data-state": {
-			"types": "./lib/ui/dist-types/primitives/data-state.d.ts",
-			"import": "./lib/ui/dist/primitives/data-state.js",
-			"default": "./lib/ui/dist/primitives/data-state.js"
-		},
-		"./ui/primitives/*": {
-			"types": "./lib/ui/dist-types/primitives/*/index.d.ts",
-			"import": "./lib/ui/dist/primitives/*/index.js",
-			"default": "./lib/ui/dist/primitives/*/index.js"
-		},
-		"./ui/theme": {
-			"types": "./lib/ui/dist-types/theme/index.d.ts",
-			"import": "./lib/ui/dist/theme/index.js",
-			"default": "./lib/ui/dist/theme/index.js"
-		},
-		"./ui/utils": {
-			"types": "./lib/ui/dist-types/utils/index.d.ts",
-			"import": "./lib/ui/dist/utils/index.js",
-			"default": "./lib/ui/dist/utils/index.js"
-		},
-		"./ui/styles/primitives": {
-			"types": "./lib/ui/dist-types/styles/primitives/index.d.ts",
-			"import": "./lib/ui/dist/styles/primitives/index.js",
-			"default": "./lib/ui/dist/styles/primitives/index.js"
-		},
-		"./ui/styles/primitives/*": {
-			"types": "./lib/ui/dist-types/styles/primitives/*.d.ts",
-			"import": "./lib/ui/dist/styles/primitives/*.js",
-			"default": "./lib/ui/dist/styles/primitives/*.js"
-		},
-		"./ui/styles/primitives/*.module.js": {
-			"types": "./lib/ui/src/styles/css-module.d.ts",
-			"import": "./lib/ui/dist/styles/primitives/*.module.js",
-			"default": "./lib/ui/dist/styles/primitives/*.module.js"
-		},
-		"./ui/styles/primitives/*.module.css": {
-			"types": "./lib/ui/src/styles/css-module.d.ts",
-			"import": "./lib/ui/dist/styles/primitives/*.module.js",
-			"default": "./lib/ui/dist/styles/primitives/*.module.js"
-		},
-		"./ui/utils/*": {
-			"types": "./lib/ui/dist-types/utils/*.d.ts",
-			"import": "./lib/ui/dist/utils/*.js",
-			"default": "./lib/ui/dist/utils/*.js"
-		},
-		"./ui/styles/*.module.js": {
-			"types": "./lib/ui/src/styles/css-module.d.ts",
-			"import": "./lib/ui/dist/styles/*.module.js",
-			"default": "./lib/ui/dist/styles/*.module.js"
-		},
-		"./ui/styles/*.module.css": "./lib/ui/dist/styles/*.module.css",
-		"./ui/styles/*": "./lib/ui/dist/styles/*",
-		"./ui": {
-			"types": "./lib/ui/dist-types/index.d.ts",
-			"import": "./lib/ui/dist/index.js",
-			"default": "./lib/ui/dist/index.js"
-		},
-		"./ui/styles/components/*.css": "./lib/ui/dist/styles/components/*.css",
-		"./ui/styles/components/*": {
-			"types": "./lib/ui/dist/styles/components/*.d.ts",
-			"style": "./lib/ui/dist/styles/components/*.css",
-			"node": "./lib/ui/dist/styles/components/*.node.js",
-			"import": "./lib/ui/dist/styles/components/*.js",
-			"default": "./lib/ui/dist/styles/components/*.js"
-		},
-		"./ui/styles/components/*.module.css": {
-			"types": "./lib/ui/dist/styles/components/*.d.ts",
-			"style": "./lib/ui/dist/styles/components/*.css",
-			"node": "./lib/ui/dist/styles/components/*.node.js",
-			"import": "./lib/ui/dist/styles/components/*.js",
-			"default": "./lib/ui/dist/styles/components/*.js"
-		},
-		"./ui/styles/components/consent-banner": {
-			"types": "./lib/ui/dist/styles/components/prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/prompt.css",
-			"node": "./lib/ui/dist/styles/components/prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/prompt.js",
-			"default": "./lib/ui/dist/styles/components/prompt.js"
-		},
-		"./ui/styles/components/consent-banner.module.css": {
-			"types": "./lib/ui/dist/styles/components/prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/prompt.css",
-			"node": "./lib/ui/dist/styles/components/prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/prompt.js",
-			"default": "./lib/ui/dist/styles/components/prompt.js"
-		},
-		"./ui/styles/components/consent-banner.css": "./lib/ui/dist/styles/components/prompt.css",
-		"./ui/styles/components/consent-dialog-trigger": {
-			"types": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel-trigger.css",
-			"node": "./lib/ui/dist/styles/components/panel-trigger.node.js",
-			"import": "./lib/ui/dist/styles/components/panel-trigger.js",
-			"default": "./lib/ui/dist/styles/components/panel-trigger.js"
-		},
-		"./ui/styles/components/consent-dialog-trigger.module.css": {
-			"types": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel-trigger.css",
-			"node": "./lib/ui/dist/styles/components/panel-trigger.node.js",
-			"import": "./lib/ui/dist/styles/components/panel-trigger.js",
-			"default": "./lib/ui/dist/styles/components/panel-trigger.js"
-		},
-		"./ui/styles/components/consent-dialog-trigger.css": "./lib/ui/dist/styles/components/panel-trigger.css",
-		"./ui/styles/components/consent-dialog": {
-			"types": "./lib/ui/dist/styles/components/panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel.css",
-			"node": "./lib/ui/dist/styles/components/panel.node.js",
-			"import": "./lib/ui/dist/styles/components/panel.js",
-			"default": "./lib/ui/dist/styles/components/panel.js"
-		},
-		"./ui/styles/components/consent-dialog.module.css": {
-			"types": "./lib/ui/dist/styles/components/panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel.css",
-			"node": "./lib/ui/dist/styles/components/panel.node.js",
-			"import": "./lib/ui/dist/styles/components/panel.js",
-			"default": "./lib/ui/dist/styles/components/panel.js"
-		},
-		"./ui/styles/components/consent-dialog.css": "./lib/ui/dist/styles/components/panel.css",
-		"./ui/styles/components/consent-manager": {
-			"types": "./lib/ui/dist/styles/components/manager.d.ts",
-			"style": "./lib/ui/dist/styles/components/manager.css",
-			"node": "./lib/ui/dist/styles/components/manager.node.js",
-			"import": "./lib/ui/dist/styles/components/manager.js",
-			"default": "./lib/ui/dist/styles/components/manager.js"
-		},
-		"./ui/styles/components/consent-manager.module.css": {
-			"types": "./lib/ui/dist/styles/components/manager.d.ts",
-			"style": "./lib/ui/dist/styles/components/manager.css",
-			"node": "./lib/ui/dist/styles/components/manager.node.js",
-			"import": "./lib/ui/dist/styles/components/manager.js",
-			"default": "./lib/ui/dist/styles/components/manager.js"
-		},
-		"./ui/styles/components/consent-manager.css": "./lib/ui/dist/styles/components/manager.css",
-		"./ui/styles/components/iab-consent-banner": {
-			"types": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/iab-prompt.css",
-			"node": "./lib/ui/dist/styles/components/iab-prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/iab-prompt.js",
-			"default": "./lib/ui/dist/styles/components/iab-prompt.js"
-		},
-		"./ui/styles/components/iab-consent-banner.module.css": {
-			"types": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/iab-prompt.css",
-			"node": "./lib/ui/dist/styles/components/iab-prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/iab-prompt.js",
-			"default": "./lib/ui/dist/styles/components/iab-prompt.js"
-		},
-		"./ui/styles/components/iab-consent-banner.css": "./lib/ui/dist/styles/components/iab-prompt.css",
-		"./ui/styles/components/iab-consent-dialog": {
-			"types": "./lib/ui/dist/styles/components/iab-panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/iab-panel.css",
-			"node": "./lib/ui/dist/styles/components/iab-panel.node.js",
-			"import": "./lib/ui/dist/styles/components/iab-panel.js",
-			"default": "./lib/ui/dist/styles/components/iab-panel.js"
-		},
-		"./ui/styles/components/iab-consent-dialog.module.css": {
-			"types": "./lib/ui/dist/styles/components/iab-panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/iab-panel.css",
-			"node": "./lib/ui/dist/styles/components/iab-panel.node.js",
-			"import": "./lib/ui/dist/styles/components/iab-panel.js",
-			"default": "./lib/ui/dist/styles/components/iab-panel.js"
-		},
-		"./ui/styles/components/iab-consent-dialog.css": "./lib/ui/dist/styles/components/iab-panel.css",
-		"./ui/styles/components/consent-banner.js": "./lib/ui/dist/styles/components/prompt.js",
-		"./ui/styles/components/consent-banner.node.js": "./lib/ui/dist/styles/components/prompt.node.js",
-		"./ui/styles/components/consent-banner.d.ts": "./lib/ui/dist/styles/components/prompt.d.ts",
-		"./ui/styles/components/consent-dialog.js": "./lib/ui/dist/styles/components/panel.js",
-		"./ui/styles/components/consent-dialog.node.js": "./lib/ui/dist/styles/components/panel.node.js",
-		"./ui/styles/components/consent-dialog.d.ts": "./lib/ui/dist/styles/components/panel.d.ts",
-		"./ui/styles/components/consent-dialog-trigger.js": "./lib/ui/dist/styles/components/panel-trigger.js",
-		"./ui/styles/components/consent-dialog-trigger.node.js": "./lib/ui/dist/styles/components/panel-trigger.node.js",
-		"./ui/styles/components/consent-dialog-trigger.d.ts": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
-		"./ui/styles/components/consent-manager.js": "./lib/ui/dist/styles/components/manager.js",
-		"./ui/styles/components/consent-manager.node.js": "./lib/ui/dist/styles/components/manager.node.js",
-		"./ui/styles/components/consent-manager.d.ts": "./lib/ui/dist/styles/components/manager.d.ts",
-		"./ui/styles/components/iab-consent-banner.js": "./lib/ui/dist/styles/components/iab-prompt.js",
-		"./ui/styles/components/iab-consent-banner.node.js": "./lib/ui/dist/styles/components/iab-prompt.node.js",
-		"./ui/styles/components/iab-consent-banner.d.ts": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
-		"./ui/styles/components/iab-consent-dialog.js": "./lib/ui/dist/styles/components/iab-panel.js",
-		"./ui/styles/components/iab-consent-dialog.node.js": "./lib/ui/dist/styles/components/iab-panel.node.js",
-		"./ui/styles/components/iab-consent-dialog.d.ts": "./lib/ui/dist/styles/components/iab-panel.d.ts",
-		"./ui/styles/components/frame": {
-			"types": "./lib/ui/dist/styles/components/consent-gate.d.ts",
-			"style": "./lib/ui/dist/styles/components/consent-gate.css",
-			"node": "./lib/ui/dist/styles/components/consent-gate.node.js",
-			"import": "./lib/ui/dist/styles/components/consent-gate.js",
-			"default": "./lib/ui/dist/styles/components/consent-gate.js"
-		},
-		"./ui/styles/components/frame.module.css": {
-			"types": "./lib/ui/dist/styles/components/consent-gate.d.ts",
-			"style": "./lib/ui/dist/styles/components/consent-gate.css",
-			"node": "./lib/ui/dist/styles/components/consent-gate.node.js",
-			"import": "./lib/ui/dist/styles/components/consent-gate.js",
-			"default": "./lib/ui/dist/styles/components/consent-gate.js"
-		},
-		"./ui/styles/components/frame.css": "./lib/ui/dist/styles/components/consent-gate.css",
-		"./ui/styles/components/frame.js": "./lib/ui/dist/styles/components/consent-gate.js",
-		"./ui/styles/components/frame.node.js": "./lib/ui/dist/styles/components/consent-gate.node.js",
-		"./ui/styles/components/frame.d.ts": "./lib/ui/dist/styles/components/consent-gate.d.ts",
-		"./ui/styles/components/animations/iab-consent-banner.css": "./lib/ui/dist/styles/components/animations/iab-prompt.css",
-		"./devtools": {
-			"types": "./lib/entries/devtools.d.ts",
-			"import": "./lib/entries/devtools.js",
-			"default": "./lib/entries/devtools.js"
-		},
-		"./package.json": "./package.json"
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "node scripts/assemble.ts",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/sdk",
-		"check-types": "tsrs --noEmit",
-		"dev": "node scripts/assemble.ts --watch",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./scripts ./__tests__",
-		"manifest": "node scripts/assemble.ts manifest",
-		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
-		"test": "vp test run"
-	},
-	"dependencies": {
-		"@iabtechlabtcf/core": "^1.5.22",
-		"base-x": "5.0.1",
-		"valibot": "1.4.2"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@types/node": "25.5.0",
-		"esbuild": "^0.28.1",
-		"tsrs": "catalog:",
-		"vite-plus": "catalog:"
-	}
+  "name": "@inth/sdk",
+  "version": "0.0.0-alpha.0",
+  "description": "The Inth consent SDK: the vanilla JavaScript client, the consent engine, UI styles, translations and IAB TCF support. Framework packages such as @inth/react build on it.",
+  "keywords": [
+    "cmp",
+    "consent",
+    "consent-banner",
+    "consent-management",
+    "cookie-banner",
+    "cookie-consent",
+    "gdpr",
+    "iab-tcf",
+    "javascript",
+    "privacy",
+    "script-blocking",
+    "script-tag"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/sdk"
+  },
+  "files": [
+    "lib",
+    "AGENTS.md",
+    "SKILL.md",
+    "docs",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./lib/browser/dist/inth.commit.js",
+    "./lib/browser/dist/inth.devtools.js",
+    "./lib/browser/dist/inth.dialog.js",
+    "./lib/browser/dist/inth.gpp.js",
+    "./lib/browser/dist/inth.headless.js",
+    "./lib/browser/dist/inth.hosted.js",
+    "./lib/browser/dist/inth.iab.js",
+    "./lib/browser/dist/inth.js",
+    "./lib/browser/dist/inth.local.js",
+    "./lib/browser/dist/inth.offline.js",
+    "./lib/browser/dist/inth.records.js",
+    "./lib/dev-tools/**",
+    "./lib/iab/**",
+    "./lib/translations/dist/all.js",
+    "./lib/translations/dist/languages/*.js"
+  ],
+  "main": "./lib/browser/dist/index.js",
+  "types": "./lib/browser/dist-types/index.d.ts",
+  "unpkg": "./lib/browser/dist/inth.js",
+  "jsdelivr": "./lib/browser/dist/inth.js",
+  "exports": {
+    ".": {
+      "types": "./lib/browser/dist-types/index.d.ts",
+      "import": "./lib/browser/dist/index.js",
+      "default": "./lib/browser/dist/index.js"
+    },
+    "./hosted": {
+      "types": "./lib/browser/dist-types/hosted.d.ts",
+      "import": "./lib/browser/dist/hosted.js",
+      "default": "./lib/browser/dist/hosted.js"
+    },
+    "./headless": {
+      "types": "./lib/browser/dist-types/headless.d.ts",
+      "import": "./lib/browser/dist/headless.js",
+      "default": "./lib/browser/dist/headless.js"
+    },
+    "./gpp": {
+      "types": "./lib/browser/dist-types/gpp.d.ts",
+      "import": "./lib/browser/dist/gpp.js",
+      "default": "./lib/browser/dist/gpp.js"
+    },
+    "./styles.css": "./lib/browser/dist/inth.css",
+    "./inth.js": "./lib/browser/dist/inth.js",
+    "./inth.hosted.js": "./lib/browser/dist/inth.hosted.js",
+    "./inth.commit.js": "./lib/browser/dist/inth.commit.js",
+    "./inth.records.js": "./lib/browser/dist/inth.records.js",
+    "./inth.dialog.js": "./lib/browser/dist/inth.dialog.js",
+    "./inth.testing.js": "./lib/browser/dist/inth.testing.js",
+    "./inth.headless.js": "./lib/browser/dist/inth.headless.js",
+    "./inth.devtools.js": "./lib/browser/dist/inth.devtools.js",
+    "./inth.gpp.js": "./lib/browser/dist/inth.gpp.js",
+    "./iab-client": {
+      "types": "./lib/browser/dist-types/iab.d.ts",
+      "import": "./lib/browser/dist/iab.js",
+      "default": "./lib/browser/dist/iab.js"
+    },
+    "./inth.iab.js": "./lib/browser/dist/inth.iab.js",
+    "./iab/styles.css": "./lib/browser/dist/inth.iab.css",
+    "./postcss-tailwind3": {
+      "types": "./lib/browser/dist-types/postcss-tailwind3.d.ts",
+      "import": "./lib/browser/dist/postcss-tailwind3.js",
+      "default": "./lib/browser/dist/postcss-tailwind3.js"
+    },
+    "./prefetch": {
+      "types": "./lib/browser/dist-types/prefetch.d.ts",
+      "import": "./lib/browser/dist/prefetch.js",
+      "default": "./lib/browser/dist/prefetch.js"
+    },
+    "./engine": {
+      "types": "./lib/core/dist-types/index.d.ts",
+      "import": "./lib/core/dist/index.js",
+      "default": "./lib/core/dist/index.js"
+    },
+    "./consent-record": {
+      "types": "./lib/core/dist-types/consent-record/index.d.ts",
+      "import": "./lib/core/dist/consent-record.js",
+      "default": "./lib/core/dist/consent-record.js"
+    },
+    "./events": {
+      "types": "./lib/core/dist-types/events.d.ts",
+      "import": "./lib/core/dist/events.js",
+      "default": "./lib/core/dist/events.js"
+    },
+    "./experiment": {
+      "types": "./lib/core/dist-types/experiment.d.ts",
+      "import": "./lib/core/dist/experiment.js",
+      "default": "./lib/core/dist/experiment.js"
+    },
+    "./modes": {
+      "types": "./lib/core/dist-types/modes.d.ts",
+      "import": "./lib/core/dist/modes.js",
+      "default": "./lib/core/dist/modes.js"
+    },
+    "./testing": {
+      "types": "./lib/core/dist-types/testing.d.ts",
+      "import": "./lib/core/dist/testing.js",
+      "default": "./lib/core/dist/testing.js"
+    },
+    "./surface-actions": {
+      "types": "./lib/core/dist-types/surface-actions/index.d.ts",
+      "import": "./lib/core/dist/surface-actions/index.js",
+      "default": "./lib/core/dist/surface-actions/index.js"
+    },
+    "./surface-actions/early-commit": {
+      "types": "./lib/core/dist-types/surface-actions/early-commit.d.ts",
+      "import": "./lib/core/dist/surface-actions/early-commit.js",
+      "default": "./lib/core/dist/surface-actions/early-commit.js"
+    },
+    "./surface-actions/instant-commit": {
+      "types": "./lib/core/dist-types/surface-actions/instant-commit.d.ts",
+      "import": "./lib/core/dist/surface-actions/instant-commit.js",
+      "default": "./lib/core/dist/surface-actions/instant-commit.js"
+    },
+    "./surface-actions/stored-records": {
+      "types": "./lib/core/dist-types/surface-actions/stored-records.d.ts",
+      "import": "./lib/core/dist/surface-actions/stored-records.js",
+      "default": "./lib/core/dist/surface-actions/stored-records.js"
+    },
+    "./surface-actions/plain-scripts": {
+      "types": "./lib/core/dist-types/surface-actions/plain-scripts.d.ts",
+      "import": "./lib/core/dist/surface-actions/plain-scripts.js",
+      "default": "./lib/core/dist/surface-actions/plain-scripts.js"
+    },
+    "./surface-state": {
+      "types": "./lib/core/dist-types/surface-state.d.ts",
+      "import": "./lib/core/dist/surface-state.js",
+      "default": "./lib/core/dist/surface-state.js"
+    },
+    "./iab-support": {
+      "types": "./lib/core/dist-types/iab-support.d.ts",
+      "import": "./lib/core/dist/iab-support.js",
+      "default": "./lib/core/dist/iab-support.js"
+    },
+    "./consent-categories": {
+      "types": "./lib/core/dist-types/consent-record/types.d.ts",
+      "import": "./lib/core/dist/consent-categories.js",
+      "default": "./lib/core/dist/consent-categories.js"
+    },
+    "./transports": {
+      "types": "./lib/core/dist-types/transports/index.d.ts",
+      "import": "./lib/core/dist/transports.js",
+      "default": "./lib/core/dist/transports.js"
+    },
+    "./transports/hosted-factory": {
+      "types": "./lib/core/dist-types/transports/hosted-factory.d.ts",
+      "import": "./lib/core/dist/transports/hosted-factory.js",
+      "default": "./lib/core/dist/transports/hosted-factory.js"
+    },
+    "./transports/manifest": {
+      "types": "./lib/core/dist-types/transports/v1/manifest.d.ts",
+      "import": "./lib/core/dist/transport-manifest.js",
+      "default": "./lib/core/dist/transport-manifest.js"
+    },
+    "./transports/manifest-browser": {
+      "types": "./lib/core/dist-types/transports/manifest-browser.d.ts",
+      "import": "./lib/core/dist/transports/manifest-browser.js",
+      "default": "./lib/core/dist/transports/manifest-browser.js"
+    },
+    "./transports/manifest-location": {
+      "types": "./lib/core/dist-types/transports/manifest-browser-location.d.ts",
+      "import": "./lib/core/dist/transports/manifest-browser-location.js",
+      "default": "./lib/core/dist/transports/manifest-browser-location.js"
+    },
+    "./transports/manifest-cache": {
+      "types": "./lib/core/dist-types/transports/manifest-cache.d.ts",
+      "import": "./lib/core/dist/transport-manifest-cache.js",
+      "default": "./lib/core/dist/transport-manifest-cache.js"
+    },
+    "./modules/clear-on-revocation": {
+      "types": "./lib/core/dist-types/modules/clear-on-revocation/index.d.ts",
+      "import": "./lib/core/dist/clear-on-revocation.js",
+      "default": "./lib/core/dist/clear-on-revocation.js"
+    },
+    "./modules/script-loader": {
+      "types": "./lib/core/dist-types/modules/script-loader/index.d.ts",
+      "import": "./lib/core/dist/script-loader.js",
+      "default": "./lib/core/dist/script-loader.js"
+    },
+    "./modules/network-blocker": {
+      "types": "./lib/core/dist-types/modules/network-blocker/index.d.ts",
+      "import": "./lib/core/dist/network-blocker.js",
+      "default": "./lib/core/dist/network-blocker.js"
+    },
+    "./modules/network-hold": {
+      "types": "./lib/core/dist-types/modules/network-blocker/hold.d.ts",
+      "import": "./lib/core/dist/network-hold.js",
+      "default": "./lib/core/dist/network-hold.js"
+    },
+    "./modules/iframe-blocker": {
+      "types": "./lib/core/dist-types/modules/iframe-blocker/index.d.ts",
+      "import": "./lib/core/dist/iframe-blocker.js",
+      "default": "./lib/core/dist/iframe-blocker.js"
+    },
+    "./modules/persistence": {
+      "types": "./lib/core/dist-types/modules/persistence/index.d.ts",
+      "import": "./lib/core/dist/persistence.js",
+      "default": "./lib/core/dist/persistence.js"
+    },
+    "./preference-draft": {
+      "types": "./lib/core/dist-types/preference-draft/index.d.ts",
+      "import": "./lib/core/dist/preference-draft.js",
+      "default": "./lib/core/dist/preference-draft.js"
+    },
+    "./server": {
+      "types": "./lib/core/dist-types/server/index.d.ts",
+      "import": "./lib/core/dist/server.js",
+      "default": "./lib/core/dist/server.js"
+    },
+    "./static": {
+      "types": "./lib/core/dist-types/static.d.ts",
+      "import": "./lib/core/dist/static.js",
+      "default": "./lib/core/dist/static.js"
+    },
+    "./modules/window-debug": {
+      "types": "./lib/core/dist-types/modules/window-debug/index.d.ts",
+      "import": "./lib/core/dist/window-debug.js",
+      "default": "./lib/core/dist/window-debug.js"
+    },
+    "./runtime": {
+      "types": "./lib/core/dist-types/runtime/index.d.ts",
+      "import": "./lib/core/dist/runtime.js",
+      "default": "./lib/core/dist/runtime.js"
+    },
+    "./runtime/client-mode": {
+      "types": "./lib/core/dist-types/runtime/client-mode.d.ts",
+      "import": "./lib/core/dist/runtime/client-mode.js",
+      "default": "./lib/core/dist/runtime/client-mode.js"
+    },
+    "./runtime/deferred-boot": {
+      "types": "./lib/core/dist-types/runtime/deferred-boot.d.ts",
+      "import": "./lib/core/dist/runtime/deferred-boot.js",
+      "default": "./lib/core/dist/runtime/deferred-boot.js"
+    },
+    "./runtime/deferred-snapshot": {
+      "types": "./lib/core/dist-types/runtime/deferred-snapshot.d.ts",
+      "import": "./lib/core/dist/runtime/deferred-snapshot.js",
+      "default": "./lib/core/dist/runtime/deferred-snapshot.js"
+    },
+    "./runtime/page-globals": {
+      "types": "./lib/core/dist-types/libs/page-globals.d.ts",
+      "import": "./lib/core/dist/libs/page-globals.js",
+      "default": "./lib/core/dist/libs/page-globals.js"
+    },
+    "./runtime/stand-in-kernel": {
+      "types": "./lib/core/dist-types/runtime/stand-in-kernel.d.ts",
+      "import": "./lib/core/dist/runtime/stand-in-kernel.js",
+      "default": "./lib/core/dist/runtime/stand-in-kernel.js"
+    },
+    "./runtime/storage-for": {
+      "types": "./lib/core/dist-types/libs/storage-for.d.ts",
+      "import": "./lib/core/dist/libs/storage-for.js",
+      "default": "./lib/core/dist/libs/storage-for.js"
+    },
+    "./runtime/save-preload": {
+      "types": "./lib/core/dist-types/runtime/save-preload.d.ts",
+      "import": "./lib/core/dist/runtime/save-preload.js",
+      "default": "./lib/core/dist/runtime/save-preload.js"
+    },
+    "./runtime/controls": {
+      "types": "./lib/core/dist-types/runtime/controls.d.ts",
+      "import": "./lib/core/dist/runtime/controls.js",
+      "default": "./lib/core/dist/runtime/controls.js"
+    },
+    "./runtime/on-demand": {
+      "types": "./lib/core/dist-types/runtime/on-demand.d.ts",
+      "import": "./lib/core/dist/runtime/on-demand.js",
+      "default": "./lib/core/dist/runtime/on-demand.js"
+    },
+    "./runtime/on-demand-factories": {
+      "types": "./lib/core/dist-types/runtime/on-demand-factories.d.ts",
+      "import": "./lib/core/dist/runtime/on-demand-factories.js",
+      "default": "./lib/core/dist/runtime/on-demand-factories.js"
+    },
+    "./runtime/provider": {
+      "types": "./lib/core/dist-types/runtime/provider.d.ts",
+      "import": "./lib/core/dist/runtime/provider.js",
+      "default": "./lib/core/dist/runtime/provider.js"
+    },
+    "./runtime/script-loader-preload": {
+      "types": "./lib/core/dist-types/runtime/script-loader-preload.d.ts",
+      "import": "./lib/core/dist/runtime/script-loader-preload.js",
+      "default": "./lib/core/dist/runtime/script-loader-preload.js"
+    },
+    "./runtime/script-server-start": {
+      "types": "./lib/core/dist-types/runtime/script-server-start.d.ts",
+      "import": "./lib/core/dist/runtime/script-server-start.js",
+      "default": "./lib/core/dist/runtime/script-server-start.js"
+    },
+    "./runtime/streamed-init": {
+      "types": "./lib/core/dist-types/runtime/streamed-init.d.ts",
+      "import": "./lib/core/dist/runtime/streamed-init.js",
+      "default": "./lib/core/dist/runtime/streamed-init.js"
+    },
+    "./build": {
+      "types": "./lib/core/dist-types/build.d.ts",
+      "import": "./lib/core/dist/build.js",
+      "default": "./lib/core/dist/build.js"
+    },
+    "./generated": {
+      "types": "./lib/core/dist-types/generated.d.ts",
+      "import": "./lib/core/dist/generated.js",
+      "default": "./lib/core/dist/generated.js"
+    },
+    "./iab": {
+      "types": "./lib/iab/dist-types/index.d.ts",
+      "import": "./lib/iab/dist/index.js",
+      "default": "./lib/iab/dist/index.js"
+    },
+    "./iab/headless": {
+      "types": "./lib/iab/dist-types/headless.d.ts",
+      "import": "./lib/iab/dist/headless.js",
+      "default": "./lib/iab/dist/headless.js"
+    },
+    "./iab/gpp": {
+      "types": "./lib/iab/dist-types/gpp.d.ts",
+      "import": "./lib/iab/dist/gpp.js",
+      "default": "./lib/iab/dist/gpp.js"
+    },
+    "./schema": {
+      "types": "./lib/schema/dist-types/index.d.ts",
+      "import": "./lib/schema/dist/index.js",
+      "default": "./lib/schema/dist/index.js"
+    },
+    "./schema/types": {
+      "types": "./lib/schema/dist-types/types.d.ts",
+      "import": "./lib/schema/dist/types.js",
+      "default": "./lib/schema/dist/types.js"
+    },
+    "./schema/config": {
+      "types": "./lib/schema/dist-types/config/index.d.ts",
+      "import": "./lib/schema/dist/config.js",
+      "default": "./lib/schema/dist/config.js"
+    },
+    "./schema/geo": {
+      "types": "./lib/schema/dist-types/shared/geo-headers.d.ts",
+      "import": "./lib/schema/dist/geo.js",
+      "default": "./lib/schema/dist/geo.js"
+    },
+    "./schema/canonical-order": {
+      "types": "./lib/schema/dist-types/shared/canonical-order.d.ts",
+      "import": "./lib/schema/dist/canonical-order.js",
+      "default": "./lib/schema/dist/canonical-order.js"
+    },
+    "./schema/v1": {
+      "types": "./lib/schema/dist-types/api/v1/index.d.ts",
+      "import": "./lib/schema/dist/api/v1/index.js",
+      "default": "./lib/schema/dist/api/v1/index.js"
+    },
+    "./translations": {
+      "types": "./lib/translations/dist-types/index.d.ts",
+      "import": "./lib/translations/dist/index.js",
+      "default": "./lib/translations/dist/index.js"
+    },
+    "./translations/all": {
+      "types": "./lib/translations/dist-types/all.d.ts",
+      "import": "./lib/translations/dist/all.js",
+      "default": "./lib/translations/dist/all.js"
+    },
+    "./translations/en": {
+      "types": "./lib/translations/dist-types/translations/en.d.ts",
+      "import": "./lib/translations/dist/translations/en.js",
+      "default": "./lib/translations/dist/translations/en.js"
+    },
+    "./translations/ar": {
+      "types": "./lib/translations/dist-types/languages/ar.d.ts",
+      "import": "./lib/translations/dist/languages/ar.js",
+      "default": "./lib/translations/dist/languages/ar.js"
+    },
+    "./translations/bg": {
+      "types": "./lib/translations/dist-types/languages/bg.d.ts",
+      "import": "./lib/translations/dist/languages/bg.js",
+      "default": "./lib/translations/dist/languages/bg.js"
+    },
+    "./translations/bn": {
+      "types": "./lib/translations/dist-types/languages/bn.d.ts",
+      "import": "./lib/translations/dist/languages/bn.js",
+      "default": "./lib/translations/dist/languages/bn.js"
+    },
+    "./translations/cs": {
+      "types": "./lib/translations/dist-types/languages/cs.d.ts",
+      "import": "./lib/translations/dist/languages/cs.js",
+      "default": "./lib/translations/dist/languages/cs.js"
+    },
+    "./translations/cy": {
+      "types": "./lib/translations/dist-types/languages/cy.d.ts",
+      "import": "./lib/translations/dist/languages/cy.js",
+      "default": "./lib/translations/dist/languages/cy.js"
+    },
+    "./translations/da": {
+      "types": "./lib/translations/dist-types/languages/da.d.ts",
+      "import": "./lib/translations/dist/languages/da.js",
+      "default": "./lib/translations/dist/languages/da.js"
+    },
+    "./translations/de": {
+      "types": "./lib/translations/dist-types/languages/de.d.ts",
+      "import": "./lib/translations/dist/languages/de.js",
+      "default": "./lib/translations/dist/languages/de.js"
+    },
+    "./translations/el": {
+      "types": "./lib/translations/dist-types/languages/el.d.ts",
+      "import": "./lib/translations/dist/languages/el.js",
+      "default": "./lib/translations/dist/languages/el.js"
+    },
+    "./translations/es": {
+      "types": "./lib/translations/dist-types/languages/es.d.ts",
+      "import": "./lib/translations/dist/languages/es.js",
+      "default": "./lib/translations/dist/languages/es.js"
+    },
+    "./translations/et": {
+      "types": "./lib/translations/dist-types/languages/et.d.ts",
+      "import": "./lib/translations/dist/languages/et.js",
+      "default": "./lib/translations/dist/languages/et.js"
+    },
+    "./translations/fi": {
+      "types": "./lib/translations/dist-types/languages/fi.d.ts",
+      "import": "./lib/translations/dist/languages/fi.js",
+      "default": "./lib/translations/dist/languages/fi.js"
+    },
+    "./translations/fr": {
+      "types": "./lib/translations/dist-types/languages/fr.d.ts",
+      "import": "./lib/translations/dist/languages/fr.js",
+      "default": "./lib/translations/dist/languages/fr.js"
+    },
+    "./translations/ga": {
+      "types": "./lib/translations/dist-types/languages/ga.d.ts",
+      "import": "./lib/translations/dist/languages/ga.js",
+      "default": "./lib/translations/dist/languages/ga.js"
+    },
+    "./translations/gu": {
+      "types": "./lib/translations/dist-types/languages/gu.d.ts",
+      "import": "./lib/translations/dist/languages/gu.js",
+      "default": "./lib/translations/dist/languages/gu.js"
+    },
+    "./translations/he": {
+      "types": "./lib/translations/dist-types/languages/he.d.ts",
+      "import": "./lib/translations/dist/languages/he.js",
+      "default": "./lib/translations/dist/languages/he.js"
+    },
+    "./translations/hi": {
+      "types": "./lib/translations/dist-types/languages/hi.d.ts",
+      "import": "./lib/translations/dist/languages/hi.js",
+      "default": "./lib/translations/dist/languages/hi.js"
+    },
+    "./translations/hr": {
+      "types": "./lib/translations/dist-types/languages/hr.d.ts",
+      "import": "./lib/translations/dist/languages/hr.js",
+      "default": "./lib/translations/dist/languages/hr.js"
+    },
+    "./translations/ht": {
+      "types": "./lib/translations/dist-types/languages/ht.d.ts",
+      "import": "./lib/translations/dist/languages/ht.js",
+      "default": "./lib/translations/dist/languages/ht.js"
+    },
+    "./translations/hu": {
+      "types": "./lib/translations/dist-types/languages/hu.d.ts",
+      "import": "./lib/translations/dist/languages/hu.js",
+      "default": "./lib/translations/dist/languages/hu.js"
+    },
+    "./translations/id": {
+      "types": "./lib/translations/dist-types/languages/id.d.ts",
+      "import": "./lib/translations/dist/languages/id.js",
+      "default": "./lib/translations/dist/languages/id.js"
+    },
+    "./translations/is": {
+      "types": "./lib/translations/dist-types/languages/is.d.ts",
+      "import": "./lib/translations/dist/languages/is.js",
+      "default": "./lib/translations/dist/languages/is.js"
+    },
+    "./translations/it": {
+      "types": "./lib/translations/dist-types/languages/it.d.ts",
+      "import": "./lib/translations/dist/languages/it.js",
+      "default": "./lib/translations/dist/languages/it.js"
+    },
+    "./translations/ja": {
+      "types": "./lib/translations/dist-types/languages/ja.d.ts",
+      "import": "./lib/translations/dist/languages/ja.js",
+      "default": "./lib/translations/dist/languages/ja.js"
+    },
+    "./translations/kn": {
+      "types": "./lib/translations/dist-types/languages/kn.d.ts",
+      "import": "./lib/translations/dist/languages/kn.js",
+      "default": "./lib/translations/dist/languages/kn.js"
+    },
+    "./translations/ko": {
+      "types": "./lib/translations/dist-types/languages/ko.d.ts",
+      "import": "./lib/translations/dist/languages/ko.js",
+      "default": "./lib/translations/dist/languages/ko.js"
+    },
+    "./translations/lb": {
+      "types": "./lib/translations/dist-types/languages/lb.d.ts",
+      "import": "./lib/translations/dist/languages/lb.js",
+      "default": "./lib/translations/dist/languages/lb.js"
+    },
+    "./translations/lt": {
+      "types": "./lib/translations/dist-types/languages/lt.d.ts",
+      "import": "./lib/translations/dist/languages/lt.js",
+      "default": "./lib/translations/dist/languages/lt.js"
+    },
+    "./translations/lv": {
+      "types": "./lib/translations/dist-types/languages/lv.d.ts",
+      "import": "./lib/translations/dist/languages/lv.js",
+      "default": "./lib/translations/dist/languages/lv.js"
+    },
+    "./translations/ml": {
+      "types": "./lib/translations/dist-types/languages/ml.d.ts",
+      "import": "./lib/translations/dist/languages/ml.js",
+      "default": "./lib/translations/dist/languages/ml.js"
+    },
+    "./translations/mr": {
+      "types": "./lib/translations/dist-types/languages/mr.d.ts",
+      "import": "./lib/translations/dist/languages/mr.js",
+      "default": "./lib/translations/dist/languages/mr.js"
+    },
+    "./translations/ms": {
+      "types": "./lib/translations/dist-types/languages/ms.d.ts",
+      "import": "./lib/translations/dist/languages/ms.js",
+      "default": "./lib/translations/dist/languages/ms.js"
+    },
+    "./translations/mt": {
+      "types": "./lib/translations/dist-types/languages/mt.d.ts",
+      "import": "./lib/translations/dist/languages/mt.js",
+      "default": "./lib/translations/dist/languages/mt.js"
+    },
+    "./translations/nb": {
+      "types": "./lib/translations/dist-types/languages/nb.d.ts",
+      "import": "./lib/translations/dist/languages/nb.js",
+      "default": "./lib/translations/dist/languages/nb.js"
+    },
+    "./translations/nl": {
+      "types": "./lib/translations/dist-types/languages/nl.d.ts",
+      "import": "./lib/translations/dist/languages/nl.js",
+      "default": "./lib/translations/dist/languages/nl.js"
+    },
+    "./translations/nn": {
+      "types": "./lib/translations/dist-types/languages/nn.d.ts",
+      "import": "./lib/translations/dist/languages/nn.js",
+      "default": "./lib/translations/dist/languages/nn.js"
+    },
+    "./translations/pa": {
+      "types": "./lib/translations/dist-types/languages/pa.d.ts",
+      "import": "./lib/translations/dist/languages/pa.js",
+      "default": "./lib/translations/dist/languages/pa.js"
+    },
+    "./translations/pl": {
+      "types": "./lib/translations/dist-types/languages/pl.d.ts",
+      "import": "./lib/translations/dist/languages/pl.js",
+      "default": "./lib/translations/dist/languages/pl.js"
+    },
+    "./translations/pt": {
+      "types": "./lib/translations/dist-types/languages/pt.d.ts",
+      "import": "./lib/translations/dist/languages/pt.js",
+      "default": "./lib/translations/dist/languages/pt.js"
+    },
+    "./translations/rm": {
+      "types": "./lib/translations/dist-types/languages/rm.d.ts",
+      "import": "./lib/translations/dist/languages/rm.js",
+      "default": "./lib/translations/dist/languages/rm.js"
+    },
+    "./translations/ro": {
+      "types": "./lib/translations/dist-types/languages/ro.d.ts",
+      "import": "./lib/translations/dist/languages/ro.js",
+      "default": "./lib/translations/dist/languages/ro.js"
+    },
+    "./translations/ru": {
+      "types": "./lib/translations/dist-types/languages/ru.d.ts",
+      "import": "./lib/translations/dist/languages/ru.js",
+      "default": "./lib/translations/dist/languages/ru.js"
+    },
+    "./translations/sk": {
+      "types": "./lib/translations/dist-types/languages/sk.d.ts",
+      "import": "./lib/translations/dist/languages/sk.js",
+      "default": "./lib/translations/dist/languages/sk.js"
+    },
+    "./translations/sl": {
+      "types": "./lib/translations/dist-types/languages/sl.d.ts",
+      "import": "./lib/translations/dist/languages/sl.js",
+      "default": "./lib/translations/dist/languages/sl.js"
+    },
+    "./translations/sv": {
+      "types": "./lib/translations/dist-types/languages/sv.d.ts",
+      "import": "./lib/translations/dist/languages/sv.js",
+      "default": "./lib/translations/dist/languages/sv.js"
+    },
+    "./translations/ta": {
+      "types": "./lib/translations/dist-types/languages/ta.d.ts",
+      "import": "./lib/translations/dist/languages/ta.js",
+      "default": "./lib/translations/dist/languages/ta.js"
+    },
+    "./translations/te": {
+      "types": "./lib/translations/dist-types/languages/te.d.ts",
+      "import": "./lib/translations/dist/languages/te.js",
+      "default": "./lib/translations/dist/languages/te.js"
+    },
+    "./translations/th": {
+      "types": "./lib/translations/dist-types/languages/th.d.ts",
+      "import": "./lib/translations/dist/languages/th.js",
+      "default": "./lib/translations/dist/languages/th.js"
+    },
+    "./translations/tr": {
+      "types": "./lib/translations/dist-types/languages/tr.d.ts",
+      "import": "./lib/translations/dist/languages/tr.js",
+      "default": "./lib/translations/dist/languages/tr.js"
+    },
+    "./translations/ur": {
+      "types": "./lib/translations/dist-types/languages/ur.d.ts",
+      "import": "./lib/translations/dist/languages/ur.js",
+      "default": "./lib/translations/dist/languages/ur.js"
+    },
+    "./translations/vi": {
+      "types": "./lib/translations/dist-types/languages/vi.d.ts",
+      "import": "./lib/translations/dist/languages/vi.js",
+      "default": "./lib/translations/dist/languages/vi.js"
+    },
+    "./translations/yi": {
+      "types": "./lib/translations/dist-types/languages/yi.d.ts",
+      "import": "./lib/translations/dist/languages/yi.js",
+      "default": "./lib/translations/dist/languages/yi.js"
+    },
+    "./translations/zh": {
+      "types": "./lib/translations/dist-types/languages/zh.d.ts",
+      "import": "./lib/translations/dist/languages/zh.js",
+      "default": "./lib/translations/dist/languages/zh.js"
+    },
+    "./ui/styles.css": "./lib/ui/dist/styles.css",
+    "./ui/styles.tw3.css": "./lib/ui/dist/styles.tw3.css",
+    "./ui/iab/styles.css": "./lib/ui/dist/iab/styles.css",
+    "./ui/iab/styles.tw3.css": "./lib/ui/dist/iab/styles.tw3.css",
+    "./ui/styles/dialog.css": "./lib/ui/dist/styles/dialog.css",
+    "./ui/styles/dialog": {
+      "types": "./lib/ui/dist/styles/dialog.d.ts",
+      "import": "./lib/ui/dist/styles/dialog.js",
+      "default": "./lib/ui/dist/styles/dialog.js"
+    },
+    "./ui/styles/primitives.css": "./lib/ui/dist/styles/primitives.css",
+    "./ui/styles/sheets/*.css": "./lib/ui/dist/styles/sheets/*.css",
+    "./ui/styles/sheets/*": {
+      "types": "./lib/ui/dist-types/styles/sheets/*.d.ts",
+      "import": "./lib/ui/dist/styles/sheets/*.js",
+      "default": "./lib/ui/dist/styles/sheets/*.js"
+    },
+    "./ui/postcss-tailwind3": {
+      "types": "./lib/ui/dist-types/postcss-tailwind3.d.ts",
+      "import": "./lib/ui/dist/postcss-tailwind3.js",
+      "default": "./lib/ui/dist/postcss-tailwind3.js"
+    },
+    "./ui/primitives": {
+      "types": "./lib/ui/dist-types/primitives/index.d.ts",
+      "import": "./lib/ui/dist/primitives/index.js",
+      "default": "./lib/ui/dist/primitives/index.js"
+    },
+    "./ui/primitives/data-state": {
+      "types": "./lib/ui/dist-types/primitives/data-state.d.ts",
+      "import": "./lib/ui/dist/primitives/data-state.js",
+      "default": "./lib/ui/dist/primitives/data-state.js"
+    },
+    "./ui/primitives/*": {
+      "types": "./lib/ui/dist-types/primitives/*/index.d.ts",
+      "import": "./lib/ui/dist/primitives/*/index.js",
+      "default": "./lib/ui/dist/primitives/*/index.js"
+    },
+    "./ui/theme": {
+      "types": "./lib/ui/dist-types/theme/index.d.ts",
+      "import": "./lib/ui/dist/theme/index.js",
+      "default": "./lib/ui/dist/theme/index.js"
+    },
+    "./ui/utils": {
+      "types": "./lib/ui/dist-types/utils/index.d.ts",
+      "import": "./lib/ui/dist/utils/index.js",
+      "default": "./lib/ui/dist/utils/index.js"
+    },
+    "./ui/styles/primitives": {
+      "types": "./lib/ui/dist-types/styles/primitives/index.d.ts",
+      "import": "./lib/ui/dist/styles/primitives/index.js",
+      "default": "./lib/ui/dist/styles/primitives/index.js"
+    },
+    "./ui/styles/primitives/*": {
+      "types": "./lib/ui/dist-types/styles/primitives/*.d.ts",
+      "import": "./lib/ui/dist/styles/primitives/*.js",
+      "default": "./lib/ui/dist/styles/primitives/*.js"
+    },
+    "./ui/styles/primitives/*.module.js": {
+      "types": "./lib/ui/src/styles/css-module.d.ts",
+      "import": "./lib/ui/dist/styles/primitives/*.module.js",
+      "default": "./lib/ui/dist/styles/primitives/*.module.js"
+    },
+    "./ui/styles/primitives/*.module.css": {
+      "types": "./lib/ui/src/styles/css-module.d.ts",
+      "import": "./lib/ui/dist/styles/primitives/*.module.js",
+      "default": "./lib/ui/dist/styles/primitives/*.module.js"
+    },
+    "./ui/utils/*": {
+      "types": "./lib/ui/dist-types/utils/*.d.ts",
+      "import": "./lib/ui/dist/utils/*.js",
+      "default": "./lib/ui/dist/utils/*.js"
+    },
+    "./ui/styles/*.module.js": {
+      "types": "./lib/ui/src/styles/css-module.d.ts",
+      "import": "./lib/ui/dist/styles/*.module.js",
+      "default": "./lib/ui/dist/styles/*.module.js"
+    },
+    "./ui/styles/*.module.css": "./lib/ui/dist/styles/*.module.css",
+    "./ui/styles/*": "./lib/ui/dist/styles/*",
+    "./ui": {
+      "types": "./lib/ui/dist-types/index.d.ts",
+      "import": "./lib/ui/dist/index.js",
+      "default": "./lib/ui/dist/index.js"
+    },
+    "./ui/styles/components/*.css": "./lib/ui/dist/styles/components/*.css",
+    "./ui/styles/components/*": {
+      "types": "./lib/ui/dist/styles/components/*.d.ts",
+      "style": "./lib/ui/dist/styles/components/*.css",
+      "node": "./lib/ui/dist/styles/components/*.node.js",
+      "import": "./lib/ui/dist/styles/components/*.js",
+      "default": "./lib/ui/dist/styles/components/*.js"
+    },
+    "./ui/styles/components/*.module.css": {
+      "types": "./lib/ui/dist/styles/components/*.d.ts",
+      "style": "./lib/ui/dist/styles/components/*.css",
+      "node": "./lib/ui/dist/styles/components/*.node.js",
+      "import": "./lib/ui/dist/styles/components/*.js",
+      "default": "./lib/ui/dist/styles/components/*.js"
+    },
+    "./ui/styles/components/consent-banner": {
+      "types": "./lib/ui/dist/styles/components/prompt.d.ts",
+      "style": "./lib/ui/dist/styles/components/prompt.css",
+      "node": "./lib/ui/dist/styles/components/prompt.node.js",
+      "import": "./lib/ui/dist/styles/components/prompt.js",
+      "default": "./lib/ui/dist/styles/components/prompt.js"
+    },
+    "./ui/styles/components/consent-banner.module.css": {
+      "types": "./lib/ui/dist/styles/components/prompt.d.ts",
+      "style": "./lib/ui/dist/styles/components/prompt.css",
+      "node": "./lib/ui/dist/styles/components/prompt.node.js",
+      "import": "./lib/ui/dist/styles/components/prompt.js",
+      "default": "./lib/ui/dist/styles/components/prompt.js"
+    },
+    "./ui/styles/components/consent-banner.css": "./lib/ui/dist/styles/components/prompt.css",
+    "./ui/styles/components/consent-dialog-trigger": {
+      "types": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
+      "style": "./lib/ui/dist/styles/components/panel-trigger.css",
+      "node": "./lib/ui/dist/styles/components/panel-trigger.node.js",
+      "import": "./lib/ui/dist/styles/components/panel-trigger.js",
+      "default": "./lib/ui/dist/styles/components/panel-trigger.js"
+    },
+    "./ui/styles/components/consent-dialog-trigger.module.css": {
+      "types": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
+      "style": "./lib/ui/dist/styles/components/panel-trigger.css",
+      "node": "./lib/ui/dist/styles/components/panel-trigger.node.js",
+      "import": "./lib/ui/dist/styles/components/panel-trigger.js",
+      "default": "./lib/ui/dist/styles/components/panel-trigger.js"
+    },
+    "./ui/styles/components/consent-dialog-trigger.css": "./lib/ui/dist/styles/components/panel-trigger.css",
+    "./ui/styles/components/consent-dialog": {
+      "types": "./lib/ui/dist/styles/components/panel.d.ts",
+      "style": "./lib/ui/dist/styles/components/panel.css",
+      "node": "./lib/ui/dist/styles/components/panel.node.js",
+      "import": "./lib/ui/dist/styles/components/panel.js",
+      "default": "./lib/ui/dist/styles/components/panel.js"
+    },
+    "./ui/styles/components/consent-dialog.module.css": {
+      "types": "./lib/ui/dist/styles/components/panel.d.ts",
+      "style": "./lib/ui/dist/styles/components/panel.css",
+      "node": "./lib/ui/dist/styles/components/panel.node.js",
+      "import": "./lib/ui/dist/styles/components/panel.js",
+      "default": "./lib/ui/dist/styles/components/panel.js"
+    },
+    "./ui/styles/components/consent-dialog.css": "./lib/ui/dist/styles/components/panel.css",
+    "./ui/styles/components/consent-manager": {
+      "types": "./lib/ui/dist/styles/components/manager.d.ts",
+      "style": "./lib/ui/dist/styles/components/manager.css",
+      "node": "./lib/ui/dist/styles/components/manager.node.js",
+      "import": "./lib/ui/dist/styles/components/manager.js",
+      "default": "./lib/ui/dist/styles/components/manager.js"
+    },
+    "./ui/styles/components/consent-manager.module.css": {
+      "types": "./lib/ui/dist/styles/components/manager.d.ts",
+      "style": "./lib/ui/dist/styles/components/manager.css",
+      "node": "./lib/ui/dist/styles/components/manager.node.js",
+      "import": "./lib/ui/dist/styles/components/manager.js",
+      "default": "./lib/ui/dist/styles/components/manager.js"
+    },
+    "./ui/styles/components/consent-manager.css": "./lib/ui/dist/styles/components/manager.css",
+    "./ui/styles/components/iab-consent-banner": {
+      "types": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
+      "style": "./lib/ui/dist/styles/components/iab-prompt.css",
+      "node": "./lib/ui/dist/styles/components/iab-prompt.node.js",
+      "import": "./lib/ui/dist/styles/components/iab-prompt.js",
+      "default": "./lib/ui/dist/styles/components/iab-prompt.js"
+    },
+    "./ui/styles/components/iab-consent-banner.module.css": {
+      "types": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
+      "style": "./lib/ui/dist/styles/components/iab-prompt.css",
+      "node": "./lib/ui/dist/styles/components/iab-prompt.node.js",
+      "import": "./lib/ui/dist/styles/components/iab-prompt.js",
+      "default": "./lib/ui/dist/styles/components/iab-prompt.js"
+    },
+    "./ui/styles/components/iab-consent-banner.css": "./lib/ui/dist/styles/components/iab-prompt.css",
+    "./ui/styles/components/iab-consent-dialog": {
+      "types": "./lib/ui/dist/styles/components/iab-panel.d.ts",
+      "style": "./lib/ui/dist/styles/components/iab-panel.css",
+      "node": "./lib/ui/dist/styles/components/iab-panel.node.js",
+      "import": "./lib/ui/dist/styles/components/iab-panel.js",
+      "default": "./lib/ui/dist/styles/components/iab-panel.js"
+    },
+    "./ui/styles/components/iab-consent-dialog.module.css": {
+      "types": "./lib/ui/dist/styles/components/iab-panel.d.ts",
+      "style": "./lib/ui/dist/styles/components/iab-panel.css",
+      "node": "./lib/ui/dist/styles/components/iab-panel.node.js",
+      "import": "./lib/ui/dist/styles/components/iab-panel.js",
+      "default": "./lib/ui/dist/styles/components/iab-panel.js"
+    },
+    "./ui/styles/components/iab-consent-dialog.css": "./lib/ui/dist/styles/components/iab-panel.css",
+    "./ui/styles/components/consent-banner.js": "./lib/ui/dist/styles/components/prompt.js",
+    "./ui/styles/components/consent-banner.node.js": "./lib/ui/dist/styles/components/prompt.node.js",
+    "./ui/styles/components/consent-banner.d.ts": "./lib/ui/dist/styles/components/prompt.d.ts",
+    "./ui/styles/components/consent-dialog.js": "./lib/ui/dist/styles/components/panel.js",
+    "./ui/styles/components/consent-dialog.node.js": "./lib/ui/dist/styles/components/panel.node.js",
+    "./ui/styles/components/consent-dialog.d.ts": "./lib/ui/dist/styles/components/panel.d.ts",
+    "./ui/styles/components/consent-dialog-trigger.js": "./lib/ui/dist/styles/components/panel-trigger.js",
+    "./ui/styles/components/consent-dialog-trigger.node.js": "./lib/ui/dist/styles/components/panel-trigger.node.js",
+    "./ui/styles/components/consent-dialog-trigger.d.ts": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
+    "./ui/styles/components/consent-manager.js": "./lib/ui/dist/styles/components/manager.js",
+    "./ui/styles/components/consent-manager.node.js": "./lib/ui/dist/styles/components/manager.node.js",
+    "./ui/styles/components/consent-manager.d.ts": "./lib/ui/dist/styles/components/manager.d.ts",
+    "./ui/styles/components/iab-consent-banner.js": "./lib/ui/dist/styles/components/iab-prompt.js",
+    "./ui/styles/components/iab-consent-banner.node.js": "./lib/ui/dist/styles/components/iab-prompt.node.js",
+    "./ui/styles/components/iab-consent-banner.d.ts": "./lib/ui/dist/styles/components/iab-prompt.d.ts",
+    "./ui/styles/components/iab-consent-dialog.js": "./lib/ui/dist/styles/components/iab-panel.js",
+    "./ui/styles/components/iab-consent-dialog.node.js": "./lib/ui/dist/styles/components/iab-panel.node.js",
+    "./ui/styles/components/iab-consent-dialog.d.ts": "./lib/ui/dist/styles/components/iab-panel.d.ts",
+    "./ui/styles/components/frame": {
+      "types": "./lib/ui/dist/styles/components/consent-gate.d.ts",
+      "style": "./lib/ui/dist/styles/components/consent-gate.css",
+      "node": "./lib/ui/dist/styles/components/consent-gate.node.js",
+      "import": "./lib/ui/dist/styles/components/consent-gate.js",
+      "default": "./lib/ui/dist/styles/components/consent-gate.js"
+    },
+    "./ui/styles/components/frame.module.css": {
+      "types": "./lib/ui/dist/styles/components/consent-gate.d.ts",
+      "style": "./lib/ui/dist/styles/components/consent-gate.css",
+      "node": "./lib/ui/dist/styles/components/consent-gate.node.js",
+      "import": "./lib/ui/dist/styles/components/consent-gate.js",
+      "default": "./lib/ui/dist/styles/components/consent-gate.js"
+    },
+    "./ui/styles/components/frame.css": "./lib/ui/dist/styles/components/consent-gate.css",
+    "./ui/styles/components/frame.js": "./lib/ui/dist/styles/components/consent-gate.js",
+    "./ui/styles/components/frame.node.js": "./lib/ui/dist/styles/components/consent-gate.node.js",
+    "./ui/styles/components/frame.d.ts": "./lib/ui/dist/styles/components/consent-gate.d.ts",
+    "./ui/styles/components/animations/iab-consent-banner.css": "./lib/ui/dist/styles/components/animations/iab-prompt.css",
+    "./devtools": {
+      "types": "./lib/entries/devtools.d.ts",
+      "import": "./lib/entries/devtools.js",
+      "default": "./lib/entries/devtools.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "node scripts/assemble.ts",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/sdk",
+    "check-types": "tsrs --noEmit",
+    "dev": "node scripts/assemble.ts --watch",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./scripts ./__tests__",
+    "manifest": "node scripts/assemble.ts manifest",
+    "prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@iabtechlabtcf/core": "^1.5.22",
+    "base-x": "5.0.1",
+    "valibot": "1.4.2"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@types/node": "25.5.0",
+    "esbuild": "^0.28.1",
+    "tsrs": "catalog:",
+    "vite-plus": "catalog:"
+  }
 }

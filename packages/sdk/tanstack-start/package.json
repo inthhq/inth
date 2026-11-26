@@ -1,229 +1,229 @@
 {
-	"name": "@inth/tanstack-start",
-	"version": "0.0.0-alpha.0",
-	"description": "TanStack cookie consent banner for TanStack Start, built on Inth. Server-rendered banner, request middleware and a preference center.",
-	"keywords": [
-		"banner",
-		"ccpa",
-		"cmp",
-		"consent",
-		"consent-banner",
-		"consent-management",
-		"consent-management-platform",
-		"consent-manager",
-		"consent-mode-v2",
-		"cookie",
-		"cookie-banner",
-		"cookie-consent",
-		"gdpr",
-		"global-privacy-control",
-		"google-consent-mode",
-		"headless",
-		"iab",
-		"iab-tcf",
-		"lgpd",
-		"preference-center",
-		"privacy",
-		"react",
-		"server-side-rendering",
-		"ssr",
-		"tanstack",
-		"tanstack-router",
-		"tanstack-start",
-		"tanstack-start-cmp",
-		"tanstack-start-consent",
-		"tanstack-start-cookie-banner",
-		"tcf",
-		"tracking-consent",
-		"typescript"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/tanstack-start"
-	},
-	"files": [
-		"dist",
-		"dist-types",
-		"styles.css",
-		"styles.tw3.css",
-		"iab",
-		"src/styles.css",
-		"src/styles.tw3.css",
-		"src/iab/styles.css",
-		"src/iab/styles.tw3.css",
-		"docs",
-		"AGENTS.md",
-		"SKILL.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"**/*.css",
-		"./dist/translations/*.js"
-	],
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"imports": {
-		"#engine-now": {
-			"types": "./dist-types/engine-now.d.ts",
-			"edge-light": "./dist/engine-now.js",
-			"workerd": "./dist/engine-now.js",
-			"browser": "./dist/engine-now-browser.js",
-			"default": "./dist/engine-now.js"
-		}
-	},
-	"exports": {
-		"./devtools": {
-			"types": "./dist-types/devtools.d.ts",
-			"import": "./dist/devtools.js",
-			"default": "./dist/devtools.js"
-		},
-		"./styles.css": "./dist/styles.css",
-		"./styles.tw3.css": "./dist/styles.tw3.css",
-		"./iab/styles.css": "./dist/iab/styles.css",
-		"./iab/styles.tw3.css": "./dist/iab/styles.tw3.css",
-		"./postcss-tailwind3": {
-			"types": "./dist-types/postcss-tailwind3.d.ts",
-			"import": "./dist/postcss-tailwind3.js",
-			"default": "./dist/postcss-tailwind3.js"
-		},
-		"./react": {
-			"types": "./dist-types/react.d.ts",
-			"import": "./dist/react.js",
-			"default": "./dist/react.js"
-		},
-		"./headless": {
-			"types": "./dist-types/headless.d.ts",
-			"import": "./dist/headless.js",
-			"default": "./dist/headless.js"
-		},
-		"./components/consent-dialog-link": {
-			"types": "./dist-types/components/consent-dialog-link.d.ts",
-			"import": "./dist/components/consent-dialog-link.js",
-			"default": "./dist/components/consent-dialog-link.js"
-		},
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		},
-		"./testing": {
-			"types": "./dist-types/testing.d.ts",
-			"import": "./dist/testing.js",
-			"default": "./dist/testing.js"
-		},
-		"./server": {
-			"types": "./dist-types/server.d.ts",
-			"browser": "./dist/server-browser.js",
-			"import": "./dist/server.js",
-			"default": "./dist/server.js"
-		},
-		"./api": {
-			"types": "./dist-types/api.d.ts",
-			"import": "./dist/api.js",
-			"default": "./dist/api.js"
-		},
-		"./middleware": {
-			"types": "./dist-types/middleware.d.ts",
-			"import": "./dist/middleware.js",
-			"default": "./dist/middleware.js"
-		},
-		"./static": {
-			"types": "./dist-types/static.d.ts",
-			"import": "./dist/static.js",
-			"default": "./dist/static.js"
-		},
-		"./build": {
-			"types": "./dist-types/build.d.ts",
-			"import": "./dist/build.js",
-			"default": "./dist/build.js"
-		},
-		"./generated": {
-			"types": "./dist-types/generated.d.ts",
-			"import": "./dist/generated.js",
-			"default": "./dist/generated.js"
-		},
-		"./engine": {
-			"types": "./dist-types/engine.d.ts",
-			"import": "./dist/engine.js",
-			"default": "./dist/engine.js"
-		},
-		"./translations/*": {
-			"types": "./dist-types/translations/*.d.ts",
-			"import": "./dist/translations/*.js",
-			"default": "./dist/translations/*.js"
-		}
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/tanstack-start",
-		"check-types": "pnpm run prebuild && tsrs --noEmit && tsrs -p tsconfig.type-tests.json",
-		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun ../shared/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
-		"fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
-		"lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
-		"prebuild": "genversion --esm --semi src/version.ts",
-		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
-		"test": "pnpm run prebuild && vp test run --passWithNoTests",
-		"test:watch": "pnpm run prebuild && vp test --passWithNoTests"
-	},
-	"dependencies": {
-		"@inth/react": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@inth/conformance": "workspace:*",
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rsbuild/core": "1.7.5",
-		"@rsbuild/plugin-react": "1.4.6",
-		"@rslib/core": "0.23.2",
-		"@tanstack/react-router": "1.170.44",
-		"@tanstack/react-start": "1.169.1",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"@vitejs/plugin-react": "6.0.3",
-		"@vitest/browser-playwright": "catalog:",
-		"@vitest/coverage-istanbul": "catalog:",
-		"genversion": "3.2.0",
-		"jsdom": "25.0.1",
-		"playwright": "catalog:",
-		"react": "19.2.7",
-		"react-dom": "19.2.7",
-		"tsrs": "catalog:",
-		"typescript": "7.0.2",
-		"vite": "catalog:",
-		"vite-plus": "catalog:",
-		"vitest": "catalog:",
-		"vitest-browser-react": "2.2.0"
-	},
-	"peerDependencies": {
-		"@tanstack/react-router": "^1.170.41",
-		"@tanstack/react-start": "^1.168.60",
-		"react": "^18.0.0 || ^19.0.0 || ^19.0.0-rc",
-		"react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-rc"
-	},
-	"peerDependenciesMeta": {
-		"@tanstack/react-router": {
-			"optional": true
-		},
-		"@tanstack/react-start": {
-			"optional": true
-		},
-		"react": {
-			"optional": true
-		},
-		"react-dom": {
-			"optional": true
-		}
-	}
+  "name": "@inth/tanstack-start",
+  "version": "0.0.0-alpha.0",
+  "description": "TanStack cookie consent banner for TanStack Start, built on Inth. Server-rendered banner, request middleware and a preference center.",
+  "keywords": [
+    "banner",
+    "ccpa",
+    "cmp",
+    "consent",
+    "consent-banner",
+    "consent-management",
+    "consent-management-platform",
+    "consent-manager",
+    "consent-mode-v2",
+    "cookie",
+    "cookie-banner",
+    "cookie-consent",
+    "gdpr",
+    "global-privacy-control",
+    "google-consent-mode",
+    "headless",
+    "iab",
+    "iab-tcf",
+    "lgpd",
+    "preference-center",
+    "privacy",
+    "react",
+    "server-side-rendering",
+    "ssr",
+    "tanstack",
+    "tanstack-router",
+    "tanstack-start",
+    "tanstack-start-cmp",
+    "tanstack-start-consent",
+    "tanstack-start-cookie-banner",
+    "tcf",
+    "tracking-consent",
+    "typescript"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/tanstack-start"
+  },
+  "files": [
+    "dist",
+    "dist-types",
+    "styles.css",
+    "styles.tw3.css",
+    "iab",
+    "src/styles.css",
+    "src/styles.tw3.css",
+    "src/iab/styles.css",
+    "src/iab/styles.tw3.css",
+    "docs",
+    "AGENTS.md",
+    "SKILL.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./dist/translations/*.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "imports": {
+    "#engine-now": {
+      "types": "./dist-types/engine-now.d.ts",
+      "edge-light": "./dist/engine-now.js",
+      "workerd": "./dist/engine-now.js",
+      "browser": "./dist/engine-now-browser.js",
+      "default": "./dist/engine-now.js"
+    }
+  },
+  "exports": {
+    "./devtools": {
+      "types": "./dist-types/devtools.d.ts",
+      "import": "./dist/devtools.js",
+      "default": "./dist/devtools.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./styles.tw3.css": "./dist/styles.tw3.css",
+    "./iab/styles.css": "./dist/iab/styles.css",
+    "./iab/styles.tw3.css": "./dist/iab/styles.tw3.css",
+    "./postcss-tailwind3": {
+      "types": "./dist-types/postcss-tailwind3.d.ts",
+      "import": "./dist/postcss-tailwind3.js",
+      "default": "./dist/postcss-tailwind3.js"
+    },
+    "./react": {
+      "types": "./dist-types/react.d.ts",
+      "import": "./dist/react.js",
+      "default": "./dist/react.js"
+    },
+    "./headless": {
+      "types": "./dist-types/headless.d.ts",
+      "import": "./dist/headless.js",
+      "default": "./dist/headless.js"
+    },
+    "./components/consent-dialog-link": {
+      "types": "./dist-types/components/consent-dialog-link.d.ts",
+      "import": "./dist/components/consent-dialog-link.js",
+      "default": "./dist/components/consent-dialog-link.js"
+    },
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist-types/testing.d.ts",
+      "import": "./dist/testing.js",
+      "default": "./dist/testing.js"
+    },
+    "./server": {
+      "types": "./dist-types/server.d.ts",
+      "browser": "./dist/server-browser.js",
+      "import": "./dist/server.js",
+      "default": "./dist/server.js"
+    },
+    "./api": {
+      "types": "./dist-types/api.d.ts",
+      "import": "./dist/api.js",
+      "default": "./dist/api.js"
+    },
+    "./middleware": {
+      "types": "./dist-types/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "default": "./dist/middleware.js"
+    },
+    "./static": {
+      "types": "./dist-types/static.d.ts",
+      "import": "./dist/static.js",
+      "default": "./dist/static.js"
+    },
+    "./build": {
+      "types": "./dist-types/build.d.ts",
+      "import": "./dist/build.js",
+      "default": "./dist/build.js"
+    },
+    "./generated": {
+      "types": "./dist-types/generated.d.ts",
+      "import": "./dist/generated.js",
+      "default": "./dist/generated.js"
+    },
+    "./engine": {
+      "types": "./dist-types/engine.d.ts",
+      "import": "./dist/engine.js",
+      "default": "./dist/engine.js"
+    },
+    "./translations/*": {
+      "types": "./dist-types/translations/*.d.ts",
+      "import": "./dist/translations/*.js",
+      "default": "./dist/translations/*.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/tanstack-start",
+    "check-types": "pnpm run prebuild && tsrs --noEmit && tsrs -p tsconfig.type-tests.json",
+    "dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun ../shared/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
+    "fmt": "vp fmt -c ../../../oxfmt.sdk.config.ts .",
+    "lint": "vp lint -c ../../../oxlint.sdk.config.ts ./src",
+    "prebuild": "genversion --esm --semi src/version.ts",
+    "prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
+    "test": "pnpm run prebuild && vp test run --passWithNoTests",
+    "test:watch": "pnpm run prebuild && vp test --passWithNoTests"
+  },
+  "dependencies": {
+    "@inth/react": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@inth/conformance": "workspace:*",
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-react": "1.4.6",
+    "@rslib/core": "0.23.2",
+    "@tanstack/react-router": "1.170.44",
+    "@tanstack/react-start": "1.169.1",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "@vitest/browser-playwright": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
+    "genversion": "3.2.0",
+    "jsdom": "25.0.1",
+    "playwright": "catalog:",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "tsrs": "catalog:",
+    "typescript": "7.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "vitest-browser-react": "2.2.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-router": "^1.170.41",
+    "@tanstack/react-start": "^1.168.60",
+    "react": "^18.0.0 || ^19.0.0 || ^19.0.0-rc",
+    "react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-router": {
+      "optional": true
+    },
+    "@tanstack/react-start": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
 }
