@@ -87,6 +87,36 @@ export const scenariosOf = function scenariosOf(
 	];
 };
 
+/**
+ * Why `fixture` does not hold exactly the scenarios `spec` runs, or
+ * `undefined` when it does. A scenario only in the fixture was renamed or
+ * dropped from the spec, and its recorded trace would otherwise go unchecked.
+ */
+export const scenarioNameMismatch = function scenarioNameMismatch(
+	spec: TraceSpec,
+	fixture: GoldenTraceFixture | undefined
+): string | undefined {
+	if (fixture === undefined) {
+		return `No fixture at fixtures/${spec.name}.json. Record it with UPDATE_GOLDEN_TRACES=1.`;
+	}
+	const expected = scenariosOf(spec).map((scenario) => scenario.name);
+	const recorded = Object.keys(fixture.scenarios);
+	const missing = expected.filter((name) => !recorded.includes(name));
+	const extra = recorded.filter((name) => !expected.includes(name));
+	if (missing.length === 0 && extra.length === 0) {
+		return undefined;
+	}
+	const list = (names: string[]) => names.map((name) => `"${name}"`).join(', ');
+	return [
+		`fixtures/${spec.name}.json does not match the spec's scenarios.`,
+		missing.length > 0 ? `Not in the fixture: ${list(missing)}.` : '',
+		extra.length > 0 ? `Not in the spec: ${list(extra)}.` : '',
+		'Record it again with UPDATE_GOLDEN_TRACES=1.',
+	]
+		.filter(Boolean)
+		.join(' ');
+};
+
 /** A module of trace specs, such as `specs/adroll.ts`. */
 export interface TraceSpecModule {
 	traces: readonly TraceSpec[];
@@ -134,6 +164,14 @@ export const describeGoldenTraces = async function describeGoldenTraces(
 		const recorded = new Map<string, TraceEvent[]>();
 
 		describe(`golden trace: ${spec.name}`, () => {
+			// A recording run rewrites the fixture with the spec's scenarios.
+			it.skipIf(write)('fixture holds the same scenarios as the spec', () => {
+				const mismatch = scenarioNameMismatch(spec, fixture);
+				if (mismatch !== undefined) {
+					throw new Error(mismatch);
+				}
+			});
+
 			for (const scenario of scenariosOf(spec)) {
 				it(scenario.name, async () => {
 					vi.resetModules();

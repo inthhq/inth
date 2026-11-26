@@ -2,7 +2,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { adrollPixel } from '../../vendors/ads-and-pixels/adroll';
-import { describeGoldenTraces, readGoldenTrace, scenariosOf } from './golden';
+import {
+	describeGoldenTraces,
+	readGoldenTrace,
+	scenarioNameMismatch,
+	scenariosOf,
+} from './golden';
 import { runTraceScenario } from './harness';
 import { labelStub, toJsonSafe } from './serialize';
 import { adrollTrace } from './specs/adroll';
@@ -45,6 +50,41 @@ describe('golden trace comparison', () => {
 		}));
 		expect(trace).not.toEqual(
 			readGoldenTrace('adroll')?.scenarios[scenario.name]
+		);
+	});
+});
+
+describe('fixture scenario names', () => {
+	const fixtureOf = (names: string[]) => ({
+		name: adrollTrace.name,
+		scenarios: Object.fromEntries(names.map((name) => [name, []])),
+	});
+	const specNames = scenariosOf(adrollTrace).map((scenario) => scenario.name);
+
+	it("accepts a fixture with the spec's scenarios", () => {
+		expect(
+			scenarioNameMismatch(adrollTrace, fixtureOf(specNames))
+		).toBeUndefined();
+	});
+
+	it('fails for a scenario only in the fixture', () => {
+		expect(
+			scenarioNameMismatch(
+				adrollTrace,
+				fixtureOf([...specNames, 'a scenario the spec dropped'])
+			)
+		).toContain('Not in the spec: "a scenario the spec dropped"');
+	});
+
+	it('fails for a scenario only in the spec', () => {
+		expect(
+			scenarioNameMismatch(adrollTrace, fixtureOf(specNames.slice(1)))
+		).toContain(`Not in the fixture: "${specNames[0]}"`);
+	});
+
+	it('fails for a missing fixture', () => {
+		expect(scenarioNameMismatch(adrollTrace, undefined)).toContain(
+			'No fixture at fixtures/adroll.json'
 		);
 	});
 });
