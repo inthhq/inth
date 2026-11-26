@@ -66,6 +66,15 @@ describe("routing", () => {
     expect(plan.sdkPackageTests).not.toContain("packages/sdk/core");
   });
 
+  test("an integration change runs the browser end-to-end tests", () => {
+    const plan = createPlan(
+      ["packages/sdk/integrations/src/vendors/analytics/hotjar.ts"],
+      workspaces
+    );
+    expect(plan.sdkPackageTests).toContain("packages/sdk/integrations");
+    expect(plan.sdkPackageTests).toContain("packages/sdk/browser");
+  });
+
   test("SDK docs run the lint job without package tests", () => {
     expect(selected(["packages/sdk/docs/frameworks/react/index.mdx"])).toEqual({
       ...none,

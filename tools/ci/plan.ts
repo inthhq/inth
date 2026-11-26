@@ -379,6 +379,12 @@ export const readWorkspaces = (root: string): Workspace[] => {
           ...manifest.peerDependencies,
         }),
         ...(manifest.name === "@inth/sdk" ? sdkParts : []),
+        // @inth/sdk-browser's end-to-end tests load every remote integration
+        // from @inth/integrations' build. Declaring it would make a build
+        // cycle, because @inth/integrations builds against @inth/sdk-browser.
+        ...(manifest.name === "@inth/sdk-browser"
+          ? ["@inth/integrations"]
+          : []),
       ],
       directory: path.relative(root, entry.path).split(path.sep).join("/"),
       name: manifest.name,
