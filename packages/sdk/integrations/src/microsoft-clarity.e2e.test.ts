@@ -4,11 +4,15 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
+	updateScripts,
 } from './e2e-test-utils';
 import { clarity } from './vendors/analytics/microsoft-clarity';
 
@@ -61,3 +65,41 @@ describe('microsoft clarity contract', () => {
 		]);
 	});
 });
+
+describe.each(npmAndRemote('microsoft-clarity', clarity))(
+	'Microsoft Clarity dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('waits for measurement, queues Consent V2 before load, and keeps it current after a withdrawal', async () => {
+			let queueSnapshot: unknown[][] | undefined;
+			installHeadProbe((node, win) => {
+				if (!node.src.includes('clarity.ms/tag/abcdef1234')) {
+					return;
+				}
+				queueSnapshot = (win.clarity as ClarityStub | undefined)?.q?.map(
+					(entry) => [...entry]
+				);
+			});
+			const win = window as unknown as { clarity?: ClarityStub };
+			const scripts = [build({ id: 'abcdef1234' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script[src*="clarity.ms"]')).toBeNull();
+			expect(win.clarity).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			await settleScripts();
+			expect(queueSnapshot).toEqual([
+				['consentv2', { ad_Storage: 'denied', analytics_Storage: 'granted' }],
+			]);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(win.clarity?.q?.at(-1)).toEqual([
+				'consentv2',
+				{ ad_Storage: 'denied', analytics_Storage: 'denied' },
+			]);
+		});
+	}
+);

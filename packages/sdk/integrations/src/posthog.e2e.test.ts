@@ -4,12 +4,14 @@
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { npmAndRemote } from './__tests__/remote-path';
 import {
 	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
+	settleScripts,
 	updateScripts,
 } from './e2e-test-utils';
 import { posthog } from './vendors/analytics/posthog';
@@ -281,3 +283,39 @@ describe('posthog contract', () => {
 		expect(acceptedBySnippetGuard).toBe(true);
 	});
 });
+
+describe.each(npmAndRemote('posthog', posthog))(
+	'PostHog dashboard settings through the %s',
+	(_label, build) => {
+		registerVendorContractCleanup();
+
+		it('loads before a choice by default, opted out before anything is captured', async () => {
+			loadScripts([build({ id: 'phc_dash1' })], ALL_DENIED);
+			await settleScripts();
+
+			expect(
+				document.querySelectorAll('script[src*="posthog.com/static/array.js"]')
+			).toHaveLength(1);
+			expect(Array.from(window.posthog as unknown as unknown[])).toEqual([
+				['opt_out_capturing'],
+			]);
+			expect(window.posthog._i).toHaveLength(1);
+		});
+
+		it('with after-consent, creates nothing before measurement, and drops the queued init on withdrawal', async () => {
+			const scripts = [build({ id: 'phc_dash1', loadMode: 'after-consent' })];
+
+			loadScripts(scripts, ALL_DENIED);
+			await settleScripts();
+			expect(document.querySelector('script[src*="posthog"]')).toBeNull();
+			expect(window.posthog).toBeUndefined();
+
+			updateScripts(scripts, grantedMeasurementConsents);
+			await settleScripts();
+			expect(window.posthog._i).toHaveLength(1);
+
+			updateScripts(scripts, ALL_DENIED);
+			expect(window.posthog._i).toEqual([]);
+		});
+	}
+);
