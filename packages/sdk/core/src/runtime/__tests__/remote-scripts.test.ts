@@ -12,7 +12,10 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import type { Script } from '../../libs/script-loader/types';
+import type {
+	Script,
+	ScriptCallbackInfo,
+} from '../../libs/script-loader/types';
 import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
 import { rootNeedsEngine } from '../../surface-actions/plain-scripts';
 import type { ProviderTransportFactory } from '../../transports/mode';
@@ -659,6 +662,88 @@ describe('remoteScripts', () => {
 			['init', 'ACME-OLD']
 		);
 		runtime.dispose();
+	});
+
+	test('shares one script between two runtimes that list the same entry, so one denial holds for both', async () => {
+		vi.resetModules();
+		const base = await import('../../manifest-runtime/index');
+		const seen: { hasConsent: boolean; registrations: number }[] = [];
+		const modules = {
+			...defaultRuntimeModules,
+			loadManifestRuntime: () =>
+				Promise.resolve({
+					...base,
+					resolvedManifestToScript: (
+						manifest: Parameters<typeof base.resolvedManifestToScript>[0]
+					) => {
+						const script = base.resolvedManifestToScript(manifest);
+						const record = (info: ScriptCallbackInfo) => {
+							seen.push({
+								hasConsent: info.hasConsent,
+								registrations: info.registrations?.length ?? 1,
+							});
+						};
+						return {
+							...script,
+							onConsentChange: record,
+							onLoad: record,
+						};
+					},
+				}),
+		};
+		const start = (rule: ReturnType<typeof optInRule>) => {
+			const runtime = createConsentRuntimeWith(
+				{
+					enabled: true,
+					// Init never answers, so each keeps its prefetched policy.
+					mode: initMode(
+						() =>
+							new Promise(() => {
+								// Never settles.
+							})
+					),
+					persistence: false,
+					prefetch: {
+						initialPolicyPending: false,
+						initialPolicyResolution: matchedResolution(rule),
+						// Loads before a choice, so the runtime that denies it registers
+						// too, as Adobe Target's script does.
+						initialScriptRegistry: {
+							load: load(acmeManifest({ alwaysLoad: true })),
+						},
+					},
+					remoteScripts: true,
+				},
+				modules
+			);
+			runtime.start();
+			return runtime;
+		};
+		// Opt-out allows marketing; opt-in denies it until a choice.
+		const allows = start(optOutRule({ id: 'opt-out' }));
+		const denies = start(optInRule({ id: 'opt-in' }));
+		expect(allows.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		expect(denies.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		await vi.waitFor(() => expect(tags()).toHaveLength(1));
+		tags()[0]?.dispatchEvent(new Event('load'));
+		await new Promise((resolve) => {
+			setTimeout(resolve, 10);
+		});
+
+		expect(tags()).toHaveLength(1);
+		expect(seen.length).toBeGreaterThan(0);
+		expect(seen.at(-1)).toEqual({ hasConsent: false, registrations: 2 });
+
+		await denies.kernel.commands.save('all');
+		await vi.waitFor(() =>
+			expect(seen.at(-1)).toEqual({ hasConsent: true, registrations: 2 })
+		);
+		allows.dispose();
+		denies.dispose();
 	});
 
 	test('stops a running script when a later init moves it to a denied category', async () => {

@@ -23,6 +23,7 @@ import {
 	normalizeScripts,
 } from './normalize';
 import { readScriptRegistry } from './registry';
+import { createScriptReuse } from './reuse';
 import { codeScriptKey, readRemoteEntries, remoteDeclaration } from './remote';
 import type { RemoteEntry } from './remote';
 import {
@@ -63,6 +64,43 @@ const heldMessage = (reason: HeldScript['reason'], script: Script): string => {
 const validateScripts = (scripts: Script[]): void => {
 	for (const script of scripts) {
 		script.validate?.(script);
+	}
+};
+
+/**
+ * The remote scripts the loaders on this page built, by manifest JSON.
+ * Loaders that list an equal manifest share one script, as npm helpers
+ * with equal options do, so its callbacks see every loader's consent
+ * combined; while any loader denies it, they see every category denied
+ * and the vendor off. An entry lasts while a loader holds it.
+ */
+const sharedRemote = new Map<
+	string,
+	{ holders: Set<symbol>; script: Script }
+>();
+
+/** The shared script for `key`, built with `build` if no loader holds one. */
+const shareRemote = (holder: symbol, key: string, build: () => Script): Script => {
+	let shared = sharedRemote.get(key);
+	if (!shared) {
+		shared = {
+			holders: new Set(),
+			script: createScriptReuse<{ key: string }>({ deniedView: true })(
+				{ key },
+				build
+			),
+		};
+		sharedRemote.set(key, shared);
+	}
+	shared.holders.add(holder);
+	return shared.script;
+};
+
+/** Lets go of `key` for `holder`; the last holder drops the entry. */
+const releaseRemote = (holder: symbol, key: string): void => {
+	const shared = sharedRemote.get(key);
+	if (shared?.holders.delete(holder) && shared.holders.size === 0) {
+		sharedRemote.delete(key);
 	}
 };
 
@@ -905,6 +943,28 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	let runtimeLoad: Promise<RemoteManifestRuntime> | undefined;
 	/** The script each entry built, kept while its manifest is unchanged. */
 	let built = new Map<string, { manifest: string; script: Script | null }>();
+	/** This loader's hold on `sharedRemote`, and the key of each script. */
+	const holder = Symbol('remote scripts');
+	let heldKeys = new Set<string>();
+	const sharedKeys = new WeakMap<Script, string>();
+	/** Holds the keys of the scripts in `next`, and lets go of the rest. */
+	const holdShared = (
+		next: Map<string, { manifest: string; script: Script | null }>
+	): void => {
+		const inUse = new Set<string>();
+		for (const { script } of next.values()) {
+			const key = script && sharedKeys.get(script);
+			if (key !== undefined && key !== null) {
+				inUse.add(key);
+			}
+		}
+		for (const key of heldKeys) {
+			if (!inUse.has(key)) {
+				releaseRemote(holder, key);
+			}
+		}
+		heldKeys = inUse;
+	};
 	/**
 	 * The script to register for an entry whose manifest changed. Once the
 	 * earlier script has started, it keeps running with its own setup and
@@ -932,6 +992,10 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		const kept = { ...earlier, category: fresh.category };
 		remoteObjects.add(kept);
+		const key = sharedKeys.get(earlier);
+		if (key !== undefined) {
+			sharedKeys.set(kept, key);
+		}
 		remoteEntryIds.set(kept, remoteEntryIds.get(earlier) ?? earlier.id);
 		return kept;
 	};
@@ -947,7 +1011,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			} else {
 				const parsed = loaded.parseResolvedManifest(entry.manifest);
 				if (parsed.ok) {
-					const fresh = loaded.resolvedManifestToScript(parsed.manifest);
+					const fresh = shareRemote(holder, manifest, () =>
+						loaded.resolvedManifestToScript(parsed.manifest)
+					);
+					sharedKeys.set(fresh, manifest);
+					heldKeys.add(manifest);
 					remoteObjects.add(fresh);
 					remoteEntryIds.set(fresh, entry.id);
 					script = keepStarted(cached?.script, fresh);
@@ -965,6 +1033,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 		}
 		built = next;
+		holdShared(next);
 		return scripts;
 	};
 	/** The code scripts, then each remote script no code script claims. */
@@ -1058,6 +1127,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				return;
 			}
 			disposed = true;
+			holdShared(new Map());
 			unsubscribe?.();
 			unsubscribe = undefined;
 			stopWaiting?.();

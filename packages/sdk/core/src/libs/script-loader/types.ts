@@ -28,6 +28,13 @@ export interface ScriptCallbackInfo {
 	 */
 	readonly registration?: symbol;
 	/**
+	 * Every registration's state, when several loaders share one script.
+	 * Non-enumerable, and set only on the combined info a shared script's
+	 * callbacks receive; read it with `getScriptRegistrations`.
+	 * @internal
+	 */
+	readonly registrations?: readonly ScriptCallbackInfo[];
+	/**
 	 * Read this registration's current whole-script gate, effective categories
 	 * and vendor permission, including changes awaiting callback delivery.
 	 * During disposal, retains declaration context while reading current consent.

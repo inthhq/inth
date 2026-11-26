@@ -30,6 +30,16 @@ export {
 	getScriptDiagnostics,
 	subscribeScriptDiagnostics,
 } from './diagnostics';
+/**
+ * Shared by `@inth/integrations` helpers and remote scripts.
+ *
+ * @internal
+ */
+export {
+	createScriptReuse,
+	equalConfig,
+	getScriptRegistrations,
+} from './reuse';
 export type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
 
 export type {
