@@ -13,9 +13,11 @@ import { expect, it } from 'vite-plus/test';
 
 /**
  * Gzipped bytes. Level 1 was 4,690; level 2 brought it to 6,264, and the
- * checks on what a step calls and writes to 6,594.
+ * checks on what a step calls and writes to 6,594. `globals` brought it to
+ * 9,015: 1,398 for the list of platform globals no manifest may declare,
+ * the rest for the root, native call and browser object checks.
  */
-const BUDGET = 6650;
+const BUDGET = 9050;
 
 it('keeps inth.manifests.js within its gzip budget', () => {
 	const file = resolve(
