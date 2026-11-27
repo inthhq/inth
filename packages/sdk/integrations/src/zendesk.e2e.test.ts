@@ -445,7 +445,9 @@ describe('Zendesk Messaging from one server entry in two loaders', () => {
 		const { load } = splitRemote([
 			fromRemote('zendeskWidget', { key: 'widget-key' }),
 		]);
-		const firstKernel = createConsentKernel({ initialScriptRegistry: { load } });
+		const firstKernel = createConsentKernel({
+			initialScriptRegistry: { load },
+		});
 		const secondKernel = createConsentKernel({
 			initialScriptRegistry: { load },
 		});
