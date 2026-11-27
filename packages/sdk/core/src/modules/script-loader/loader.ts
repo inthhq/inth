@@ -23,9 +23,9 @@ import {
 	normalizeScripts,
 } from './normalize';
 import { readScriptRegistry } from './registry';
-import { createScriptReuse } from './reuse';
 import { codeScriptKey, readRemoteEntries, remoteDeclaration } from './remote';
 import type { RemoteEntry } from './remote';
+import { createScriptReuse } from './reuse';
 import {
 	createRegistryVerifier,
 	isRegistrySignatureExpired,
@@ -80,7 +80,11 @@ const sharedRemote = new Map<
 >();
 
 /** The shared script for `key`, built with `build` if no loader holds one. */
-const shareRemote = (holder: symbol, key: string, build: () => Script): Script => {
+const shareRemote = (
+	holder: symbol,
+	key: string,
+	build: () => Script
+): Script => {
 	let shared = sharedRemote.get(key);
 	if (!shared) {
 		shared = {

@@ -516,9 +516,10 @@ describe('remoteScripts', () => {
 		expect(disposed).not.toHaveBeenCalled();
 		expect(tags()).toHaveLength(1);
 		expect(tags()[0]).toBe(tag);
-		expect((window as { acmeQueue?: unknown[] }).acmeQueue).not.toContainEqual(
-			['init', 'ACME-NEW']
-		);
+		expect((window as { acmeQueue?: unknown[] }).acmeQueue).not.toContainEqual([
+			'init',
+			'ACME-NEW',
+		]);
 		runtime.dispose();
 	});
 
@@ -612,9 +613,7 @@ describe('remoteScripts', () => {
 			persistence: false,
 			prefetch: {
 				initialPolicyPending: true,
-				initialPolicyResolution: matchedResolution(
-					optInRule({ id: 'opt-in' })
-				),
+				initialPolicyResolution: matchedResolution(optInRule({ id: 'opt-in' })),
 				initialScriptRegistry: {
 					load: withAccount('ACME-OLD', { alwaysLoad: true }),
 				},
@@ -658,9 +657,9 @@ describe('remoteScripts', () => {
 		});
 
 		expect(tags()).toHaveLength(0);
-		expect((window as { acmeQueue?: unknown[] }).acmeQueue ?? []).not.toContainEqual(
-			['init', 'ACME-OLD']
-		);
+		expect(
+			(window as { acmeQueue?: unknown[] }).acmeQueue ?? []
+		).not.toContainEqual(['init', 'ACME-OLD']);
 		runtime.dispose();
 	});
 
