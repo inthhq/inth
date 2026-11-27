@@ -1,4 +1,7 @@
-import { manifestFeatureLevel, manifestRoots } from '@inth/sdk/manifest-runtime';
+import {
+	manifestFeatureLevel,
+	manifestRoots,
+} from '@inth/sdk/manifest-runtime';
 
 import type {
 	LoadScriptStep,
