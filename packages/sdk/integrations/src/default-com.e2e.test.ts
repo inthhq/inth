@@ -226,7 +226,9 @@ describe('Default from npm and from the Inth server on one page', () => {
 		// Code claims the entry, so the server's Forms SDK never loads.
 		expect(document.querySelector('script[src*="sdk.js"]')).toBeNull();
 		expect(
-			document.querySelector('script[src="https://handshake.default.com/index.js"]')
+			document.querySelector(
+				'script[src="https://handshake.default.com/index.js"]'
+			)
 		).not.toBeNull();
 		expect(window.__defaultPixel__).toMatchObject({ key: 'inthfake' });
 	});

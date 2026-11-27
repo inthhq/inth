@@ -11,7 +11,6 @@ import {
 	remoteLoaderOption,
 	splitRemote,
 } from './__tests__/remote-path';
-
 import {
 	ALL_DENIED,
 	installHeadProbe,
@@ -353,7 +352,9 @@ describe('Adobe Target core-loader contracts', () => {
 	it('shares one SDK between two loaders that list the same server entry, and waits for both to grant', async () => {
 		vi.useFakeTimers();
 		const { load } = splitRemote([fromRemote('adobeTarget', webSdkOptions)]);
-		const firstKernel = createConsentKernel({ initialScriptRegistry: { load } });
+		const firstKernel = createConsentKernel({
+			initialScriptRegistry: { load },
+		});
 		const secondKernel = createConsentKernel({
 			initialScriptRegistry: { load },
 		});

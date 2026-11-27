@@ -233,9 +233,7 @@ describe('validateOptionValues', () => {
 				purposes: { ...specs.purposes, required: true },
 			} satisfies Record<string, RemoteOptionSpec>;
 
-			expect(
-				validateOptionValues('test', required, { purposes: {} })
-			).toEqual({
+			expect(validateOptionValues('test', required, { purposes: {} })).toEqual({
 				issues: ["test: 'purposes' must have at least one entry"],
 				ok: false,
 			});
