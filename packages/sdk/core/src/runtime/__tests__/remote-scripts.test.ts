@@ -1027,10 +1027,7 @@ describe('remoteScripts', () => {
 				persistence: false,
 				prefetch: {
 					initialScriptRegistry: {
-						load: [
-							...load(acmeManifest({ alwaysLoad: true })),
-							sentryEntry(),
-						],
+						load: [...load(acmeManifest({ alwaysLoad: true })), sentryEntry()],
 					},
 				},
 				remoteScripts: true,
