@@ -4,7 +4,14 @@
  * `remoteScripts` loads the integrations a project added on the Inth
  * server, which arrive as manifests on `scriptRegistry.load`.
  */
-import { afterEach, describe, expect, test, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	test,
+	vi,
+} from 'vite-plus/test';
 
 import {
 	matchedResolution,
@@ -21,11 +28,11 @@ import { rootNeedsEngine } from '../../surface-actions/plain-scripts';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import {
 	createConsentProviderRuntime,
-	createConsentRuntime,
+	createConsentRuntime as createRuntime,
 	defaultRuntimeModules,
 } from '../index';
-import { createConsentRuntimeWith } from '../runtime-with-modules';
-import type { ConsentRuntimeOptions } from '../types';
+import { createConsentRuntimeWith as createRuntimeWith } from '../runtime-with-modules';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 const ACME_SRC = 'https://cdn.acme.example/pixel.js';
 
@@ -76,6 +83,33 @@ const initMode = (answer: () => Promise<Record<string, unknown>>) =>
 		save: () => Promise.resolve({ ok: true }),
 	});
 
+/**
+ * Runtimes a test made and has not disposed. A test that fails before its
+ * own `dispose()` leaves one running, and its late tags would fail the next
+ * tests, so `afterEach` disposes what is left.
+ */
+const live = new Set<ConsentRuntime>();
+const track = (runtime: ConsentRuntime): ConsentRuntime => {
+	const { dispose } = runtime;
+	live.add(runtime);
+	runtime.dispose = () => {
+		live.delete(runtime);
+		dispose();
+	};
+	return runtime;
+};
+const createConsentRuntime = (...args: Parameters<typeof createRuntime>) =>
+	track(createRuntime(...args));
+const createConsentRuntimeWith = (
+	...args: Parameters<typeof createRuntimeWith>
+) => track(createRuntimeWith(...args));
+
+// The first test would otherwise pay for the cold import of the manifest
+// runtime inside its one-second wait.
+beforeAll(async () => {
+	await import('../../manifest-runtime/index');
+});
+
 /** Consent management off, so every script may load at once. */
 const startOff = (
 	options: Omit<ConsentRuntimeOptions, 'enabled' | 'mode'> & {
@@ -93,6 +127,9 @@ const startOff = (
 };
 
 afterEach(() => {
+	for (const runtime of live) {
+		runtime.dispose();
+	}
 	document.head.innerHTML = '';
 	delete (window as { acmeQueue?: unknown }).acmeQueue;
 	delete (window as { __inthDebug?: unknown }).__inthDebug;
