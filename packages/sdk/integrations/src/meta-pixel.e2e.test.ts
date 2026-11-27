@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { npmAndRemote } from './__tests__/remote-path';
-
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,

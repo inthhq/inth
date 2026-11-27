@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import { npmAndRemote } from './__tests__/remote-path';
-
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -279,7 +278,11 @@ describe.each(npmAndRemote('googleTagManager', googleTagManager))(
 			expect(requests.map(({ src }) => src)).toEqual([
 				'https://www.googletagmanager.com/gtm.js?id=GTM-DASH1',
 			]);
-			expect(requests[0]?.queue[0]).toEqual(['consent', 'default', deniedDefault]);
+			expect(requests[0]?.queue[0]).toEqual([
+				'consent',
+				'default',
+				deniedDefault,
+			]);
 			expect((window as TestWindow).dataLayer).toContainEqual(
 				expect.objectContaining({ event: 'gtm.js' })
 			);
