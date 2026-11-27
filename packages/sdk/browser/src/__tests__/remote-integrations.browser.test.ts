@@ -104,7 +104,6 @@ const readPage = async function readPage(
 	};
 };
 
-
 beforeAll(async () => {
 	await commands.watchRequests();
 	list = await fetchRemoteIntegrations();
